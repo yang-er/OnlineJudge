@@ -1,0 +1,183 @@
+﻿@{
+    ViewData["Title"] = "About";
+}
+
+<div class="container-fluid mt-4 mb-4 pl-4 pr-4">
+    <h2>@ViewData["Title"]</h2>
+    <h5 class="mb-3">Something about this Online Judge.</h5>
+
+    <div class="row">
+        <div class="col-md-6 col-lg-4">
+            <h3>Architecture of Service</h3>
+            <ul class="pl-4 pr-4">
+                <li>
+                    <h5>JudgeBase</h5>
+                    <p>
+                        Basic definition of data used in RESTful APIs.
+                        <br />
+                        Implemention of storage with Azure or Local Files.
+                        <br />
+                        Now open source on <a href="//github.com/yang-er/joj-base" rel="nofollow">GitHub</a>.
+                        <br />
+                        <img src="~/images/about/netcore.svg" class="tech-icon" />
+                        <img src="~/images/about/azure.svg" class="tech-icon" />
+                        <img src="~/images/about/storage.svg" class="tech-icon" />
+                    </p>
+                </li>
+                <li>
+                    <h5>JudgeDaemon</h5>
+                    <p>
+                        Micro-service by .NET Core Generic Host.
+                        <br />
+                        Running pipelines used in a judge task, such as preparation of running environment, compilation of source code, verdiction of each test case.
+                        <br />
+                        Still rewriting.
+                        <br />
+                        <img src="~/images/about/csharp.svg" class="tech-icon" />
+                        <img src="~/images/about/batch.svg" class="tech-icon" />
+                        <img src="~/images/about/trafficmanager.svg" class="tech-icon" />
+                    </p>
+                </li>
+                <li>
+                    <h5>JudgeW32</h5>
+                    <p>
+                        Encapsulation of Windows APIs for Process Info, Job Object and Error Reporting.
+                        <br />
+                        Recent versions is on <a href="//github.com/yang-er/joj-old/tree/master/JudgeW32" rel="nofollow">GitHub</a>.
+                        <br />
+                        <img src="~/images/about/cpp.svg" class="tech-icon" />
+                        <img src="~/images/about/windows.svg" class="tech-icon" />
+                        <img src="~/images/about/container.svg" class="tech-icon" />
+                        <img src="~/images/about/powershell.svg" class="tech-icon" />
+                    </p>
+                </li>
+                <li>
+                    <h5>JudgeL64</h5>
+                    <p>
+                        Applying setuid, rlimit, ptrace, chroot before fork &amp; exec.
+                        <br />
+                        Inspired by <a href="//github.com/zhblue/hustoj" rel="nofollow">HUSTOJ</a>.
+                        <br />
+                        Recent versions is on <a href="//github.com/yang-er/joj-old/tree/master/JudgeL64" rel="nofollow">GitHub</a>.
+                        <br />
+                        <img src="~/images/about/cpp.svg" class="tech-icon" />
+                        <img src="~/images/about/linux.svg" class="tech-icon" />
+                        <img src="~/images/about/virtualmachine.svg" class="tech-icon" />
+                    </p>
+                </li>
+            </ul>
+        </div>
+
+        <div class="col-md-6 col-lg-4">
+            <h3>Architecture of Web</h3>
+            <ul class="pl-4 pr-4">
+                <li>
+                    <h5>JudgeWeb</h5>
+                    <p>
+                        Websites for JLUCPC by ASP.NET Core MVC.
+                        <br />
+                        Provide the submission and reviewing for problems.
+                        <br />
+                        Holding team information.
+                        <br />
+                        Guide for newbies.
+                        <br />
+                        Problem editing and submission rejudging.
+                        <br />
+                        User and contest management.
+                        <br />
+                        Judge Server status monitoring.
+                        <br />
+                        Markdown rendering by Markdig and Katex.
+                        <br />
+                        Hosted on Microsoft Azure App Service.
+                        <br />
+                        Database by Microsoft SQL Server.
+                        <br />
+                        This will be open source partially.
+                        <br />
+                        <img src="~/images/about/appservice.svg" class="tech-icon" />
+                        <img src="~/images/about/contentdeliverynetwork.svg" class="tech-icon" />
+                        <img src="~/images/about/mssql.svg" class="tech-icon" />
+                        <img src="~/images/about/activedirectory.svg" class="tech-icon" />
+                    </p>
+                </li>
+                <li>
+                    <h5>JudgeRest</h5>
+                    <p>
+                        API Controllers for DOMjudge judgehosts.
+                        <br />
+                        <img src="~/images/about/servicebus.svg" class="tech-icon" />
+                        <img src="~/images/about/apimanagement.svg" class="tech-icon" />
+                        <img src="~/images/about/resource-manager.svg" class="tech-icon" />
+                    </p>
+                </li>
+                <li>
+                    <h5>JudgeContest</h5>
+                    <p>
+                        Provide a tiny environment for contest.
+                        <br />
+                        Used for small contests such as DS-Expr class.
+                        <br />
+                        Maybe it will be used in CPCs someday~
+                        <br />
+                        Coming soon..
+                        <br />
+                        <img src="~/images/about/appservice2.svg" class="tech-icon" />
+                        <img src="~/images/about/applicationinsights.svg" class="tech-icon" />
+                        <img src="~/images/about/databricks.svg" class="tech-icon" />
+                    </p>
+                </li>
+            </ul>
+        </div>
+
+        <div class="col-lg-4">
+            <h3>Development and History</h3>
+            <ul class="pl-4 pr-4">
+                <li>
+                    <h5>Team</h5>
+                    <ul class="pl-4">
+                        <li>GitHub @@yang-er</li>
+                        <li>GitHub @@zxnm19980609</li>
+                    </ul>
+                    <p>Welcome to join!</p>
+                </li>
+                <li>
+                    <h5>History</h5>
+                    <ul class="pl-4 mb-3">
+                        <li>2018/05/11 Project started</li>
+                        <li>2018/06/01 First use in class</li>
+                        <li>2018/06/10 Finish Windows module</li>
+                        <li>2018/06/22 Finish Linux module</li>
+                        <li>2018/06/27 Paused developing</li>
+                        <li>2019/03/04 Restarted developing</li>
+                        <li>2019/06/06 Use DOMjudge as JudgeCore</li>
+                    </ul>
+                </li>
+                <li>
+                    <h5>Repositories</h5>
+                    <ul class="pl-4 mb-3">
+                        <li><a href="//github.com/yang-er/joj-old">Archived Version</a></li>
+                        <li><a href="//github.com/yang-er/joj-base">JudgeBase</a></li>
+                        <li><a href="//github.com/yang-er/joj-daemon">JudgeDaemon</a></li>
+                        <li><a href="//github.com/yang-er/joj-win32">JudgeW32 2.0</a></li>
+                        <li><a href="//github.com/yang-er/joj-rest">JudgeRest</a></li>
+                        <li><a href="//github.com/yang-er/dj_helper">DOMjudge Helpers</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+
+    <style>
+        .tech-icon {
+            height: 3em;
+            margin-right: 0.5em;
+            margin-top: 0.5em;
+        }
+    </style>
+
+}

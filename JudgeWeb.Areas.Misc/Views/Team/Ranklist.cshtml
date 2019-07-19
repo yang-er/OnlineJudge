@@ -1,0 +1,58 @@
+﻿@model RanklistViewModel
+
+<div class="container-fluid mt-4 mb-4 pl-4 pr-4">
+    <h2>@ViewData["Title"]</h2>
+    <h6 class="mb-3">
+        <a asp-route-year="">All</a> |
+        <a asp-route-year="2016">2016</a> |
+        <a asp-route-year="2017">2017</a> |
+        <a asp-route-year="2018">2018</a> -
+        <a asp-route-name="HDOJ">HDOJ</a> |
+        <a asp-route-name="Codeforces">Codeforces</a> |
+        <a asp-route-name="POJ">POJ</a> |
+        <a asp-route-name="Vjudge">Vjudge</a>
+    </h6>
+    @if (Model.IsUpdating)
+    {
+        <div class="alert alert-warning" role="alert">
+            Ranklist is being refreshed. Please refresh this page later.
+        </div>
+    }
+    else if (Model.LastUpdate == DateTime.UnixEpoch)
+    {
+        <div class="alert alert-danger" role="alert">
+            <b>Update failed. </b>Maybe @Model.OjName is unavailable now.
+            Click <a asp-action="Refresh" asp-route-oj="@Model.OjName" data-toggle="ajaxWindow" data-target="reqref">here</a> to refresh manually.
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-success" role="alert">
+            <b>Last Update </b>@Html.CstTime(Model.LastUpdate).
+            Click <a asp-action="Refresh" asp-route-oj="@Model.OjName" data-toggle="ajaxWindow" data-target="reqref">here</a> to refresh manually.
+        </div>
+    }
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Grade</th>
+                <th>ACMer</th>
+                <th>@Model.CountColumn</th>
+            </tr>
+        </thead>
+        <tbody>
+        @{ int i = 0; }
+        @foreach (var item in Model.OjAccounts)
+        {
+            <tr>
+                <th>@(++i)</th>
+                <td>@item.Grade</td>
+                <td><a rel="nofollow" href="@string.Format(Model.AccountTemplate, item.Account)">@item.NickName</a></td>
+                <td>@Html.Raw(Model.RankTemplate(item.Solved))</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>
