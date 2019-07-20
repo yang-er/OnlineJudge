@@ -1,0 +1,37 @@
+﻿@{
+    ViewData["Title"] = "View User";
+    User user = ViewBag.User;
+    IEnumerable<SubmissionStatistics> stat = ViewBag.Stat;
+}
+
+<div class="container-fluid mt-4 mb-4 pl-4 pr-4">
+    <h2>@ViewData["Title"]</h2>
+    <h5 class="mb-4">View user's basic information</h5>
+
+    <div class="row">
+        <div class="col-12 col-md-3">
+            <img gravatar-email="@user.Email" style="width:100%;max-width:256px" />
+            <h4 class="mt-3">@(string.IsNullOrEmpty(user.NickName) ? user.UserName : user.NickName)</h4>
+        </div>
+        <div class="col-12 col-md-9">
+            <h4>Statistics</h4>
+            <ul>
+                <li><b>Problems Submitted</b> @stat.Count()</li>
+                <li><b>Problems Solved</b> @stat.Count(s => s.AcceptedSubmission > 0)</li>
+                <li><b>Submissions</b> @stat.Sum(s => s.TotalSubmission)</li>
+                <li><b>Accepted</b> @stat.Sum(s => s.AcceptedSubmission)</li>
+            </ul>
+
+            <h4>List of submitted problems</h4>
+            <ul>
+                @foreach (var prob in stat)
+                {
+                    <li>
+                        <a asp-area="Judge" asp-controller="Problem" asp-action="View" asp-route-pid="@prob.ProblemId">@prob.ProblemId</a>
+                        <small>@prob.AcceptedSubmission/@prob.TotalSubmission</small>
+                    </li>
+                }
+            </ul>
+        </div>
+    </div>
+</div>

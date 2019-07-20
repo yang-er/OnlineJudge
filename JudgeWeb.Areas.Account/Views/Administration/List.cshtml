@@ -1,0 +1,50 @@
+﻿@model IEnumerable<User>
+@{
+    ViewData["Title"] = "User Management";
+    Dictionary<int, (int Accepted, int Total)> stats = ViewBag.Statistics;
+}
+
+<h2>@ViewData["Title"]</h2>
+<h5 class="mb-3">Perform basic operations on users</h5>
+
+<table class="table table-responsive-lg">
+    <thead>
+        <tr>
+            <th style="width:8%;min-width:80px">ID</th>
+            <th style="width:16%;min-width:160px">User Name</th>
+            <th style="width:16%;min-width:160px">Nick Name</th>
+            <th style="width:28%;min-width:280px">Email</th>
+            <th style="width:12%;min-width:120px">Ratio</th>
+            <th style="width:20%;min-width:200px">Options</th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach (var item in Model)
+    {
+        var stat = stats.ContainsKey(item.Id) ? stats[item.Id] : default;
+
+        <tr>
+            <td>@item.Id</td>
+            <td>@item.UserName</td>
+            <td>@item.NickName</td>
+            <td>
+                @item.Email
+                @if (item.EmailConfirmed)
+                {
+                    <span class="badge badge-success">&radic;</span>
+                }
+                else
+                {
+                    <span class="badge badge-danger">&times;</span>
+                }
+            </td>
+            <td>@Html.RatioOf(stat.Accepted, stat.Total)</td>
+            <td>
+                <a asp-action="Modify" asp-route-uid="@item.Id" data-toggle="ajaxWindow" data-target="mod">Modify</a>
+                |
+                <a asp-action="Role" asp-route-uid="@item.Id" data-toggle="ajaxWindow" data-target="roles">Role Assign</a>
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>
