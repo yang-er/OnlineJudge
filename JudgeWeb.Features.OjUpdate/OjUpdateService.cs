@@ -82,9 +82,9 @@ namespace JudgeWeb.Features.OjUpdate
             string siteName)
         {
             Logger = logger;
-            NameSet = nameSet;
+            NameSet = nameSet ?? new List<OjAccount>();
             LastUpdate = DateTime.UnixEpoch;
-            sleepToken = sleepLength;
+            sleepToken = sleepLength <= 0 ? 44640 : sleepLength;
             SiteName = siteName;
             OjList[siteName] = this;
             ColumnName = "Count";

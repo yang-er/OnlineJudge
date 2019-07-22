@@ -1,10 +1,16 @@
-﻿using Microsoft.AspNetCore.Mvc.ApplicationModels;
+﻿using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc.ApplicationModels;
+using Microsoft.AspNetCore.Mvc.ApplicationParts;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
+using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.FileProviders;
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Security.Claims;
 
 namespace Microsoft.AspNetCore.Mvc
@@ -16,18 +22,56 @@ namespace Microsoft.AspNetCore.Mvc
             return roles.Split(',').Any(role => user.IsInRole(role));
         }
 
-        public static IMvcBuilder AddMvc2(this IServiceCollection services)
+        public static IMvcBuilder SetTokenTransform<T>(this IMvcBuilder builder)
+            where T : IOutboundParameterTransformer, new()
         {
-            Action<MvcOptions> conf = options =>
-            {
+            builder.Services.Configure<MvcOptions>(options =>
                 options.Conventions.Add(
-                    new RouteTokenTransformerConvention(
-                        new SlugifyParameterTransformer()));
-            };
+                    new RouteTokenTransformerConvention(new T())));
+            return builder;
+        }
 
-            var builder = services.AddMvc(conf);
-            services.TryAddSingleton<IActionResultExecutor<ContentFileResult>, ContentFileResultExecutor>();
-            builder.SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+        public static IMvcBuilder EnableContentFileResult(this IMvcBuilder builder)
+        {
+            builder.Services.TryAddSingleton<
+                IActionResultExecutor<ContentFileResult>,
+                ContentFileResultExecutor>();
+            return builder;
+        }
+
+        public static IMvcBuilder UseAreaParts(this IMvcBuilder builder,
+            string projectPrefix, IEnumerable<string> areaNames)
+        {
+#if DEBUG
+            // only in debug mode should we open this module
+            // so that we can hot-fix our cshtml.
+            builder.Services.AddOptions<RazorViewEngineOptions>()
+                .Configure<IHostingEnvironment>((options, env) =>
+                {
+                    var areaProvider = new AreasFileProvider(
+                        new PhysicalFileProvider(env.ContentRootPath + "/../"),
+                        projectPrefix ?? throw new ArgumentNullException("ProjectPrefix"));
+                    areaProvider.AddExternalAreas(areaNames ?? Enumerable.Empty<string>());
+                    options.FileProviders.Add(areaProvider);
+                });
+#endif
+
+            builder.ConfigureApplicationPartManager(apm =>
+            {
+                foreach (var area in areaNames ?? Enumerable.Empty<string>())
+                {
+                    apm.ApplicationParts.Add(
+                        new AssemblyPart(
+                            Assembly.LoadFrom(
+                                AppDomain.CurrentDomain.BaseDirectory + projectPrefix + area + ".dll")));
+                    apm.ApplicationParts.Add(
+                        new AreaRazorAssemblyPart(
+                            Assembly.LoadFrom(
+                                AppDomain.CurrentDomain.BaseDirectory + projectPrefix + area + ".Views.dll"),
+                                area));
+                }
+            });
+
             return builder;
         }
     }
