@@ -1,0 +1,99 @@
+﻿@model IEnumerable<StatusListModel>
+@inject UserManager UserManager
+@{
+    ViewData["Title"] = "Realtime Judge Status";
+    string uuid = UserManager.GetUserId(User);
+    int uid = uuid != null ? int.Parse(uuid) : -1;
+    bool enableAll = User.IsInRoles("Administrator,Problem");
+    int pg = (int)ViewData["Page"];
+}
+
+<div class="container-fluid mt-4 mb-4 pl-4 pr-4">
+    <h2>Realtime Status</h2>
+    <h5 class="mb-3">Previous judge submissions</h5>
+    <table class="table table-responsive-lg">
+        <thead>
+            <tr>
+                <th style="width:8%;min-width:80px" scope="col">#</th>
+                <th style="width:18%;min-width:200px;max-width:200px" scope="col">Submit Time</th>
+                <th style="width:20%;min-width:200px" scope="col" class="dropdown"><partial name="_VerdictFilter" /></th>
+                <th style="width:6%;min-width:80px" scope="col" class="dropdown"><partial name="_ProblemFilter" /></th>
+                <th style="width:10%;min-width:100px" scope="col">Exe.Time</th>
+                <th style="width:10%;min-width:100px" scope="col">Exe.Mem</th>
+                <th style="width:10%;min-width:100px" scope="col">Code Len</th>
+                <th style="width:8%;min-width:100px" scope="col" class="dropdown"><partial name="_LanguageFilter" /></th>
+                <th style="width:10%;min-width:100px" scope="col" class="dropdown"><partial name="_UserFilter" /></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <th scope="row">@(item.Submission.SubmissionId)</th>
+                    <td>@Html.CstTime(item.Submission.Time.DateTime)</td>
+                    <td><verdict target="StatusText" value="@item.Grade.Status" /></td>
+                    <td><a asp-area="Judge" asp-controller="Problem" asp-action="View" asp-route-pid="@item.Submission.ProblemId">@item.Submission.ProblemId</a></td>
+                    <td>@(item.Grade.ExecuteTime)ms</td>
+                    <td>@(item.Grade.ExecuteMemory)k</td>
+                    <td>
+                        @if (enableAll || item.Submission.Author == uid)
+                        {
+                            <a asp-action="View" asp-route-id="@item.Submission.SubmissionId">@(item.Submission.CodeLength)B</a>
+                        }
+                        else
+                        {
+                            @(item.Submission.CodeLength + "B")
+                        }
+                    </td>
+                    <td>@item.Language</td>
+                    <td>
+                        @if (item.UserName == null)
+                        {
+                            <a>SYSTEM</a>
+                        }
+                        else
+                        {
+                            <a asp-area="Account" asp-controller="Profile" asp-action="View" asp-route-uid="@item.Submission.Author">@item.UserName</a>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <nav aria-label="...">
+        <ul class="pagination">
+            @if (pg == 1)
+            {
+                <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+                <li class="page-item active" aria-current="page">
+                    <span class="page-link">
+                        1
+                        <span class="sr-only">(current)</span>
+                    </span>
+                </li>
+            }
+            else
+            {
+                <li class="page-item"><a class="page-link" asp-all-route-data="@ViewBag.Filter" asp-route-pg="">&laquo;</a></li>
+                <li class="page-item"><a class="page-link" asp-all-route-data="@ViewBag.Filter" asp-route-pg="@(pg-1)">@(pg - 1)</a></li>
+                <li class="page-item active" aria-current="page">
+                    <span class="page-link">
+                        @pg
+                        <span class="sr-only">(current)</span>
+                    </span>
+                </li>
+            }
+
+            @if (pg == -1)
+            {
+                <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+            }
+            else
+            {
+                <li class="page-item"><a class="page-link" asp-all-route-data="@ViewBag.Filter" asp-route-pg="@(pg+1)">@(pg+1)</a></li>
+                <li class="page-item"><a class="page-link" asp-all-route-data="@ViewBag.Filter" asp-route-pg="-1">&raquo;</a></li>
+            }
+        </ul>
+    </nav>
+</div>

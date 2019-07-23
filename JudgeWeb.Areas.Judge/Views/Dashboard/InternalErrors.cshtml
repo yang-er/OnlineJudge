@@ -1,0 +1,38 @@
+﻿@model IEnumerable<InternalError>
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="container-fluid mt-4 mb-4 pl-4 pr-4">
+    <h2>Internal Errors</h2>
+    <h5 class="mb-3">Table for DOMjudge internal errors</h5>
+    <table class="mt-3 data-table table table-sm table-striped dataTable no-footer" role="grid" style="width:auto">
+        <thead>
+            <tr role="row">
+                <th title="ID" scope="col">ID</th>
+                <th title="Description" scope="col">description</th>
+                <th title="Time" scope="col">time</th>
+                <th title="Status" scope="col">status</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var ie in Model)
+            {
+                var langType = ie.Status == InternalError.ErrorStatus.Open ? "1.0" : "0.3";
+                <tr role="row">
+                    <td>@ie.ErrorId</td>
+                    <td><a style="color:rgba(0,0,0,@langType)" asp-action="InternalError" asp-route-eid="@ie.ErrorId">@ie.Description</a></td>
+                    <td>@ie.Time</td>
+                    <td>@ie.Status</td>
+                </tr>
+            }
+
+            @if (!Model.Any())
+            {
+                <tr role="row">
+                    <td colspan="5">No data available</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

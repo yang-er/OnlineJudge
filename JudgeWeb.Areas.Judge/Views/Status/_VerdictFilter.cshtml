@@ -1,0 +1,30 @@
+﻿@{ 
+    var verdicts = new List<(int, string)>
+    {
+        (0, "Unknown"),
+        (11, "Accepted"),
+        (5, "Wrong Answer"),
+        (6, "Compile Error"),
+        (3, "Runtime Error"),
+        (1, "Time Limit Exceeded"),
+        (2, "Memory Limit Exceeded"),
+        (4, "Output Limit Exceeded"),
+        (8, "Pending"),
+        (9, "Running"),
+        (10, "Undefined Error"),
+    };
+    
+    var nowFilters = new Dictionary<string, string>((IDictionary<string, string>)ViewBag.Filter);
+    string current = nowFilters.GetValueOrDefault("status");
+}
+
+<a class="dropdown-toggle text-reset" id="verdict-tag" aria-expanded="false" aria-haspopup="true" href="#" data-toggle="dropdown" data-offset="0,5">Verdict</a>
+<div class="dropdown-menu" aria-labelledby="verdict-tag">
+    <h6 class="dropdown-header">Verdict filters</h6>
+    @foreach (var (vid, name) in verdicts)
+    {
+        <a class="dropdown-item @(current == vid.ToString() ? "active text-dark" : "")" asp-all-route-data="nowFilters" asp-route-pg="" asp-route-status="@vid">@name</a>
+    }
+    <div class="dropdown-divider"></div>
+    <a class="dropdown-item" asp-all-route-data="nowFilters" asp-route-pg="" asp-route-status="">Clear filter</a>
+</div>

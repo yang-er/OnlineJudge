@@ -1,0 +1,39 @@
+﻿@model InternalError
+@{
+    ViewData["Title"] = "Internal Error";
+}
+
+<div class="container-fluid mt-4 mb-4 pl-4 pr-4">
+    <h2>Internal Error #@Model.ErrorId</h2>
+    <h5 class="mb-3">Judgehost internal error details</h5>
+    <table class="data-table table table-sm table-striped dataTable no-footer" id="DataTables_Table_12" role="grid" style="width:auto">
+        <tbody>
+            <tr role="row">
+                <th>Description</th>
+                <td>@Model.Description</td>
+            </tr>
+            <tr role="row">
+                <th>Time</th>
+                <td>@Model.Time</td>
+            </tr>
+            <tr role="row">
+                <th>Status</th>
+                <td>@Model.Status</td>
+            </tr>
+            <tr role="row">
+                <th>Affect</th>
+                <td>Disabled @Model.Disabled</td>
+            </tr>
+            <tr role="row">
+                <th>Judgehost log snippet</th>
+                <td><base64 value="@Model.JudgehostLog" /></td>
+            </tr>
+        </tbody>
+    </table>
+
+    @if (Model.Status == InternalError.ErrorStatus.Open)
+    {
+        <a asp-route-todo="resolve" class="btn btn-success"><i class="bowtie-icon bowtie-heart-fill"></i> Mark as resolved</a>
+        <a asp-route-todo="ignore" class="btn btn-danger"><i class="bowtie-icon bowtie-heartbeat-fill"></i> Mark as ignored</a>
+    }
+</div>

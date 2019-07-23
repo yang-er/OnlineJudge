@@ -1,0 +1,30 @@
+﻿@{
+    var langs = new List<(string, string)>
+    {
+        ("c", "C"),
+        ("cpp", "C++"),
+        ("java", "Java"),
+        ("python2", "Python 2"),
+        ("python3", "Python 3"),
+        ("pascal", "Pascal"),
+        ("csharp", "C#"),
+        ("kotlin", "Kotlin"),
+        ("haskell", "Haskell"),
+        ("pl", "Perl"),
+        ("f95", "Fortran"),
+    };
+
+    var nowFilters = new Dictionary<string, string>((IDictionary<string, string>)ViewBag.Filter);
+    string current = nowFilters.GetValueOrDefault("lang");
+}
+
+<a class="dropdown-toggle text-reset" id="lang-tag" aria-expanded="false" aria-haspopup="true" href="#" data-toggle="dropdown" data-offset="0,5">Lang</a>
+<div class="dropdown-menu" aria-labelledby="lang-tag">
+    <h6 class="dropdown-header">Language filters</h6>
+    @foreach (var (vid, name) in langs)
+    {
+        <a class="dropdown-item @(current == vid ? "active text-dark" : "")" asp-all-route-data="nowFilters" asp-route-pg="" asp-route-lang="@vid">@name</a>
+    }
+    <div class="dropdown-divider"></div>
+    <a class="dropdown-item" asp-all-route-data="nowFilters" asp-route-pg="" asp-route-lang="">Clear filter</a>
+</div>

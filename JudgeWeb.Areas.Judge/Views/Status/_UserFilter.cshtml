@@ -1,0 +1,21 @@
+﻿@{
+    var nowFilters = (IDictionary<string, string>)ViewBag.Filter;
+    nowFilters.TryGetValue("uid", out var nowUid);
+    nowUid = nowUid ?? "";
+}
+
+<a class="dropdown-toggle text-reset" id="user-tag" aria-expanded="false" aria-haspopup="true" href="#" data-toggle="dropdown" data-offset="0,5">Author</a>
+<div class="dropdown-menu" aria-labelledby="user-tag">
+    <h6 class="dropdown-header">User ID filters</h6>
+    <form method="get" class="mx-4 mt-1 mb-2">
+        @foreach (var (k, v) in nowFilters)
+        {
+            if (k != "uid")
+            {
+                <input type="hidden" name="@k" value="@v" />
+            }
+        }
+        <input type="number" class="form-control mb-2 form-control-sm" name="uid" value="@nowUid" />
+        <button type="submit" class="btn btn-outline-secondary btn-sm">Filter</button>
+    </form>
+</div>

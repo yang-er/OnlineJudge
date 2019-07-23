@@ -1,0 +1,26 @@
+﻿@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="container-fluid mt-4 mb-4 pl-4 pr-4">
+    <h2>Dashboard</h2>
+    <h5 class="mb-3">DOMjudge jury interface</h5>
+        
+    <div class="row">
+        <div class="col-sm-6 col-md-5 col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    System statistics
+                </div>
+                <div class="card-body">
+                    <ul>
+                        <li><a asp-action="InternalError">Internal Errors</a></li>
+                        <li><a asp-action="JudgeHost">Judgehosts</a></li>
+                        <li><a asp-action="Language">Languages</a></li>
+                        <li><a asp-action="Executable">Executables</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

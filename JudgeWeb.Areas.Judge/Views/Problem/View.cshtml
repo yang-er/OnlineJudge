@@ -1,0 +1,15 @@
+﻿<link rel="stylesheet" href="~/static/style/katex.css" />
+<script defer src="~/static/script/katex.js"></script>
+
+<div class="container-fluid mt-4 mb-4 pl-4 pr-4">
+    <div class="row">
+        <div class="col" style="max-width:50em">
+            @Html.Raw((string)ViewData["Content"])
+            <a asp-action="Submit" class="btn btn-primary">Submit</a>
+            @if (User.IsInRoles("Administrator,Problem"))
+            {
+                <a asp-action="Edit" class="btn btn-danger">Edit</a>
+            }
+        </div>
+    </div>
+</div>

@@ -1,0 +1,141 @@
+﻿@model ProblemEditModel
+@{
+    ViewData["Title"] = "Problem Editor";
+    var Testcases = ViewData["Testcase"] as IEnumerable<TestcaseInfoModel>;
+}
+
+<div class="container-fluid mt-4 mb-4 pl-4 pr-4">
+    <h2>@ViewData["Title"]</h2>
+    <h5 class="mb-3">#@Model.ProblemId</h5>
+
+    <div class="row">
+        <div class="col-md-6">
+            @if (ViewData.ContainsKey("Message"))
+            {
+                <div class="alert alert-@ViewData["MsgType"] alert-dismissible fade show" role="alert">
+                    @ViewData["Message"]
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+            }
+            <form asp-action="Edit" method="post" class="setting-form-group">
+                <input type="hidden" asp-for="ProblemId" />
+                <div class="form-group">
+                    <label class="font-weight-bold" asp-for="Title">Problem Title</label>
+                    <input class="form-control" asp-for="Title" />
+                </div>
+                <div class="form-group">
+                    <label class="font-weight-bold">Running Limitations</label>
+                    <div class="row">
+                        <div class="input-group col-lg-6">
+                            <div class="input-group-prepend"><span class="input-group-text" id="ms-tag">Time</span></div>
+                            <input asp-for="TimeLimit" class="form-control" placeholder="better to be times of 1000" aria-label="Time" aria-describedby="ms-tag" />
+                            <div class="input-group-append"><span class="input-group-text" id="ms-tag">ms</span></div>
+                        </div>
+                        <div class="input-group col-lg-6 mt-3 mt-lg-0">
+                            <div class="input-group-prepend"><span class="input-group-text" id="KB-tag">Memory</span></div>
+                            <input asp-for="MemoryLimit" class="form-control" placeholder="better to be times of 32768" aria-label="Memory" aria-describedby="KB-tag" />
+                            <div class="input-group-append"><span class="input-group-text" id="KB-tag">KB</span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="font-weight-bold" asp-for="Source"></label>
+                    <input asp-for="Source" class="form-control" aria-describedby="sourceHelp" />
+                    <small id="sourceHelp" class="form-text text-muted">Source of this problem, usually described as "Name" or "Name|Link".</small>
+                </div>
+                <div class="form-group">
+                    <label class="font-weight-bold">Judging Type</label>
+                    <div class="row">
+                        <div class="input-group col-lg-6">
+                            <div class="input-group-prepend"><span class="input-group-text">Run</span></div>
+                            <select class="custom-select" asp-for="RunScript">
+                                <option value="run">run - Default run script</option>
+                            </select>
+                        </div>
+                        <div class="input-group col-lg-6 mt-3 mt-lg-0">
+                            <div class="input-group-prepend"><span class="input-group-text">Compare</span></div>
+                            <select class="custom-select" asp-for="CompareScript">
+                                <option value="compare">compare - Default compare script</option>
+                                <option value="float">float - For floats with prec 1E-7</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="font-weight-bold">Activity</label>
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox" class="custom-control-input" asp-for="IsActive" id="isactive">
+                        <label class="custom-control-label" for="isactive">Is Active and Visible to Public</label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="font-weight-bold">Markdown Editor</label>
+                    <div>
+                        <a class="btn btn-outline-primary" target="_blank" asp-action="Markdown" asp-route-backstore="@($"p{Model.ProblemId}")" asp-route-target="description">Description</a>
+                        <a class="btn btn-outline-success" target="_blank" asp-action="Markdown" asp-route-backstore="@($"p{Model.ProblemId}")" asp-route-target="inputdesc">Input</a>
+                        <a class="btn btn-outline-warning" target="_blank" asp-action="Markdown" asp-route-backstore="@($"p{Model.ProblemId}")" asp-route-target="outputdesc">Output</a>
+                        <a class="btn btn-outline-info" target="_blank" asp-action="Markdown" asp-route-backstore="@($"p{Model.ProblemId}")" asp-route-target="hint">Hint</a>
+                    </div>
+                    <small id="sourceHelp" class="form-text text-muted">Editor will be opened in new tabs or windows.</small>
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary"> Save </button>
+                    <a asp-action="Export" asp-route-pid="@Model.ProblemId" class="btn btn-secondary"> Export </a>
+                </div>
+            </form>
+        </div>
+        <div class="col-md-6">
+            <div class="setting-form-group">
+                <div class="form-group">
+                    <label class="font-weight-bold">Testcases</label>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th scope="col">ID</th>
+                                <th scope="col">Rank</th>
+                                <th scope="col">Description</th>
+                                <th scope="col">Input</th>
+                                <th scope="col">Output</th>
+                                <th scope="col"><a asp-action="Testcase" asp-route-pid="@Model.ProblemId" asp-route-ttid="add" data-toggle="ajaxWindow" data-target="restore"><span class="bowtie text-dark"><i class="bowtie-plan"></i> Add</span></a></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var tc in Testcases)
+                            {
+                                <tr>
+                                    <td scope="row">@tc.TestcaseId</td>
+                                    <td scope="row">@tc.Rank</td>
+                                    <td scope="row">
+                                        @if (tc.IsSecret)
+                                        {
+                                            <span class="badge badge-danger">Secret</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge badge-primary">Sample</span>
+                                        }
+                                        @tc.Description
+                                    </td>
+                                    <td scope="row"><a asp-action="Testcase" asp-route-pid="@Model.ProblemId" asp-route-tid="@tc.TestcaseId" asp-route-filetype="input" class="text-dark">@Html.NiceByteSize(tc.InputLength)</a></td>
+                                    <td scope="row"><a asp-action="Testcase" asp-route-pid="@Model.ProblemId" asp-route-tid="@tc.TestcaseId" asp-route-filetype="output" class="text-dark">@Html.NiceByteSize(tc.OutputLength)</a></td>
+                                    <td><a asp-action="Testcase" asp-route-pid="@Model.ProblemId" asp-route-ttid="@tc.TestcaseId" data-toggle="ajaxWindow" data-target="restore"><span class="bowtie text-dark"><i class="bowtie-edit"></i> Edit</span></a></td>
+                                </tr>
+                            }
+                            @if (!Testcases.Any())
+                            {
+                                <tr>
+                                    <td colspan="4">
+                                        No testcase data.
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                    <small class="form-text text-muted">Sample test cases will be used in real judge. Judge test cases should be checked with standard programs.</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

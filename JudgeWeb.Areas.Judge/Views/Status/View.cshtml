@@ -1,0 +1,126 @@
+﻿@model CodeViewModel
+@{
+    ViewData["Title"] = "View";
+}
+
+    <div class="container-fluid mt-4 mb-4 pl-4 pr-4">
+        <h2>Submission #@Model.SubmissionId</h2>
+        <h5 style="font-size:0">
+            <span class="bowtie"><i class="bowtie-symbol-book"></i><a asp-area="Judge" asp-controller="Problem" asp-action="View" asp-route-pid="@Model.ProblemId">@Model.ProblemId# @Model.ProblemTitle</a></span>
+            <span class="bowtie"><i class="bowtie-file-type-sln"></i>@Model.LanguageName</span>
+            <span class="bowtie"><i class="bowtie-test-plan"></i>@(Model.CodeLength)B</span>
+            <span class="bowtie"><i class="bowtie-stopwatch"></i>@Html.CstTime(Model.Time.DateTime)</span>
+        </h5>
+
+        @if (User.IsInRoles("Administrator,Problem"))
+        {
+            IEnumerable<(Judging g, string n)> judgings = ViewBag.AllJudgings;
+            <h4>Judgings</h4>
+            <table class="table table-striped table-hover table-sm" style="width: auto;">
+                <thead>
+                    <tr>
+                        <td></td>
+                        <th scope="col">ID</th>
+                        <th scope="col">time</th>
+                        <th scope="col">memory</th>
+                        <th scope="col">judgehost</th>
+                        <th scope="col">result</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var (judging, serverName) in judgings)
+                    {
+                        var iconName = judging.Active ? "favorite" : judging.JudgingId == Model.JudgingId ? "arrow-right" : "null";
+                        <tr>
+                            <td><span class="bowtie mr-0" title="Watching Judge Result"><i class="bowtie-@iconName"></i></span></td>
+                            <td><a asp-route-gid="@judging.JudgingId">j@(judging.JudgingId)</a></td>
+                            <td>@(judging.ExecuteTime)ms</td>
+                            <td>@(judging.ExecuteMemory)kb</td>
+                            <td>@serverName</td>
+                            <td><verdict target="StatusText" value="@judging.Status" /></td>
+                            <td><a asp-action="Activate" asp-route-gid="@judging.JudgingId" class="bowtie mr-0 text-dark"><i class="bowtie-approve"></i></a></td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="7">
+                            <a asp-action="Rejudge" asp-route-id="@Model.SubmissionId" asp-route-full="no" class="text-dark mr-3">Rejudge</a>
+                            <a asp-action="Rejudge" asp-route-id="@Model.SubmissionId" asp-route-full="full" class="text-dark">Full Rejudge</a>
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        }
+        else
+        {
+            <h4>Verdict</h4>
+            <p><verdict target="StatusText" value="@Model.Status" /></p>
+        }
+
+        @if (Model.LanguageExternalId.StartsWith("python")) { Model.LanguageExternalId = "python"; }
+        <h4>Solution Code</h4>
+        <pre id="coded_area" class="line-numbers language-@Model.LanguageExternalId"><code class="language-@Model.LanguageExternalId">@Html.DisplayFor(model => model.SourceCode)</code></pre>
+
+        @if (!string.IsNullOrEmpty(Model.CompileError))
+        {
+            <h4>Compiler Output</h4>
+            <base64 class="mb-3" value="@Model.CompileError" />
+        }
+
+        <h4>Running Details</h4>
+        <p style="font-size:0">
+            @for (int i = 0; i < Model.Details.Count; i++)
+            {
+                <a title="Test @(i+1): @(Model.Details[i].Status), @(Model.Details[i].ExecuteTime)ms, @(Model.Details[i].ExecuteMemory)K." style="font-size:1rem"><verdict target="BadgeSmall" value="@Model.Details[i].Status" /></a>
+            }
+
+            @for (int i = Model.Details.Count; i < Model.TestcaseNumber; i++)
+            {
+                <a title="Test @(i+1): Pending Or Not Execute" style="font-size:1rem"><verdict target="BadgeSmall" val="8" /></a>
+            }
+        </p>
+
+        @if (User.IsInRoles("Administrator,Problem"))
+        {
+            <div class="row">
+                @foreach (var run in Model.Details.Where(d => d.Status != Verdict.Accepted))
+                {
+                    <div class="col-12 col-md-6 pr-md-4">
+                        <h5>Run #@run.TestId</h5>
+                        <table class="table table-sm table-bordered table-striped" style="width:auto">
+                            <tbody>
+                                <tr>
+                                    <th style="min-width:5em">Testcase</th>
+                                    <td style="min-width:15em">
+                                        #@run.TestcaseId
+                                        <a asp-controller="Problem" asp-action="Testcase" asp-route-pid="@Model.ProblemId" asp-route-tid="@run.TestcaseId" asp-route-filetype="input">input</a>
+                                        <a asp-controller="Problem" asp-action="Testcase" asp-route-pid="@Model.ProblemId" asp-route-tid="@run.TestcaseId" asp-route-filetype="output">output</a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Status</th>
+                                    <td>@(run.ExecuteTime)ms, @(run.ExecuteMemory)kb.</td>
+                                </tr>
+                                <tr>
+                                    <th>Verdict</th>
+                                    <td><verdict target="Badge" value="@run.Status" /></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <h6>Diff output</h6>
+                        <base64 class="mb-3 mt-1" value="@run.OutputDiff" />
+                        <h6>Judging system output</h6>
+                        <base64 class="mb-3 mt-1" value="@run.OutputSystem" />
+                    </div>
+                }
+            </div>
+        }
+    </div>
+
+@section Scripts {
+    <script src="~/static/script/prism.js"></script>
+    <link rel="stylesheet" href="~/static/style/prism.css" />
+    <link rel="stylesheet" href="~/static/style/status_view.css" />
+}
