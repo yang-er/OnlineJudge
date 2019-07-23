@@ -9,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.FileProviders;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Security.Claims;
@@ -39,6 +40,20 @@ namespace Microsoft.AspNetCore.Mvc
             return builder;
         }
 
+        private static bool TryLoad(string assemblyName, out Assembly assembly)
+        {
+            if (File.Exists(AppDomain.CurrentDomain.BaseDirectory + assemblyName))
+            {
+                assembly = Assembly.LoadFrom(AppDomain.CurrentDomain.BaseDirectory + assemblyName);
+                return true;
+            }
+            else
+            {
+                assembly = null;
+                return false;
+            }
+        }
+
         public static IMvcBuilder UseAreaParts(this IMvcBuilder builder,
             string projectPrefix, IEnumerable<string> areaNames)
         {
@@ -60,15 +75,10 @@ namespace Microsoft.AspNetCore.Mvc
             {
                 foreach (var area in areaNames ?? Enumerable.Empty<string>())
                 {
-                    apm.ApplicationParts.Add(
-                        new AssemblyPart(
-                            Assembly.LoadFrom(
-                                AppDomain.CurrentDomain.BaseDirectory + projectPrefix + area + ".dll")));
-                    apm.ApplicationParts.Add(
-                        new AreaRazorAssemblyPart(
-                            Assembly.LoadFrom(
-                                AppDomain.CurrentDomain.BaseDirectory + projectPrefix + area + ".Views.dll"),
-                                area));
+                    if (TryLoad(projectPrefix + area + ".dll", out var assembly1))
+                        apm.ApplicationParts.Add(new AssemblyPart(assembly1));
+                    if (TryLoad(projectPrefix + area + ".Views.dll", out var assembly2))
+                        apm.ApplicationParts.Add(new AreaRazorAssemblyPart(assembly2, area));
                 }
             });
 

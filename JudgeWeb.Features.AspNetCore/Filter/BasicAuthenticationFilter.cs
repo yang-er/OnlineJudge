@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.Extensions.DependencyInjection;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 
 namespace Microsoft.AspNetCore.Mvc
@@ -11,14 +11,14 @@ namespace Microsoft.AspNetCore.Mvc
     /// </summary>
     public class BasicAuthenticationFilter : Attribute, IAuthorizationFilter
     {
-        private ISet<string> AuthorizeString { get; set; }
+        private string[] AuthorizeString { get; set; }
 
         public string RealmName { get; }
 
         public BasicAuthenticationFilter(string realmName, params string[] vs)
         {
             RealmName = realmName;
-            AuthorizeString = new HashSet<string>(vs);
+            AuthorizeString = vs;
         }
 
         public void OnAuthorization(AuthorizationFilterContext context)
@@ -28,8 +28,22 @@ namespace Microsoft.AspNetCore.Mvc
             if (auth is null)
             {
                 context.Result = new NeedAuthenticationResult(RealmName);
+                return;
             }
-            else if (!AuthorizeString.Contains(auth))
+
+            IBasicAuthorizationService provider;
+
+            if (AuthorizeString.Length > 0)
+            {
+                provider = new ArgumentBasicAuthorizationService(AuthorizeString);
+            }
+            else
+            {
+                provider = context.HttpContext.RequestServices
+                    .GetRequiredService<ConfigurationBasicAuthorizationService>();
+            }
+
+            if (!provider.Authorize(auth))
             {
                 context.Result = new StatusCodeResult(401);
             }

@@ -1,11 +1,19 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
+using System.Linq;
 
 namespace JudgeWeb.Features.OjUpdate
 {
     public static class OjExtensions
     {
+        private static bool TryGetSection(this IConfiguration configuration,
+            string name, out IConfigurationSection section)
+        {
+            section = configuration.GetSection(name);
+            return section.GetChildren().Count() > 0;
+        }
+
         public static IServiceCollection AddOjUpdateService(
             this IServiceCollection services,
             Action<IConfigurationBuilder> confOptions)
@@ -14,21 +22,29 @@ namespace JudgeWeb.Features.OjUpdate
             confOptions.Invoke(confBuilder);
             IConfiguration configuration = confBuilder.Build();
 
-            services.AddOptions<HdojUpdateOptions>()
-                    .Bind(configuration.GetSection("hdu"));
-            services.AddHostedService<HdojUpdateService>();
+            if (configuration.TryGetSection("hdu", out var hdu))
+            {
+                services.AddOptions<HdojUpdateOptions>().Bind(hdu);
+                services.AddHostedService<HdojUpdateService>();
+            }
 
-            services.AddOptions<CfUpdateOptions>()
-                    .Bind(configuration.GetSection("cf"));
-            services.AddHostedService<CfUpdateService>();
+            if (configuration.TryGetSection("cf", out var cf))
+            {
+                services.AddOptions<CfUpdateOptions>().Bind(cf);
+                services.AddHostedService<CfUpdateService>();
+            }
 
-            services.AddOptions<PojUpdateOptions>()
-                    .Bind(configuration.GetSection("poj"));
-            services.AddHostedService<PojUpdateService>();
+            if (configuration.TryGetSection("poj", out var poj))
+            {
+                services.AddOptions<PojUpdateOptions>().Bind(poj);
+                services.AddHostedService<PojUpdateService>();
+            }
 
-            services.AddOptions<VjUpdateOptions>()
-                    .Bind(configuration.GetSection("vj"));
-            services.AddHostedService<VjUpdateService>();
+            if (configuration.TryGetSection("vj", out var vj))
+            {
+                services.AddOptions<VjUpdateOptions>().Bind(vj);
+                services.AddHostedService<VjUpdateService>();
+            }
 
             return services;
         }
