@@ -563,7 +563,7 @@ namespace JudgeWeb.Areas.Account.Controllers
             }
             else
             {
-                return RedirectToAction("Index", "Home", new { area = "Content" });
+                return RedirectToAction("Index", "Home", new { area = "Misc" });
             }
         }
 

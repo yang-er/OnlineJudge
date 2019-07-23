@@ -1,10 +1,10 @@
-﻿using JudgeWeb.Areas.Misc.Models;
+﻿using EntityFrameworkCore.Cacheable;
+using JudgeWeb.Areas.Misc.Models;
 using JudgeWeb.Data;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using System;
 using System.Diagnostics;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace JudgeWeb.Areas.Misc.Controllers
 {
@@ -20,14 +20,15 @@ namespace JudgeWeb.Areas.Misc.Controllers
         }
 
         [Route("/")]
-        public async Task<IActionResult> Index()
+        public IActionResult Index()
         {
-            var news = await DbContext.News
+            var news = DbContext.News
                 .Where(n => n.Active)
                 .OrderByDescending(n => n.NewsId)
                 .Select(n => new { n.Title, n.NewsId })
                 .Take(10)
-                .ToListAsync();
+                .Cacheable(TimeSpan.FromMinutes(50))
+                .ToList();
 
             return View(news.Select(a => (a.NewsId, a.Title)));
         }

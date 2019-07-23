@@ -1,10 +1,12 @@
-﻿using JudgeWeb.Areas.Misc.Models;
+﻿using EntityFrameworkCore.Cacheable;
+using JudgeWeb.Areas.Misc.Models;
 using JudgeWeb.Data;
 using JudgeWeb.Features;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -28,6 +30,26 @@ namespace JudgeWeb.Areas.Misc.Controllers
             MarkdownService = ms;
         }
 
+        private News QueryNews(int nid, bool expires = false)
+        {
+            return DbContext.News
+                .Where(n => n.NewsId == nid)
+                .Cacheable(TimeSpan.FromHours(1), expires)
+                .FirstOrDefault();
+        }
+
+        private IEnumerable<(int, string)> QueryNewsList(bool expires = false)
+        {
+            var list = DbContext.News
+                .Where(n => n.Active)
+                .Select(n => new { n.NewsId, n.Title })
+                .OrderByDescending(n => n.NewsId)
+                .Take(100)
+                .Cacheable(TimeSpan.FromHours(1), expires)
+                .ToList();
+            return list.Select(a => (a.NewsId, a.Title));
+        }
+
         [HttpPost("{nid}")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int nid, NewsEditModel model)
@@ -48,6 +70,8 @@ namespace JudgeWeb.Areas.Misc.Controllers
             news.LastUpdate = DateTime.Now;
 
             await DbContext.SaveChangesAsync();
+            QueryNews(nid, true);
+            QueryNewsList(true);
             return View(model);
         }
 
@@ -68,6 +92,7 @@ namespace JudgeWeb.Areas.Misc.Controllers
             });
 
             await DbContext.SaveChangesAsync();
+            QueryNewsList(true);
             return RedirectToAction("Edit", new { nid = news.Entity.NewsId });
         }
 
@@ -103,25 +128,16 @@ namespace JudgeWeb.Areas.Misc.Controllers
 
         [HttpGet("{nid}")]
         [AllowAnonymous]
-        public async Task<IActionResult> View(int nid)
+        public IActionResult View(int nid)
         {
-            var news = await DbContext.News
-                .Where(n => n.NewsId == nid)
-                .Select(n => new { n.Active, n.Content, n.LastUpdate, n.Title, n.Tree })
-                .FirstOrDefaultAsync();
-
-            var newsList = await DbContext.News
-                .Where(n => n.Active)
-                .Select(n => new { n.NewsId, n.Title, n.LastUpdate })
-                .OrderByDescending(n => n.NewsId)
-                .Take(100)
-                .ToListAsync();
+            var news = QueryNews(nid);
+            var newsList = QueryNewsList();
 
             if (news is null || !news.Active && !User.IsInRoles(privilege))
             {
                 return View(new NewsViewModel
                 {
-                    NewsList = newsList.Select(n => (n.NewsId, n.Title)),
+                    NewsList = newsList,
                     NewsId = -1,
                     Title = "404 Not Found",
                     HtmlContent = "Sorry, the requested content is not found.",
@@ -133,7 +149,7 @@ namespace JudgeWeb.Areas.Misc.Controllers
             {
                 return View(new NewsViewModel
                 {
-                    NewsList = newsList.Select(n => (n.NewsId, n.Title)),
+                    NewsList = newsList,
                     NewsId = nid,
                     Title = news.Title,
                     HtmlContent = Encoding.UTF8.GetString(news.Content),

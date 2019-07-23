@@ -50,6 +50,7 @@ namespace JudgeWeb.Areas.Misc.Controllers
         /// </summary>
         /// <param name="oj">对应的OJ</param>
         [HttpGet("{oj}")]
+        [ValidateInAjax]
         public IActionResult Refresh(string oj)
         {
             if (!OjUpdateService.OjList.ContainsKey(oj))

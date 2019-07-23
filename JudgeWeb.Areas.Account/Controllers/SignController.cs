@@ -103,7 +103,7 @@ namespace JudgeWeb.Areas.Account.Controllers
         {
             await SignInManager.SignOutAsync();
             Logger.LogInformation("User logged out.");
-            return RedirectToAction("Index", "Home", new { area = "Content" });
+            return RedirectToAction("Index", "Home", new { area = "Misc" });
         }
 
         [HttpGet]
@@ -429,7 +429,7 @@ namespace JudgeWeb.Areas.Account.Controllers
         {
             if (userId == null || code == null)
             {
-                return RedirectToAction("Index", "Home", new { area = "Content" });
+                return RedirectToAction("Index", "Home", new { area = "Misc" });
             }
 
             var user = await UserManager.FindByIdAsync(userId);
@@ -459,7 +459,7 @@ namespace JudgeWeb.Areas.Account.Controllers
             }
             else
             {
-                return RedirectToAction("Index", "Home", new { area = "Content" });
+                return RedirectToAction("Index", "Home", new { area = "Misc" });
             }
         }
     }
