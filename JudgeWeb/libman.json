@@ -754,12 +754,17 @@
       "destination": "wwwroot/static/chart/"
     },
     {
-      "library": "jquery.qrcode@1.0",
+      "library": "jscolor@1.4.5",
       "destination": "wwwroot/static/js/"
     },
     {
-      "library": "jscolor@1.4.5",
-      "destination": "wwwroot/static/js/"
+      "provider": "jsdelivr",
+      "library": "qrcodejs@1.0.0",
+      "destination": "wwwroot/static/js/",
+      "files": [
+        "qrcode.min.js",
+        "qrcode.js"
+      ]
     }
   ]
 }
