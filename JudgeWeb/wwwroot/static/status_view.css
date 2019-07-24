@@ -1,0 +1,43 @@
+span.prob-info .info-title {
+    font-weight: 600;
+    margin-right: 0.5em;
+    line-height: 1.5em;
+}
+
+@media (max-width: 767px) {
+    .prob-info {
+        display: block;
+    }
+
+        .prob-info ~ br {
+            display: none;
+        }
+}
+
+#coded_area {
+	margin-top: 0.5em;
+    margin-bottom: 1.5em;
+	background: #f8f9fa;
+}
+
+        .verdict-sm {
+            margin: 1px;
+        }
+        .bowtie {
+            margin-right: 0.75em;
+            margin-bottom: 0.25em;
+            font-size: 1rem;
+            display: inline-block;
+        }
+            .bowtie i {
+                margin-right: 0.25em;
+                font-size: 0.9rem;
+            }
+
+
+#diagnostic {
+    background-color: #212327;
+    border-radius: 0.5em;
+    padding: 1em;
+    color: #eee;
+}
