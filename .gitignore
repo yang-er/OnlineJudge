@@ -338,3 +338,27 @@ ASALocalRun/
 
 # BeatPulse healthcheck temp database
 healthchecksdb
+
+# OJ Cache and some data files
+/JudgeWeb/ojcache.json
+/JudgeWeb/ojcache.Codeforces.json
+/JudgeWeb/ojcache.HDOJ.json
+/JudgeWeb/ojcache.Vjudge.json
+/JudgeWeb/ojcache.POJ.json
+/JudgeWeb/Problems
+/JudgeWeb/wwwroot/images/affiliations/*.png
+
+# LibMan restores
+/JudgeWeb/wwwroot/static/fonts
+/JudgeWeb/wwwroot/static/images
+/JudgeWeb/wwwroot/static/lib
+/JudgeWeb/wwwroot/static/editormd.js
+/JudgeWeb/wwwroot/static/editormd.min.js
+/JudgeWeb/wwwroot/static/katex.js
+/JudgeWeb/wwwroot/static/katex.min.js
+/JudgeWeb/wwwroot/static/katex.min.css
+/JudgeWeb/wwwroot/static/chart
+/JudgeWeb/wwwroot/static/webfonts
+/JudgeWeb/wwwroot/static/prism
+/JudgeWeb/wwwroot/static/js
+/JudgeWeb/wwwroot/static/css

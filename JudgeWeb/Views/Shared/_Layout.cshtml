@@ -1,0 +1,74 @@
+﻿@addTagHelper *, JudgeWeb.Features.AspNetCore
+<!doctype html>
+<html lang="zh-cn">
+<head>
+    <meta charset="utf-8">
+    <title>@ViewData["Title"] - Online Judge</title>
+    <meta name="viewport" content="initial-scale=1, user-scalable=no">
+    <environment include="Development">
+        <link rel="stylesheet" href="~/static/bootstrap/css/bootstrap.css" />
+        <link rel="stylesheet" href="~/static/style/custom.css" />
+        <link rel="stylesheet" href="~/static/style/bowtie.css" />
+        <script src="~/static/script/jquery-3.2.1.js"></script>
+        <script src="~/static/script/popper.min.js"></script>
+        <script src="~/static/script/bootstrap.js"></script>
+        <script src="~/static/script/xylab.js"></script>
+        <script src="~/static/script/Chart.bundle.min.js"></script>
+    </environment>
+    <environment exclude="Development">
+        <link rel="stylesheet" href="~/static/bootstrap/css/bootstrap.min.css" />
+        <link rel="stylesheet" href="~/static/style/custom.css" />
+        <link rel="stylesheet" href="~/static/style/bowtie.min.css" />
+        <script src="~/static/script/jquery-3.2.1.min.js"></script>
+        <script src="~/static/script/popper.min.js"></script>
+        <script src="~/static/script/bootstrap.min.js"></script>
+        <script src="~/static/script/xylab.js"></script>
+        <script src="~/static/script/Chart.bundle.min.js"></script>
+    </environment>
+</head>
+
+<body>
+    <div id="append-parent"></div>
+    <!-- #header start -->
+    <header class="navbar navbar-expand navbar-dark flex-column flex-md-row bd-navbar">
+        <partial name="_LogoPartial" />
+
+        <div class="navbar-nav-scroll">
+            <ul class="navbar-nav flex-row">
+                <li class="nav-item"><a class="nav-link" active-ctrl="Home" asp-area="Misc" asp-controller="Home" asp-action="Index">Home</a></li>
+                <li class="nav-item"><a class="nav-link" active-ctrl="Team" asp-area="Misc" asp-controller="Team" asp-action="Index">Team</a></li>
+                <li class="nav-item"><a class="nav-link" active-ctrl="Problem" asp-area="Judge" asp-controller="Problem" asp-action="List" asp-route-pg="">Problem</a></li>
+                <li class="nav-item"><a class="nav-link" active-ctrl="Status" asp-area="Judge" asp-controller="Status" asp-action="List" asp-route-pg="">Status</a></li>
+            </ul>
+        </div>
+
+        <partial name="_LoginPartial" />
+    </header>
+    <!-- #content start -->
+    @RenderBody()
+    <!-- #content end -->
+    <div id="ajax_append"></div>
+
+    @if (!ViewData.ContainsKey("NoFooter"))
+    {
+
+    <!-- #footer start -->
+    <footer class="bd-footer text-muted">
+        <div class="container-fluid p-3 p-md-5">
+            <ul class="bd-footer-links">
+                <li><a asp-area="Misc" asp-controller="Home" asp-action="About">About</a></li>
+                <li><a href="https://github.com/yang-er" rel="nofollow">Open Source</a></li>
+                <li><a href="https://www.xylab.fun" rel="nofollow">Laboratory</a></li>
+            </ul>
+            <p>&copy; Yang-er 2019. Built with <a href="//dotnet.microsoft.com/" rel="nofollow">.NET Core 2.2</a>.</p>
+            <p>Hosted on <a href="//www.azure.cn/" rel="nofollow">Microsoft Azure App Service</a>.</p>
+        </div>
+    </footer>
+    <!-- #footer end -->
+        
+    }
+
+    <aside class="col-md-4 col-xl-3" id="notification-box"></aside>
+    @RenderSection("Scripts", required: false)
+</body>
+</html>
