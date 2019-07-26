@@ -1,8 +1,10 @@
 ﻿using JudgeWeb.Areas.Judge.Models;
 using JudgeWeb.Data;
+using JudgeWeb.Features.Storage;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -219,6 +221,16 @@ namespace JudgeWeb.Areas.Judge.Controllers
 
             var list = await query.ToListAsync();
             return View(list);
+        }
+
+        [HttpGet("{jid}/{rid}/{type}")]
+        [Authorize(Roles = problemRole)]
+        public IActionResult RunDetails(int jid, int rid, string type)
+        {
+            var io = HttpContext.RequestServices.GetRequiredService<IFileRepository>();
+            io.SetContext("Runs");
+            if (!io.ExistPart($"j{jid}", $"r{rid}.{type}")) return NotFound();
+            return ContentFile($"Runs/j{jid}/r{rid}.{type}", "application/octet-stream", $"j{jid}_r{rid}.{type}");
         }
     }
 }

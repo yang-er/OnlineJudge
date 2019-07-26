@@ -14,7 +14,10 @@ namespace JudgeWeb.Areas.Api.Controllers
     [BasicAuthenticationFilter("DOMjudge API")]
     [Area("Api")]
     [Route("[area]/[action]")]
-    public class MetaController : ControllerBase
+    [ProducesResponseType(200)]
+    [ProducesResponseType(401)]
+    [ProducesResponseType(404)]
+    public class GeneralController : ControllerBase
     {
         /// <summary>
         /// 数据库上下文
@@ -25,7 +28,7 @@ namespace JudgeWeb.Areas.Api.Controllers
         /// 构造 DOMjudge API 的控制器。
         /// </summary>
         /// <param name="rdbc">数据库</param>
-        public MetaController(AppDbContext rdbc)
+        public GeneralController(AppDbContext rdbc)
         {
             DbContext = rdbc;
         }
@@ -38,6 +41,7 @@ namespace JudgeWeb.Areas.Api.Controllers
         /// <summary>
         /// 获取当前 DOMjudge API 版本。
         /// </summary>
+        [HttpGet]
         public IActionResult Version()
         {
             return Json(new { api_version = 4 });
@@ -46,6 +50,7 @@ namespace JudgeWeb.Areas.Api.Controllers
         /// <summary>
         /// 获取评测队列统计。
         /// </summary>
+        [HttpGet]
         public async Task<IActionResult> Status()
         {
             var judgingStatus = await DbContext.Judgings
@@ -92,6 +97,7 @@ namespace JudgeWeb.Areas.Api.Controllers
         /// 获取数据库中的设置。
         /// </summary>
         /// <param name="name">设置名称</param>
+        [HttpGet]
         public async Task<IActionResult> Config(string name)
         {
             var jo = new JObject();

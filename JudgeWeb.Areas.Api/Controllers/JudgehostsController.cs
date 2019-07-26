@@ -1,7 +1,9 @@
 ﻿using JudgeWeb.Areas.Api.Models;
 using JudgeWeb.Data;
+using JudgeWeb.Features.Storage;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using System;
@@ -18,6 +20,9 @@ namespace JudgeWeb.Areas.Api.Controllers
     [BasicAuthenticationFilter("DOMjudge API")]
     [Area("Api")]
     [Route("[area]/[controller]/[action]")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(401)]
+    [ProducesResponseType(404)]
     public class JudgehostsController : ControllerBase
     {
         /// <summary>
@@ -49,6 +54,18 @@ namespace JudgeWeb.Areas.Api.Controllers
         }
 
         private bool AnyNull(params object[] objs) => objs.Any(s => s is null);
+
+        private byte[] TryUnbase64(string src)
+        {
+            try
+            {
+                return Convert.FromBase64String(src);
+            }
+            catch
+            {
+                return Array.Empty<byte>();
+            }
+        }
 
         private JsonResult Json(object value) => new JsonResult(value);
 
@@ -184,7 +201,7 @@ namespace JudgeWeb.Areas.Api.Controllers
         /// 注册所给的 judgehost，并返回所有未完成的评测任务。
         /// </summary>
         /// <param name="model">HOSTNAME</param>
-        [HttpPut("/[area]/[controller]")]
+        [HttpPost("/[area]/[controller]")]
         public async Task<IActionResult> OnPut(CreateJudgeHostModel model)
         {
             var item = await DbContext.JudgeHosts
@@ -418,8 +435,30 @@ namespace JudgeWeb.Areas.Api.Controllers
             if (host is null) return Json("");
             host.PollTime = DateTimeOffset.Now;
             DbContext.JudgeHosts.Update(host);
-            batches.ForEach(b => DbContext.Details.Add(b.ParseInfo(jid)));
+
+            var runEntities = batches
+                .Select(b => (b, DbContext.Details.Add(b.ParseInfo(jid))))
+                .ToList();
+
             await DbContext.SaveChangesAsync();
+
+            var io = HttpContext.RequestServices.GetRequiredService<IFileRepository>();
+            io.SetContext("Runs");
+            foreach (var (b, e) in runEntities)
+            {
+                var stderr = TryUnbase64(b.OutputError);
+                var stdout = TryUnbase64(b.OutputRun);
+
+                try
+                {
+                    await io.WriteBinaryAsync($"j{jid}", $"r{e.Entity.TestId}.out", stdout);
+                    await io.WriteBinaryAsync($"j{jid}", $"r{e.Entity.TestId}.err", stderr);
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError(ex, "An error occurred when saving OutputError and OutputRun for j{jid}", jid);
+                }
+            }
 
             var judging = await (
                 from g in DbContext.Judgings

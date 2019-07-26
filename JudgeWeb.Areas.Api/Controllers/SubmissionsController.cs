@@ -14,8 +14,11 @@ namespace JudgeWeb.Areas.Api.Controllers
     /// </summary>
     [BasicAuthenticationFilter("DOMjudge API")]
     [Area("Api")]
-    [Route("[area]/[controller]/{cid}/[action]")]
-    public class ContestsController : ControllerBase
+    [Route("[area]/contests/{cid}/[controller]/{sid}/[action]")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(401)]
+    [ProducesResponseType(404)]
+    public class SubmissionsController : ControllerBase
     {
         /// <summary>
         /// 数据库上下文
@@ -35,7 +38,7 @@ namespace JudgeWeb.Areas.Api.Controllers
         /// 构建控制器。
         /// </summary>
         /// <param name="rdbc">数据库上下文</param>
-        public ContestsController(AppDbContext rdbc)
+        public SubmissionsController(AppDbContext rdbc)
         {
             DbContext = rdbc;
         }
@@ -45,8 +48,8 @@ namespace JudgeWeb.Areas.Api.Controllers
         /// </summary>
         /// <param name="cid">比赛ID</param>
         /// <param name="sid">提交ID</param>
-        [HttpGet("{sid}/source-code")]
-        public async Task<IActionResult> Submissions(int cid, int sid)
+        [HttpGet]
+        public async Task<IActionResult> SourceCode(int cid, int sid)
         {
             var src = await (
                 from s in DbContext.Submissions

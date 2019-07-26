@@ -20,6 +20,9 @@ namespace JudgeWeb.Areas.Api.Models
         [JsonProperty("runtime")]
         public string RunTime { get; set; }
 
+        [JsonProperty("output_run")]
+        public string OutputRun { get; set; }
+
         [JsonProperty("output_system")]
         public string OutputSystem { get; set; }
 

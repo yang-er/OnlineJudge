@@ -346,6 +346,7 @@ healthchecksdb
 /JudgeWeb/ojcache.Vjudge.json
 /JudgeWeb/ojcache.POJ.json
 /JudgeWeb/Problems
+/JudgeWeb/Runs
 /JudgeWeb/wwwroot/images/affiliations/*.png
 
 # LibMan restores

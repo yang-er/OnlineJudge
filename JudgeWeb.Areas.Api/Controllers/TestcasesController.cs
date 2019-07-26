@@ -15,6 +15,10 @@ namespace JudgeWeb.Areas.Api.Controllers
     [BasicAuthenticationFilter("DOMjudge API")]
     [Area("Api")]
     [Route("[area]/[controller]/[action]")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(401)]
+    [ProducesResponseType(404)]
+    [Produces("application/json")]
     public class TestcasesController : ControllerBase
     {
         /// <summary>
@@ -98,9 +102,8 @@ namespace JudgeWeb.Areas.Api.Controllers
         /// </summary>
         /// <param name="tcid">测试样例ID</param>
         /// <param name="filetype">文件类型</param>
-        [HttpGet("api/testcases/{tcid}/file/{filetype}")]
-        [HttpGet("api/v4/testcases/{tcid}/file/{filetype}")]
-        public async Task<IActionResult> FetchFile(int tcid, string filetype)
+        [HttpGet("/[area]/[controller]/{tcid}/[action]/{filetype}")]
+        public async Task<IActionResult> File(int tcid, string filetype)
         {
             // TODO: 将测试样例缓存在本地磁盘
             var tcQuery = DbContext.Testcases

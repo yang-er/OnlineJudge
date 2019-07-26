@@ -601,10 +601,14 @@
       "files": [
         "js/bootstrap.min.js",
         "js/bootstrap.js",
+        "js/bootstrap.bundle.min.js",
+        "js/bootstrap.bundle.js",
         "css/bootstrap.css",
         "css/bootstrap.min.css",
         "js/bootstrap.js.map",
         "js/bootstrap.min.js.map",
+        "js/bootstrap.bundle.min.js.map",
+        "js/bootstrap.bundle.js.map",
         "css/bootstrap.css.map",
         "css/bootstrap.min.css.map"
       ]
@@ -736,10 +740,6 @@
         "css/dataTables.bootstrap4.css",
         "css/dataTables.bootstrap4.min.css"
       ]
-    },
-    {
-      "library": "prism@1.16.0",
-      "destination": "wwwroot/static/prism/"
     },
     {
       "library": "d3@5.9.7",

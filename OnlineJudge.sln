@@ -33,6 +33,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JudgeWeb.Areas.Judge", "Jud
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JudgeWeb.Areas.Api", "JudgeWeb.Areas.Api\JudgeWeb.Areas.Api.csproj", "{83B079B0-9B3F-4DC9-B522-3E0814CBFDEB}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JudgeWeb.Areas.Contest", "JudgeWeb.Areas.Contest\JudgeWeb.Areas.Contest.csproj", "{A9F932A3-7857-405B-B1DA-B0C620AD55DA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -91,6 +93,10 @@ Global
 		{83B079B0-9B3F-4DC9-B522-3E0814CBFDEB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{83B079B0-9B3F-4DC9-B522-3E0814CBFDEB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{83B079B0-9B3F-4DC9-B522-3E0814CBFDEB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A9F932A3-7857-405B-B1DA-B0C620AD55DA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A9F932A3-7857-405B-B1DA-B0C620AD55DA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A9F932A3-7857-405B-B1DA-B0C620AD55DA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A9F932A3-7857-405B-B1DA-B0C620AD55DA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -107,6 +113,7 @@ Global
 		{67A5D1EC-5682-4FDD-8519-7F08A05F1698} = {9899DEFC-868A-434C-A666-DBD2E829FA3F}
 		{940A252B-4982-4884-8FC7-DE5817E9F8CD} = {9899DEFC-868A-434C-A666-DBD2E829FA3F}
 		{83B079B0-9B3F-4DC9-B522-3E0814CBFDEB} = {9899DEFC-868A-434C-A666-DBD2E829FA3F}
+		{A9F932A3-7857-405B-B1DA-B0C620AD55DA} = {9899DEFC-868A-434C-A666-DBD2E829FA3F}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {63A11EAF-DF83-49FD-B3CD-4AB686D1C955}

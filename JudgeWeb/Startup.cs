@@ -106,7 +106,9 @@ namespace JudgeWeb
                 .SetTokenTransform<SlugifyParameterTransformer>()
                 .EnableContentFileResult()
                 .SetCompatibilityVersion(CompatibilityVersion.Version_2_1)
-                .UseAreaParts("JudgeWeb.Areas.", new[] { "Misc", "Account", "Api", "Judge" });
+                .UseAreaParts("JudgeWeb.Areas.", new[] { "Misc", "Account", "Api", "Judge", "Contest" });
+
+            services.AddSwagger();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -116,6 +118,7 @@ namespace JudgeWeb
             {
                 app.UseDeveloperExceptionPage();
                 app.UseDatabaseErrorPage();
+                app.UseApiExplorer();
             }
             else if (Environment.EnvironmentName == "Test")
             {
