@@ -2,10 +2,14 @@
 using JudgeWeb.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using InternalErrorStatus = JudgeWeb.Data.InternalError.ErrorStatus;
@@ -293,6 +297,123 @@ namespace JudgeWeb.Areas.Judge.Controllers
             ).Take(200).ToListAsync();
             ViewBag.Submissions = subs.Select(a => (a.s, a.g));
             return View();
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> CreateContest()
+        {
+            var c = DbContext.Contests.Add(new Contest
+            {
+                IsPublic = false,
+                RegisterDefaultCategory = 0,
+                ShortName = "",
+                Name = "",
+            });
+
+            await DbContext.SaveChangesAsync();
+
+            DbContext.AuditLogs.Add(new AuditLog
+            {
+                Comment = "created",
+                UserName = User.Identity.Name,
+                ContestId = c.Entity.ContestId,
+                EntityId = c.Entity.ContestId,
+                Resolved = true,
+                Time = DateTime.Now,
+                Type = AuditLog.TargetType.Contest,
+            });
+
+            await DbContext.SaveChangesAsync();
+
+            var roleMgr = HttpContext.RequestServices
+                .GetRequiredService<RoleManager<IdentityRole<int>>>();
+            var userMgr = HttpContext.RequestServices
+                .GetRequiredService<UserManager>();
+            var result = await roleMgr.CreateAsync(new IdentityRole<int>($"JuryOfContest{c.Entity.ContestId}"));
+            if (!result.Succeeded) return Json(result);
+
+            var firstUser = await userMgr.GetUserAsync(User);
+            var roleAttach = await userMgr.AddToRoleAsync(firstUser, $"JuryOfContest{c.Entity.ContestId}");
+            if (!roleAttach.Succeeded) return Json(roleAttach);
+            return RedirectToAction("Home", "Jury", new { area = "Contest" });
+        }
+
+        [HttpGet]
+        public IActionResult Images()
+        {
+            var files = Directory.EnumerateFiles("wwwroot/images/problem/");
+            return View(files);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [ValidateInAjax]
+        public async Task<IActionResult> Images(IFormFile file)
+        {
+            try
+            {
+                var writeStream = System.IO.File.OpenWrite("wwwroot/images/problem/" + Path.GetFileName(file.FileName));
+                await file.CopyToAsync(writeStream);
+                writeStream.Close();
+                return Message("Upload media", "Upload succeeded.", MessageType.Success);
+            }
+            catch (Exception ex)
+            {
+                return Message("Upload media", "Upload failed. " + ex.ToString(), MessageType.Danger);
+            }
+        }
+
+        [HttpPost("{affid}")]
+        [ValidateInAjax]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Affiliation(int affid, TeamAffiliation model, IFormFile logo)
+        {
+            if (affid == 0)
+            {
+                DbContext.Add(model);
+            }
+            else
+            {
+                var aff = await DbContext.TeamAffiliations
+                    .FirstAsync(a => a.AffiliationId == affid);
+                aff.ExternalId = model.ExternalId;
+                aff.FormalName = model.FormalName;
+                DbContext.TeamAffiliations.Update(aff);
+            }
+
+            await DbContext.SaveChangesAsync();
+            var msg = "Affiliation updated. ";
+
+            if (logo != null && logo.FileName.EndsWith(".png"))
+            {
+                var write = new FileStream($"wwwroot/images/affiliations/{model.ExternalId}.png", FileMode.OpenOrCreate);
+                await logo.CopyToAsync(write);
+                write.Close();
+                msg = msg + "Logo uploaded.";
+            }
+            else if (logo != null)
+            {
+                msg = msg + "Logo should be png!";
+            }
+
+            return Message("Update affiliation", msg, msg.EndsWith('!') ? MessageType.Warning : MessageType.Success);
+        }
+
+        [HttpGet("{affid}")]
+        [ValidateInAjax]
+        public async Task<IActionResult> Affiliation(int affid)
+        {
+            TeamAffiliation aff;
+            if (affid == 0) aff = new TeamAffiliation();
+            else aff = await DbContext.TeamAffiliations.FirstAsync(a => a.AffiliationId == affid);
+            return Window(aff);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Affiliations()
+        {
+            var affs = await DbContext.TeamAffiliations.ToListAsync();
+            return View(affs);
         }
     }
 }

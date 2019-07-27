@@ -29,6 +29,12 @@ namespace JudgeWeb.Features.Razor
         [HtmlAttributeName("too-late")]
         public bool IsTooLate { get; set; }
 
+        [HtmlAttributeName("reg-status")]
+        public int? RegistrationStatus { get; set; }
+
+        [HtmlAttributeName("rule")]
+        public int? ContestRule { get; set; }
+
         static readonly (string, string, string, string, string)[] st = new[]
         {
             ("Unknown", "secondary", "?", "unkown", "queued"), // 0
@@ -45,6 +51,88 @@ namespace JudgeWeb.Features.Razor
             ("Accepted", "success", "✓", "correct", "correct"),
         };
 
+        static readonly (string, string)[] team = new[]
+        {
+            ("sol sol_queued", "Pending"),
+            ("sol sol_correct", "Accepted"),
+            ("sol sol_incorrect", "Rejected"),
+            ("sol sol_incorrect", "Deleted"),
+            ("sol sol_queued", "Unknown"),
+        };
+
+        private (string, string) SolveAsTeamStatus()
+        {
+            if (TeamStatus.Value >= 0 && TeamStatus.Value <= 3)
+            {
+                return team[TeamStatus.Value];
+            }
+            else
+            {
+                return team[4];
+            }
+        }
+
+        private (string, string) SolveAsVerdict()
+        {
+            if (ValueInt.HasValue == ValueVerdict.HasValue
+                && (int)ValueVerdict.Value != ValueInt.Value)
+                throw new InvalidOperationException();
+            var v = ValueInt ?? (int)ValueVerdict.Value;
+
+            if (Target == VerdictTag.StatusText)
+            {
+                return ("state state-" + st[v].Item2, st[v].Item1);
+            }
+            else if (Target == VerdictTag.Badge)
+            {
+                return ("badge badge-" + st[v].Item2, st[v].Item1);
+            }
+            else if (Target == VerdictTag.BadgeSmall)
+            {
+                return ("verdict-sm badge badge-" + st[v].Item2, st[v].Item3);
+            }
+            else if (IsTooLate)
+            {
+                return ("sol sol_queued", "too-late");
+            }
+            else
+            {
+                return ("sol sol_" + st[v].Item5, st[v].Item4);
+            }
+        }
+
+        private (string, string) SolveAsRegistrationStatus()
+        {
+            if (RegistrationStatus.Value == 0)
+            {
+                return ("sol sol_incorrect", "closed");
+            }
+            else
+            {
+                return ("sol sol_correct", "open");
+            }
+        }
+
+        private (string, string) SolveAsRule()
+        {
+            if (ContestRule.Value == 0)
+            {
+                return ("sol", "ACM-ICPC");
+            }
+            else if (ContestRule.Value == 1)
+            {
+                return ("sol", "Codeforces");
+            }
+            else if (ContestRule.Value == 2)
+            {
+                return ("sol", "NOI");
+            }
+            else
+            {
+                return ("sol sol_incorrect", "Unknown");
+            }
+        }
+
         public override void Process(TagHelperContext context, TagHelperOutput output)
         {
             output.TagName = "span";
@@ -53,59 +141,19 @@ namespace JudgeWeb.Features.Razor
 
             if (TeamStatus.HasValue)
             {
-                if (TeamStatus.Value == 0)
-                {
-                    @class = "sol sol_queued";
-                    content = "Pending";
-                }
-                else if (TeamStatus.Value == 1)
-                {
-                    @class = "sol sol_correct";
-                    content = "Accepted";
-                }
-                else if (TeamStatus.Value == 2)
-                {
-                    @class = "sol sol_incorrect";
-                    content = "Rejected";
-                }
-                else
-                {
-                    @class = "sol sol_queued";
-                    content = "Unknown";
-                }
+                (@class, content) = SolveAsTeamStatus();
+            }
+            else if (RegistrationStatus.HasValue)
+            {
+                (@class, content) = SolveAsRegistrationStatus();
+            }
+            else if (ContestRule.HasValue)
+            {
+                (@class, content) = SolveAsRule();
             }
             else
             {
-                if (ValueInt.HasValue == ValueVerdict.HasValue
-                    && (int)ValueVerdict.Value != ValueInt.Value)
-                    throw new InvalidOperationException();
-                var v = ValueInt ?? (int)ValueVerdict.Value;
-
-                if (Target == VerdictTag.StatusText)
-                {
-                    @class = "state state-" + st[v].Item2;
-                    content = st[v].Item1;
-                }
-                else if (Target == VerdictTag.Badge)
-                {
-                    @class = "badge badge-" + st[v].Item2;
-                    content = st[v].Item1;
-                }
-                else if (Target == VerdictTag.BadgeSmall)
-                {
-                    @class = "verdict-sm badge badge-" + st[v].Item2;
-                    content = st[v].Item3;
-                }
-                else if (IsTooLate)
-                {
-                    @class = "sol sol_queued";
-                    content = "too-late";
-                }
-                else
-                {
-                    @class = "sol sol_" + st[v].Item5;
-                    content = st[v].Item4;
-                }
+                (@class, content) = SolveAsVerdict();
             }
 
             output.Attributes.TryGetAttribute("class", out var clv);

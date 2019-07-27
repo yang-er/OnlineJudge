@@ -348,6 +348,7 @@ healthchecksdb
 /JudgeWeb/Problems
 /JudgeWeb/Runs
 /JudgeWeb/wwwroot/images/affiliations/*.png
+/JudgeWeb/wwwroot/images/problem/
 
 # LibMan restores
 /JudgeWeb/wwwroot/static/fonts

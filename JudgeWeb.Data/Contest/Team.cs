@@ -48,7 +48,7 @@ namespace JudgeWeb.Data
         public int CategoryId { get; set; }
 
         /// <summary>
-        /// 队伍状态，0为挂起，1为通过，2为拒绝
+        /// 队伍状态，0为挂起，1为通过，2为拒绝，3为已删除
         /// </summary>
         [Index]
         public int Status { get; set; }

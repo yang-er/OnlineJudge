@@ -1,0 +1,93 @@
+﻿@model IEnumerable<TeamAffiliation>
+@{
+    ViewData["Title"] = "Affiliations";
+}
+
+<div class="container-fluid mt-4 mb-4 pl-4 pr-4">
+    <h2>Affiliations</h2>
+    <h5 class="mb-3"><a asp-action="Affiliation" asp-route-affid="0" data-target="showAff" data-toggle="ajaxWindow">Add</a> or manage team affiliations</h5>
+
+    <link rel="stylesheet" href="~/static/css/dataTables.bootstrap4.min.css">
+    <script src="~/static/js/jquery.dataTables.min.js"></script>
+    <script src="~/static/js/dataTables.bootstrap4.min.js"></script>
+
+    <style>
+        .text-variant {
+            font-variant: small-caps;
+        }
+
+        .data-table td a, .data-table td a:hover {
+            display: block;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .data-table th {
+            white-space: nowrap;
+        }
+
+        .data-table td {
+            white-space: nowrap;
+        }
+
+        .dataTables_filter {
+            text-align: inherit;
+        }
+
+        .table-wrapper {
+            display: inline-block;
+        }
+
+        .force-width a {
+            max-width: 20em;
+            text-overflow: ellipsis;
+            overflow: hidden;
+        }
+    </style>
+
+    <div class="table-wrapper">
+        <table class="data-table table table-sm table-striped" style="width:auto">
+            <thead class="">
+                <tr>
+                    <th></th>
+                    <th scope="col" class="sortable searchable">ID</th>
+                    <th scope="col" class="sortable searchable">short name</th>
+                    <th scope="col" class="sortable searchable">formal name</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var aff in Model)
+                {
+                    <tr asp-action="Affiliation" asp-route-affid="@aff.AffiliationId" data-target="showAff" data-toggle="ajaxWindow">
+                        <td use-a><img src="~/images/affiliations/@(aff.ExternalId).png" width="35" height="35" /></td>
+                        <td class="align-middle" use-a>@aff.AffiliationId</td>
+                        <td class="align-middle text-variant" use-a>@aff.ExternalId</td>
+                        <td class="align-middle" use-a>@aff.FormalName</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    $().ready(function () {
+        $('.data-table').DataTable({
+            "paging": false,
+            "searching": true,
+            "ordering": true,
+            "order": [[1, 'asc']],
+            "info": false,
+            "autoWidth": true,
+            "language": {
+                "searchPlaceholder": "filter table",
+                "search": "_INPUT_",
+            },
+            'aoColumnDefs': [
+                { aTargets: ['sortable'], bSortable: true },
+                { aTargets: ['searchable'], bSearchable: true },
+                { aTargets: ['_all'], bSortable: false, bSearchable: false }
+            ],
+        });
+    });
+</script>

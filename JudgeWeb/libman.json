@@ -742,7 +742,7 @@
       ]
     },
     {
-      "library": "d3@5.9.7",
+      "library": "d3@3.5.5",
       "destination": "wwwroot/static/chart/",
       "files": [
         "d3.min.js",

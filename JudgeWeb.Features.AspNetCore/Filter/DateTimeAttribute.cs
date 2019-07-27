@@ -4,6 +4,7 @@
     {
         public override bool IsValid(object value)
         {
+            if (value == null) return true;
             if (!(value is string realValue)) return false;
             if (string.IsNullOrWhiteSpace(realValue)) return true;
             return DateTime.TryParse(realValue, out _);
