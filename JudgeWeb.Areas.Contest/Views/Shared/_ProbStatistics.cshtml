@@ -1,0 +1,25 @@
+﻿@model (ScoreboardProblemStatisticsModel[], int)
+
+<tr style="border-top: 2px solid black;">
+    <td id="scoresummary" title="Summary" colspan="4">Summary</td>
+    <td title="total solved" class="scorenc">@Model.Item2</td>
+    <td></td>
+    @foreach (var st in Model.Item1)
+    {
+        <td style="text-align: left;">
+            <a>
+                <i class="fas fa-thumbs-up fa-fw"></i>
+                <span style="font-size:90%;" title="number of accepted submissions">@st.Accepted</span>
+                <br />
+                <i class="fas fa-thumbs-down fa-fw"></i>
+                <span style="font-size:90%;" title="number of rejected submissions">@st.Rejected</span>
+                <br />
+                <i class="fas fa-question-circle fa-fw"></i>
+                <span style="font-size:90%;" title="number of pending submissions">@st.Pending</span>
+                <br />
+                <i class="fas fa-clock fa-fw"></i>
+                <span style="font-size:90%;" title="first solved">@(st.FirstSolve is null ? "n/a" : (st.FirstSolve.Value + "min"))</span>
+            </a>
+        </td>
+    }
+</tr>

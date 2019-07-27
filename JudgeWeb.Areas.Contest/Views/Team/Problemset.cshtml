@@ -1,0 +1,56 @@
+﻿@model ScoreboardSingleViewModel
+@{
+    ViewData["Title"] = "Team";
+    ViewData["DisableAjaxRefresh"] = true;
+}
+
+<h1 class="mt-4 text-center">Contest problems</h1>
+
+@if (Model.Contest.StartTime.GetValueOrDefault(DateTime.MaxValue) > DateTime.Now)
+{
+    <div class="alert alert-secondary mt-4">No problem texts available at this point.</div>
+}
+else
+{
+    <div class="container">
+        <div class="row problem-list">
+            @for (int i = 0; i < Model.Problems.Length; i += 3)
+            {
+                <div class="col-md-12">
+                    <div class="card-deck my-md-3">
+                        @for (int j = 0; j < 3; j++)
+                        {
+                            if (i + j >= Model.Problems.Length)
+                            {
+                                <div class="card" style="border:none;">
+
+                                </div>
+                            }
+                            else
+                            {
+                                var prob = Model.Problems[i + j];
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h3 class="card-title">
+                                            <div class="circle" style="background-color: @prob.Color;"></div>
+                                            Problem @prob.ShortName
+                                        </h3>
+                                        <h4 class="card-subtitle mb-2 text-muted">@prob.Title</h4>
+                                        <h5 class="card-subtitle mb-2 text-muted">Limits: @(prob.TimeLimit)ms / @(prob.MemoryLimit / 1024)MB</h5>
+
+                                        <div class="text-center">
+                                            <a class="btn btn-secondary" role="button" asp-route-prob="@prob.ShortName">
+                                                <i class="fas fa-file-pdf"></i>
+                                                problem text
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}

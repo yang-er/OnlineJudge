@@ -1,0 +1,196 @@
+﻿@model ScoreboardFullViewModel
+@{
+    ViewData["Title"] = "Scoreboard";
+    ViewData["RefreshAfter"] = "initializeScoreboard";
+    ViewData["DataAjaxClass"] = "mt-3";
+    bool inajax = ViewData.ContainsKey("InAjax");
+    if (inajax) { Layout = null; }
+    var fil_aff = (HashSet<int>)ViewData["Filter_affiliations"];
+    var fil_cat = (HashSet<int>)ViewData["Filter_categories"];
+    var inJury = ViewData.ContainsKey("InJury");
+    var affs = Model.Affiliations.Where(a => a.AffiliationId != 0 || inJury);
+    var grps = Model.Categories.Where(g => g.IsPublic || inJury);
+    var state = Model.Contest.GetState();
+}
+
+<div class="card">
+    <div class="card-header" style="font-family: Roboto, sans-serif; display: flex;">
+        <span style="font-weight: bold;">@Model.Contest.Name</span>
+        <span style="color: DimGray; margin-left: auto;">
+            @if (state == ContestState.NotScheduled)
+            {
+                @($"scheduling")
+            }
+            else if (state == ContestState.ScheduledToStart)
+            {
+                if (Model.Contest.StartTime.Value.Date > DateTime.Now)
+                {
+                    @($"scheduled to start on {Model.Contest.StartTime}")
+                }
+                else
+                {
+                    @($"scheduled to start on {Model.Contest.StartTime:HH:mm}")
+                }
+            }
+            else if (state == ContestState.Started || state == ContestState.Frozen)
+            {
+                @($"starts: {Model.Contest.StartTime:HH:mm} - ends: {Model.Contest.EndTime:HH:mm}")
+            }
+            else if (state == ContestState.Ended)
+            {
+                @("contest over, waiting for results")
+            }
+            else
+            {
+                @("final standings")
+            }
+        </span>
+    </div>
+</div>
+
+@if (state == ContestState.Frozen || state == ContestState.Ended)
+{
+    var freezeLength = (int)(Model.Contest.EndTime - Model.Contest.FreezeTime).Value.TotalMinutes;
+    <div class="alert alert-warning" role="alert" style="font-size: 80%;">
+        The @(inJury ? "public" : "") scoreboard was frozen with @freezeLength minutes remaining - solutions
+        submitted in the last @freezeLength minutes of the contest are still shown as pending.
+    </div>
+}
+
+@if ((state == ContestState.NotScheduled || state == ContestState.ScheduledToStart) && !inJury)
+{
+    <br />
+
+    <div class="card-deck">
+        @foreach (var grp in Model.Categories)
+        {
+            <div class="card" style="font-family: Roboto, sans-serif;">
+                <div class="card-header">@grp.Name</div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        @foreach (var aff in Model.RankCache.Where(g => g.Team.CategoryId == grp.CategoryId).Select(g => g.Affil).Distinct())
+                        {
+                            <li class="list-group-item">@aff.FormalName</li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        }
+    </div>
+
+}
+else
+{
+
+    <div class="dropdown">
+        <button class="btn btn-outline-secondary btn-sm m-2 dropdown-toggle" data-toggle="dropdown"
+                aria-haspopup="true" aria-expanded="false" id="filter-toggle">
+            <i class="fas fa-filter"></i>
+            Filter
+            @(fil_aff is null ? "" : "(affiliations)")
+            @(fil_cat is null ? "" : "(categories)")
+        </button>
+
+        <div class="dropdown-menu" aria-labelledby="filter-toggle">
+            <form asp-action="Scoreboard" method="get">
+                <div class="m-2 p-2 form-inline">
+                    <select class="form-control mr-2" multiple size="8" name="affiliations[]">
+                        @foreach (var aff in affs)
+                        {
+                            <option issel="@(fil_aff?.Contains(aff.AffiliationId) ?? false)" value="@aff.AffiliationId">@aff.FormalName</option>
+                        }
+                    </select>
+                    <select class="form-control mr-2" multiple size="8" name="categories[]">
+                        @foreach (var grp in grps)
+                        {
+                            <option issel="@(fil_cat?.Contains(grp.CategoryId) ?? false)" value="@grp.CategoryId">@grp.Name</option>
+                        }
+                    </select>
+                    <input type="submit" class="btn btn-primary btn-sm align-top" name="filter" value="filter" />
+                    <a class="btn btn-secondary btn-sm align-top" asp-action="Scoreboard">clear</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <partial name="_ScoreBoard" model="Model" />
+    <p><br /><br /></p>
+
+    @if (Model.ShowCategory.Count > 1)
+    {
+        <table id="categ_legend" class="scoreboard scorelegend ">
+            <thead>
+                <tr>
+                    <th scope="col">
+                        <a>Categories</a>
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var grp in Model.ShowCategory)
+                {
+                    <tr style="background: @grp.Item1;">
+                        <td>
+                            <a>@grp.Item2</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+
+    <table id="cell_legend" class="scoreboard scorelegend ">
+        <thead>
+            <tr>
+                <th scope="col">Cell colours</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr class="score_first">
+                <td>Solved first</td>
+            </tr>
+            <tr class="score_correct">
+                <td>Solved</td>
+            </tr>
+            <tr class="score_incorrect">
+                <td>Tried, incorrect</td>
+            </tr>
+            <tr class="score_pending">
+                <td>Tried, pending</td>
+            </tr>
+            <tr class="score_neutral">
+                <td>Untried</td>
+            </tr>
+        </tbody>
+    </table>
+
+}
+
+<p id="lastmod">
+    Last Update: @string.Format("{0:R}", DateTime.Now).Replace("GMT", "CST")<br />
+    using <a href="https://www.domjudge.org/" rel="nofollow" target="_top">DOMjudge</a> judgehost and theme
+</p>
+
+@if (!inajax)
+{
+    @section Scripts {
+        <script>
+            initFavouriteTeams();
+
+            var scoreboardUrl = '@Html.Raw(ViewData["RefreshUrl"])';
+
+            $(function () {
+                window.initializeScoreboard = function () {
+                    var $newProgress = $('[data-ajax-refresh-target] > .d-none > [data-progress-bar]');
+                    if ($newProgress.length) {
+                        var $oldProgress = $('body > [data-progress-bar]');
+                        $oldProgress.html($newProgress.children());
+                        $newProgress.parent().remove();
+                    }
+
+                    initFavouriteTeams();
+                };
+            });
+        </script>
+    }
+}

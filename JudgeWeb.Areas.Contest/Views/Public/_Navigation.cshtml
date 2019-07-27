@@ -1,0 +1,51 @@
+﻿<ul class="navbar-nav mr-auto">
+    <li class="nav-item">
+        <a class="nav-link" active-act="Info" asp-controller="Public" asp-action="Info">
+            <i class="fas fa-home d-md-none"></i>
+            About
+        </a>
+    </li>
+
+    <li class="nav-item">
+        <a class="nav-link" active-act="Scoreboard" asp-controller="Public" asp-action="Scoreboard">
+            <i class="fas fa-list-ol d-md-none"></i>
+            Scoreboard
+        </a>
+    </li>
+
+    @if (User.IsInRoles("Administrator,JuryOfContest" + (string)ViewBag.Contest.ContestId.ToString()))
+    {
+        <li class="nav-item">
+            <a class="nav-link" asp-controller="Jury" asp-action="Home">
+                <i class="fas fa-arrow-right d-md-none"></i>
+                Jury
+            </a>
+        </li>
+    }
+
+    @if (ViewBag.Team != null)
+    {
+        <li class="nav-item">
+            <a class="nav-link" asp-controller="Team" asp-action="Home">
+                <i class="fas fa-arrow-right d-md-none"></i>
+                Team
+            </a>
+        </li>
+    }
+</ul>
+
+<div id="submitbut">
+    <a class="nav-link justify-content-center" asp-area="Content" asp-controller="Home" asp-action="Index">
+        <button type="button" class="btn btn-info btn-sm">
+            <i class="fas fa-sign-out-alt"></i> Main site
+        </button>
+    </a>
+</div>
+
+<ul class="navbar-nav">
+    <li class="ajax-loader-container">
+        <div class="spinner-border spinner-border-sm ajax-loader" style="display: none;" role="status">
+            <span class="sr-only">Loading...</span>
+        </div>
+    </li>
+</ul>

@@ -1,0 +1,142 @@
+﻿@model JuryViewClarificationModel
+@{
+    ViewData["Title"] = "Clarification " + Model.Main.ClarificationId;
+    ViewData["DisableAjaxRefresh"] = true;
+    ViewData["UseCanned"] = true;
+    ContestProblem[] probs = Model.Problems;
+
+    var model2 = new AddClarificationModel
+    {
+        Body = Model.Main.Body,
+        TeamTo = Model.Main.Sender ?? 0,
+        Type = Model.Main.Category == Clarification.TargetCategory.General
+             ? "general"
+             : Model.Main.Category == Clarification.TargetCategory.Technical
+             ? "tech"
+             : "prob-" + probs.First(cp => cp.ProblemId == Model.Main.ProblemId).ShortName,
+    };
+
+    ViewData["ReplyTo"] = Model.Main.ClarificationId;
+}
+
+<div class="mt-3 container clarificationform">
+    @if (!Model.Main.Answered && Model.Main.JuryMember != null)
+    {
+        <div class="alert alert-info" role="alert">
+            <i class="fas fa-user-lock"></i>
+            Claimed by <strong>@Model.Main.JuryMember</strong>
+            @(Model.Main.JuryMember == Model.UserName ? "(it's you!)" : "")
+        </div>
+    }
+
+    @foreach (var item in Model.Associated)
+    {
+        var prob = probs.FirstOrDefault(c => c.ProblemId == item.ProblemId);
+        <div class="card mb-3 @(item == Model.Main ? "border-primary" : item.Sender.HasValue ? "" : "border-success")">
+            <div class="card-header">
+                <div class="row">
+                    <div class="col-sm">
+                        Clarification @item.ClarificationId
+                    </div>
+                    <div class="col-sm text-muted text-right">
+                        <span title="@item.SubmitTime">@item.SubmitTime.ToString("HH:mm")</span>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="card-title">
+                    <div class="row">
+                        <div class="col-sm">
+                            From:
+                            @if (item.Sender.HasValue)
+                            {
+                                <a asp-action="Team" asp-route-teamid="@item.Sender">@item.TeamName (t@(item.Sender))</a>
+                            }
+                            else
+                            {
+                                @($"Jury ({item.JuryMember})")
+                            }
+                        </div>
+
+                        <div class="col-sm">
+                            Subject:
+                            <span class="clarification-subject">
+                                @item.Category @prob?.ShortName issue
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-sm">
+                            To:
+                            @if (item.Recipient.HasValue)
+                            {
+                                <a asp-action="Team" asp-route-teamid="@item.Recipient">@item.TeamName (t@(item.Recipient))</a>
+                            }
+                            else if (item.Sender.HasValue)
+                            {
+                                @("Jury")
+                            }
+                            else
+                            {
+                                <strong>All</strong>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-text">
+                    <pre class="output-text bg-light p-3">@item.Body</pre>
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="knoppenbalk">
+        <div class="row">
+            @{
+                bool claim = Model.Main.JuryMember == null || Model.Main.Answered;
+            }
+
+            <div class="col-sm">
+                <button class="btn btn-secondary btn-sm"
+                        data-toggle="collapse" data-target="#collapsereplyform"
+                        aria-expanded="false" aria-controls="collapsereplyform">
+                    <i class="fa fa-reply"></i> reply
+                </button>
+            </div>
+
+            <div class="col-sm text-center">
+                <a asp-action="ClarificationClaim"
+                   asp-route-clarid="@Model.Main.ClarificationId"
+                   asp-route-claim="@(claim)"
+                   data-toggle="ajaxWindow" data-target="claimClaris"
+                   class="btn btn-sm btn-@(claim ? "" : "outline-")success @(Model.Main.Answered || (Model.Main.JuryMember != null && Model.Main.JuryMember != Model.UserName) ? "disabled" : "")">
+                    <i class="fas @(claim ? "fa-lock" : "fa-lock-open")"></i>
+                    @(claim ? "claim" : "unclaim")
+                </a>
+            </div>
+
+            <div class="col-sm text-right">
+                <a asp-action="ClarificationSetAnswered"
+                   asp-route-clarid="@Model.Main.ClarificationId"
+                   asp-route-answered="@(!Model.Main.Answered)"
+                   data-toggle="ajaxWindow" data-target="setAnswered"
+                   class="btn btn-sm @(Model.Main.Answered ? "btn-outline-warning" : "btn-warning") @((Model.Main.JuryMember != null && Model.Main.JuryMember != Model.UserName) ? "disabled" : "")">
+                    <i class="fas fa-@(Model.Main.Answered ? "times" : "check")"></i>
+                    set @(Model.Main.Answered ? "un" : "")answered
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="collapse container clarificationform" id="collapsereplyform">
+    <div class="card">
+        <div class="card-header">Send clarification</div>
+        <div class="card-body">
+            <partial name="ClarificationSend" model="model2" />
+        </div>
+    </div>
+</div>

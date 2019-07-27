@@ -1,0 +1,80 @@
+﻿@model AddClarificationModel
+@{
+    ViewData["Title"] = "Send clarification";
+    ViewData["DisableAjaxRefresh"] = true;
+    var teams = ((IEnumerable<KeyValuePair<int, string>>)ViewBag.Teams)
+        .Select(kvp => new SelectListItem($"{kvp.Value} (t{kvp.Key})", kvp.Key.ToString()));
+    var types = ((ContestProblem[])ViewBag.Problems)
+        .Select(cp => new SelectListItem($"{cp.ShortName} - {cp.Title}", $"prob-{cp.ShortName}"));
+    Model.Body = !string.IsNullOrWhiteSpace(Model.Body) ? string.Join('\n', Model.Body.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).Select(c => "> " + c)) + '\n' : "";
+    bool useCanned = ViewData.ContainsKey("UseCanned");
+}
+
+@if (!useCanned)
+{
+    @Html.Raw("<div class=\"mt-3 container clarificationform\">");
+    <h1>Send Clarification</h1>
+}
+
+<form asp-action="ClarificationSend" method="post" id="sendclar" onsubmit="return confirmClar();">
+
+    @if (ViewData.ContainsKey("ReplyTo"))
+    {
+        <input type="hidden" asp-for="ReplyTo" value="@ViewData["ReplyTo"]" />
+    }
+
+    <div class="form-group">
+        <label asp-for="TeamTo"></label>
+        <select class="custom-select" asp-for="TeamTo" asp-items="teams">
+            <option value="0">ALL (... or select)</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="Type"></label>
+        <select asp-for="Type" class="custom-select" asp-items="types">
+            <option value="general">General issue</option>
+            <option value="tech">Technical issue</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="Body"></label>
+        <textarea class="form-control" asp-for="Body" rows="8" cols="85" required></textarea>
+    </div>
+
+    <div class="row">
+        <div class="col-sm">
+            <div class="form-group">
+                <button type="submit" name="submit" class="btn btn-primary"><i class="fas fa-envelope"></i> Send</button>
+            </div>
+        </div>
+
+        @if (useCanned)
+        {
+            <div class="col-sm text-right">
+                <div class="input-group">
+                    <div class="input-group-prepend">
+                        <div class="input-group-text"><i class="fas fa-fish"></i></div>
+                    </div>
+                    <select class="custom-select form-control-sm" id="clar_answers">
+                        <option selected value="_default">Add canned answer...</option>
+                        <option>No response</option>
+                        <option>Please read the problem statement carefully</option>
+                    </select>
+                </div>
+            </div>
+        }
+    </div>
+</form>
+
+@if (!useCanned)
+{
+    @Html.Raw("</div>");
+}
+
+<script>
+    $(function () {
+        $('#clar_answers').change(clarificationAppendAnswer);
+    });
+</script>

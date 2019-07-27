@@ -1,0 +1,61 @@
+﻿@model TeamViewSubmissionModel
+@{
+    Layout = null;
+    var time = Model.Time;
+    var compile_badge = Model.CompilerOutput is null ? "secondary"
+                      : Model.Verdict == Verdict.CompileError ? "danger" : "success";
+    var compile_result = Model.CompilerOutput is null ? "waiting"
+                      : Model.Verdict == Verdict.CompileError ? "failed" : "successful";
+}
+
+<div class="modal fade" id="modal-@ViewData["HandleKey"]" tabindex="-1" role="dialog" aria-labelledby="modal-@ViewData["HandleKey"]-label" aria-hidden="true">
+    <div class="modal-dialog" style="max-width:800px" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modal-@ViewData["HandleKey"]-label">Submission details</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="container">
+                    <div class="d-flex flex-row">
+                        <div class="p-2">Problem: <b><span class="probid">@Model.ProblemShortName</span> - @Model.ProblemName</b></div>
+                        <div class="p-2">Submitted: <b>@time.ToString("HH:mm")</b></div>
+                        <div class="p-2">Language: <b>@Model.Language</b></div>
+                        <div class="p-2">Compilation: <span class="badge badge-@compile_badge">@compile_result</span></div>
+                    </div>
+
+                    @if (compile_badge == "success")
+                    {
+                        <div class="d-flex flex-row">
+                            <div class="p-2">
+                                Run result: <verdict target="DomJudge" value="@Model.Verdict" />
+                            </div>
+                        </div>
+                    }
+
+                    <hr />
+                    <h4 class="text-center">Compilation output</h4>
+                    @if (string.IsNullOrWhiteSpace(Model.CompilerOutput))
+                    {
+                        <p class="nodata">There were no compiler errors or warnings.</p>
+                    }
+                    else
+                    {
+                        <pre class="output_text pre-scrollable">@Model.CompilerOutput.UnBase64()</pre>
+                    }
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(function () {
+        setSeenSub(@Model.SubmissionId);
+    });
+</script>

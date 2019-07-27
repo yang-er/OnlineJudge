@@ -1,0 +1,64 @@
+﻿@model BoardViewModel
+
+<table class="scoreboard center">
+    <colgroup>
+        <col id="scorerank" />
+        <col />
+        <col id="scorelogos" />
+        <col id="scoreteamname" />
+    </colgroup>
+    <colgroup>
+        <col id="scoresolv" />
+        <col id="scoretotal" />
+    </colgroup>
+    <colgroup>
+        @foreach (var p in Model.Problems)
+        {
+            <col class="scoreprob" />
+        }
+    </colgroup>
+
+    <thead>
+        <tr class="scoreheader">
+            <th title="rank" scope="col">rank</th>
+            <th title="team name" scope="col" colspan="3">team</th>
+            <th title="# solved / penalty time" colspan="2" scope="col">score</th>
+
+            @foreach (var cp in Model.Problems.OrderBy(a => a.Rank))
+            {
+                <th title="problem @cp.Title" scope="col">
+                    @cp.ShortName <div class="circle" style="background: @cp.Color;"></div>
+                </th>
+            }
+        </tr>
+    </thead>
+
+    @foreach (var g in Model)
+    {
+        int totalPoints = 0;
+        <tbody>
+
+            @foreach (var s in g)
+            {
+                totalPoints += s.Points;
+                <partial name="_TeamScore" model="s" />
+                if (s.Category != null)
+                {
+                    Model.ShowCategory.Add((s.CategoryColor, s.Category));
+                }
+            }
+
+            @if (g.Statistics != null)
+            {
+                <partial name="_ProbStatistics" model="(g.Statistics, totalPoints)" />
+            }
+        </tbody>
+    }
+</table>
+
+<style>
+    @foreach (var item in Model.ShowCategory)
+    {
+        @($".cl_{item.Item1.Substring(1)} {{ background-color: {item.Item1}; }}")
+    }
+</style>

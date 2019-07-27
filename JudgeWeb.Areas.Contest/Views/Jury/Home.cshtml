@@ -1,0 +1,138 @@
+﻿@model JuryHomeModel
+@{
+    ViewData["Title"] = "Jury";
+    Contest ctx = ViewBag.Contest;
+    ViewData["DisableAjaxRefresh"] = true;
+    var state = ctx.GetState();
+}
+
+<style>
+
+    .data-table td a, .data-table td a:hover {
+        display: block;
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .data-table th {
+        white-space: nowrap;
+    }
+
+    .data-table td {
+        white-space: nowrap;
+    }
+
+    .dataTables_filter {
+        text-align: inherit;
+    }
+
+    .table-wrapper {
+        display: inline-block;
+    }
+</style>
+
+<hgroup class="mb-3">
+    <h1 class="mt-3">
+        Contest
+        <span style="font-variant:small-caps;">
+            @Model.Contest.ShortName
+        </span>
+        <a asp-action="Edit" class="btn btn-sm btn-outline-primary">Edit</a>
+    </h1>
+    <h4 class="text-left">@Model.Contest.Name</h4>
+</hgroup>
+
+<div class="row">
+    <div class="col-lg-6">
+        <partial name="_StatusMessage" model="Model.Message" />
+        <form method="post">
+            <table class="table table-hover">
+                <tbody>
+                    <tr>
+                        <td><i class="fas fa-@((int)state >= 2 ? "check" : "")"></i></td>
+                        <td><b>Start time:</b></td>
+                        <td show-time="Model.Contest.StartTime" null-value="not scheduled"></td>
+                        <td>
+                            @if (state == ContestState.ScheduledToStart && User.IsInRole("Administrator"))
+                            {
+                                <button asp-action="ChangeState" asp-route-target="startnow" class="btn btn-sm btn-primary">start now</button>
+                                <button asp-action="ChangeState" asp-route-target="delay" class="mt-1 mt-md-0 btn btn-sm btn-primary">delay</button>
+                            }
+                            else if (state == ContestState.NotScheduled && User.IsInRole("Administrator"))
+                            {
+                                <button asp-action="ChangeState" asp-route-target="startnow" class="btn btn-sm btn-primary">start now</button>
+                            }
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><i class="fas fa-@(Model.Contest.FreezeTime.HasValue && (int)state >= 3 ? "check" : "")"></i></td>
+                        <td><b>Freeze time:</b></td>
+                        <td show-time="Model.Contest.FreezeTime"></td>
+                        <td>
+                            @if (state == ContestState.Started && User.IsInRole("Administrator"))
+                            {
+                                <button asp-action="ChangeState" asp-route-target="freeze" class="btn btn-sm btn-primary">freeze now</button>
+                            }
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class=""><i class="fas fa-@(Model.Contest.EndTime.HasValue && (int)state >= 4 ? "check" : "")"></i></td>
+                        <td class=""><b>End time:</b></td>
+                        <td show-time="Model.Contest.EndTime"></td>
+                        <td>
+                            @if ((state == ContestState.Started || state == ContestState.Frozen) && User.IsInRole("Administrator"))
+                            {
+                                <button asp-action="ChangeState" asp-route-target="endnow" class="btn btn-sm btn-primary">end now</button>
+                            }
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><i class="fas fa-@(Model.Contest.UnfreezeTime.HasValue && (int)state >= 5 ? "check" : "")"></i></td>
+                        <td><b>Unfreeze time:</b></td>
+                        <td show-time="Model.Contest.UnfreezeTime"></td>
+                        <td>
+                            @if (state == ContestState.Ended && User.IsInRole("Administrator"))
+                            {
+                                <button asp-action="ChangeState" asp-route-target="unfreeze" class="btn btn-sm btn-primary">unfreeze now</button>
+                            }
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </form>
+    </div>
+</div>
+
+<h2 class="mt-2">Problems</h2>
+
+<div class="row">
+    <div class="col-lg-6">
+        <table class="table data-table table-sm table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>~</th>
+                    <th>Name</th>
+                    <th>submit?</th>
+                    <th>judge?</th>
+                    <th>Color</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var prob in Model.Problem)
+                {
+                    <tr asp-area="Judge" asp-controller="Problem" asp-action="Edit" asp-route-pid="@prob.ProblemId" data-toggle="gotoUrl">
+                        <td use-a>p@(prob.ProblemId)</td>
+                        <td use-a>@prob.ShortName</td>
+                        <td use-a>@prob.Title</td>
+                        <td use-a>@(prob.AllowSubmit ? "Yes" : "No")</td>
+                        <td use-a>@(prob.AllowJudge ? "Yes" : "No")</td>
+                        <td use-a title="@prob.Color">
+                            <div class="circle" style="background-color: @prob.Color"></div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

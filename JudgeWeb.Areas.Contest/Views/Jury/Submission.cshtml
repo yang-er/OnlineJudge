@@ -1,0 +1,304 @@
+﻿@model JuryViewSubmissionModel
+@{
+    ViewData["Title"] = "Submission s" + Model.SubmissionId;
+    Contest ctx = ViewBag.Contest;
+    ViewData["DisableAjaxRefresh"] = true;
+}
+
+<link rel="stylesheet" href="~/static/chart/nv.d3.min.css" type="text/css" />
+<script type="text/javascript" src="~/static/chart/d3.min.js"></script>
+<script type="text/javascript" src="~/static/chart/nv.d3.min.js"></script>
+
+<style>
+
+    .judging-table td a, .judging-table td a:hover {
+        display: block;
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .judging-table tr.disabled td a {
+        color: silver
+    }
+</style>
+
+<h2 class="mt-2">Submission @Model.SubmissionId</h2>
+
+<div class="submission-summary mb-2">
+    <span>
+        <i class="fas fa-users" title="Team:"></i>
+        @Model.Team.TeamName (t@(Model.Team.TeamId))
+    </span>
+    <span>
+        <i class="fas fa-trophy" title="Contest:"></i>
+        @ctx.ShortName
+    </span>
+    <span>
+        <i class="fas fa-book-open" title="Problem:"></i>
+        @Model.ProblemShortName: @Model.ProblemTitle
+    </span>
+    <span>
+        <i class="fas fa-comments" title="Language:"></i>
+        @Model.LanguageName
+    </span>
+    <span>
+        <i class="fas fa-clock" title="Submittime:"></i>
+        <span title="@Model.Time">
+            @Model.Time.ToString("HH:mm")
+        </span>
+    </span>
+    <span>
+        <i class="fas fa-stopwatch" title="Allowed runtime:"></i>
+        @(Model.TimeLimit)ms
+    </span>
+</div>
+
+@if (Model.AllJudgings.Count() > 1)
+{
+    <table class="judging-table table table-striped table-hover table-sm" style="width: auto;">
+        <caption>Judgings</caption>
+        <thead>
+            <tr>
+                <td></td>
+                <th scope="col">ID</th>
+                <th scope="col">start</th>
+                <th scope="col">time</th>
+                <th scope="col">memory</th>
+                <th scope="col">judgehost</th>
+                <th scope="col">result</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var (judging, serverName) in Model.AllJudgings)
+            {
+                var subTime = judging.StartTime;
+                <tr asp-action="Submission" asp-route-sid="@Model.SubmissionId" asp-route-gid="@judging.JudgingId" data-toggle="gotoUrl" class="@(judging.Active ? "" : "disabled")">
+                    <td use-a>@if (judging.JudgingId == Model.JudgingId)
+                    {<i class="fas fa-long-arrow-alt-right"></i>}</td>
+                    <td use-a>j@(judging.JudgingId)</td>
+                    <td use-a>@subTime?.ToString("HH:mm")</td>
+                    <td use-a>@(judging.ExecuteTime)ms</td>
+                    <td use-a>@(judging.ExecuteMemory)K</td>
+                    <td use-a><span class="hostname">@serverName</span></td>
+                    <td use-a><verdict target="DomJudge" value="@judging.Status" class="@(judging.Active ? "" : "disabled")" /></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+}
+
+<div>
+    <div style="display: inline-block" id="testcaseruntime">
+        <h3 id="graphs">Testcase Runtimes</h3>
+        <svg style="width:500px; height:250px;"></svg>
+    </div>
+</div>
+
+<script type="text/javascript">
+    function create_chart(data, maxY) {
+        var tickStep = 1;
+        if (maxY <= 2) {
+            tickStep = 0.2;
+        } else if (maxY <= 5) {
+            tickStep = 0.5;
+        }
+        maxY += tickStep;
+        var chart = nv.models.multiBarChart()
+            .x(function (d) { return d.label })
+            .y(function (d) { return d.value })
+            .showControls(false)
+            .reduceXTicks(true)
+            .forceY([0, maxY])
+            .duration(250)
+            .showLegend(false)
+            ;
+        var tickValues = [];
+        for (i = 0; i <= maxY; i += tickStep) {
+            tickValues.push(i);
+        }
+        chart.yAxis
+            .tickValues(tickValues)
+            .axisLabel('Runtime(in ms)');
+        return chart;
+    }
+    $(function () {
+        var maxY = @(Model.TimeLimit/1000.0);
+        maxY = Math.max(maxY, @(Model.Details.DefaultIfEmpty().Max(d => d?.ExecuteTime ?? 0)/1000.0));
+
+        var testcase_times = [
+            {
+                key: "Runtime",
+                values: [
+                    @{ int i = 0; }
+                    @foreach (var item in Model.Details)
+                    {
+                        i++;
+                        @Html.Raw($"{{\"label\": \"{i}\", \"value\": {item.ExecuteTime/1000.0}, \"color\": \"{(item.Status==Verdict.Accepted?"#28a745":item.Status==Verdict.TimeLimitExceeded?"orange":item.Status==Verdict.WrongAnswer?"#dc3545":"#ff3399")}\",\"description\": \"Resource id #{i}\"}},\n")
+                    }
+                    @for (; i < Model.TestcaseNumber; i++)
+                    {
+                        @Html.Raw($"{{\"label\": \"{i+1}\",\"value\": 0,\"color\": \"grey\",\"description\": \"Resource id #{i+1}\"}},")
+                    }
+                ]
+            }
+        ];
+        nv.addGraph(function () {
+            var chart = create_chart(testcase_times, maxY);
+            chart.tooltip.contentGenerator(function (obj) {
+                var format = d3.format(".3f");
+                return "<b>Testcase " + obj.data.description + "</b><br><b>Runtime:</b> " + format(obj.data.value) + "s";
+            });
+            chart.xAxis.axisLabel("Testcase Rank");
+            d3.select('#testcaseruntime svg')
+                .datum(testcase_times)
+                .call(chart);
+            var svgsize = chart.container.clientWidth || chart.container.parentNode.clientWidth;
+            var line = d3.select('#testcaseruntime svg')
+                .append('line')
+                .attr({
+                    x1: chart.margin().left,
+                    y1: chart.yAxis.scale()(1) + chart.margin().top,
+                    x2: +svgsize - chart.margin().right,
+                    y2: chart.yAxis.scale()(1) + chart.margin().top,
+                })
+                .style("stroke", "#F00");
+            nv.utils.windowResize(chart.update);
+            return chart;
+        });
+    })</script>
+
+<h2 class="mb-2">Judging j@(Model.JudgingId)</h2>
+
+<div class="mb-2">
+    <div>
+        Result: <verdict target="DomJudge" value="@Model.Status" class="@(Model.Judging.Active ? "" : "disabled")" />,
+        Judgehost: <span class="hostname">@Model.ServerName</span>,
+        <span class="judgetime">
+            @if (Model.Judging.StartTime.HasValue)
+            {
+                @("Judging started: " + Model.Judging.StartTime?.ToString("HH:mm:ss") + ", ")
+                if (Model.Judging.StopTime.HasValue)
+                {
+                    @("finished in " + (Model.Judging.StopTime - Model.Judging.StartTime)?.ToString("mm\\:ss") + "s")
+                }
+                else
+                {
+                    @("not finished yet")
+                }
+            }
+            else
+            {
+                @("Judging not started yet")
+            }
+        </span>
+        @if (Model.Status != Verdict.CompileError)
+        {
+            @(", max / sum runtime: " + (Model.ExecuteTime / 1000.0) + "s / " + (Model.Details.Sum(s => s.ExecuteTime) / 1000.0) + "s")
+        }
+    </div>
+    @if (Model.Status != Verdict.CompileError)
+    {
+        <table>
+            <tr>
+                <td>testcase runs: </td>
+                <td>
+                    @{ i = 0; }@foreach (var d in Model.Details)
+                    {
+                        i++;<a title="#@i, runtime: @(d.ExecuteTime)ms, result: @(d.Status)" href="#run-@i" onclick="@if (d.Status == Verdict.Accepted) {@("display_correctruns(true);")}"><verdict target="BadgeSmall" value="d.Status" /></a>}@for (i++; i <= Model.TestcaseNumber; i++)
+                    {<a title="#@i, pending" href="#run-@i" onclick="display_correctruns(true);"><verdict target="BadgeSmall" val="8" /></a>}
+                    </td>
+                </tr>
+            </table>
+        }
+</div>
+
+<h3>
+    <a class="collapse-link" href="javascript:collapse('#detailcompile')">
+        Compilation
+        <span style="color: @(Model.Status == Verdict.CompileError ? "red" : Model.Status == Verdict.Pending ? "gray" : "#1daa1d");">
+            @(Model.Status == Verdict.CompileError ? "unsuccessful" : Model.Status == Verdict.Pending ? "waiting" : "successful")
+        </span>
+    </a>
+</h3>
+
+<base64 class="@(Model.Status == Verdict.CompileError ? "" : "d-none")" id="detailcompile" value="@Model.CompileError" />
+
+@if (Model.Status != Verdict.CompileError)
+{
+    i = 0;
+    foreach (var detail in Model.Details)
+    {
+        i++;
+        <div class="run @(detail.Status == Verdict.Accepted ? "run_correct" : "")">
+            <h4 id="run-@i">Run @i (r@(detail.TestId))</h4>
+            <table>
+                <tr>
+                    <td>
+                        <table class="table table-sm table-striped table-bordered table-hover">
+                            <tr>
+                                <th>Reference</th>
+                                <td>
+                                    <a asp-area="Judge" asp-controller="Problem" asp-action="Testcase" asp-route-pid="@Model.ProblemId" asp-route-tid="@detail.TestcaseId" asp-route-filetype="input">data.in</a>
+                                    <a asp-area="Judge" asp-controller="Problem" asp-action="Testcase" asp-route-pid="@Model.ProblemId" asp-route-tid="@detail.TestcaseId" asp-route-filetype="output">data.out</a>
+                                    <a asp-area="Judge" asp-controller="Status" asp-action="RunDetails" asp-route-jid="@detail.JudgingId" asp-route-rid="@detail.TestId" asp-route-type="out">user.out</a>
+                                    <a asp-area="Judge" asp-controller="Status" asp-action="RunDetails" asp-route-jid="@detail.JudgingId" asp-route-rid="@detail.TestId" asp-route-type="err">user.err</a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Status</th>
+                                <td>@(detail.ExecuteTime)ms, @(detail.ExecuteMemory)kb.</td>
+                            </tr>
+                            <tr>
+                                <th>Result</th>
+                                <td><verdict target="DomJudge" value="detail.Status" /></td>
+                            </tr>
+                        </table>
+                    </td>
+                    <td></td>
+                </tr>
+            </table>
+
+            <h5>Diff output</h5>
+            @if (string.IsNullOrEmpty(detail.OutputDiff))
+            {
+                <p class="nodata">There was no diff output.</p>
+            }
+            else
+            {
+                <base64 value="@detail.OutputDiff" />
+            }
+
+            <h5>Judging system output (info/debug/errors)</h5>
+            <base64 value="@detail.OutputSystem" />
+        </div>
+    }
+    for (i++; i <= Model.TestcaseNumber; i++)
+    {
+        <div class="run">
+            <h4 id="run-@i">Run @i</h4>
+            <p class="nodata">Testcase not used.</p>
+        </div>
+    }
+}
+
+<style>
+    div.submission-summary > span {
+        margin-right: 10px;
+    }
+
+    .run > h4, .run > h5 {
+        text-align: left;
+    }
+</style>
+
+<script type="text/javascript">
+    function display_correctruns(show) {
+        elements = document.getElementsByClassName('run_correct');
+        for (var i = 0; i < elements.length; i++) {
+            elements[i].style.display = show ? 'block' : 'none';
+        }
+    }
+
+    display_correctruns(false);
+</script>

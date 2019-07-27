@@ -1,0 +1,112 @@
+﻿@model IEnumerable<JuryListTeamModel>
+@{
+    ViewData["Title"] = "Teams";
+    ViewData["DisableAjaxRefresh"] = true;
+}
+
+<link rel="stylesheet" href="~/static/css/dataTables.bootstrap4.min.css">
+<script src="~/static/js/jquery.dataTables.min.js"></script>
+<script src="~/static/js/dataTables.bootstrap4.min.js"></script>
+
+<style>
+    .text-variant {
+        font-variant: small-caps;
+    }
+
+    .data-table td a, .data-table td a:hover {
+        display: block;
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .data-table th {
+        white-space: nowrap;
+    }
+
+    .data-table td {
+        white-space: nowrap;
+    }
+
+    .dataTables_filter {
+        text-align: inherit;
+    }
+
+    .table-wrapper {
+        display: inline-block;
+    }
+
+    .force-width a {
+        max-width: 20em;
+        text-overflow: ellipsis;
+        overflow: hidden;
+    }
+</style>
+
+<h2 class="mt-3" style="margin-bottom: -1em;">Teams</h2>
+
+<div class="table-wrapper">
+    <table class="data-table table table-sm table-striped" style="width:auto">
+        <thead class="">
+            <tr>
+                <th scope="col" class="sortable searchable">ID</th>
+                <th scope="col" class="sortable searchable">teamname</th>
+                <th scope="col" class="sortable searchable">category</th>
+                <th scope="col" class="sortable searchable">affiliation</th>
+                <th scope="col" class="sortable searchable">user</th>
+                <th scope="col" class="sortable searchable">status</th>
+                <th scope="col" class="sortable searchable">register time</th>
+                <th></th>
+                <th></th>
+                <th></th>
+                <th></th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var team in Model)
+            {
+                <tr asp-route-teamid="@team.TeamId" data-toggle="gotoUrl">
+                    <td use-a>@team.TeamId</td>
+                    <td use-a class="force-width">@team.TeamName</td>
+                    <td use-a>@team.Category</td>
+                    <td use-a class="text-variant" title="@team.AffiliationName">@team.Affiliation</td>
+                    <td use-a>@team.UserName</td>
+                    <td use-a><verdict team-status="team.Status" /></td>
+                    <td use-a>@team.RegisterTime</td>
+                    <td><a asp-route-teamid="@team.TeamId" asp-route-act="edit" data-toggle="ajaxWindow" data-target="editTeam" title="edit this team"><i class="fas fa-edit"></i></a></td>
+                    <td><a asp-route-teamid="@team.TeamId" asp-route-act="delete" data-toggle="ajaxWindow" data-target="deleteTeam" title="delete this team"><i class="fas fa-trash-alt"></i></a></td>
+                    <td><a asp-action="Clarification" asp-route-teamto="@team.TeamId" title="send clarification to this team"><i class="fas fa-envelope"></i></a></td>
+                    <td><a asp-route-teamid="@team.TeamId" asp-route-act="accept" data-toggle="ajaxWindow" data-target="acceptTeam" title="accept this team"><i class="fas fa-thumbs-up"></i></a></td>
+                    <td><a asp-route-teamid="@team.TeamId" asp-route-act="reject" data-toggle="ajaxWindow" data-target="rejectTeam" title="reject this team"><i class="fas fa-thumbs-down"></i></a></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<script>
+    $().ready(function () {
+        $('.data-table').DataTable({
+            "paging": false,
+            "searching": true,
+            "ordering": true,
+            "order": [[0, 'desc']],
+            "info": false,
+            "autoWidth": true,
+            "language": {
+                "searchPlaceholder": "filter table",
+                "search": "_INPUT_",
+            },
+            'aoColumnDefs': [
+                { aTargets: ['sortable'], bSortable: true },
+                { aTargets: ['searchable'], bSearchable: true },
+                { aTargets: ['_all'], bSortable: false, bSearchable: false }
+            ],
+        });
+    });
+</script>
+
+<p>
+    <a asp-action="TeamAdd" data-toggle="ajaxWindow" data-target="addTeam" class="btn btn-primary" title="Add new team"><i class="fas fa-plus"></i>&nbsp;Add new team</a>
+    <a asp-action="TeamImport" data-toggle="ajaxWindow" data-target="importTeam" class="btn btn-secondary" title="Import teams"><i class="fas fa-file-import"></i>&nbsp;Import teams</a>
+</p>

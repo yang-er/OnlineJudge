@@ -1,0 +1,68 @@
+﻿@model ScoreboardSingleViewModel
+@{
+    ViewData["Title"] = "View Problem";
+    ViewData["DisableAjaxRefresh"] = true;
+}
+
+<link rel="stylesheet" href="~/static/katex.min.css" />
+<script defer src="~/static/katex.min.js"></script>
+
+<div class="mt-4 container-fluid" id="problem-descibe">
+    @Html.Raw((string)ViewData["Content"])
+</div>
+
+<style>
+    
+@@media print {
+    body {
+        font-size: 1.3em;
+        margin: 1cm;
+    }
+
+    #problem-descibe {
+        margin: 0em !important;
+    }
+}
+
+#problem-descibe p {
+    font-size: 1.05em;
+}
+
+#problem-descibe p > code, #problem-descibe li > code {
+    font-size: 100%;
+    background: rgba(27, 31, 35, 0.05);
+    color: #24292e;
+    padding: .2em .4em;
+    border-radius: .2em;
+}
+
+span.katex-src ~ .katex {
+    font-size: 1.1em;
+}
+
+.samp .input, .samp .output {
+    border: 1px solid #888888;
+}
+
+.samp .output {
+    margin-bottom: 1em;
+    position: relative;
+    top: -1px;
+}
+
+.samp .output pre, .samp .input pre {
+    background-color: #EFEFEF;
+    line-height: 1.25em;
+    margin: 0;
+    padding: 0.25em;
+}
+
+.samp .title {
+    background-color: #FFFFFF;
+    border-bottom: 1px solid #888888;
+    font-family: arial;
+    font-weight: bold;
+    padding: 0.25em;
+}
+
+</style>
