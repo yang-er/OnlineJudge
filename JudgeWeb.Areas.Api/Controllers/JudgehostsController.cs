@@ -125,7 +125,7 @@ namespace JudgeWeb.Areas.Api.Controllers
                     Comment = "internal error created",
                     Resolved = true,
                     Time = DateTime.Now,
-                    Type = AuditLog.TargetType.Judging,
+                    Type = AuditLog.TargetType.Contest,
                     UserName = "judgehost",
                 });
             }
@@ -153,7 +153,7 @@ namespace JudgeWeb.Areas.Api.Controllers
                     Comment = "internal error created",
                     Resolved = true,
                     Time = DateTime.Now,
-                    Type = AuditLog.TargetType.Judging,
+                    Type = AuditLog.TargetType.Contest,
                     UserName = host.ServerName,
                 });
             }
@@ -407,6 +407,24 @@ namespace JudgeWeb.Areas.Api.Controllers
             {
                 judging.Status = Verdict.CompileError;
                 judging.StopTime = DateTimeOffset.Now;
+
+                var cid = await (
+                    from j in DbContext.Judgings
+                    where j.JudgingId == jid
+                    join s in DbContext.Submissions on j.SubmissionId equals s.SubmissionId
+                    select s.ContestId
+                ).FirstAsync();
+
+                DbContext.AuditLogs.Add(new AuditLog
+                {
+                    Comment = $"judged {judging.Status}",
+                    EntityId = judging.JudgingId,
+                    ContestId = cid,
+                    Resolved = cid == 0,
+                    Time = DateTime.Now,
+                    Type = AuditLog.TargetType.Judging,
+                    UserName = hostname,
+                });
             }
 
             judging.ServerId = host.ServerId;
@@ -511,6 +529,8 @@ namespace JudgeWeb.Areas.Api.Controllers
                 });
 
                 await DbContext.SaveChangesAsync();
+
+                Features.Scoreboard.RefreshService.Notify();
             }
 
             return Ok();

@@ -69,7 +69,7 @@ namespace JudgeWeb.Areas.Account.Controllers
             int lastUid = users.Last().Id;
 
             var statQuery =
-                from s in DbContext.SubmissionStatistics()
+                from s in DbContext.SubmissionStatistics
                 where s.Author >= firstUid && s.Author <= lastUid && s.ContestId == 0
                 group s by s.Author;
 

@@ -1,6 +1,11 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using EntityFrameworkCore.Cacheable;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Data.SqlClient;
+using System.Linq;
 
 namespace JudgeWeb.Data
 {
@@ -39,7 +44,18 @@ namespace JudgeWeb.Data
         public virtual DbSet<Testcase> Testcases { get; set; }
 
 
-        public virtual DbQuery<SubmissionStatistics> SubmissionStatistics { get; set; }
+        public IEnumerable<SubmissionStatistics> SubmissionStatistics =>
+            Query<SubmissionStatistics>()
+                .FromSql(Data.SubmissionStatistics.QueryString)
+                .AsNoTracking()
+                .Cacheable(TimeSpan.FromMinutes(10))
+                .ToList();
+
+
+        public IQueryable<ContestTestcase> ContestTestcase(int _cid) =>
+            Query<ContestTestcase>()
+                .FromSql(Data.ContestTestcase.QueryString, new SqlParameter("__cid", _cid))
+                .AsNoTracking();
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -70,8 +86,8 @@ namespace JudgeWeb.Data
             modelBuilder.Entity2<JudgeHost>();
             modelBuilder.Entity2<Testcase>();
 
-            modelBuilder.Query<SubmissionStatistics>()
-                .ToView("SubmissionStatistics");
+            modelBuilder.Query<SubmissionStatistics>();
+            modelBuilder.Query<ContestTestcase>();
         }
     }
 }

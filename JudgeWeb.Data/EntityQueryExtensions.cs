@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore;
+using System;
+using System.Linq;
 
 namespace JudgeWeb.Data
 {
@@ -12,8 +14,37 @@ namespace JudgeWeb.Data
         Finalized,
     }
 
-    public static class DbEntityExtensions
+    public static class EntityQueryExtensions
     {
+        public static IQueryable<Testcase> WithoutBlob(this IQueryable<Testcase> query)
+        {
+            return query.Select(t => new Testcase
+            {
+                TestcaseId = t.TestcaseId,
+                Description = t.Description,
+                InputLength = t.InputLength,
+                IsSecret = t.IsSecret,
+                Md5sumInput = t.Md5sumInput,
+                Md5sumOutput = t.Md5sumOutput,
+                OutputLength = t.OutputLength,
+                Point = t.Point,
+                ProblemId = t.ProblemId,
+                Rank = t.Rank,
+            });
+        }
+
+        public static IQueryable<Executable> WithoutBlob(this IQueryable<Executable> query)
+        {
+            return query.Select(e => new Executable
+            {
+                ExecId = e.ExecId,
+                Description = e.Description,
+                Md5sum = e.Md5sum,
+                Type = e.Type,
+                ZipSize = e.ZipSize,
+            });
+        }
+
         public static bool CheckPermission(this Clarification clar, int teamid)
         {
             return !clar.Recipient.HasValue || clar.Recipient == teamid || clar.Sender == teamid;

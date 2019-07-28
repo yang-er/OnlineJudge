@@ -42,7 +42,7 @@ namespace JudgeWeb.Areas.Judge.Controllers
             var probs = await query.OrderBy(p => p.ProblemId).ToListAsync();
 
             int uid = int.Parse(UserManager.GetUserId(User) ?? "-1");
-            ViewBag.Statistics = DbContext.SubmissionStatistics()
+            ViewBag.Statistics = DbContext.SubmissionStatistics
                 .Where(p => p.ProblemId <= 1000 + pg * itemsPerPage
                     && p.ProblemId > 970 + pg * itemsPerPage
                     && p.ContestId == 0)

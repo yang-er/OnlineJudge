@@ -26,7 +26,7 @@ namespace JudgeWeb.Areas.Account.Controllers
             if (user is null) return NotFound();
             ViewBag.User = user;
 
-            ViewBag.Stat = DbContext.SubmissionStatistics()
+            ViewBag.Stat = DbContext.SubmissionStatistics
                 .Where(s => s.Author == uid);
             return View();
         }

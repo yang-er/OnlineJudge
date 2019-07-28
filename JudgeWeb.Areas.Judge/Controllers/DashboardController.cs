@@ -85,14 +85,7 @@ namespace JudgeWeb.Areas.Judge.Controllers
             if (!IsWindowAjax)
             {
                 var execs = await DbContext.Executable
-                    .Select(e => new Executable
-                    {
-                        ExecId = e.ExecId,
-                        Description = e.Description,
-                        Md5sum = e.Md5sum,
-                        Type = e.Type,
-                        ZipSize = e.ZipSize,
-                    })
+                    .WithoutBlob()
                     .ToListAsync();
 
                 return View(execs);

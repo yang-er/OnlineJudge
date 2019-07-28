@@ -38,6 +38,7 @@
     <ProjectReference Include="..\JudgeWeb.Features.Markdown\JudgeWeb.Features.Markdown.csproj" />
     <ProjectReference Include="..\JudgeWeb.Features.OjUpdate\JudgeWeb.Features.OjUpdate.csproj" />
     <ProjectReference Include="..\JudgeWeb.Features.Problem\JudgeWeb.Features.Problem.csproj" />
+    <ProjectReference Include="..\JudgeWeb.Features.Scoreboard\JudgeWeb.Features.Scoreboard.csproj" />
     <ProjectReference Include="..\JudgeWeb.Features.Storage\JudgeWeb.Features.Storage.csproj" />
   </ItemGroup>
 

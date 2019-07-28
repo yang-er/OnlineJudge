@@ -227,7 +227,7 @@ namespace JudgeWeb.Features.OjUpdate
         /// <param name="stoppingToken">提前停止令牌</param>
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            Logger.LogInformation("Fetch service started.");
+            Logger.LogDebug("Fetch service started.");
             
             while (!stoppingToken.IsCancellationRequested)
             {
@@ -242,7 +242,7 @@ namespace JudgeWeb.Features.OjUpdate
                     {
                         firstUpdate = false;
                         (jumpFromUpdate, sleepLength) = await CheckCacheAsync();
-                        if (jumpFromUpdate) Logger.LogInformation("Cache hit.");
+                        if (jumpFromUpdate) Logger.LogDebug("Cache hit.");
                     }
 
                     if (!jumpFromUpdate)
@@ -274,7 +274,7 @@ namespace JudgeWeb.Features.OjUpdate
                 }
             }
             
-            Logger.LogInformation("Fetch service stopped.");
+            Logger.LogDebug("Fetch service stopped.");
         }
     }
 }

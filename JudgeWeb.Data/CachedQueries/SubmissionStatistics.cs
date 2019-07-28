@@ -1,11 +1,4 @@
-﻿using EntityFrameworkCore.Cacheable;
-using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-namespace JudgeWeb.Data
+﻿namespace JudgeWeb.Data
 {
     public class SubmissionStatistics
     {
@@ -18,15 +11,13 @@ namespace JudgeWeb.Data
         public int Author { get; set; }
 
         public int ContestId { get; set; }
-    }
 
-    public static partial class QueryExtensions
-    {
-        public static IEnumerable<SubmissionStatistics> SubmissionStatistics(this AppDbContext dbContext)
-        {
-            return dbContext.SubmissionStatistics
-                .Cacheable(TimeSpan.FromMinutes(10))
-                .ToList();
-        }
+        internal const string QueryString =
+            "SELECT COUNT(*) AS [TotalSubmission]," +
+                  " SUM(CASE WHEN [g].[Status] = 11 THEN 1 ELSE 0 END) AS [AcceptedSubmission]," +
+                  " [s].[ProblemId], [s].[ContestId], [s].[Author] " +
+            "FROM [Submissions] AS [s] " +
+            "JOIN [Judgings] AS [g] ON [g].[SubmissionId] = [s].[SubmissionId] AND [g].[Active] = 1 " +
+            "GROUP BY [s].[ProblemId], [s].[Author], [s].[ContestId]";
     }
 }

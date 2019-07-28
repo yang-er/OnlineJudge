@@ -433,6 +433,13 @@ namespace JudgeWeb.Areas.Contest.Controllers
         }
 
         [HttpGet]
+        public IActionResult RefreshCache()
+        {
+            Service.RefreshScoreboardCache();
+            return Ok();
+        }
+
+        [HttpGet]
         [ValidateInAjax]
         public IActionResult TeamImport()
         {

@@ -12,7 +12,7 @@ namespace JudgeWeb.Areas.Contest.Models
 
         public int TeamId { get; set; }
 
-        public ContestProblem Problem { get; set; }
+        public ContestTestcase Problem { get; set; }
 
         public string TeamName { get; set; }
 

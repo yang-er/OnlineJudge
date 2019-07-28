@@ -15,14 +15,28 @@
         }
     </td>
     <td class="scoretn cl_@Model.CategoryColor.Substring(1)" title="@Model.TeamName">
-        <a>
-            <span class="forceWidth">
-                @Model.TeamName
-            </span>
-            <span class="univ forceWidth">
-                @(Model.AffiliationId == "null" ? "" : Model.Affiliation)
-            </span>
-        </a>
+        @if (User.IsInRoles("Administrator,JuryOfContest" + ViewData["ContestId"]))
+        {
+            <a asp-action="Team" asp-route-teamid="@Model.TeamId">
+                <span class="forceWidth">
+                    @Model.TeamName
+                </span>
+                <span class="univ forceWidth">
+                    @(Model.AffiliationId == "null" ? "" : Model.Affiliation)
+                </span>
+            </a>
+        }
+        else
+        {
+            <a>
+                <span class="forceWidth">
+                    @Model.TeamName
+                </span>
+                <span class="univ forceWidth">
+                    @(Model.AffiliationId == "null" ? "" : Model.Affiliation)
+                </span>
+            </a>
+        }
     </td>
 
     <td class="scorenc">@Model.Points</td>

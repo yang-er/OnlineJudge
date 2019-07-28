@@ -173,31 +173,10 @@ namespace JudgeWeb.Areas.Contest.Services
                 .Cacheable(TimeSpan.FromSeconds(30));
         }
 
-        public IQueryable<ContestProblem> QueryTestcaseCount()
+        public IQueryable<ContestTestcase> QueryTestcaseCount()
         {
-            var cid = ContestId;
-
-            return DbContext.ContestProblem
-                .Where(cp => cp.ContestId == cid)
-                .Join(
-                    inner: DbContext.Testcases,
-                    outerKeySelector: p => p.ProblemId,
-                    innerKeySelector: p => p.ProblemId,
-                    resultSelector: (cp, g) => new { cp, c = 1 })
-                .GroupBy(
-                    keySelector: a => a.cp,
-                    resultSelector: (cp, g) =>
-                        new ContestProblem
-                        {
-                            AllowJudge = cp.AllowJudge,
-                            AllowSubmit = cp.AllowSubmit,
-                            Color = cp.Color,
-                            ContestId = cp.ContestId,
-                            ProblemId = cp.ProblemId,
-                            Rank = cp.Rank,
-                            ShortName = cp.ShortName,
-                            TestcaseCount = g.Count()
-                        })
+            return DbContext
+                .ContestTestcase(ContestId)
                 .Cacheable(TimeSpan.FromMinutes(20));
         }
 
@@ -331,6 +310,7 @@ namespace JudgeWeb.Areas.Contest.Services
             });
 
             DbContext.SaveChanges();
+            Features.Scoreboard.RefreshService.Notify();
             return s.Entity.SubmissionId;
         }
 

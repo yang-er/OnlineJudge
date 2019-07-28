@@ -144,6 +144,23 @@ namespace JudgeWeb.Areas.Contest.Services
             return query.ToDictionary(t => t.Id, t => t.UserName);
         }
 
+        public void RefreshScoreboardCache()
+        {
+            DbContext.AuditLogs.Add(new AuditLog
+            {
+                Type = AuditLog.TargetType.Contest,
+                Time = DateTime.Now,
+                Resolved = false,
+                UserName = GetUserName(),
+                ContestId = Contest.ContestId,
+                Comment = "updated",
+                EntityId = Contest.ContestId,
+            });
+
+            DbContext.SaveChanges();
+            Features.Scoreboard.RefreshService.Notify();
+        }
+
         public void DeleteTeam(Team team)
         {
             var oldUid = team.UserId;

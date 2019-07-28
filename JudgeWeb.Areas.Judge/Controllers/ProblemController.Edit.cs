@@ -19,19 +19,7 @@ namespace JudgeWeb.Areas.Judge.Controllers
             ViewData["Testcase"] = await DbContext.Testcases
                 .Where(t => t.ProblemId == pid)
                 .OrderBy(t => t.Rank)
-                .Select(t => new Testcase
-                {
-                    TestcaseId = t.TestcaseId,
-                    Description = t.Description,
-                    InputLength = t.InputLength,
-                    IsSecret = t.IsSecret,
-                    Md5sumInput = t.Md5sumInput,
-                    Md5sumOutput = t.Md5sumOutput,
-                    OutputLength = t.OutputLength,
-                    Point = t.Point,
-                    ProblemId = t.ProblemId,
-                    Rank = t.Rank
-                })
+                .WithoutBlob()
                 .ToListAsync();
         }
 
