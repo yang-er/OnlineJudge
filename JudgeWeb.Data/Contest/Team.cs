@@ -56,6 +56,6 @@ namespace JudgeWeb.Data
         /// <summary>
         /// 注册时间
         /// </summary>
-        public DateTime? RegisterTime { get; set; }
+        public DateTimeOffset? RegisterTime { get; set; }
     }
 }

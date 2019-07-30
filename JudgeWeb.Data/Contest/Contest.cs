@@ -28,22 +28,22 @@ namespace JudgeWeb.Data
         /// <summary>
         /// 比赛开始时间
         /// </summary>
-        public DateTime? StartTime { get; set; }
+        public DateTimeOffset? StartTime { get; set; }
 
         /// <summary>
         /// 榜冻结时间
         /// </summary>
-        public DateTime? FreezeTime { get; set; }
+        public DateTimeOffset? FreezeTime { get; set; }
 
         /// <summary>
         /// 比赛结束时间
         /// </summary>
-        public DateTime? EndTime { get; set; }
+        public DateTimeOffset? EndTime { get; set; }
 
         /// <summary>
         /// 榜解封时间
         /// </summary>
-        public DateTime? UnfreezeTime { get; set; }
+        public DateTimeOffset? UnfreezeTime { get; set; }
 
         /// <summary>
         /// 排名方法

@@ -18,7 +18,7 @@
             Ranklist is being refreshed. Please refresh this page later.
         </div>
     }
-    else if (Model.LastUpdate == DateTime.UnixEpoch)
+    else if (Model.LastUpdate == DateTimeOffset.UnixEpoch)
     {
         <div class="alert alert-danger" role="alert">
             <b>Update failed. </b>Maybe @Model.OjName is unavailable now.

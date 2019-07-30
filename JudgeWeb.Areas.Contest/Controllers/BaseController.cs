@@ -63,7 +63,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
             if (!Contest.FreezeTime.HasValue)
                 showPublic = false;
             else if (Contest.UnfreezeTime.HasValue
-                    && Contest.UnfreezeTime.Value < DateTime.Now)
+                    && Contest.UnfreezeTime.Value < DateTimeOffset.Now)
                 showPublic = false;
             return (showPublic, false);
         }

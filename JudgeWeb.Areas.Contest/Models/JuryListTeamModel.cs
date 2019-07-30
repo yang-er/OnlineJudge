@@ -18,6 +18,6 @@ namespace JudgeWeb.Areas.Contest.Models
 
         public int Status { get; set; }
 
-        public DateTime? RegisterTime { get; set; }
+        public DateTimeOffset? RegisterTime { get; set; }
     }
 }

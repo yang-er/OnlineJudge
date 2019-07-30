@@ -10,7 +10,7 @@ namespace JudgeWeb.Areas.Misc.Models
 
         public bool IsUpdating { get; set; }
 
-        public DateTime LastUpdate { get; set; }
+        public DateTimeOffset LastUpdate { get; set; }
 
         public Func<int, string> RankTemplate { get; set; }
 

@@ -11,15 +11,15 @@
         Contest cont = ViewBag.Contest;
         var initial = DateTimeOffset.Now.ToUnixTimeMilliseconds();
         var now = initial / 1000;
-        var startTime = cont.StartTime is null ? -1 : new DateTimeOffset(cont.StartTime.Value).ToUnixTimeSeconds();
-        var endTime = cont.EndTime is null ? -1 : new DateTimeOffset(cont.EndTime.Value).ToUnixTimeSeconds();
+        var startTime = cont.StartTime is null ? -1 : cont.StartTime.Value.ToUnixTimeSeconds();
+        var endTime = cont.EndTime is null ? -1 : cont.EndTime.Value.ToUnixTimeSeconds();
         var prog = startTime == -1 || initial / 1000 < startTime ? 0
             : now >= endTime ? 100 : (now - startTime) * 100 / (endTime - startTime);
         <partial name="_ProgressBar" model="prog" />
     }
 }
 
-@if (Model.Contest.StartTime.GetValueOrDefault(DateTime.MaxValue) > DateTime.Now)
+@if ((Model.Contest.StartTime ?? DateTimeOffset.MaxValue) > DateTimeOffset.Now)
 {
     <h1 id="teamwelcome" class="text-center">Welcome team <span id="teamwelcometeam">@Model.Team.TeamName</span>!</h1>
     <h2 id="contestnotstarted" class="text-center">@(Model.Contest.StartTime.HasValue ? string.Format("Contest scheduled to start on {0:R}", Model.Contest.StartTime.Value).Replace("GMT", "CST") : "Contest has been delayed")</h2>

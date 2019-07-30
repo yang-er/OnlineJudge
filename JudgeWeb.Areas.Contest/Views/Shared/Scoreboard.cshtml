@@ -23,7 +23,7 @@
             }
             else if (state == ContestState.ScheduledToStart)
             {
-                if (Model.Contest.StartTime.Value.Date > DateTime.Now)
+                if (Model.Contest.StartTime.Value.Date > DateTimeOffset.Now)
                 {
                     @($"scheduled to start on {Model.Contest.StartTime}")
                 }
@@ -167,7 +167,7 @@ else
 }
 
 <p id="lastmod">
-    Last Update: @string.Format("{0:R}", DateTime.Now).Replace("GMT", "CST")<br />
+    Last Update: @string.Format("{0:R}", DateTimeOffset.Now).Replace("GMT", "CST")<br />
     using <a href="https://www.domjudge.org/" rel="nofollow" target="_top">DOMjudge</a> judgehost and theme
 </p>
 

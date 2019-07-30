@@ -23,7 +23,7 @@
         @foreach (var sub in Model)
         {
             var subTime = sub.Time.DateTime;
-            var tooLate = (ctx.EndTime ?? DateTime.MaxValue) < subTime;
+            var tooLate = (ctx.EndTime ?? DateTimeOffset.MaxValue) < subTime;
             if (sub.Result == Verdict.Accepted) { correct++; }
             total++;
             <tr asp-action="Submission" asp-route-sid="@sub.SubmissionId"

@@ -32,7 +32,7 @@ namespace JudgeWeb.Areas.Contest.Models
         public int ContestId { get; set; }
         public int TimeLimit { get; set; }
         public Team Team { get; set; }
-        public DateTime Time { get; set; }
+        public DateTimeOffset Time { get; set; }
 
         public IEnumerable<(Judging g, string n)> AllJudgings { get; set; }
         public string SourceCode { get; set; }

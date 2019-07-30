@@ -124,7 +124,7 @@ namespace JudgeWeb.Areas.Api.Controllers
                     EntityId = lang.LangId,
                     Comment = "internal error created",
                     Resolved = true,
-                    Time = DateTime.Now,
+                    Time = DateTimeOffset.Now,
                     Type = AuditLog.TargetType.Contest,
                     UserName = "judgehost",
                 });
@@ -152,7 +152,7 @@ namespace JudgeWeb.Areas.Api.Controllers
                     EntityId = host.ServerId,
                     Comment = "internal error created",
                     Resolved = true,
-                    Time = DateTime.Now,
+                    Time = DateTimeOffset.Now,
                     Type = AuditLog.TargetType.Contest,
                     UserName = host.ServerName,
                 });
@@ -222,7 +222,7 @@ namespace JudgeWeb.Areas.Api.Controllers
                     ContestId = 0,
                     Comment = $"judgehost {model.hostname} on {HttpContext.Connection.RemoteIpAddress} registered",
                     Resolved = true,
-                    Time = DateTime.Now,
+                    Time = DateTimeOffset.Now,
                     Type = AuditLog.TargetType.Contest,
                     EntityId = 0,
                     UserName = "judgerest",
@@ -421,7 +421,7 @@ namespace JudgeWeb.Areas.Api.Controllers
                     EntityId = judging.JudgingId,
                     ContestId = cid,
                     Resolved = cid == 0,
-                    Time = DateTime.Now,
+                    Time = DateTimeOffset.Now,
                     Type = AuditLog.TargetType.Judging,
                     UserName = hostname,
                 });
@@ -523,7 +523,7 @@ namespace JudgeWeb.Areas.Api.Controllers
                     EntityId = judging.g.JudgingId,
                     ContestId = judging.ContestId,
                     Resolved = judging.ContestId == 0,
-                    Time = DateTime.Now,
+                    Time = DateTimeOffset.Now,
                     Type = AuditLog.TargetType.Judging,
                     UserName = hostname,
                 });

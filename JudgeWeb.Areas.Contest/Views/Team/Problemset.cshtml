@@ -6,7 +6,7 @@
 
 <h1 class="mt-4 text-center">Contest problems</h1>
 
-@if (Model.Contest.StartTime.GetValueOrDefault(DateTime.MaxValue) > DateTime.Now)
+@if ((Model.Contest.StartTime ?? DateTimeOffset.MaxValue) > DateTimeOffset.Now)
 {
     <div class="alert alert-secondary mt-4">No problem texts available at this point.</div>
 }

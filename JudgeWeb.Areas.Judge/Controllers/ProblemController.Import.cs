@@ -93,7 +93,7 @@ namespace JudgeWeb.Areas.Judge.Controllers
                         EntityId = probId,
                         Resolved = true,
                         ContestId = 0,
-                        Time = DateTime.Now,
+                        Time = DateTimeOffset.Now,
                         Type = AuditLog.TargetType.Problem,
                         UserName = UserManager.GetUserName(User),
                     });

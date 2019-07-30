@@ -67,7 +67,7 @@ namespace JudgeWeb.Features.OjUpdate
         /// <summary>
         /// 上次更新时间
         /// </summary>
-        public DateTime LastUpdate { get; private set; }
+        public DateTimeOffset LastUpdate { get; private set; }
 
         /// <summary>
         /// 构造基础刷新服务实例。
@@ -83,7 +83,7 @@ namespace JudgeWeb.Features.OjUpdate
         {
             Logger = logger;
             NameSet = nameSet ?? new List<OjAccount>();
-            LastUpdate = DateTime.UnixEpoch;
+            LastUpdate = DateTimeOffset.UnixEpoch;
             sleepToken = sleepLength <= 0 ? 44640 : sleepLength;
             SiteName = siteName;
             OjList[siteName] = this;
@@ -166,7 +166,7 @@ namespace JudgeWeb.Features.OjUpdate
 
                     using (var httpClient = new HttpClient())
                     {
-                        LastUpdate = DateTime.UnixEpoch;
+                        LastUpdate = DateTimeOffset.UnixEpoch;
                         ConfigureHttpClient(httpClient);
 
                         foreach (var id in NameSet)
@@ -175,7 +175,7 @@ namespace JudgeWeb.Features.OjUpdate
                         }
 
                         NameSet.Sort();
-                        LastUpdate = DateTime.Now;
+                        LastUpdate = DateTimeOffset.Now;
                     }
                 }
             }
@@ -210,7 +210,7 @@ namespace JudgeWeb.Features.OjUpdate
             // this hit because of the change of list.
             if (lastCache.NameSet.Count != NameSet.Count) return cacheNotHit;
 
-            var updateGap = DateTime.Now - lastCache.LastUpdate;
+            var updateGap = DateTimeOffset.Now - lastCache.LastUpdate;
             if (updateGap.TotalMinutes > sleepToken) return cacheNotHit;
             
             NameSet.Clear();

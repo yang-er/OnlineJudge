@@ -26,7 +26,7 @@ namespace JudgeWeb.Data
         /// <summary>
         /// 上次更新时间
         /// </summary>
-        public DateTime LastUpdate { get; set; }
+        public DateTimeOffset LastUpdate { get; set; }
 
         /// <summary>
         /// Markdown源码

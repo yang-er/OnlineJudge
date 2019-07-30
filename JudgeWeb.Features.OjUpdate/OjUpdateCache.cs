@@ -5,7 +5,7 @@ namespace JudgeWeb.Features.OjUpdate
 {
     public class OjUpdateCache
     {
-        public DateTime LastUpdate { get; set; }
+        public DateTimeOffset LastUpdate { get; set; }
 
         public List<OjAccount> NameSet { get; set; }
     }

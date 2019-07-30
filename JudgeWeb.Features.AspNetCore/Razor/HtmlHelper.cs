@@ -7,7 +7,7 @@ namespace Microsoft.AspNetCore.Mvc.Rendering
     {
         public static IHtmlContent Timestamp(this IHtmlHelper hh, long timestamp)
         {
-            return hh.CstTime(DateTime.UnixEpoch.AddSeconds(timestamp));
+            return hh.CstTime(DateTimeOffset.UnixEpoch.AddSeconds(timestamp));
         }
 
         public static string Timespan(this IHtmlHelper hh, TimeSpan timeSpan)
@@ -18,11 +18,9 @@ namespace Microsoft.AspNetCore.Mvc.Rendering
             return $"{timeSpan.TotalSeconds:0} secs ago";
         }
 
-        public static IHtmlContent CstTime(this IHtmlHelper hh, DateTime dt)
+        public static IHtmlContent CstTime(this IHtmlHelper hh, DateTimeOffset dt)
         {
-            return hh.Raw(dt.ToUniversalTime()
-                            .AddHours(8)
-                            .ToString("yyyy-MM-dd HH:mm:ss"));
+            return hh.Raw(dt.ToString("yyyy-MM-dd HH:mm:ss"));
         }
 
         public static IHtmlContent RatioOf(this IHtmlHelper hh, int fz, int fm)

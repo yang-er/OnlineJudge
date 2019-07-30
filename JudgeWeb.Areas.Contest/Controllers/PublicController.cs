@@ -55,7 +55,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 AffiliationId = aff,
                 ContestId = Contest.ContestId,
                 CategoryId = Contest.RegisterDefaultCategory,
-                RegisterTime = System.DateTime.Now,
+                RegisterTime = System.DateTimeOffset.Now,
                 Status = 0,
                 TeamName = UserManager.GetNickName(User) ?? UserManager.GetUserName(User),
                 UserId = uuid,

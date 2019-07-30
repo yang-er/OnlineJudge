@@ -13,7 +13,7 @@ namespace JudgeWeb.Areas.Misc.Models
 
         public string Tree { get; set; }
 
-        public DateTime LastUpdate { get; set; }
+        public DateTimeOffset LastUpdate { get; set; }
 
         public string HtmlContent { get; set; }
     }

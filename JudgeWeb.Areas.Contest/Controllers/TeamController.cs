@@ -84,7 +84,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
         [HttpGet("{prob}")]
         public async Task<IActionResult> Problemset(string prob)
         {
-            if ((Contest.StartTime ?? DateTime.MaxValue) > DateTime.Now) return NotFound();
+            if ((Contest.StartTime ?? DateTimeOffset.MaxValue) > DateTimeOffset.Now) return NotFound();
             var problem = Service.Problems
                 .FirstOrDefault(a => a.ShortName == prob);
             if (problem == default) return NotFound();
@@ -130,7 +130,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 var newClar = new Clarification
                 {
                     Body = model.Body,
-                    SubmitTime = DateTime.Now,
+                    SubmitTime = DateTimeOffset.Now,
                     ContestId = cid,
                     JuryMember = null,
                     Sender = teamid,
@@ -165,7 +165,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
         [ValidateInAjax]
         public IActionResult Submit()
         {
-            if (!Contest.StartTime.HasValue || Contest.StartTime.Value >= DateTime.Now)
+            if (!Contest.StartTime.HasValue || Contest.StartTime.Value >= DateTimeOffset.Now)
                 return Message("Submit", "Contest not started.", MessageType.Danger);
             ViewData["Problems"] = Service.Problems;
             ViewData["Languages"] = Service.QueryLanguages()
@@ -178,7 +178,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult Submit(TeamCodeSubmitModel model)
         {
-            if (!Contest.StartTime.HasValue || Contest.StartTime.Value >= DateTime.Now)
+            if (!Contest.StartTime.HasValue || Contest.StartTime.Value >= DateTimeOffset.Now)
                 return Message("Submit", "Contest not started.", MessageType.Danger);
             if (SubmitCore(model) == -1) return NotFound();
 

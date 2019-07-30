@@ -67,7 +67,7 @@ namespace JudgeWeb.Areas.Misc.Controllers
             news.Active = model.Active;
             news.Content = Encoding.UTF8.GetBytes(html);
             news.Tree = Encoding.UTF8.GetBytes(tree);
-            news.LastUpdate = DateTime.Now;
+            news.LastUpdate = DateTimeOffset.Now;
 
             await DbContext.SaveChangesAsync();
             QueryNews(nid, true);
@@ -86,7 +86,7 @@ namespace JudgeWeb.Areas.Misc.Controllers
                 Source = Encoding.UTF8.GetBytes(model.MarkdownSource),
                 Title = model.Title,
                 Active = model.Active,
-                LastUpdate = DateTime.Now,
+                LastUpdate = DateTimeOffset.Now,
                 Content = Encoding.UTF8.GetBytes(html),
                 Tree = Encoding.UTF8.GetBytes(tree),
             });
@@ -141,7 +141,7 @@ namespace JudgeWeb.Areas.Misc.Controllers
                     NewsId = -1,
                     Title = "404 Not Found",
                     HtmlContent = "Sorry, the requested content is not found.",
-                    LastUpdate = DateTime.Now,
+                    LastUpdate = DateTimeOffset.Now,
                     Tree = "",
                 });
             }

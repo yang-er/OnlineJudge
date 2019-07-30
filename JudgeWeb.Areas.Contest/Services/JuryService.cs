@@ -46,8 +46,8 @@ namespace JudgeWeb.Areas.Contest.Services
             {
                 if (!contest.EndTime.HasValue)
                     return "Error when trying to set end time.";
-                var now = DateTime.Now.AddSeconds(30);
-                DateTime old;
+                var now = DateTimeOffset.Now.AddSeconds(30);
+                DateTimeOffset old;
 
                 if (contest.StartTime.HasValue)
                 {
@@ -59,7 +59,7 @@ namespace JudgeWeb.Areas.Contest.Services
                 else
                 {
                     // from delay to start
-                    old = DateTime.UnixEpoch;
+                    old = DateTimeOffset.UnixEpoch;
                 }
 
                 contest.StartTime = now;
@@ -74,14 +74,14 @@ namespace JudgeWeb.Areas.Contest.Services
                 if (state != ContestState.Started)
                     return "Error contest state occured.";
 
-                contest.FreezeTime = DateTime.Now;
+                contest.FreezeTime = DateTimeOffset.Now;
             }
             else if (target == "endnow")
             {
                 if (state != ContestState.Started && state != ContestState.Frozen)
                     return "Error contest state occured.";
 
-                var now = DateTime.Now;
+                var now = DateTimeOffset.Now;
                 contest.EndTime = now;
 
                 if (contest.FreezeTime.HasValue && contest.FreezeTime.Value > now)
@@ -92,7 +92,7 @@ namespace JudgeWeb.Areas.Contest.Services
                 if (state != ContestState.Ended)
                     return "Error contest state occured.";
 
-                contest.UnfreezeTime = DateTime.Now;
+                contest.UnfreezeTime = DateTimeOffset.Now;
             }
             else if (target == "delay")
             {
@@ -102,11 +102,11 @@ namespace JudgeWeb.Areas.Contest.Services
                 var old = contest.StartTime.Value;
                 contest.StartTime = null;
                 if (contest.EndTime.HasValue)
-                    contest.EndTime = DateTime.UnixEpoch + (contest.EndTime.Value - old);
+                    contest.EndTime = DateTimeOffset.UnixEpoch + (contest.EndTime.Value - old);
                 if (contest.FreezeTime.HasValue)
-                    contest.FreezeTime = DateTime.UnixEpoch + (contest.FreezeTime.Value - old);
+                    contest.FreezeTime = DateTimeOffset.UnixEpoch + (contest.FreezeTime.Value - old);
                 if (contest.UnfreezeTime.HasValue)
-                    contest.UnfreezeTime = DateTime.UnixEpoch + (contest.UnfreezeTime.Value - old);
+                    contest.UnfreezeTime = DateTimeOffset.UnixEpoch + (contest.UnfreezeTime.Value - old);
             }
 
             DbContext.Contests.Update(contest);
@@ -117,7 +117,7 @@ namespace JudgeWeb.Areas.Contest.Services
                 ContestId = ContestId,
                 EntityId = ContestId,
                 Resolved = true,
-                Time = DateTime.Now,
+                Time = DateTimeOffset.Now,
                 Type = AuditLog.TargetType.Contest,
                 UserName = GetUserName(),
             });
@@ -149,7 +149,7 @@ namespace JudgeWeb.Areas.Contest.Services
             DbContext.AuditLogs.Add(new AuditLog
             {
                 Type = AuditLog.TargetType.Contest,
-                Time = DateTime.Now,
+                Time = DateTimeOffset.Now,
                 Resolved = false,
                 UserName = GetUserName(),
                 ContestId = Contest.ContestId,
@@ -171,7 +171,7 @@ namespace JudgeWeb.Areas.Contest.Services
             DbContext.AuditLogs.Add(new AuditLog
             {
                 Type = AuditLog.TargetType.Contest,
-                Time = DateTime.Now,
+                Time = DateTimeOffset.Now,
                 Resolved = true,
                 UserName = GetUserName(),
                 ContestId = Contest.ContestId,
@@ -187,7 +187,7 @@ namespace JudgeWeb.Areas.Contest.Services
             DbContext.AuditLogs.Add(new AuditLog
             {
                 Type = AuditLog.TargetType.Contest,
-                Time = DateTime.Now,
+                Time = DateTimeOffset.Now,
                 Resolved = true,
                 UserName = UserName,
                 ContestId = Contest.ContestId,
@@ -246,7 +246,7 @@ namespace JudgeWeb.Areas.Contest.Services
             {
                 EntityId = team.TeamId,
                 Type = AuditLog.TargetType.Contest,
-                Time = DateTime.Now,
+                Time = DateTimeOffset.Now,
                 Resolved = true,
                 UserName = UserName,
                 ContestId = Contest.ContestId,
@@ -482,7 +482,7 @@ namespace JudgeWeb.Areas.Contest.Services
                 .ToDictionary(a => a.ProblemId, a => a.Title);
         }
 
-        private bool InSequence(params DateTime?[] dateTimes)
+        private bool InSequence(params DateTimeOffset?[] dateTimes)
         {
             if (dateTimes.Length == 0) return true;
             var item = dateTimes[0];
@@ -505,8 +505,8 @@ namespace JudgeWeb.Areas.Contest.Services
             (string, bool) SolveAndUpdate()
             {
                 var cst = Contest;
-                DateTime @base;
-                DateTime? startTime, endTime, freezeTime, unfreezeTime;
+                DateTimeOffset @base;
+                DateTimeOffset? startTime, endTime, freezeTime, unfreezeTime;
                 bool contestTimeChanged = false;
 
                 if (model.DefaultCategory != 0)
@@ -525,12 +525,12 @@ namespace JudgeWeb.Areas.Contest.Services
 
                 if (string.IsNullOrEmpty(model.StartTime))
                 {
-                    @base = DateTime.UnixEpoch;
+                    @base = DateTimeOffset.UnixEpoch;
                     startTime = null;
                 }
                 else
                 {
-                    @base = DateTime.Parse(model.StartTime);
+                    @base = DateTimeOffset.Parse(model.StartTime);
                     startTime = @base;
                 }
 
@@ -608,7 +608,7 @@ namespace JudgeWeb.Areas.Contest.Services
                     EntityId = ContestId,
                     ContestId = ContestId,
                     Resolved = !contestTimeChanged,
-                    Time = DateTime.Now,
+                    Time = DateTimeOffset.Now,
                     UserName = GetUserName(),
                     Type = AuditLog.TargetType.Contest,
                 });
@@ -659,7 +659,7 @@ namespace JudgeWeb.Areas.Contest.Services
                     DbContext.AuditLogs.Add(new AuditLog
                     {
                         Type = AuditLog.TargetType.Contest,
-                        Time = DateTime.Now,
+                        Time = DateTimeOffset.Now,
                         Resolved = true,
                         UserName = GetUserName(),
                         ContestId = Contest.ContestId,

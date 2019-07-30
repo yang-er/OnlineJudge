@@ -312,7 +312,7 @@ namespace JudgeWeb.Areas.Judge.Controllers
                 ContestId = c.Entity.ContestId,
                 EntityId = c.Entity.ContestId,
                 Resolved = true,
-                Time = DateTime.Now,
+                Time = DateTimeOffset.Now,
                 Type = AuditLog.TargetType.Contest,
             });
 

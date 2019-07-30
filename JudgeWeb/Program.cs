@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
+using System.Globalization;
 using System.Text;
 
 namespace JudgeWeb
@@ -10,6 +11,7 @@ namespace JudgeWeb
 
         public static void Main(string[] args)
         {
+            Culture.SetCultureInfo("zh-CN");
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
             (Current = CreateWebHostBuilder(args).Build()).Run();
         }

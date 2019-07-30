@@ -267,7 +267,7 @@ namespace JudgeWeb.Areas.Contest.Services
                 DbContext.AuditLogs.Add(new AuditLog
                 {
                     Type = AuditLog.TargetType.Contest,
-                    Time = DateTime.Now,
+                    Time = DateTimeOffset.Now,
                     Resolved = true,
                     UserName = GetUserName(),
                     ContestId = Contest.ContestId,

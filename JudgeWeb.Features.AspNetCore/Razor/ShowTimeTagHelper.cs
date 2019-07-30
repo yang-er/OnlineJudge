@@ -9,10 +9,10 @@ namespace JudgeWeb.Features.Razor
     [HtmlTargetElement(Attributes = "show-time")]
     public class ShowTimeTagHelper : TagHelper
     {
-        static readonly DateTime TwoKilo = new DateTime(2000, 1, 1);
+        static readonly DateTimeOffset TwoKilo = new DateTime(2000, 1, 1);
 
         [HtmlAttributeName("show-time")]
-        public DateTime? ShowTime { get; set; }
+        public DateTimeOffset? ShowTime { get; set; }
 
         [HtmlAttributeName("null-value")]
         public string NullValue { get; set; } = "-";
@@ -27,7 +27,7 @@ namespace JudgeWeb.Features.Razor
             {
                 if (ShowTime.Value < TwoKilo)
                 {
-                    var span = ShowTime.Value - DateTime.UnixEpoch;
+                    var span = ShowTime.Value - DateTimeOffset.UnixEpoch;
                     output.Content.Append("+" + span.ToString("d\\.hh\\:mm\\:ss"));
                 }
                 else

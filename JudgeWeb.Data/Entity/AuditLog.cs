@@ -16,7 +16,7 @@ namespace JudgeWeb.Data
         /// <summary>
         /// 发生时间
         /// </summary>
-        public DateTime Time { get; set; }
+        public DateTimeOffset Time { get; set; }
 
         /// <summary>
         /// 用户名

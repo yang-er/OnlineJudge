@@ -30,7 +30,7 @@ namespace JudgeWeb.Data
         /// <summary>
         /// 提交时间
         /// </summary>
-        public DateTime SubmitTime { get; set; }
+        public DateTimeOffset SubmitTime { get; set; }
 
         /// <summary>
         /// 发者队伍编号

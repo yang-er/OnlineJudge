@@ -7,7 +7,7 @@
             if (value == null) return true;
             if (!(value is string realValue)) return false;
             if (string.IsNullOrWhiteSpace(realValue)) return true;
-            return DateTime.TryParse(realValue, out _);
+            return DateTimeOffset.TryParse(realValue, out _);
         }
 
         public override string FormatErrorMessage(string name)

@@ -50,9 +50,9 @@ namespace JudgeWeb.Data
             return !clar.Recipient.HasValue || clar.Recipient == teamid || clar.Sender == teamid;
         }
 
-        public static ContestState GetState(this Contest cst, DateTime? nowTime = null)
+        public static ContestState GetState(this Contest cst, DateTimeOffset? nowTime = null)
         {
-            var now = nowTime ?? DateTime.Now;
+            var now = nowTime ?? DateTimeOffset.Now;
 
             var startTime = cst.StartTime;
             var endTime = cst.EndTime;

@@ -2,8 +2,8 @@
     Contest cont = ViewBag.Contest;;
     var initial = DateTimeOffset.Now.ToUnixTimeMilliseconds();
     var now = initial / 1000;
-    var startTime = cont.StartTime is null ? -1 : new DateTimeOffset(cont.StartTime.Value).ToUnixTimeSeconds();
-    var endTime = cont.EndTime is null ? -1 : new DateTimeOffset(cont.EndTime.Value).ToUnixTimeSeconds();
+    var startTime = cont.StartTime is null ? -1 : cont.StartTime.Value.ToUnixTimeSeconds();
+    var endTime = cont.EndTime is null ? -1 : cont.EndTime.Value.ToUnixTimeSeconds();
     var prog = startTime == -1 || initial / 1000 < startTime ? 0
         : now >= endTime ? 100 : (now - startTime) * 100 / (endTime - startTime);
     if (!ViewData.ContainsKey("RefreshSpan")) { ViewData["RefreshSpan"] = 30; }

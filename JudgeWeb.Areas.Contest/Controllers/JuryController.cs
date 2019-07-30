@@ -113,7 +113,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
             ViewBag.Message = DisplayMessage;
 
             var startTime = Contest.StartTime?.ToString() ?? "";
-            var startDateTime = Contest.StartTime ?? DateTime.UnixEpoch;
+            var startDateTime = Contest.StartTime ?? DateTimeOffset.UnixEpoch;
             var stopTime = Contest.EndTime.HasValue ? (Contest.EndTime.Value - startDateTime).ToDeltaString() : "";
             var unfTime = Contest.UnfreezeTime.HasValue ? (Contest.UnfreezeTime.Value - startDateTime).ToDeltaString() : "";
             var freTime = Contest.FreezeTime.HasValue ? (Contest.FreezeTime.Value - startDateTime).ToDeltaString() : "";
@@ -208,7 +208,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 var newClar = new Clarification
                 {
                     Body = model.Body,
-                    SubmitTime = DateTime.Now,
+                    SubmitTime = DateTimeOffset.Now,
                     ContestId = cid,
                     JuryMember = UserManager.GetUserName(User),
                     Sender = null,
