@@ -15,7 +15,7 @@
         }
     </td>
     <td class="scoretn cl_@Model.CategoryColor.Substring(1)" title="@Model.TeamName">
-        <a>
+        <a asp-action="Team" asp-route-teamid="@Model.TeamId">
             <span class="forceWidth">
                 @Model.TeamName
             </span>

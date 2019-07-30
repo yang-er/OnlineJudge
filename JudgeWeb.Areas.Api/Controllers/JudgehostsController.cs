@@ -84,7 +84,7 @@ namespace JudgeWeb.Areas.Api.Controllers
                 hostname = a.ServerName,
                 active = a.Active,
                 polltime = a.PollTime.ToUnixTimeSeconds(),
-                polltime_formatted = a.PollTime.ToString(),
+                polltime_formatted = a.PollTime.ToString("yyyy-MM-dd HH:mm:ss zzz"),
             }));
         }
 

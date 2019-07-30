@@ -32,7 +32,7 @@ namespace JudgeWeb.Features.Razor
                 }
                 else
                 {
-                    output.Content.Append(ShowTime.Value.ToString());
+                    output.Content.Append(ShowTime.Value.ToString("yyyy-MM-dd HH:mm:ss zzz"));
                 }
             }
         }

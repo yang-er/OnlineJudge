@@ -112,7 +112,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
             ViewBag.Repository = Service.GetAllProblems();
             ViewBag.Message = DisplayMessage;
 
-            var startTime = Contest.StartTime?.ToString() ?? "";
+            var startTime = Contest.StartTime?.ToString("yyyy-MM-dd HH:mm:ss zzz") ?? "";
             var startDateTime = Contest.StartTime ?? DateTimeOffset.UnixEpoch;
             var stopTime = Contest.EndTime.HasValue ? (Contest.EndTime.Value - startDateTime).ToDeltaString() : "";
             var unfTime = Contest.UnfreezeTime.HasValue ? (Contest.UnfreezeTime.Value - startDateTime).ToDeltaString() : "";
