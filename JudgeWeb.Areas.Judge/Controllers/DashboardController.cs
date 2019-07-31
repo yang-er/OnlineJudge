@@ -328,7 +328,7 @@ namespace JudgeWeb.Areas.Judge.Controllers
             var firstUser = await userMgr.GetUserAsync(User);
             var roleAttach = await userMgr.AddToRoleAsync(firstUser, $"JuryOfContest{c.Entity.ContestId}");
             if (!roleAttach.Succeeded) return Json(roleAttach);
-            return RedirectToAction("Home", "Jury", new { area = "Contest" });
+            return RedirectToAction("Home", "Jury", new { area = "Contest", cid = c.Entity.ContestId });
         }
 
         [HttpGet]

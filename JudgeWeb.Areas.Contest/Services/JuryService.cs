@@ -441,7 +441,7 @@ namespace JudgeWeb.Areas.Contest.Services
                     JudgingId = g.JudgingId,
                     ServerId = g.ServerId,
                     LanguageId = s.Language,
-                    Time = s.Time.DateTime,
+                    Time = s.Time,
                     SourceCode = s.SourceCode,
                     CompileError = g.CompileError,
                     ProblemTitle = p.Title,
