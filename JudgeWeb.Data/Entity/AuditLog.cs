@@ -21,7 +21,7 @@ namespace JudgeWeb.Data
         /// <summary>
         /// 用户名
         /// </summary>
-        [Property(IsRequired = true)]
+        [IsRequired]
         public string UserName { get; set; }
 
         /// <summary>
@@ -45,7 +45,7 @@ namespace JudgeWeb.Data
         /// <summary>
         /// 操作的注释
         /// </summary>
-        [Property(IsRequired = true)]
+        [IsRequired]
         public string Comment { get; set; }
 
         /// <summary>

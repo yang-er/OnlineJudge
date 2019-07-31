@@ -1,6 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
-
-namespace JudgeWeb.Data
+﻿namespace JudgeWeb.Data
 {
     public class ContestTestcase
     {
@@ -45,13 +43,13 @@ namespace JudgeWeb.Data
         public int TestcaseCount { get; set; }
 
         internal const string QueryString =
-            "SELECT [cp].[ContestId], [cp].[ProblemId], [cp].[ShortName]," +
-                  " [cp].[Rank], [cp].[AllowSubmit], [cp].[AllowJudge]," +
-                  " [cp].[Color], COUNT(1) AS [TestcaseCount] " +
-            "FROM [ContestProblem] AS [cp] " +
-            "INNER JOIN [Testcases] AS [t] ON [cp].[ProblemId] = [t].[ProblemId] " +
-            "WHERE [cp].[ContestId] = @__cid " +
-            "GROUP BY [cp].[ProblemId], [cp].[ShortName], [cp].[ContestId]," +
-                    " [cp].[Rank], [cp].[AllowSubmit], [cp].[AllowJudge], [cp].[Color]";
+            "SELECT cp.ContestId, cp.ProblemId, cp.ShortName," +
+                  " cp.Rank, cp.AllowSubmit, cp.AllowJudge," +
+                  " cp.Color, COUNT(1) AS TestcaseCount " +
+            "FROM ContestProblem AS cp " +
+            "INNER JOIN Testcases AS t ON cp.ProblemId = t.ProblemId " +
+            "WHERE cp.ContestId = @__cid " +
+            "GROUP BY cp.ProblemId, cp.ShortName, cp.ContestId," +
+                    " cp.Rank, cp.AllowSubmit, cp.AllowJudge, cp.Color";
     }
 }

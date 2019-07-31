@@ -17,13 +17,15 @@ namespace JudgeWeb.Data
         /// 语言外部编号
         /// </summary>
         [Index]
-        [Property(IsRequired = true, MaxLength = 16, IsUnicode = false)]
+        [IsRequired]
+        [NonUnicode(MaxLength = 16)]
         public string ExternalId { get; set; }
 
         /// <summary>
         /// 语言正式名称
         /// </summary>
-        [Property(IsRequired = true, IsUnicode = false)]
+        [IsRequired]
+        [NonUnicode]
         public string Name { get; set; }
 
         /// <summary>
@@ -49,7 +51,8 @@ namespace JudgeWeb.Data
         /// <summary>
         /// 编译脚本
         /// </summary>
-        [Property(IsRequired = true, IsUnicode = false, MaxLength = 64)]
+        [IsRequired]
+        [NonUnicode(MaxLength = 64)]
         [HasOneWithMany(typeof(Executable), DeleteBehavior.Restrict)]
         public string CompileScript { get; set; }
     }

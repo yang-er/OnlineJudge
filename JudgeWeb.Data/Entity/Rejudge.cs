@@ -20,7 +20,7 @@
         /// <summary>
         /// 重判原因
         /// </summary>
-        [Property(IsRequired = true)]
+        [IsRequired]
         public string Reason { get; set; }
 
         /// <summary>

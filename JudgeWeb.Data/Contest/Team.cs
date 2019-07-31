@@ -30,7 +30,8 @@ namespace JudgeWeb.Data
         /// <summary>
         /// 队伍名称
         /// </summary>
-        [Property(IsRequired = true, MaxLength = 128)]
+        [IsRequired]
+        [MaxLength(128)]
         public string TeamName { get; set; }
 
         /// <summary>

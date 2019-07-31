@@ -66,7 +66,7 @@ namespace JudgeWeb.Data
         /// <summary>
         /// 编译错误内容，以BASE64编码
         /// </summary>
-        [Property(MaxLength = 131072, IsUnicode = false)]
+        [NonUnicode(MaxLength = 131072)]
         public string CompileError { get; set; }
 
         /// <summary>

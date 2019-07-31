@@ -339,6 +339,9 @@ ASALocalRun/
 # BeatPulse healthcheck temp database
 healthchecksdb
 
+# EntityFrameworkCore Migrations
+/JudgeWeb.Data/Migrations/
+
 # OJ Cache and some data files
 /JudgeWeb/ojcache.json
 /JudgeWeb/ojcache.Codeforces.json

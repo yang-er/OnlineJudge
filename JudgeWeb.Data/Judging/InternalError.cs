@@ -26,13 +26,13 @@ namespace JudgeWeb.Data
         /// <summary>
         /// 错误描述，BASE64
         /// </summary>
-        [Property(IsRequired = true)]
+        [IsRequired]
         public string Description { get; set; }
 
         /// <summary>
         /// 评测机日志，BASE64
         /// </summary>
-        [Property(IsRequired = true)]
+        [IsRequired]
         public string JudgehostLog { get; set; }
 
         /// <summary>
@@ -43,7 +43,7 @@ namespace JudgeWeb.Data
         /// <summary>
         /// 禁用的对象
         /// </summary>
-        [Property(IsRequired = true)]
+        [IsRequired]
         public string Disabled { get; set; }
 
         /// <summary>

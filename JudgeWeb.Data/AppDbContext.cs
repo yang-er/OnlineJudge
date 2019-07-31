@@ -61,30 +61,57 @@ namespace JudgeWeb.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+            bool isMySql = !Database.IsSqlServer();
 
-            modelBuilder.Entity2<Submission>();
-            modelBuilder.Entity2<Problem>();
-            modelBuilder.Entity2<AuditLog>();
-            modelBuilder.Entity2<Detail>();
-            modelBuilder.Entity2<Judging>();
-            modelBuilder.Entity2<Rejudge>();
-            modelBuilder.Entity2<News>();
+            // Now it is designed for SQL Server or MySQL.
+            // If you add reference to MySql.Data.EntityFrameworkCore.Design,
+            // you can change that line into
+            //   bool isMySql = Database.IsMySQL();
 
-            modelBuilder.Entity2<Contest>();
-            modelBuilder.Entity2<ContestProblem>();
-            modelBuilder.Entity2<Clarification>();
-            modelBuilder.Entity2<Team>();
-            modelBuilder.Entity2<TeamAffiliation>();
-            modelBuilder.Entity2<TeamCategory>();
-            modelBuilder.Entity2<ScoreCache>();
-            modelBuilder.Entity2<RankCache>();
+            modelBuilder.Entity<Submission>()
+                .UseAttributes(isMySql);
+            modelBuilder.Entity<Problem>()
+                .UseAttributes(isMySql);
+            modelBuilder.Entity<AuditLog>()
+                .UseAttributes(isMySql);
+            modelBuilder.Entity<Detail>()
+                .UseAttributes(isMySql);
+            modelBuilder.Entity<Judging>()
+                .UseAttributes(isMySql);
+            modelBuilder.Entity<Rejudge>()
+                .UseAttributes(isMySql);
+            modelBuilder.Entity<News>()
+                .UseAttributes(isMySql);
 
-            modelBuilder.Entity2<Configure>();
-            modelBuilder.Entity2<Executable>();
-            modelBuilder.Entity2<InternalError>();
-            modelBuilder.Entity2<Language>();
-            modelBuilder.Entity2<JudgeHost>();
-            modelBuilder.Entity2<Testcase>();
+            modelBuilder.Entity<Contest>()
+                .UseAttributes(isMySql);
+            modelBuilder.Entity<ContestProblem>()
+                .UseAttributes(isMySql);
+            modelBuilder.Entity<Clarification>()
+                .UseAttributes(isMySql);
+            modelBuilder.Entity<Team>()
+                .UseAttributes(isMySql);
+            modelBuilder.Entity<TeamAffiliation>()
+                .UseAttributes(isMySql);
+            modelBuilder.Entity<TeamCategory>()
+                .UseAttributes(isMySql);
+            modelBuilder.Entity<ScoreCache>()
+                .UseAttributes(isMySql);
+            modelBuilder.Entity<RankCache>()
+                .UseAttributes(isMySql);
+
+            modelBuilder.Entity<Configure>()
+                .UseAttributes(isMySql);
+            modelBuilder.Entity<Executable>()
+                .UseAttributes(isMySql);
+            modelBuilder.Entity<InternalError>()
+                .UseAttributes(isMySql);
+            modelBuilder.Entity<Language>()
+                .UseAttributes(isMySql);
+            modelBuilder.Entity<JudgeHost>()
+                .UseAttributes(isMySql);
+            modelBuilder.Entity<Testcase>()
+                .UseAttributes(isMySql);
 
             modelBuilder.Query<SubmissionStatistics>();
             modelBuilder.Query<ContestTestcase>();

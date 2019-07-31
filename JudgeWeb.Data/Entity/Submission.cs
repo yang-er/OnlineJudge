@@ -41,7 +41,8 @@ namespace JudgeWeb.Data
         /// <summary>
         /// 源代码，BASE64
         /// </summary>
-        [Property(IsRequired = true, IsUnicode = false, MaxLength = 131072)]
+        [IsRequired]
+        [NonUnicode(MaxLength = 131072)]
         public string SourceCode { get; set; }
 
         /// <summary>
@@ -59,7 +60,8 @@ namespace JudgeWeb.Data
         /// <summary>
         /// 提交时用户IP地址
         /// </summary>
-        [Property(IsRequired = true, IsUnicode = false, MaxLength = 128)]
+        [IsRequired]
+        [NonUnicode(MaxLength = 128)]
         public string Ip { get; set; }
     }
 }

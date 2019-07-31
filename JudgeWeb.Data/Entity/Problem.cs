@@ -10,20 +10,21 @@ namespace JudgeWeb.Data
         /// <summary>
         /// 题目编号
         /// </summary>
-        [Key]
-        [Property(ValueGeneratedNever = true)]
+        [Key(ValueGeneratedNever = true)]
         public int ProblemId { get; set; }
 
         /// <summary>
         /// 题目名称
         /// </summary>
-        [Property(IsRequired = true, MaxLength = 128)]
+        [IsRequired]
+        [MaxLength(128)]
         public string Title { get; set; }
 
         /// <summary>
         /// 题目来源
         /// </summary>
-        [Property(IsRequired = true, MaxLength = 256)]
+        [IsRequired]
+        [MaxLength(256)]
         public string Source { get; set; }
 
         /// <summary>
@@ -44,21 +45,23 @@ namespace JudgeWeb.Data
         /// <summary>
         /// 运行脚本
         /// </summary>
-        [Property(IsRequired = true, IsUnicode = false, MaxLength = 64)]
+        [IsRequired]
+        [NonUnicode(MaxLength = 64)]
         [HasOneWithMany(typeof(Executable), DeleteBehavior.Restrict)]
         public string RunScript { get; set; }
 
         /// <summary>
         /// 比较脚本
         /// </summary>
-        [Property(IsRequired = true, IsUnicode = false, MaxLength = 64)]
+        [IsRequired]
+        [NonUnicode(MaxLength = 64)]
         [HasOneWithMany(typeof(Executable), DeleteBehavior.Restrict)]
         public string CompareScript { get; set; }
 
         /// <summary>
         /// 比较参数
         /// </summary>
-        [Property(IsUnicode = false, MaxLength = 128)]
+        [NonUnicode(MaxLength = 128)]
         public string ComapreArguments { get; set; }
 
         /// <summary>

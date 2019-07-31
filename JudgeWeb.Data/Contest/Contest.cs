@@ -16,13 +16,13 @@ namespace JudgeWeb.Data
         /// <summary>
         /// 比赛名称
         /// </summary>
-        [Property(IsRequired = true)]
+        [IsRequired]
         public string Name { get; set; }
 
         /// <summary>
         /// 比赛短名称
         /// </summary>
-        [Property(IsRequired = true)]
+        [IsRequired]
         public string ShortName { get; set; }
 
         /// <summary>

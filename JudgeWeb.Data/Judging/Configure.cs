@@ -15,13 +15,15 @@
         /// 设置名称
         /// </summary>
         [Index]
-        [Property(IsRequired = true, MaxLength = 128, IsUnicode = false)]
+        [IsRequired]
+        [NonUnicode(MaxLength = 128)]
         public string Name { get; set; }
 
         /// <summary>
         /// 设置值
         /// </summary>
-        [Property(IsRequired = true, IsUnicode = false)]
+        [IsRequired]
+        [NonUnicode]
         public string Value { get; set; }
 
         /// <summary>

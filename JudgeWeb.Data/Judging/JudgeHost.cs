@@ -17,7 +17,8 @@ namespace JudgeWeb.Data
         /// 服务器名称
         /// </summary>
         [Index]
-        [Property(IsRequired = true, IsUnicode = false, MaxLength = 64)]
+        [IsRequired]
+        [NonUnicode(MaxLength = 64)]
         public string ServerName { get; set; }
 
         /// <summary>

@@ -28,19 +28,22 @@ namespace JudgeWeb.Data
         /// <summary>
         /// 输入的MD5
         /// </summary>
-        [Property(IsRequired = true, IsUnicode = false, MaxLength = 32)]
+        [IsRequired]
+        [NonUnicode(MaxLength = 32)]
         public string Md5sumInput { get; set; }
 
         /// <summary>
         /// 输出的MD5
         /// </summary>
-        [Property(IsRequired = true, IsUnicode = false, MaxLength = 32)]
+        [IsRequired]
+        [NonUnicode(MaxLength = 32)]
         public string Md5sumOutput { get; set; }
 
         /// <summary>
         /// 输入内容，不大于32MB
         /// </summary>
-        [Property(IsRequired = true, MaxLength = 1 << 25)]
+        [IsRequired]
+        [MaxLength(1 << 25)]
         public byte[] Input { get; set; }
 
         /// <summary>
@@ -51,7 +54,8 @@ namespace JudgeWeb.Data
         /// <summary>
         /// 输出内容，不大于4MB
         /// </summary>
-        [Property(IsRequired = true, MaxLength = 1 << 22)]
+        [IsRequired]
+        [MaxLength(1 << 22)]
         public byte[] Output { get; set; }
 
         /// <summary>
@@ -72,7 +76,8 @@ namespace JudgeWeb.Data
         /// <summary>
         /// 测试点描述
         /// </summary>
-        [Property(IsRequired = true, MaxLength = 1 << 9)]
+        [IsRequired]
+        [MaxLength(1 << 9)]
         public string Description { get; set; }
     }
 }

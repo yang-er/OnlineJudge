@@ -14,42 +14,61 @@ namespace JudgeWeb.Data
             return value != null;
         }
 
-        public static EntityTypeBuilder<T> UseAttributes<T>(this EntityTypeBuilder<T> entity) where T : class
+        public static EntityTypeBuilder<T> UseAttributes<T>(this EntityTypeBuilder<T> entity, bool isMySql) where T : class
         {
             var type = typeof(T);
             var keys = new List<string>();
 
             foreach (var prop in type.GetProperties())
             {
+                var propBuilder = entity.Property(prop.Name);
+
                 if (prop.TryGetAttribute<IgnoreAttribute>(out _))
                     entity.Ignore(prop.Name);
 
-                if (prop.TryGetAttribute<KeyAttribute>(out _))
+                if (prop.TryGetAttribute<KeyAttribute>(out var ka))
+                {
                     keys.Add(prop.Name);
+                    if (ka.ValueGeneratedNever)
+                        propBuilder.ValueGeneratedNever();
+                }
 
                 if (prop.TryGetAttribute<IndexAttribute>(out _))
                     entity.HasIndex(prop.Name);
 
                 if (prop.TryGetAttribute<HasOneWithManyAttribute>(out var fkey))
-                {
                     entity.HasOne(fkey.RelatedTypeName)
                         .WithMany()
                         .HasForeignKey(prop.Name)
                         .OnDelete(fkey.DeleteBehavior);
+
+                if (prop.TryGetAttribute<IsRequiredAttribute>(out _))
+                    propBuilder.IsRequired();
+
+                if (prop.TryGetAttribute<NonUnicodeAttribute>(out var nup))
+                {
+                    propBuilder.IsUnicode(false);
+                    if (nup.MaxLength != -1)
+                        propBuilder.HasMaxLength(nup.MaxLength);
+                    if (nup.MaxLength > 65535 && isMySql)
+                        propBuilder.HasColumnType("TEXT");
                 }
 
-                if (prop.TryGetAttribute<PropertyAttribute>(out var prop2))
+                if (prop.TryGetAttribute<MaxLengthAttribute>(out var mla))
                 {
-                    var prop3 = entity.Property(prop.Name);
-                    if (prop2.IsRequired)
-                        prop3.IsRequired();
-                    if (prop2.IsUnicode == false)
-                        prop3.IsUnicode(false);
-                    if (prop2.MaxLength != -1)
-                        prop3.HasMaxLength(prop2.MaxLength);
-                    if (prop2.ValueGeneratedNever)
-                        prop3.ValueGeneratedNever();
+                    propBuilder.HasMaxLength(mla.MaxLength);
+
+                    if (mla.MaxLength > 65535 && isMySql)
+                    {
+                        if (prop.PropertyType == typeof(string))
+                            propBuilder.HasColumnType("TEXT");
+                        else if (prop.PropertyType == typeof(byte[]))
+                            propBuilder.HasColumnType("BLOB");
+                    }
                 }
+
+                if (isMySql && prop.PropertyType == typeof(bool))
+                    propBuilder.HasColumnType("bit");
             }
 
             if (keys.Count > 0)
@@ -58,11 +77,6 @@ namespace JudgeWeb.Data
             }
 
             return entity;
-        }
-
-        public static ModelBuilder Entity2<T>(this ModelBuilder modelBuilder) where T : class
-        {
-            return modelBuilder.Entity<T>(entity => entity.UseAttributes());
         }
     }
 }

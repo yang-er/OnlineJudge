@@ -24,7 +24,8 @@ namespace JudgeWeb.Data
         /// <summary>
         /// 短名称
         /// </summary>
-        [Property(IsRequired = true, IsUnicode = false, MaxLength = 10)]
+        [IsRequired]
+        [NonUnicode(MaxLength = 10)]
         public string ShortName { get; set; }
 
         /// <summary>
@@ -46,7 +47,7 @@ namespace JudgeWeb.Data
         /// <summary>
         /// 气球颜色
         /// </summary>
-        [Property(IsRequired = true)]
+        [IsRequired]
         public string Color { get; set; }
 
         /// <summary>

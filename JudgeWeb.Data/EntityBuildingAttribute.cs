@@ -10,19 +10,33 @@ namespace JudgeWeb.Data
     internal class IgnoreAttribute : Attribute { }
 
     [AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
-    internal class PropertyAttribute : Attribute
+    internal class IsRequiredAttribute : Attribute { }
+
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
+    internal class ValueGeneratedNeverAttribute : Attribute { }
+
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
+    internal class NonUnicodeAttribute : Attribute
     {
-        public bool IsRequired { get; set; }
-
         public int MaxLength { get; set; } = -1;
-
-        public bool IsUnicode { get; set; } = true;
-
-        public bool ValueGeneratedNever { get; set; }
     }
 
     [AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
-    internal class KeyAttribute : Attribute { }
+    internal class MaxLengthAttribute : Attribute
+    {
+        public int MaxLength { get; } = -1;
+
+        public MaxLengthAttribute(int maxLength)
+        {
+            MaxLength = maxLength;
+        }
+    }
+
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
+    internal class KeyAttribute : Attribute
+    {
+        public bool ValueGeneratedNever { get; set; }
+    }
 
     [AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
     internal class HasOneWithManyAttribute : Attribute

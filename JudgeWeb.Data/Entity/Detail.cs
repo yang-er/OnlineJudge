@@ -45,13 +45,13 @@ namespace JudgeWeb.Data
         /// <summary>
         /// 系统输出，以BASE64编码
         /// </summary>
-        [Property(IsUnicode = false, MaxLength = 131072)]
+        [NonUnicode(MaxLength = 131072)]
         public string OutputSystem { get; set; }
 
         /// <summary>
         /// 比较脚本输出，以BASE64编码
         /// </summary>
-        [Property(IsUnicode = false, MaxLength = 131072)]
+        [NonUnicode(MaxLength = 131072)]
         public string OutputDiff { get; set; }
     }
 }

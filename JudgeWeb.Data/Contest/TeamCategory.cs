@@ -14,13 +14,13 @@
         /// <summary>
         /// 分组名称
         /// </summary>
-        [Property(IsRequired = true)]
+        [IsRequired]
         public string Name { get; set; }
 
         /// <summary>
         /// 分组颜色
         /// </summary>
-        [Property(IsRequired = true)]
+        [IsRequired]
         public string Color { get; set; }
 
         /// <summary>

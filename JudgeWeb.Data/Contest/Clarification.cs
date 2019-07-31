@@ -62,7 +62,7 @@ namespace JudgeWeb.Data
         /// <summary>
         /// 提问正文
         /// </summary>
-        [Property(IsRequired = true)]
+        [IsRequired]
         public string Body { get; set; }
 
         /// <summary>
