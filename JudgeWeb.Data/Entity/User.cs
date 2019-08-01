@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using System;
 
 namespace JudgeWeb.Data
 {
@@ -26,5 +27,10 @@ namespace JudgeWeb.Data
         /// </summary>
         [PersonalData]
         public string NickName { get; set; }
+
+        /// <summary>
+        /// 注册时间
+        /// </summary>
+        public DateTimeOffset? RegisterTime { get; set; }
     }
 }

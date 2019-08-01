@@ -67,7 +67,7 @@ namespace JudgeWeb.Data
                     }
                 }
 
-                if (isMySql && prop.PropertyType == typeof(bool))
+                if (isMySql && (prop.PropertyType == typeof(bool) || prop.PropertyType == typeof(bool?)))
                     propBuilder.HasColumnType("bit");
             }
 

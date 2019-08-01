@@ -113,6 +113,9 @@ namespace JudgeWeb.Data
             modelBuilder.Entity<Testcase>()
                 .UseAttributes(isMySql);
 
+            modelBuilder.Entity<User>()
+                .UseAttributes(isMySql);
+
             modelBuilder.Query<SubmissionStatistics>();
             modelBuilder.Query<ContestTestcase>();
         }
