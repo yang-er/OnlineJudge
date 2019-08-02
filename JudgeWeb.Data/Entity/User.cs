@@ -29,6 +29,12 @@ namespace JudgeWeb.Data
         public string NickName { get; set; }
 
         /// <summary>
+        /// 签名档
+        /// </summary>
+        [PersonalData]
+        public string Plan { get; set; }
+
+        /// <summary>
         /// 注册时间
         /// </summary>
         public DateTimeOffset? RegisterTime { get; set; }

@@ -244,6 +244,7 @@ namespace JudgeWeb.Areas.Account.Controllers
                 PhoneNumber = user.PhoneNumber,
                 IsEmailConfirmed = user.EmailConfirmed,
                 StatusMessage = StatusMessage,
+                Plan = user.Plan,
             };
 
             return View(model);
@@ -270,9 +271,13 @@ namespace JudgeWeb.Areas.Account.Controllers
 
             if (string.IsNullOrEmpty(model.NickName))
                 model.NickName = null;
+            if (string.IsNullOrEmpty(model.Plan))
+                model.Plan = null;
 
             if (user.NickName != model.NickName)
                 user.NickName = model.NickName;
+            if (user.Plan != model.Plan)
+                user.Plan = model.Plan;
 
             var email = user.Email;
             if (model.Email != email)

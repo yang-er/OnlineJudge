@@ -19,6 +19,10 @@
                 <input asp-for="NickName" class="form-control" />
             </div>
             <div class="form-group">
+                <label asp-for="Plan"></label>
+                <input asp-for="Plan" class="form-control" />
+            </div>
+            <div class="form-group">
                 <label asp-for="Email"></label>
                 @if (Model.IsEmailConfirmed)
                 {

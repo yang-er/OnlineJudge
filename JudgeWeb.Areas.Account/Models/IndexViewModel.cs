@@ -10,6 +10,10 @@ namespace JudgeWeb.Areas.Account.Models
         [Display(Name = "Nick name")]
         public string NickName { get; set; }
 
+        [DataType(DataType.Text)]
+        [Display(Name = "Plan")]
+        public string Plan { get; set; }
+
         public bool IsEmailConfirmed { get; set; }
 
         [Required]
