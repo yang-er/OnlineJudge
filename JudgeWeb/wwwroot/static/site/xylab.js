@@ -46,12 +46,17 @@ function showWindow(handlekey, geturl) {
 
 function notice(text, type, header) {
     type = type || "info";
-    if (header) {
-        $("#notification-box").append('<div class="alert alert-' + type + ' new-add fade" role="alert"><h4 class="alert-heading">' + header + '<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button></h4><p class="mb-0">' + text + '</p></div>');
-    } else {
-        $("#notification-box").append('<div class="alert alert-' + type + ' new-add fade" role="alert">' + text + '<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button></div>');
-    }
-    $("#notification-box .new-add").removeClass("new-add").addClass("show");
+    header = header || "小羊实验室";
+
+    $('#notification-box').append(
+        '<div class="toast new-add" data-autohide="false" role="alert" aria-live="assertive" aria-atomic="true">'
+        + '<div class="toast-header"><div class="rounded mr-2 text-' + type + '">•</div>'
+        + '<strong class="mr-auto">' + header + '</strong>'
+        + '<small class="text-muted">just now</small>'
+        + '<button type="button" class="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close">'
+        + '<span aria-hidden="true">&times;</span></button>'
+        + '</div><div class="toast-body">' + text + '</div></div>');
+    $('#notification-box .new-add').removeClass('new-add').toast('show');
 }
 
 function ajaxpost(Form, handlekey, parent, arg2) {
@@ -116,7 +121,7 @@ function initXylabFunctions() {
 	});
 
 	// custom-file-input
-	$('body').on('change', '.custom-file-input', function () {
+	$body.on('change', '.custom-file-input', function () {
 		var files = this.files;
 		var fileNames = [];
 		for (var i = 0; i < files.length; i++) {
@@ -124,7 +129,12 @@ function initXylabFunctions() {
 		}
 		$(this).next('.custom-file-label').html(fileNames.join(", "));
 		$(this).next('.custom-file-label').removeClass('text-muted');
-	});
+    });
+
+    // toasts
+    $body.on('hidden.bs.toast', '.toast', function () {
+        $(this).remove();
+    });
 
 	// katex-src inline
 	$('span.katex-src').each(function() {
