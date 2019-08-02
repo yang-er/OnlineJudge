@@ -1,7 +1,6 @@
-﻿using JudgeWeb.Data;
-using JudgeWeb.Areas.Judge.Models;
+﻿using JudgeWeb.Areas.Judge.Models;
+using JudgeWeb.Data;
 using JudgeWeb.Features;
-using Markdig;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -29,11 +28,15 @@ namespace JudgeWeb.Areas.Judge.Controllers
         {
             if (ppid == "add")
             {
-                var probcnt = await DbContext.Problems.CountAsync();
+                var probcnt = await DbContext.Problems
+                    .OrderByDescending(p => p.ProblemId)
+                    .Select(p => new { p.ProblemId })
+                    .FirstOrDefaultAsync();
+                probcnt = probcnt ?? new { ProblemId = 999 };
 
                 var model = new Problem
                 {
-                    ProblemId = probcnt + 1001,
+                    ProblemId = probcnt.ProblemId + 1,
                     Source = "",
                     CompareScript = "compare",
                     RunScript = "run",
@@ -144,7 +147,7 @@ namespace JudgeWeb.Areas.Judge.Controllers
 
                 var samples = await DbContext.Testcases
                     .Where(t => !t.IsSecret && t.ProblemId == pid)
-                    .Select(t => new { t.Input, t.Output })
+                    .Select(t => new { t.TestcaseId })
                     .ToListAsync();
 
                 if (samples.Count > 0)
@@ -153,8 +156,10 @@ namespace JudgeWeb.Areas.Judge.Controllers
 
                     foreach (var item in samples)
                     {
-                        var _in = Encoding.UTF8.GetString(item.Input);
-                        var _out = Encoding.UTF8.GetString(item.Output);
+                        var input = await IoContext.ReadBinaryAsync($"p{pid}", $"t{item.TestcaseId}.in");
+                        var output = await IoContext.ReadBinaryAsync($"p{pid}", $"t{item.TestcaseId}.out");
+                        var _in = Encoding.UTF8.GetString(input);
+                        var _out = Encoding.UTF8.GetString(output);
                         htmlBuilder.AppendLine("<div class=\"samp\">");
 
                         if (!string.IsNullOrEmpty(_in))

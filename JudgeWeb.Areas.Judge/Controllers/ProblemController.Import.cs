@@ -69,10 +69,8 @@ namespace JudgeWeb.Areas.Judge.Controllers
                         var output = Encoding.UTF8.GetBytes(test.t.Output);
                         var outputHash = output.ToMD5().ToHexDigest(true);
 
-                        DbContext.Testcases.Add(new Testcase
+                        var tcc = DbContext.Testcases.Add(new Testcase
                         {
-                            Input = input,
-                            Output = output,
                             InputLength = input.Length,
                             OutputLength = output.Length,
                             Point = test.t.Point,
@@ -85,6 +83,9 @@ namespace JudgeWeb.Areas.Judge.Controllers
                         });
 
                         await DbContext.SaveChangesAsync();
+
+                        await IoContext.WriteBinaryAsync($"p{probId}", $"t{tcc.Entity.TestcaseId}.in", input);
+                        await IoContext.WriteBinaryAsync($"p{probId}", $"t{tcc.Entity.TestcaseId}.out", output);
                     }
 
                     DbContext.AuditLogs.Add(new AuditLog

@@ -1,4 +1,5 @@
-﻿using JudgeWeb.Data;
+﻿using EntityFrameworkCore.Cacheable;
+using JudgeWeb.Data;
 using JudgeWeb.Features.Storage;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -11,7 +12,7 @@ namespace JudgeWeb.Areas.Judge.Controllers
     [Route("[area]/[controller]/[action]")]
     public partial class ProblemController : Controller2
     {
-        const int itemsPerPage = 30;
+        const int itemsPerPage = 50;
         const string privilege = "Administrator,Problem";
 
         private AppDbContext DbContext { get; }
@@ -34,9 +35,18 @@ namespace JudgeWeb.Areas.Judge.Controllers
         public async Task<IActionResult> List(int pg = 1)
         {
             if (pg < 1) pg = 1;
+            ViewBag.Page = pg;
+
+            var list = DbContext.Problems
+                .OrderByDescending(p => p.ProblemId)
+                .Select(p => new { p.ProblemId })
+                .Cacheable(System.TimeSpan.FromMinutes(5))
+                .FirstOrDefault();
+            ViewBag.TotalPage = ((list?.ProblemId ?? 1000) - 1000) / itemsPerPage + 1;
+
             var query = DbContext.Problems
-                .Where(p => p.ProblemId <= 1000 + pg * itemsPerPage
-                    && p.ProblemId > 970 + pg * itemsPerPage);
+                .Where(p => p.ProblemId < 1000 + pg * itemsPerPage
+                    && p.ProblemId >= 1000 + (pg - 1) * itemsPerPage);
             if (!User.IsInRoles(privilege))
                 query = query.Where(p => p.Flag == 0);
             var probs = await query.OrderBy(p => p.ProblemId).ToListAsync();

@@ -14,19 +14,18 @@ namespace JudgeWeb.Areas.Judge.Controllers
     {
         [Authorize(Roles = privilege)]
         [HttpGet("{pid}/{tid}/{filetype}")]
-        public async Task<IActionResult> Testcase(int pid, int tid, string filetype)
+        public IActionResult Testcase(int pid, int tid, string filetype)
         {
-            var testcase = DbContext.Testcases
-                .Where(t => t.TestcaseId == tid && t.ProblemId == pid);
-
-            IQueryable<byte[]> file = null;
-            if (filetype == "input") file = testcase.Select(t => t.Input);
-            else if (filetype == "output") file = testcase.Select(t => t.Output);
+            if (filetype == "input") filetype = "in";
+            else if (filetype == "output") filetype = "out";
             else return NotFound();
-            var content = await file.FirstOrDefaultAsync();
-            if (content is null) return NotFound();
 
-            return File(content, "application/octet-stream", $"p{pid}.t{tid}.{filetype.Replace("put", "")}", false);
+            if (IoContext.ExistPart($"p{pid}", $"t{tid}.{filetype}"))
+                return ContentFile(
+                    $"Problems/p{pid}/t{tid}.{filetype}",
+                    "application/octet-stream",
+                    $"p{pid}.t{tid}.{filetype}");
+            return NotFound();
         }
 
         [HttpPost("{pid}/{ttid}")]
@@ -44,8 +43,6 @@ namespace JudgeWeb.Areas.Judge.Controllers
 
                     var tc = DbContext.Testcases.Add(new Testcase
                     {
-                        Input = input.Item1,
-                        Output = output.Item1,
                         ProblemId = pid,
                         Rank = rank + 1,
                         Description = model.Description,
@@ -57,6 +54,9 @@ namespace JudgeWeb.Areas.Judge.Controllers
                     });
 
                     await DbContext.SaveChangesAsync();
+
+                    await IoContext.WriteBinaryAsync($"p{pid}", $"t{tc.Entity.TestcaseId}.in", input.Item1);
+                    await IoContext.WriteBinaryAsync($"p{pid}", $"t{tc.Entity.TestcaseId}.out", output.Item1);
 
                     DbContext.AuditLogs.Add(new AuditLog
                     {
@@ -90,17 +90,17 @@ namespace JudgeWeb.Areas.Judge.Controllers
                     if (model.InputContent != null)
                     {
                         var tc = await model.InputContent.ReadAsync();
-                        last.Input = tc.Item1;
                         last.Md5sumInput = tc.Item2;
                         last.InputLength = tc.Item1.Length;
+                        await IoContext.WriteBinaryAsync($"p{pid}", $"t{tid}.in", tc.Item1);
                     }
 
                     if (model.OutputContent != null)
                     {
                         var tc = await model.OutputContent.ReadAsync();
-                        last.Output = tc.Item1;
                         last.Md5sumOutput = tc.Item2;
                         last.OutputLength = tc.Item1.Length;
+                        await IoContext.WriteBinaryAsync($"p{pid}", $"t{tid}.out", tc.Item1);
                     }
 
                     last.Description = model.Description ?? last.Description;

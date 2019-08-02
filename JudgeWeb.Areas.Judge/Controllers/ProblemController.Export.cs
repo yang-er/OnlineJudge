@@ -48,17 +48,20 @@ namespace JudgeWeb.Areas.Judge.Controllers
 
                 var tcs = await DbContext.Testcases
                     .Where(t => t.ProblemId == pid)
-                    .Select(t => new { t.IsSecret, t.Input, t.Output, t.Description, t.Point })
+                    .Select(t => new { t.TestcaseId, t.IsSecret, t.Description, t.Point })
                     .ToListAsync();
 
                 foreach (var tc in tcs)
                 {
                     var target = tc.IsSecret ? xmlObj.TestCases : xmlObj.Samples;
+                    var input = await IoContext.ReadBinaryAsync($"p{pid}", $"t{tc.TestcaseId}.in");
+                    var output = await IoContext.ReadBinaryAsync($"p{pid}", $"t{tc.TestcaseId}.out");
+
                     target.Add(new TestCase
                     (
                         tc.Description,
-                        Encoding.UTF8.GetString(tc.Input),
-                        Encoding.UTF8.GetString(tc.Output),
+                        Encoding.UTF8.GetString(input),
+                        Encoding.UTF8.GetString(output),
                         tc.Point
                     ));
                 }

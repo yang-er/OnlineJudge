@@ -58,19 +58,35 @@
         </tbody>
         <tfoot>
             <tr>
+                <td colspan="@(User.IsInRoles("Administrator,Problem") ? 2 : 3)">
+                    <ul class="pagination pagination-sm">
+                        <li class="page-item disabled">
+                            <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Page</a>
+                        </li>
+                        @for (int i = 1; i <= ViewBag.TotalPage; i++)
+                        {
+                            if (i == ViewBag.Page)
+                            {
+                                <li class="page-item active" aria-current="page">
+                                    <span class="page-link">
+                                        @i
+                                        <span class="sr-only">(current)</span>
+                                    </span>
+                                </li>
+                            }
+                            else
+                            {
+                                <li class="page-item">
+                                    <a class="page-link" asp-action="List" asp-route-pg="@i">@i</a>
+                                </li>
+                            }
+                        }
+                    </ul>
+                </td>
                 @if (User.IsInRoles("Administrator,Problem"))
                 {
-                    <td colspan="2">
-                        Page 1
-                    </td>
                     <td>
                         <a asp-action="Import" data-toggle="ajaxWindow" data-target="restore" class="bowtie text-dark"><i class="bowtie-tfvc-pull-request"></i> Import</a>
-                    </td>
-                }
-                else
-                {
-                    <td colspan="3">
-                        Page 1
                     </td>
                 }
             </tr>

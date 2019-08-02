@@ -56,5 +56,14 @@ namespace JudgeWeb.Features.Storage
             var forFile = $"{_ctx}/{backstore}/{targetFile}";
             return File.WriteAllBytesAsync(forFile, content);
         }
+
+        public Task<byte[]> ReadBinaryAsync(string backstore, string targetFile)
+        {
+            EnsureDirectoryExists(backstore);
+            var forFile = $"{_ctx}/{backstore}/{targetFile}";
+            if (File.Exists(forFile))
+                return File.ReadAllBytesAsync(forFile);
+            return Task.FromResult<byte[]>(null);
+        }
     }
 }

@@ -40,23 +40,9 @@ namespace JudgeWeb.Data
         public string Md5sumOutput { get; set; }
 
         /// <summary>
-        /// 输入内容，不大于32MB
-        /// </summary>
-        [IsRequired]
-        [MaxLength(1 << 25)]
-        public byte[] Input { get; set; }
-
-        /// <summary>
         /// 输入长度
         /// </summary>
         public int InputLength { get; set; }
-
-        /// <summary>
-        /// 输出内容，不大于4MB
-        /// </summary>
-        [IsRequired]
-        [MaxLength(1 << 22)]
-        public byte[] Output { get; set; }
 
         /// <summary>
         /// 输出长度

@@ -1,7 +1,9 @@
 ﻿using JudgeWeb.Areas.Api.Models;
 using JudgeWeb.Data;
+using JudgeWeb.Features.Storage;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -105,18 +107,24 @@ namespace JudgeWeb.Areas.Api.Controllers
         [HttpGet("/[area]/[controller]/{tcid}/[action]/{filetype}")]
         public async Task<IActionResult> File(int tcid, string filetype)
         {
-            // TODO: 将测试样例缓存在本地磁盘
-            var tcQuery = DbContext.Testcases
-                .Where(tc => tc.TestcaseId == tcid);
+            var tcq = await DbContext.Testcases
+                .Where(tc => tc.TestcaseId == tcid)
+                .Select(tc => new { pid = tc.ProblemId })
+                .FirstOrDefaultAsync();
 
-            IQueryable<byte[]> bytesQuery;
+            if (tcq is null) return NotFound();
+
             if (filetype == "input")
-                bytesQuery = tcQuery.Select(t => t.Input);
+                filetype = "in";
             else if (filetype == "output")
-                bytesQuery = tcQuery.Select(t => t.Output);
+                filetype = "out";
             else return BadRequest();
 
-            var bytes = await bytesQuery.FirstOrDefaultAsync();
+            var io = HttpContext.RequestServices
+                .GetRequiredService<IFileRepository>();
+            io.SetContext("Problems");
+
+            var bytes = await io.ReadBinaryAsync($"p{tcq.pid}", $"t{tcid}.{filetype}");
             if (bytes is null) return NotFound();
             var base64encoded = Convert.ToBase64String(bytes);
             return Json(base64encoded);

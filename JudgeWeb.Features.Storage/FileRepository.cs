@@ -8,6 +8,8 @@ namespace JudgeWeb.Features.Storage
 
         Task<string> ReadPartAsync(string backstore, string targetFile);
 
+        Task<byte[]> ReadBinaryAsync(string backstore, string targetFile);
+
         Task WritePartAsync(string backstore, string targetFile, string content);
 
         Task WriteBinaryAsync(string backstore, string targetFile, byte[] content);
