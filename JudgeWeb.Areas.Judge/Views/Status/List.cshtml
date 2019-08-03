@@ -29,20 +29,20 @@
             @foreach (var item in Model)
             {
                 <tr>
-                    <th scope="row">@(item.Submission.SubmissionId)</th>
-                    <td>@Html.CstTime(item.Submission.Time.DateTime)</td>
-                    <td><verdict target="StatusText" value="@item.Grade.Status" /></td>
-                    <td><a asp-area="Judge" asp-controller="Problem" asp-action="View" asp-route-pid="@item.Submission.ProblemId">@item.Submission.ProblemId</a></td>
-                    <td>@(item.Grade.ExecuteTime)ms</td>
-                    <td>@(item.Grade.ExecuteMemory)k</td>
+                    <th scope="row">@(item.SubmissionId)</th>
+                    <td>@Html.CstTime(item.Time.DateTime)</td>
+                    <td><verdict target="StatusText" value="@item.Status" /></td>
+                    <td><a asp-area="Judge" asp-controller="Problem" asp-action="View" asp-route-pid="@item.ProblemId">@item.ProblemId</a></td>
+                    <td>@(item.ExecuteTime)ms</td>
+                    <td>@(item.ExecuteMemory)k</td>
                     <td>
-                        @if (enableAll || item.Submission.Author == uid)
+                        @if (enableAll || item.Author == uid)
                         {
-                            <a asp-action="View" asp-route-id="@item.Submission.SubmissionId">@(item.Submission.CodeLength)B</a>
+                            <a asp-action="View" asp-route-id="@item.SubmissionId">@(item.CodeLength)B</a>
                         }
                         else
                         {
-                            @(item.Submission.CodeLength + "B")
+                            @(item.CodeLength + "B")
                         }
                     </td>
                     <td>@item.Language</td>
@@ -53,7 +53,7 @@
                         }
                         else
                         {
-                            <a asp-area="Account" asp-controller="Profile" asp-action="View" asp-route-uid="@item.Submission.Author">@item.UserName</a>
+                            <a asp-area="Account" asp-controller="Profile" asp-action="View" asp-route-uid="@item.Author">@item.UserName</a>
                         }
                     </td>
                 </tr>

@@ -207,8 +207,14 @@ namespace JudgeWeb.Areas.Judge.Controllers
                 .Select(a =>
                     new StatusListModel
                     {
-                        Grade = a.g,
-                        Submission = a.s,
+                        Author = a.s.Author,
+                        CodeLength = a.s.CodeLength,
+                        ProblemId = a.s.ProblemId,
+                        ExecuteMemory = a.g.ExecuteMemory,
+                        ExecuteTime = a.g.ExecuteTime,
+                        Status = a.g.Status,
+                        SubmissionId = a.s.SubmissionId,
+                        Time = a.s.Time,
                         Language = a.l.Name,
                         UserName = a.u == null
                                  ? null
