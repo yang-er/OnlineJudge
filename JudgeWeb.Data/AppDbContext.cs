@@ -116,6 +116,25 @@ namespace JudgeWeb.Data
             modelBuilder.Entity<User>()
                 .UseAttributes(isMySql);
 
+            if (isMySql)
+            {
+                modelBuilder.Entity<IdentityUserLogin<int>>()
+                    .Property(e => e.LoginProvider)
+                        .HasMaxLength(255);
+                modelBuilder.Entity<IdentityUserLogin<int>>()
+                    .Property(e => e.ProviderKey)
+                        .HasMaxLength(255);
+                modelBuilder.Entity<IdentityUserToken<int>>()
+                    .Property(e => e.LoginProvider)
+                        .HasMaxLength(255);
+                modelBuilder.Entity<IdentityUserToken<int>>()
+                    .Property(e => e.Name)
+                        .HasMaxLength(255);
+                modelBuilder.Entity<Executable>()
+                    .Property(e => e.ZipFile)
+                        .HasColumnType("BLOB");
+            }
+
             modelBuilder.Query<SubmissionStatistics>();
             modelBuilder.Query<ContestTestcase>();
         }
