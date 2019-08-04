@@ -374,6 +374,19 @@ namespace JudgeWeb.Areas.Contest.Services
                 .FirstOrDefault();
         }
 
+        public IEnumerable<(Verdict, DateTimeOffset)> GetStatistics()
+        {
+            var query =
+                from s in DbContext.Submissions
+                join g in DbContext.Judgings
+                    on new { s.SubmissionId, Active = true }
+                    equals new { g.SubmissionId, g.Active }
+                select new { s.Time, g.Status };
+
+            return query.Cacheable(TimeSpan.FromMinutes(1))
+                .ToList().Select(a => (a.Status, a.Time));
+        }
+
         public IEnumerable<JuryListSubmissionModel> GetSubmissions(int? teamid = null)
         {
             var cid = ContestId;

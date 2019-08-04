@@ -1,7 +1,7 @@
 ﻿@model JuryDeleteTeamModel
 @{ Layout = null; }
 
-<form asp-action="TeamDelete" method="post" onsubmit="ajaxpost(this,'@ViewData["HandleKey2"]','@ViewData["HandleKey"]');return false">
+<form asp-action="Delete" method="post" onsubmit="ajaxpost(this,'@ViewData["HandleKey2"]','@ViewData["HandleKey"]');return false">
     <input type="hidden" asp-for="ToDelete" />
     <div class="modal fade" id="modal-@ViewData["HandleKey"]" tabindex="-1" role="dialog" aria-labelledby="modal-@ViewData["HandleKey"]-label" aria-hidden="true">
         <div class="modal-dialog" role="document">

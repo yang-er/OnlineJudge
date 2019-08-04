@@ -44,7 +44,7 @@
 
 <h2 class="mt-3">Clarifications</h2>
 <partial name="_StatusMessage" model="Model.MessageInfo" />
-<p><a asp-route-teamto="-1">Send Clarification</a></p>
+<p><a asp-action="Send" asp-route-teamto="-1">Send Clarification</a></p>
 <p><a href="#newrequests">View New Clarification Requests</a></p>
 <p><a href="#oldrequests">View Old Clarification Requests</a></p>
 <p><a href="#clarifications">View General Clarifications</a></p>
@@ -70,7 +70,7 @@
             {
                 var prob = Model.Problems.FirstOrDefault(c => c.ProblemId == clar.ProblemId);
                 var toClaim = clar.JuryMember != Model.JuryName && clar.JuryMember != null;
-                <tr asp-route-clarid="@clar.ClarificationId" data-toggle="gotoUrl">
+                <tr asp-action="Clarification" asp-route-clarid="@clar.ClarificationId" data-toggle="gotoUrl">
                     <td use-a>@clar.ClarificationId</td>
                     <td use-a>@clar.SubmitTime.ToString("HH:mm")</td>
                     <td use-a class="force-width">@clar.TeamName</td>
@@ -85,7 +85,7 @@
                         }
                         else
                         {
-                            <a asp-action="ClarificationClaim" asp-route-clarid="@clar.ClarificationId" asp-route-claim="@(clar.JuryMember == null)" data-toggle="ajaxWindow" data-target="claimClaris" class="btn d-block btn-sm btn-outline-success">@(clar.JuryMember == null ? "claim" : "unclaim")</a>
+                            <a asp-action="Claim" asp-route-clarid="@clar.ClarificationId" asp-route-claim="@(clar.JuryMember == null)" data-toggle="ajaxWindow" data-target="claimClaris" class="btn d-block btn-sm btn-outline-success">@(clar.JuryMember == null ? "claim" : "unclaim")</a>
                         }
                     </td>
                 </tr>
@@ -114,7 +114,7 @@
             @foreach (var clar in Model.OldRequests)
             {
                 var prob = Model.Problems.FirstOrDefault(c => c.ProblemId == clar.ProblemId);
-                <tr asp-route-clarid="@clar.ClarificationId" data-toggle="gotoUrl">
+                <tr asp-action="Clarification" asp-route-clarid="@clar.ClarificationId" data-toggle="gotoUrl">
                     <td use-a>@clar.ClarificationId</td>
                     <td use-a>@clar.SubmitTime.ToString("HH:mm")</td>
                     <td use-a class="force-width">@clar.TeamName</td>
@@ -149,7 +149,7 @@
             @foreach (var clar in Model.GeneralClarifications)
             {
                 var prob = Model.Problems.FirstOrDefault(c => c.ProblemId == clar.ProblemId);
-                <tr asp-route-clarid="@clar.ClarificationId" data-toggle="gotoUrl">
+                <tr asp-action="Clarification" asp-route-clarid="@clar.ClarificationId" data-toggle="gotoUrl">
                     <td use-a>@clar.ClarificationId</td>
                     <td use-a>@clar.SubmitTime.ToString("HH:mm")</td>
                     <td use-a>Jury</td>

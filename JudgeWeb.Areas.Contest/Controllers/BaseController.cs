@@ -57,6 +57,8 @@ namespace JudgeWeb.Areas.Contest.Controllers
 
         protected virtual IActionResult BeforeActionExecuting() => null;
 
+        protected virtual bool EnableScoreboard => true;
+
         protected virtual (bool showPublic, bool isJury) ScoreboardChooseStrategy()
         {
             bool showPublic = true;
@@ -74,6 +76,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
             [FromQuery(Name = "categories[]")] int[] categories,
             [FromQuery(Name = "clear")] string clear = "")
         {
+            if (!EnableScoreboard) return NotFound();
             var (showPublic, isJury) = ScoreboardChooseStrategy();
             var cont = Service.GetTotalBoard(showPublic, isJury);
 

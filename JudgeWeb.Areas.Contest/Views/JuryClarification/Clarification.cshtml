@@ -50,7 +50,7 @@
                             From:
                             @if (item.Sender.HasValue)
                             {
-                                <a asp-action="Team" asp-route-teamid="@item.Sender">@item.TeamName (t@(item.Sender))</a>
+                                <a asp-controller="JuryTeam" asp-action="Team" asp-route-teamid="@item.Sender">@item.TeamName (t@(item.Sender))</a>
                             }
                             else
                             {
@@ -71,7 +71,7 @@
                             To:
                             @if (item.Recipient.HasValue)
                             {
-                                <a asp-action="Team" asp-route-teamid="@item.Recipient">@item.TeamName (t@(item.Recipient))</a>
+                                <a asp-controller="JuryTeam" asp-action="Team" asp-route-teamid="@item.Recipient">@item.TeamName (t@(item.Recipient))</a>
                             }
                             else if (item.Sender.HasValue)
                             {
@@ -107,7 +107,7 @@
             </div>
 
             <div class="col-sm text-center">
-                <a asp-action="ClarificationClaim"
+                <a asp-action="Claim"
                    asp-route-clarid="@Model.Main.ClarificationId"
                    asp-route-claim="@(claim)"
                    data-toggle="ajaxWindow" data-target="claimClaris"
@@ -118,7 +118,7 @@
             </div>
 
             <div class="col-sm text-right">
-                <a asp-action="ClarificationSetAnswered"
+                <a asp-action="SetAnswered"
                    asp-route-clarid="@Model.Main.ClarificationId"
                    asp-route-answered="@(!Model.Main.Answered)"
                    data-toggle="ajaxWindow" data-target="setAnswered"
@@ -136,7 +136,7 @@
     <div class="card">
         <div class="card-header">Send clarification</div>
         <div class="card-body">
-            <partial name="ClarificationSend" model="model2" />
+            <partial name="Send" model="model2" />
         </div>
     </div>
 </div>

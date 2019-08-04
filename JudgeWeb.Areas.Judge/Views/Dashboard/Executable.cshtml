@@ -1,5 +1,4 @@
-﻿@model IEnumerable<ExecutableInfoModel>
-
+﻿@model IEnumerable<Executable>
 @{
     ViewData["Title"] = "Dashboard";
 }
@@ -23,7 +22,7 @@
                     <td class="pr-2"><a class="text-dark" asp-action="Executable" asp-route-target="@exec.ExecId">@exec.ExecId</a></td>
                     <td class="pr-2">@exec.Type</td>
                     <td class="pr-2">@exec.Description</td>
-                    <td>@Html.NiceByteSize(exec.ZipLength)</td>
+                    <td>@Html.NiceByteSize(exec.ZipSize)</td>
                 </tr>
             }
         </tbody>

@@ -16,7 +16,7 @@
     <h1>Send Clarification</h1>
 }
 
-<form asp-action="ClarificationSend" method="post" id="sendclar" onsubmit="return confirmClar();">
+<form asp-action="Send" asp-route-teamto="" method="post" id="sendclar" onsubmit="return confirmClar();">
 
     @if (ViewData.ContainsKey("ReplyTo"))
     {

@@ -40,9 +40,9 @@
 </div>
 
 <p>
-    <a asp-action="Team" asp-route-teamid="@Model.Team.TeamId" asp-route-act="edit" data-toggle="ajaxWindow" data-target="editTeam" class="btn btn-primary" title="Edit"><i class="fas fa-edit"></i>&nbsp;Edit</a>
-    <a asp-action="Team" asp-route-teamid="@Model.Team.TeamId" asp-route-act="delete" data-toggle="ajaxWindow" data-target="deleteTeam" class="btn btn-danger" title="Delete"><i class="fas fa-trash-alt"></i>&nbsp;Delete</a>
-    <a asp-action="Clarification" asp-route-teamto="@Model.Team.TeamId" class="btn btn-secondary" title="Send message"><i class="fas fa-envelope"></i>&nbsp;Send message</a>
+    <a asp-action="Edit" asp-route-teamid="@Model.Team.TeamId" data-toggle="ajaxWindow" data-target="editTeam" class="btn btn-primary" title="Edit"><i class="fas fa-edit"></i>&nbsp;Edit</a>
+    <a asp-action="Delete" asp-route-teamid="@Model.Team.TeamId" data-toggle="ajaxWindow" data-target="deleteTeam" class="btn btn-danger" title="Delete"><i class="fas fa-trash-alt"></i>&nbsp;Delete</a>
+    <a asp-controller="JuryClarification" asp-action="Send" asp-route-teamto="@Model.Team.TeamId" class="btn btn-secondary" title="Send message"><i class="fas fa-envelope"></i>&nbsp;Send message</a>
 </p>
 
 <h3>Score</h3>

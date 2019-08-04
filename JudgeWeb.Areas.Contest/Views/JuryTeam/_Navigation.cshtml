@@ -2,14 +2,14 @@
 
 <ul class="navbar-nav mr-auto">
     <li class="nav-item">
-        <a class="nav-link" active-act="Home" asp-action="Home">
+        <a class="nav-link" asp-controller="Jury" asp-action="Home">
             <i class="fas fa-home d-md-none"></i>
             Home
         </a>
     </li>
 
     <li class="nav-item">
-        <a class="nav-link" asp-controller="JuryTeam" asp-action="Teams" id="menu_teams">
+        <a class="nav-link active" asp-route-teamid="" asp-route-act="" asp-action="Teams" id="menu_teams">
             <i class="fas fa-address-book d-md-none"></i>
             Teams
             <span class="badge badge-warning" id="num-alerts-teams">@ViewBag.ptc</span>
@@ -25,13 +25,13 @@
     </li>
 
     <li class="nav-item">
-        <a class="nav-link" active-act="Submission" asp-route-sid="" asp-route-gid="" asp-action="Submission">
+        <a class="nav-link" asp-controller="Jury" asp-action="Submission">
             <i class="fas fa-file-code d-md-none"></i>
             Submissions
         </a>
     </li>
     <li class="nav-item">
-        <a class="nav-link" active-act="Scoreboard" asp-action="Scoreboard">
+        <a class="nav-link" asp-controller="Jury" asp-action="Scoreboard">
             <i class="fas fa-list-ol d-md-none"></i>
             Scoreboard
         </a>
@@ -63,7 +63,7 @@
 </script>
 
 <div id="submitbut">
-    <a class="nav-link justify-content-center" data-toggle="ajaxWindow" data-target="submit" asp-action="Submit">
+    <a class="nav-link justify-content-center" data-toggle="ajaxWindow" data-target="submit" asp-controller="Jury" asp-action="Submit">
         <button type="button" class="btn btn-success btn-sm">
             <i class="fas fa-cloud-upload-alt"></i> Submit
         </button>

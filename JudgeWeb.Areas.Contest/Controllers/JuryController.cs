@@ -1,22 +1,17 @@
 ﻿using JudgeWeb.Areas.Contest.Models;
 using JudgeWeb.Areas.Contest.Services;
-using JudgeWeb.Data;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using ClarificationCategory = JudgeWeb.Data.Clarification.TargetCategory;
 
 namespace JudgeWeb.Areas.Contest.Controllers
 {
     [Area("Contest")]
     [Route("[area]/{cid}/[controller]/[action]")]
-    public partial class JuryController : BaseController<JuryService>
+    public class JuryController : BaseController<JuryService>
     {
         protected override IActionResult BeforeActionExecuting()
         {
@@ -184,325 +179,91 @@ namespace JudgeWeb.Areas.Contest.Controllers
             return RedirectToAction(nameof(Submission), new { cid = Contest.ContestId, sid });
         }
 
-        [HttpGet]
-        [ActionName("Clarification")]
-        public IActionResult ListClarification()
-        {
-            var model = Service.GetClarifications();
-            model.MessageInfo = DisplayMessage;
-            return View("Clarifications", model);
-        }
-
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult ClarificationSend(AddClarificationModel model)
-        {
-            var cid = Contest.ContestId;
-            var probs = Service.Problems;
-
-            string SolveAndAdd()
-            {
-                if (string.IsNullOrWhiteSpace(model.Body))
-                    return "Error sending empty clarification.";
-
-                var newClar = new Clarification
-                {
-                    Body = model.Body,
-                    SubmitTime = DateTimeOffset.Now,
-                    ContestId = cid,
-                    JuryMember = UserManager.GetUserName(User),
-                    Sender = null,
-                    ResponseToId = model.ReplyTo,
-                    Recipient = model.TeamTo == 0 ? default(int?) : model.TeamTo,
-                    ProblemId = null,
-                    Answered = true
-                };
-
-                if (model.ReplyTo.HasValue)
-                {
-                    var respTo = Service.GetClarification(model.ReplyTo.Value, true);
-                    if (respTo == null) return "Error finding clarification replying to";
-                    respTo.Answered = true;
-                    Service.UpdateClarificationBeforeInsertOne(respTo);
-                }
-
-                if (model.Type == "general")
-                    newClar.Category = ClarificationCategory.General;
-                else if (model.Type == "tech")
-                    newClar.Category = ClarificationCategory.Technical;
-                else if (!model.Type.StartsWith("prob-"))
-                    return "Error detecting category.";
-                else
-                {
-                    var prob = probs.FirstOrDefault(p => "prob-" + p.ShortName == model.Type);
-                    if (prob is null) return "Error detecting problem.";
-                    newClar.ProblemId = prob.ProblemId;
-                    newClar.Category = ClarificationCategory.Problem;
-                }
-
-                Service.SendClarification(newClar);
-                return "Clarification sent to common";
-            }
-
-            DisplayMessage = SolveAndAdd();
-            return RedirectToAction(nameof(Clarification), new { cid });
-        }
-
-        [HttpGet("send/{teamto}")]
-        [ActionName("Clarification")]
-        public IActionResult SendClarification(int teamto)
-        {
-            ViewBag.Teams = Service.TeamName;
-            ViewBag.Problems = Service.Problems;
-            return View("ClarificationSend", new AddClarificationModel
-            {
-                TeamTo = teamto,
-                Body = "",
-            });
-        }
-
-        [HttpGet("{clarid}/{answered}")]
-        public IActionResult ClarificationSetAnswered(int clarid, bool answered)
-        {
-            if (Service.SetAnswerClarification(clarid, answered))
-                return Message(
-                    "Set clarification",
-                    $"clarification #{clarid} is now {(answered ? "" : "un")}answered.",
-                    MessageType.Success);
-
-            return Message(
-                "Set clarification",
-                "Unknown error.",
-                MessageType.Danger);
-        }
-
-        [HttpGet("{clarid}")]
-        [ActionName("Clarification")]
-        public IActionResult ViewClarification(int clarid)
-        {
-            var model = Service.GetClarification(clarid);
-            if (model == null) return NotFound();
-            ViewBag.Teams = model.Teams;
-            ViewBag.Problems = model.Problems;
-            return View(model);
-        }
-
-        [HttpGet("{clarid}/{claim}")]
-        [ValidateInAjax]
-        public IActionResult ClarificationClaim(int clarid, bool claim)
-        {
-            if (Service.ClaimClarification(clarid, claim))
-                return Message(
-                    "Claim clarification",
-                    $"clarification #{clarid} is now {(claim ? "" : "un")}claimed.",
-                    MessageType.Success);
-
-            return Message(
-                "Claim clarification",
-                "Unknown error.",
-                MessageType.Danger);
-        }
-
-        [HttpGet]
-        [ActionName("Team")]
-        public IActionResult ListTeam()
-        {
-            return View("Teams", Service.GetTeams());
-        }
-
-        [HttpGet("{teamid}")]
-        [ActionName("Team")]
-        public IActionResult ViewTeam(int teamid)
-        {
-            var sc = Service.GetOneTeam(teamid);
-            if (sc is null) return NotFound();
-
-            return View(new JuryViewTeamModel
-            {
-                TeamScoreboard = sc,
-                Submissions = Service.GetSubmissions(teamid)
-            });
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public IActionResult TeamAdd(JuryAddTeamModel model)
-        {
-            var teamid = Service.CreateTeam(new Team
-            {
-                AffiliationId = model.AffiliationId,
-                Status = 1,
-                CategoryId = model.CategoryId,
-                ContestId = Contest.ContestId,
-                TeamName = model.TeamName,
-                UserId = model.UserId,
-            });
-
-            return Message(
-                "Add team",
-                $"Team {model.TeamName} (t{teamid}) added.",
-                MessageType.Success);
-        }
-
-        [HttpGet]
-        public IActionResult TeamAdd()
-        {
-            ViewData["Aff"] = Service.QueryAffiliations(false).ToList();
-            ViewData["Cat"] = Service.QueryCategories(null).ToList();
-            ViewData["User"] = Service.GetUnregisteredUsers();
-            return Window(new JuryAddTeamModel());
-        }
-
-        [HttpPost("{teamid}")]
-        [ValidateAntiForgeryToken]
-        [ValidateInAjax]
-        public IActionResult TeamDelete(int teamid, JuryDeleteTeamModel model2)
-        {
-            var team = Service.QueryTeam(teamid).FirstOrDefault();
-
-            if (team is null)
-                return Message(
-                    "Delete team",
-                    $"Team #{teamid} not found.",
-                    MessageType.Warning);
-
-            Service.DeleteTeam(team);
-
-            return Message(
-                "Delete team",
-                $"Team #{teamid} {model2.ToDelete} deleted.",
-                MessageType.Success);
-        }
-
-        [HttpPost("{teamid}")]
-        [ValidateAntiForgeryToken]
-        [ValidateInAjax]
-        public IActionResult TeamEdit(int teamid, JuryEditTeamModel model)
-        {
-            var team = Service.QueryTeam(teamid).FirstOrDefault();
-            Service.UpdateTeam(team, model);
-            Service.QueryTeam(teamid, true).FirstOrDefault();
-
-            return Message(
-                "Edit team",
-                $"Team {team.TeamName} (t{teamid}) updated.",
-                MessageType.Success);
-        }
-
-        [HttpGet("{teamid}/{act}")]
-        [ActionName("Team")]
-        [ValidateInAjax]
-        public IActionResult ActionTeam(int teamid, string act)
-        {
-            var team = Service.QueryTeam(teamid).FirstOrDefault();
-            if (team == null) return NotFound();
-
-            if (act == "delete")
-            {
-                return Window(nameof(TeamDelete), new JuryDeleteTeamModel
-                {
-                    ToDelete = $"{team.TeamName} (t{team.TeamId})"
-                });
-            }
-            else if (act == "edit")
-            {
-                ViewData["Aff"] = Service.QueryAffiliations(false).ToList();
-                ViewData["Cat"] = Service.QueryCategories(null).ToList();
-
-                return Window(nameof(TeamEdit), new JuryEditTeamModel
-                {
-                    AffiliationId = team.AffiliationId,
-                    CategoryId = team.CategoryId,
-                    TeamName = team.TeamName,
-                    TeamId = teamid,
-                });
-            }
-            else if (act == "accept" || act == "reject")
-            {
-                Service.UpdateTeam(team, act);
-
-                return Message(
-                    "Team registration confirm",
-                    $"Team #{teamid} is now {act}ed.",
-                    MessageType.Success);
-            }
-            else
-            {
-                return NotFound();
-            }
-        }
-
-        [HttpGet]
-        public IActionResult RefreshCache()
+        [Authorize(Roles = "Administrator")]
+        public IActionResult RefreshCache(bool post = true)
         {
             Service.RefreshScoreboardCache();
-            return Ok();
+            DisplayMessage = "Scoreboard cache will be refreshed in minutes...";
+            return RedirectToAction(nameof(Home));
         }
 
         [HttpGet]
         [ValidateInAjax]
-        public IActionResult TeamImport()
+        [Authorize(Roles = "Administrator")]
+        public IActionResult RefreshCache()
         {
             return View();
         }
 
-        [HttpPost]
-        [ValidateInAjax]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> TeamImport(IFormFile file)
+        [HttpGet]
+        public IActionResult Statistics()
         {
-            // every line in file: [name]\t[affname]\t[category]\t[uid]\n
-            var toAddTeams = new List<Team>();
-            var cats = Service.QueryCategories(null).ToList();
-            var affs = Service.QueryAffiliations(false).ToList();
-            var users = Service.GetUnregisteredUsers();
+            return View(Service.GetStatistics());
+        }
 
-            IActionResult ErrorReadingTsv(string line)
+        [HttpGet]
+        public IActionResult Rejudging() => Ok();
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Administrator")]
+        public async Task<IActionResult> Assign(JuryAssignModel model)
+        {
+            var user = await UserManager.FindByNameAsync(model.UserName);
+
+            if (user == null)
             {
-                return Message("Team Import",
-                    "Error reading tsv file with line: " + line,
-                    MessageType.Danger);
+                DisplayMessage = "Error user not found.";
+            }
+            else
+            {
+                var result = await UserManager
+                    .AddToRoleAsync(user, "JuryOfContest" + Contest.ContestId);
+
+                if (result.Succeeded)
+                    DisplayMessage = $"Jury role of user {user.UserName} assigned.";
+                else
+                    DisplayMessage = "Error " + string.Join('\n', result.Errors.Select(e => e.Description));
             }
 
-            IActionResult ErrorLoadingDependency(string name, string value)
-            {
-                return Message("Team Import",
-                    "No " + name + " value " + value + " found.",
-                    MessageType.Danger);
-            }
+            return RedirectToAction(nameof(Home), new { cid = Contest.ContestId });
+        }
 
-            using (var stream = file.OpenReadStream())
-            using (var reader = new StreamReader(stream))
-            {
-                while (!reader.EndOfStream)
-                {
-                    var line = await reader.ReadLineAsync();
-                    if (string.IsNullOrWhiteSpace(line)) continue;
-                    var one = line.Split('\t');
-                    if (one.Length != 4) return ErrorReadingTsv(line);
-                    if (string.IsNullOrWhiteSpace(one[0])) return ErrorReadingTsv(line);
-                    if (!int.TryParse(one[2], out int catid)) return ErrorReadingTsv(line);
-                    if (!int.TryParse(one[3], out int uid)) return ErrorReadingTsv(line);
-                    if (string.IsNullOrWhiteSpace(one[1])) return ErrorReadingTsv(line);
-                    if (!affs.Any(a => a.ExternalId == one[1])) return ErrorLoadingDependency("affiliation", one[1]);
-                    if (!cats.Any(c => c.CategoryId == catid)) return ErrorLoadingDependency("category", one[2]);
-                    if (uid != 0 && !users.ContainsKey(uid)) return ErrorLoadingDependency("user id", one[3]);
-                    if (uid != 0) users.Remove(uid);
+        [HttpGet]
+        [ValidateInAjax]
+        [Authorize(Roles = "Administrator")]
+        public IActionResult Assign()
+        {
+            return Window(new JuryAssignModel());
+        }
 
-                    toAddTeams.Add(new Team
-                    {
-                        AffiliationId = affs.First(a => a.ExternalId == one[1]).AffiliationId,
-                        Status = 1,
-                        CategoryId = catid,
-                        ContestId = Contest.ContestId,
-                        TeamName = one[0],
-                        UserId = uid,
-                    });
-                }
-            }
+        [HttpPost("{uid}")]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Administrator")]
+        public async Task<IActionResult> Unassign(int uid, bool unassign = true)
+        {
+            var user = await UserManager.FindByIdAsync(uid.ToString());
+            if (user == null) return NotFound();
+            var result = await UserManager
+                .RemoveFromRoleAsync(user, "JuryOfContest" + Contest.ContestId);
 
-            Service.CreateTeams(toAddTeams);
-            return Message("Team Import", "Import succeeded.", MessageType.Success);
+            if (result.Succeeded)
+                DisplayMessage = $"Jury role of user {user.UserName} unassigned.";
+            else
+                DisplayMessage = "Error " + string.Join('\n', result.Errors.Select(e => e.Description));
+            return RedirectToAction(nameof(Home), new { cid = Contest.ContestId });
+        }
+
+        [HttpGet("{uid}")]
+        [ValidateInAjax]
+        [Authorize(Roles = "Administrator")]
+        public async Task<IActionResult> Unassign(int uid)
+        {
+            var user = await UserManager.FindByIdAsync(uid.ToString());
+            if (user == null) return NotFound();
+            return Window(user);
         }
     }
 }

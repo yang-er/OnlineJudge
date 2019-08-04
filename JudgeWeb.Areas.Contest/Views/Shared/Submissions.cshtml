@@ -26,7 +26,7 @@
             var tooLate = (ctx.EndTime ?? DateTimeOffset.MaxValue) < subTime;
             if (sub.Result == Verdict.Accepted) { correct++; }
             total++;
-            <tr asp-action="Submission" asp-route-sid="@sub.SubmissionId"
+            <tr asp-controller="Jury" asp-action="Submission" asp-route-sid="@sub.SubmissionId"
                 data-toggle="gotoUrl"
                 data-problem-id="@sub.Problem?.ProblemId"
                 data-team-id="@sub.TeamId"
