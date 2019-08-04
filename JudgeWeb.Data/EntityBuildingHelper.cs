@@ -51,6 +51,8 @@ namespace JudgeWeb.Data
                     if (nup.MaxLength != -1)
                         propBuilder.HasMaxLength(nup.MaxLength);
                     if (nup.MaxLength > 65535 && isMySql)
+                        propBuilder.HasColumnType("MEDIUMTEXT");
+                    else if (nup.MaxLength > 4000 && isMySql)
                         propBuilder.HasColumnType("TEXT");
                 }
 
@@ -59,6 +61,13 @@ namespace JudgeWeb.Data
                     propBuilder.HasMaxLength(mla.MaxLength);
 
                     if (mla.MaxLength > 65535 && isMySql)
+                    {
+                        if (prop.PropertyType == typeof(string))
+                            propBuilder.HasColumnType("MEDIUMTEXT");
+                        else if (prop.PropertyType == typeof(byte[]))
+                            propBuilder.HasColumnType("MEDIUMBLOB");
+                    }
+                    else if (mla.MaxLength > 4000 && isMySql)
                     {
                         if (prop.PropertyType == typeof(string))
                             propBuilder.HasColumnType("TEXT");

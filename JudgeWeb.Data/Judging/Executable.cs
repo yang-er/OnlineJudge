@@ -21,9 +21,10 @@
         public string Md5sum { get; set; }
 
         /// <summary>
-        /// 压缩包
+        /// 压缩包，最大1MB
         /// </summary>
         [IsRequired]
+        [MaxLength(1 << 20)]
         public byte[] ZipFile { get; set; }
 
         /// <summary>

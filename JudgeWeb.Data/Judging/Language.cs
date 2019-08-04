@@ -25,12 +25,14 @@ namespace JudgeWeb.Data
         /// 语言正式名称
         /// </summary>
         [IsRequired]
-        [NonUnicode]
+        [NonUnicode(MaxLength = 32)]
         public string Name { get; set; }
 
         /// <summary>
         /// 保存的文件后缀名
         /// </summary>
+        [IsRequired]
+        [NonUnicode(MaxLength = 32)]
         public string FileExtension { get; set; }
 
         /// <summary>

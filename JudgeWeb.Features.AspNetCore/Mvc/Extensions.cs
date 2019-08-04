@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.AspNetCore.Mvc.ApplicationParts;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
@@ -54,6 +55,13 @@ namespace Microsoft.AspNetCore.Mvc
             }
         }
 
+        public static IdentityBuilder UsePasswordHasher<THasher, TUser>(this IdentityBuilder builder)
+            where THasher : class, IPasswordHasher<TUser> where TUser : class
+        {
+            builder.Services.Replace(ServiceDescriptor.Scoped<IPasswordHasher<TUser>, THasher>());
+            return builder;
+        }
+
         public static IMvcBuilder UseAreaParts(this IMvcBuilder builder,
             string projectPrefix, IEnumerable<string> areaNames)
         {
@@ -76,9 +84,16 @@ namespace Microsoft.AspNetCore.Mvc
                 foreach (var area in areaNames ?? Enumerable.Empty<string>())
                 {
                     if (TryLoad(projectPrefix + area + ".dll", out var assembly1))
+                    {
                         apm.ApplicationParts.Add(new AssemblyPart(assembly1));
+                        foreach (var attr in assembly1.GetCustomAttributes<InjectAttribute>())
+                            builder.Services.TryAdd(attr.GetDescriptior());
+                    }
+
                     if (TryLoad(projectPrefix + area + ".Views.dll", out var assembly2))
+                    {
                         apm.ApplicationParts.Add(new AreaRazorAssemblyPart(assembly2, area));
+                    }
                 }
             });
 

@@ -26,6 +26,7 @@ namespace JudgeWeb.Data
         /// 用户昵称
         /// </summary>
         [PersonalData]
+        [MaxLength(256)]
         public string NickName { get; set; }
 
         /// <summary>
