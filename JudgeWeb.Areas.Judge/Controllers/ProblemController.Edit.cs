@@ -18,7 +18,6 @@ namespace JudgeWeb.Areas.Judge.Controllers
             ViewData["Testcase"] = await DbContext.Testcases
                 .Where(t => t.ProblemId == pid)
                 .OrderBy(t => t.Rank)
-                .WithoutBlob()
                 .ToListAsync();
         }
 
@@ -63,11 +62,12 @@ namespace JudgeWeb.Areas.Judge.Controllers
                         MemoryLimit = p.MemoryLimit,
                         TimeLimit = p.TimeLimit,
                         Title = p.Title,
-                        IsActive = p.Flag == 0,
+                        Flag = p.Flag,
                     })
                     .FirstOrDefaultAsync();
                 if (prob is null) return NotFound();
 
+                prob.IsActive = prob.Flag == 0;
                 await LoadTestcaseInfo(pid);
                 return View(prob);
             }

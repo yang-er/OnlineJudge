@@ -1,11 +1,19 @@
 ﻿@model CodeSubmitModel
 @{ 
     IEnumerable<SelectListItem> langs = ViewBag.Language;
+    string DisplayMessage = ViewBag.DisplayMessage;
 }
 
 <div class="container-fluid mt-4 mb-4 pl-4 pr-4">
     <h2>Submit Code</h2>
     <h5>@ViewData["ProblemId"]# @ViewData["ProblemTitle"]</h5>
+
+    @if (DisplayMessage != null)
+    {
+        <div class="alert alert-danger" role="alert">
+            @DisplayMessage
+        </div>
+    }
 
     <form asp-action="Submit" asp-route-pid="@ViewData["ProblemId"]" method="post">
         <input type="hidden" asp-for="ProblemId" />

@@ -26,7 +26,7 @@ namespace JudgeWeb.Areas.Judge.Services
             if (status.HasValue)
                 query2 = query2.Where(a => (int)a.g.Status == status.Value);
             if (uid.HasValue)
-                query2 = query2.Where(a => a.s.Author == uid.Value);
+                query2 = query2.Where(a => a.s.Author == uid.Value && a.s.ContestId == 0);
             if (lang != null)
                 query2 = query2.Where(a => a.l.ExternalId == lang);
 
@@ -55,7 +55,7 @@ namespace JudgeWeb.Areas.Judge.Services
                         Language = a.l.Name,
                         LanguageId = a.s.Language,
                         ContestId = a.s.ContestId,
-                        UserName = a.u == null
+                        UserName = a.u == null || a.s.ContestId != 0
                                  ? null
                                  : string.IsNullOrEmpty(a.u.NickName)
                                  ? a.u.UserName
@@ -82,7 +82,7 @@ namespace JudgeWeb.Areas.Judge.Services
             if (status.HasValue)
                 query2 = query2.Where(a => (int)a.g.Status == status.Value);
             if (uid.HasValue)
-                query2 = query2.Where(a => a.s.Author == uid.Value);
+                query2 = query2.Where(a => a.s.Author == uid.Value && a.s.ContestId == 0);
 
             if (lang != null)
             {

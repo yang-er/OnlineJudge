@@ -3,6 +3,7 @@ using JudgeWeb.Areas.Judge.Models;
 using JudgeWeb.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -23,7 +24,7 @@ namespace JudgeWeb.Areas.Judge.Controllers
                 .Select(l => new Tuple<int, string>(l.LangId, l.Name))
                 .Cacheable(TimeSpan.FromMinutes(5))
                 .ToList()
-                .Select(t => new SelectListItem(t.Item1.ToString(), t.Item2));
+                .Select(t => new SelectListItem(t.Item2, t.Item1.ToString()));
         }
 
         /// <summary>
@@ -46,6 +47,7 @@ namespace JudgeWeb.Areas.Judge.Controllers
             ViewData["ProblemId"] = pid;
             ViewData["Title"] = "Submit Code";
             ViewBag.Language = GetLanguageList();
+            ViewBag.DisplayMessage = default(string);
 
             return View(new CodeSubmitModel
             {
@@ -79,6 +81,19 @@ namespace JudgeWeb.Areas.Judge.Controllers
                 ModelState.AddModelError("xys::blocked", notPermitted);
             }
 
+            var lang = await DbContext.Languages
+                .Where(l => l.LangId == model.Language)
+                .FirstOrDefaultAsync();
+
+            if (lang == null)
+            {
+                ModelState.AddModelError("lang::notfound", "Language is not found.");
+            }
+            else if (!lang.AllowSubmit)
+            {
+                ModelState.AddModelError("lang::notallow", "You can't submit solutions with this language.");
+            }
+
             if (ModelState.ErrorCount > 0)
             {
                 ViewData["ProblemTitle"] = prob.Title;
@@ -86,6 +101,15 @@ namespace JudgeWeb.Areas.Judge.Controllers
                 ViewData["Title"] = "Submit Code";
                 ViewBag.Language = GetLanguageList();
 
+                var sb = new System.Text.StringBuilder();
+                foreach (var state in ModelState)
+                {
+                    if (state.Value.ValidationState != ModelValidationState.Invalid) continue;
+                    foreach (var item in state.Value.Errors)
+                        sb.AppendLine(item.ErrorMessage);
+                }
+
+                ViewBag.DisplayMessage = sb.ToString();
                 return View(model);
             }
             else

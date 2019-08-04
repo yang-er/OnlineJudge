@@ -30,5 +30,7 @@ namespace JudgeWeb.Areas.Judge.Models
 
         [DisplayName("Is this problem active?")]
         public bool IsActive { get; set; }
+
+        public int Flag { get; set; }
     }
 }

@@ -1,6 +1,6 @@
 ﻿@addTagHelper *, JudgeWeb.Features.AspNetCore
 <!doctype html>
-<html lang="zh-cn">
+<html lang="en-us">
 <head>
     <meta charset="utf-8">
     <title>@ViewData["Title"] - Online Judge</title>
@@ -47,7 +47,7 @@
     <!-- #content end -->
     <div id="ajax_append"></div>
 
-    @if (!ViewData.ContainsKey("NoFooter"))
+    @if (ViewData.ContainsKey("HasFooter"))
     {
 
     <!-- #footer start -->
