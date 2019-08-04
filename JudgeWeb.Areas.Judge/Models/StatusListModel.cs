@@ -1,5 +1,4 @@
-﻿using JudgeWeb.Data;
-using System;
+﻿using System;
 
 namespace JudgeWeb.Areas.Judge.Models
 {
@@ -13,7 +12,9 @@ namespace JudgeWeb.Areas.Judge.Models
         public int ProblemId { get; set; }
         public int ExecuteTime { get; set; }
         public int ExecuteMemory { get; set; }
+        public int ContestId { get; set; }
         public string UserName { get; set; }
+        public int LanguageId { get; set; }
         public string Language { get; set; }
     }
 }
