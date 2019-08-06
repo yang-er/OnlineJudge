@@ -1,7 +1,7 @@
 ﻿@model ProblemEditModel
 @{
     ViewData["Title"] = "Problem Editor";
-    var Testcases = ViewData["Testcase"] as IEnumerable<Testcase>;
+    IEnumerable<Testcase> Testcases = ViewBag.Testcase;
 }
 
 <div class="container-fluid mt-4 mb-4 pl-4 pr-4">

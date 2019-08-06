@@ -35,7 +35,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JudgeWeb.Areas.Api", "Judge
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JudgeWeb.Areas.Contest", "JudgeWeb.Areas.Contest\JudgeWeb.Areas.Contest.csproj", "{A9F932A3-7857-405B-B1DA-B0C620AD55DA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JudgeWeb.Features.Scoreboard", "JudgeWeb.Features.Scoreboard\JudgeWeb.Features.Scoreboard.csproj", "{6112B384-4745-4F72-A029-FC6D15D1EC3D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JudgeWeb.Features.Scoreboard", "JudgeWeb.Features.Scoreboard\JudgeWeb.Features.Scoreboard.csproj", "{6112B384-4745-4F72-A029-FC6D15D1EC3D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.AspNetCore.Mvc.ApplicationParts;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
@@ -14,6 +15,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Security.Claims;
+using System.Text;
 
 namespace Microsoft.AspNetCore.Mvc
 {
@@ -60,6 +62,19 @@ namespace Microsoft.AspNetCore.Mvc
         {
             builder.Services.Replace(ServiceDescriptor.Scoped<IPasswordHasher<TUser>, THasher>());
             return builder;
+        }
+
+        public static string GetErrorStrings(this ModelStateDictionary modelState)
+        {
+            var sb = new StringBuilder();
+            foreach (var state in modelState)
+            {
+                if (state.Value.ValidationState != ModelValidationState.Invalid) continue;
+                foreach (var item in state.Value.Errors)
+                    sb.AppendLine(item.ErrorMessage);
+            }
+
+            return sb.ToString();
         }
 
         public static IMvcBuilder UseAreaParts(this IMvcBuilder builder,

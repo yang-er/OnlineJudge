@@ -1,8 +1,9 @@
-﻿using EntityFrameworkCore.Cacheable;
+﻿using JudgeWeb.Areas.Judge.Models;
+using JudgeWeb.Areas.Judge.Services;
 using JudgeWeb.Data;
-using JudgeWeb.Features.Storage;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -12,19 +13,18 @@ namespace JudgeWeb.Areas.Judge.Controllers
     [Route("[area]/[controller]/[action]")]
     public partial class ProblemController : Controller2
     {
-        const int itemsPerPage = 50;
         const string privilege = "Administrator,Problem";
+        const int ItemsPerPage = 50;
 
-        private AppDbContext DbContext { get; }
         private UserManager UserManager { get; }
-        private IFileRepository IoContext { get; }
+        private TestcaseManager TestcaseManager { get; }
+        private ProblemManager ProblemManager { get; }
 
-        public ProblemController(AppDbContext jdbc, UserManager um, IFileRepository pe)
+        public ProblemController(ProblemManager ctx, UserManager um, TestcaseManager tm)
         {
-            DbContext = jdbc;
+            ProblemManager = ctx;
             UserManager = um;
-            IoContext = pe;
-            pe.SetContext("Problems");
+            TestcaseManager = tm;
         }
 
         /// <summary>
@@ -36,34 +36,17 @@ namespace JudgeWeb.Areas.Judge.Controllers
         {
             if (pg < 1) pg = 1;
             ViewBag.Page = pg;
+            ViewBag.TotalPage = ProblemManager.TotalPages;
 
-            var list = DbContext.Problems
-                .OrderByDescending(p => p.ProblemId)
-                .Select(p => new { p.ProblemId })
-                .Cacheable(System.TimeSpan.FromMinutes(5))
-                .FirstOrDefault();
-            ViewBag.TotalPage = ((list?.ProblemId ?? 1000) - 1000) / itemsPerPage + 1;
-
-            var query = DbContext.Problems
-                .Where(p => p.ProblemId < 1000 + pg * itemsPerPage
-                    && p.ProblemId >= 1000 + (pg - 1) * itemsPerPage);
-            if (!User.IsInRoles(privilege))
-                query = query.Where(p => p.Flag == 0);
-            var probs = await query.OrderBy(p => p.ProblemId).ToListAsync();
+            var probs = await ProblemManager
+                .ListAsync(pg, User.IsInRoles(privilege));
 
             int uid = int.Parse(UserManager.GetUserId(User) ?? "-1");
-            ViewBag.Statistics = DbContext.SubmissionStatistics
-                .Where(p => p.ProblemId < 1000 + pg * itemsPerPage
-                    && p.ProblemId >= 1000 + (pg - 1) * itemsPerPage
-                    && p.ContestId == 0)
-                .GroupBy(p => p.ProblemId)
-                .ToDictionary(
-                    keySelector: g => g.Key,
-                    elementSelector: g => (
-                        g.Sum(s => s.AcceptedSubmission),
-                        g.Sum(s => s.TotalSubmission),
-                        g.Sum(s => s.Author == uid ? s.TotalSubmission : 0),
-                        g.Sum(s => s.Author == uid ? s.AcceptedSubmission : 0)));
+            ViewBag.Statistics = ProblemManager.StatisticsByUser(uid,
+                grouping: p => p.ProblemId,
+                filter: p => p.ProblemId < 1000 + pg * ItemsPerPage
+                    && p.ProblemId >= 1000 + (pg - 1) * ItemsPerPage
+                    && p.ContestId == 0);
 
             return View(probs);
         }
@@ -75,25 +58,101 @@ namespace JudgeWeb.Areas.Judge.Controllers
         [HttpGet("{pid}")]
         public async Task<IActionResult> View(int pid)
         {
-            var prob = await DbContext.Problems
-                .Where(p => p.ProblemId == pid)
-                .Select(p => new { p.Flag })
-                .FirstOrDefaultAsync();
+            var prob = await ProblemManager.TitleFlagAsync(pid);
 
-            if (prob is null || prob.Flag != 0 && !User.IsInRoles(privilege))
+            if (!prob.HasValue || prob.Value.Flag != 0 && !User.IsInRoles(privilege))
                 return NotFound(); // No such problem or not visible.
-            var view = await IoContext.ReadPartAsync($"p{pid}", $"view.html");
+            var view = await ProblemManager.GetViewAsync(pid);
 
-            if (!string.IsNullOrEmpty(view))
+            if (string.IsNullOrEmpty(view)) return NotFound();
+
+            ViewData["Title"] = "Problem View";
+            ViewData["Content"] = view;
+            ViewData["Id"] = pid;
+            return View();
+        }
+
+        /// <summary>
+        /// 展示提交代码的页面。
+        /// </summary>
+        /// <param name="pid">题目编号</param>
+        [HttpGet("{pid}")]
+        [Authorize]
+        public async Task<IActionResult> Submit(int pid,
+            [FromServices] LanguageManager languageManager)
+        {
+            var prob = await ProblemManager.TitleFlagAsync(pid);
+            if (!prob.HasValue) return NotFound();
+            if (prob.Value.Flag != 0 && !User.IsInRoles(privilege)) return NotFound();
+
+            ViewData["ProblemTitle"] = prob.Value.Title;
+            ViewData["ProblemId"] = pid;
+            ViewData["Title"] = "Submit Code";
+
+            ViewBag.Language = languageManager.GetAll().Values
+                .Where(kvp => kvp.AllowSubmit)
+                .Select(t => new SelectListItem(t.Name, t.LangId.ToString()));
+            ViewBag.DisplayMessage = default(string);
+
+            return View(new CodeSubmitModel
             {
-                ViewData["Title"] = "Problem View";
-                ViewData["Content"] = view;
-                ViewData["Id"] = pid;
-                return View();
+                Code = "",
+                Language = 2,
+                ProblemId = pid,
+            });
+        }
+
+        /// <summary>
+        /// 提交代码并存入数据库。
+        /// </summary>
+        /// <param name="pid">问题编号</param>
+        /// <param name="model">代码视图模型</param>
+        [HttpPost("{pid}")]
+        [Authorize]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Submit(
+            int pid, CodeSubmitModel model,
+            [FromServices] LanguageManager langMgr,
+            [FromServices] SubmissionManager subMgr)
+        {
+            if (model.ProblemId != pid) return BadRequest();
+
+            var prob = await ProblemManager.TitleFlagAsync(pid);
+            if (!prob.HasValue) return NotFound();
+            if (prob.Value.Flag != 0 && !User.IsInRoles(privilege)) return NotFound();
+
+            if (User.IsInRole("Blocked"))
+                ModelState.AddModelError("xys::blocked",
+                    "You are not permitted to submit code.");
+
+            var lang = langMgr.Get(model.Language);
+            if (lang == null)
+                ModelState.AddModelError("lang::notfound",
+                    "Language is not found.");
+            else if (!lang.AllowSubmit)
+                ModelState.AddModelError("lang::notallow",
+                    "You can't submit solutions with this language.");
+
+            if (ModelState.ErrorCount > 0)
+            {
+                ViewData["ProblemTitle"] = prob.Value.Title;
+                ViewData["ProblemId"] = pid;
+                ViewData["Title"] = "Submit Code";
+                ViewBag.Language = langMgr.GetAll().Values
+                    .Where(kvp => kvp.AllowSubmit)
+                    .Select(t => new SelectListItem(t.Name, t.LangId.ToString()));
+                ViewBag.DisplayMessage = ModelState.GetErrorStrings();
+
+                return View(model);
             }
             else
             {
-                return NotFound();
+                int id = await subMgr.CreateAsync(model,
+                    HttpContext.Connection.RemoteIpAddress,
+                    int.Parse(UserManager.GetUserId(User)),
+                    UserManager.GetUserName(User));
+
+                return RedirectToAction("View", "Status", new { area = "Judge", id });
             }
         }
     }

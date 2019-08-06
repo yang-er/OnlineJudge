@@ -1,5 +1,5 @@
-﻿using JudgeWeb.Areas.Judge.Services;
-using JudgeWeb.Data;
+﻿using JudgeWeb.Areas.Judge.Providers;
+using JudgeWeb.Areas.Judge.Services;
 using JudgeWeb.Features.Storage;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -16,59 +16,54 @@ namespace JudgeWeb.Areas.Judge.Controllers
     {
         const string problemRole = "Administrator,Problem";
 
-        private UserManager UserManager { get; }
-
-        private JudgeContext Service { get; }
-
-        public StatusController(JudgeContext ctx, UserManager jum)
-        {
-            Service = ctx;
-            UserManager = jum;
-        }
-
         [HttpGet("{id}/{full}")]
         [Authorize(Roles = problemRole)]
-        public async Task<IActionResult> Rejudge(int id, string full)
+        public async Task<IActionResult> Rejudge(int id, string full,
+            [FromServices] JudgingManager judgingManager)
         {
-            var jid = await Service.Rejudge(id, full == "full");
+            var jid = await judgingManager.WithUser(User)
+                .RejudgeSubmissionAsync(id, full == "full");
+
             if (jid == -1) return NotFound();
             return RedirectToAction(nameof(View), new { gid = jid });
         }
 
         [HttpGet("{gid}")]
         [Authorize(Roles = problemRole)]
-        public async Task<IActionResult> Activate(int gid)
+        public async Task<IActionResult> Activate(int gid,
+            [FromServices] JudgingManager judgingManager)
         {
-            var sid = await Service.ActivateJudging(gid, UserManager.GetUserName(User));
+            var sid = await judgingManager.WithUser(User)
+                .ActivateByIdAsync(gid);
 
-            if (sid == -1)
-                return NotFound();
-            else if (sid == int.MinValue)
-                return BadRequest();
+            if (sid == -1) return NotFound();
+            if (sid == int.MinValue) return BadRequest();
             return RedirectToAction("View", new { id = sid, gid });
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> View(int id, int? gid)
+        public async Task<IActionResult> View(int id, int? gid,
+            [FromServices] StatusProvider statusProvider,
+            [FromServices] JudgingManager judgingManager)
         {
-            var uid = UserManager.GetUserId(User);
-            var model = await Service.ViewCode(id, gid, uid, User.IsInRoles(problemRole));
+            var model = await statusProvider
+                .FetchCodeViewAsync(id, gid, User);
             if (model is null) return NotFound();
 
             if (User.IsInRoles(problemRole))
-            {
-                ViewBag.AllJudgings = await Service.GetJudgings(id);
-            }
+                ViewBag.AllJudgings = await judgingManager.WithUser(User)
+                    .EnumerateBySubmissionAsync(id);
 
             return View(model);
         }
 
         [HttpGet("{pg?}")]
-        public async Task<IActionResult> List(int pg = 1,
-            int? pid = null, int? status = null, int? uid = null, string lang = null)
+        public async Task<IActionResult> List(
+            [FromServices] StatusProvider statusProvider, 
+            int pg = 1, int? pid = null, int? status = null,
+            int? uid = null, string lang = null)
         {
-            var page = pg;
-            if (page == 0) page = 1;
+            var page = pg == 0 ? 1 : pg;
             ViewData["Page"] = page;
 
             var filter = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -83,17 +78,26 @@ namespace JudgeWeb.Areas.Judge.Controllers
                 filter.Add(nameof(lang), lang);
             
             ViewBag.Filter = filter;
-            return View(await Service.GetStatusList(page, pid, status, uid, lang));
+
+            var model = await statusProvider
+                .FetchListAsync(page, pid, status, uid, lang);
+            return View(model);
         }
 
         [HttpGet("{jid}/{rid}/{type}")]
         [Authorize(Roles = problemRole)]
-        public IActionResult RunDetails(int jid, int rid, string type)
+        public IActionResult RunDetails(int jid, int rid, string type,
+            [FromServices] IFileRepository io)
         {
-            var io = HttpContext.RequestServices.GetRequiredService<IFileRepository>();
             io.SetContext("Runs");
-            if (!io.ExistPart($"j{jid}", $"r{rid}.{type}")) return NotFound();
-            return ContentFile($"Runs/j{jid}/r{rid}.{type}", "application/octet-stream", $"j{jid}_r{rid}.{type}");
+
+            if (!io.ExistPart($"j{jid}", $"r{rid}.{type}"))
+                return NotFound();
+
+            return ContentFile(
+                $"Runs/j{jid}/r{rid}.{type}",
+                "application/octet-stream",
+                $"j{jid}_r{rid}.{type}");
         }
     }
 }

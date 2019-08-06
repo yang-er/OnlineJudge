@@ -30,11 +30,9 @@ namespace JudgeWeb.Areas.Account.Controllers
 
         [HttpGet]
         [AllowAnonymous]
-        public async Task<IActionResult> AdministratorBootstrap()
+        public async Task<IActionResult> AdministratorBootstrap(
+            [FromServices] RoleManager<IdentityRole<int>> roleManager)
         {
-            var roleManager = HttpContext.RequestServices
-                .GetRequiredService<RoleManager<IdentityRole<int>>>();
-
             if (await roleManager.RoleExistsAsync("Administrator"))
             {
                 return RedirectToAction("Index", "Home", new { area = "" });

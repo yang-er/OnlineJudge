@@ -1,4 +1,5 @@
 ﻿using JudgeWeb.Areas.Judge.Models;
+using JudgeWeb.Areas.Judge.Services;
 using JudgeWeb.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -33,31 +34,19 @@ namespace JudgeWeb.Areas.Judge.Controllers
             return View();
         }
 
-        public async Task<IActionResult> Toggle(string @as, string aj, string jh)
+        public async Task<IActionResult> Toggle(
+            string @as, string aj, string jh,
+            [FromServices] LanguageManager langMgr)
         {
             if (@as != null)
             {
-                var cur = await DbContext.Languages
-                    .Where(l => l.ExternalId == @as)
-                    .FirstOrDefaultAsync();
-
-                if (cur != null)
-                {
-                    cur.AllowSubmit = !cur.AllowSubmit;
-                    DbContext.Languages.Update(cur);
-                }
+                await langMgr.ToggleAsync(aj,
+                    l => l.AllowSubmit = !l.AllowSubmit);
             }
             else if (aj != null)
             {
-                var cur = await DbContext.Languages
-                    .Where(l => l.ExternalId == aj)
-                    .FirstOrDefaultAsync();
-
-                if (cur != null)
-                {
-                    cur.AllowJudge = !cur.AllowJudge;
-                    DbContext.Languages.Update(cur);
-                }
+                await langMgr.ToggleAsync(aj,
+                    l => l.AllowJudge = !l.AllowJudge);
             }
             else if (jh != null)
             {
@@ -76,8 +65,8 @@ namespace JudgeWeb.Areas.Judge.Controllers
                 return BadRequest();
             }
 
-            await DbContext.SaveChangesAsync();
-            return RedirectToAction(jh is null ? nameof(Language) : nameof(JudgeHost));
+            return RedirectToAction(jh is null
+                ? nameof(Language) : nameof(JudgeHost));
         }
 
         public async Task<IActionResult> Executable()
@@ -262,38 +251,33 @@ namespace JudgeWeb.Areas.Judge.Controllers
             return View();
         }
 
-        public async Task<IActionResult> Language()
+        public async Task<IActionResult> Language(
+            [FromServices] LanguageManager manager)
         {
-            ViewBag.Statistics = (await DbContext.Submissions
-                .GroupBy(s => s.Language)
-                .Select(g => new { g.Key, Count = g.Count() })
-                .ToListAsync()).Select(a => (a.Key, a.Count));
-            return View("Languages", await DbContext.Languages.ToListAsync());
+            ViewBag.Statistics = await manager.StatisticsAsync();
+            return View("Languages", manager.GetAll().Values);
         }
 
         [HttpGet("{extid}")]
-        public async Task<IActionResult> Language(string extid)
+        public async Task<IActionResult> Language(string extid,
+            [FromServices] LanguageManager manager,
+            [FromServices] SubmissionManager manager2)
         {
-            var lang = await DbContext.Languages
+            var lang = manager.GetAll().Values
                 .Where(l => l.ExternalId == extid)
-                .FirstOrDefaultAsync();
+                .FirstOrDefault();
             if (lang is null) return NotFound();
-            ViewBag.Language = lang;
 
-            var subs = await (
-                from g in DbContext.Judgings
-                where g.Active
-                join s in DbContext.Submissions on g.SubmissionId equals s.SubmissionId
-                where s.Language == lang.LangId
-                orderby g.SubmissionId descending
-                select new { s, g }
-            ).Take(200).ToListAsync();
-            ViewBag.Submissions = subs.Select(a => (a.s, a.g));
+            ViewBag.Language = lang;
+            ViewBag.Submissions = await manager2
+                .EnumerateAsync(s => s.Language == lang.LangId, 200);
             return View();
         }
 
         [HttpGet]
-        public async Task<IActionResult> CreateContest()
+        public async Task<IActionResult> CreateContest(
+            [FromServices] UserManager userMgr,
+            [FromServices] RoleManager<IdentityRole<int>> roleMgr)
         {
             var c = DbContext.Contests.Add(new Contest
             {
@@ -318,10 +302,6 @@ namespace JudgeWeb.Areas.Judge.Controllers
 
             await DbContext.SaveChangesAsync();
 
-            var roleMgr = HttpContext.RequestServices
-                .GetRequiredService<RoleManager<IdentityRole<int>>>();
-            var userMgr = HttpContext.RequestServices
-                .GetRequiredService<UserManager>();
             var result = await roleMgr.CreateAsync(new IdentityRole<int>($"JuryOfContest{c.Entity.ContestId}"));
             if (!result.Succeeded) return Json(result);
 
@@ -334,6 +314,7 @@ namespace JudgeWeb.Areas.Judge.Controllers
         [HttpGet]
         public IActionResult Images()
         {
+            
             var files = Directory.EnumerateFiles("wwwroot/images/problem/");
             return View(files);
         }
