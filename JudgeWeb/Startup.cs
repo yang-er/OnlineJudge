@@ -118,6 +118,7 @@ namespace JudgeWeb
                 .SetCompatibilityVersion(CompatibilityVersion.Version_2_1)
                 .UseAreaParts("JudgeWeb.Areas.", new[] { "Misc", "Account", "Api", "Judge", "Contest" });
 
+            services.AddDefaultManagers();
             services.AddScoreboardService();
             services.AddSwagger();
         }

@@ -1,22 +1,12 @@
-﻿using JudgeWeb.Data;
+﻿using JudgeWeb.Features.Storage;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
-using System.Linq.Expressions;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-using JudgeWeb.Areas.Judge.Models;
-using System.Net;
-using JudgeWeb.Areas.Judge.Services;
-using JudgeWeb.Features.Storage;
-using JudgeWeb.Areas.Judge.Providers;
-using Microsoft.Extensions.Caching.Memory;
 using System.Security.Claims;
-using Microsoft.AspNetCore.Mvc;
+using System.Threading.Tasks;
 
-[assembly: Inject(typeof(TestcaseManager))]
-namespace JudgeWeb.Areas.Judge.Services
+namespace JudgeWeb.Data
 {
     public class TestcaseManager
     {
@@ -137,6 +127,5 @@ namespace JudgeWeb.Areas.Judge.Services
                 .OrderBy(t => t.Rank)
                 .ToListAsync();
         }
-
     }
 }

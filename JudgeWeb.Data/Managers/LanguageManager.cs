@@ -1,15 +1,11 @@
-﻿using JudgeWeb.Areas.Judge.Providers;
-using JudgeWeb.Areas.Judge.Services;
-using JudgeWeb.Data;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-[assembly: Inject(typeof(LanguageManager))]
-namespace JudgeWeb.Areas.Judge.Services
+namespace JudgeWeb.Data
 {
     public class LanguageManager
     {

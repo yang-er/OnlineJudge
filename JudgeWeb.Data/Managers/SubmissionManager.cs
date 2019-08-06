@@ -1,17 +1,12 @@
-﻿using JudgeWeb.Data;
+﻿using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
-using System.Linq.Expressions;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-using JudgeWeb.Areas.Judge.Models;
+using System.Linq.Expressions;
 using System.Net;
-using JudgeWeb.Areas.Judge.Services;
+using System.Threading.Tasks;
 
-[assembly: Inject(typeof(SubmissionManager))]
-namespace JudgeWeb.Areas.Judge.Services
+namespace JudgeWeb.Data
 {
     public class SubmissionManager
     {
@@ -39,18 +34,19 @@ namespace JudgeWeb.Areas.Judge.Services
             return query.Select(a => (a.s, a.g));
         }
 
-        public async Task<int> CreateAsync(CodeSubmitModel model,
-            IPAddress ip, int uid, string username)
+        public async Task<int> CreateAsync(
+            string code, int language, int problemId,
+            IPAddress ip, int cid, int uid, string username)
         {
             var s = DbContext.Submissions.Add(new Submission
             {
                 Author = uid,
-                CodeLength = model.Code.Length,
+                CodeLength = code.Length,
                 Ip = ip.ToString(),
-                Language = model.Language,
-                ProblemId = model.ProblemId,
-                SourceCode = model.Code.ToBase64(),
-                ContestId = 0,
+                Language = language,
+                ProblemId = problemId,
+                SourceCode = code.ToBase64(),
+                ContestId = cid,
                 Time = DateTimeOffset.Now,
             });
 
@@ -58,10 +54,10 @@ namespace JudgeWeb.Areas.Judge.Services
 
             DbContext.AuditLogs.Add(new AuditLog
             {
-                ContestId = 0,
+                ContestId = cid,
                 EntityId = s.Entity.SubmissionId,
                 Time = s.Entity.Time.DateTime,
-                Resolved = true,
+                Resolved = cid == 0,
                 Type = AuditLog.TargetType.Submission,
                 UserName = username,
                 Comment = "added via problem list",

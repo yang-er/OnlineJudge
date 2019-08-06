@@ -2,9 +2,9 @@
 using Microsoft.Extensions.Internal;
 using System;
 
-namespace JudgeWeb.Areas.Judge.Providers
+namespace JudgeWeb.Data
 {
-    internal static class GlobalCache
+    public static class GlobalCache
     {
         static GlobalCache()
         {

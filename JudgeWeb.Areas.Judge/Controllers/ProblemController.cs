@@ -147,9 +147,10 @@ namespace JudgeWeb.Areas.Judge.Controllers
             }
             else
             {
-                int id = await subMgr.CreateAsync(model,
+                int id = await subMgr.CreateAsync(
+                    model.Code, model.Language, model.ProblemId,
                     HttpContext.Connection.RemoteIpAddress,
-                    int.Parse(UserManager.GetUserId(User)),
+                    0, int.Parse(UserManager.GetUserId(User)),
                     UserManager.GetUserName(User));
 
                 return RedirectToAction("View", "Status", new { area = "Judge", id });

@@ -1,14 +1,11 @@
-﻿using JudgeWeb.Areas.Judge.Services;
-using JudgeWeb.Data;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
-[assembly: Inject(typeof(JudgingManager))]
-namespace JudgeWeb.Areas.Judge.Services
+namespace JudgeWeb.Data
 {
     public class JudgingManager
     {
