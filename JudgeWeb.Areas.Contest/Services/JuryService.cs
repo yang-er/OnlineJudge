@@ -404,7 +404,7 @@ namespace JudgeWeb.Areas.Contest.Services
                 from s in submissions
                 orderby s.SubmissionId descending
                 join g in DbContext.Judgings on new { s.SubmissionId, Active = true } equals new { g.SubmissionId, g.Active }
-                join t in DbContext.Teams on s.Author equals t.TeamId
+                join t in DbContext.Teams on new { TeamId = s.Author, s.ContestId } equals new { t.TeamId, t.ContestId }
                 join d in DbContext.Details on g.JudgingId equals d.JudgingId into dd
                 from d in dd.DefaultIfEmpty()
                 select new { g.Status, s.Time, s.ProblemId, s.Language, s.Author, s.SubmissionId, t.TeamName, d = (Verdict?)d.Status }
