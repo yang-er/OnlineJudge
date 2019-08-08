@@ -18,7 +18,7 @@ using System.Xml.Linq;
 [assembly: Inject(typeof(ProblemManager))]
 namespace JudgeWeb.Areas.Judge.Services
 {
-    public partial class ProblemManager
+    public class ProblemManager
     {
         protected AppDbContext DbContext { get; }
 

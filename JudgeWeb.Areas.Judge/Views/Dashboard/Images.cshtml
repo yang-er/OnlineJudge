@@ -1,4 +1,5 @@
-﻿@model IEnumerable<string>
+﻿@using Microsoft.Extensions.FileProviders
+@model IDirectoryContents
 @{
     ViewData["Title"] = "Media";
 }
@@ -12,19 +13,23 @@
             <thead class="">
                 <tr>
                     <th scope="col">file name</th>
+                    <th scope="col">size</th>
+                    <th scope="col">last modified</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach (var file in Model)
                 {
                     <tr>
-                        <td><a href="@file.Replace("wwwroot", "")">@file</a></td>
+                        <td><a href="/images/problem/@file.Name">@file.Name</a></td>
+                        <td>@Html.NiceByteSize(file.Length)</td>
+                        <td>@file.LastModified.ToLocalTime()</td>
                     </tr>
                 }
                 @if (Model.Count() == 0)
                 {
                     <tr>
-                        <td>No data avaliable.</td>
+                        <td colspan="3">No data avaliable.</td>
                     </tr>
                 }
             </tbody>

@@ -3,7 +3,6 @@ using JudgeWeb.Areas.Judge.Providers;
 using JudgeWeb.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
