@@ -14,6 +14,7 @@ namespace JudgeWeb.Areas.Account.Controllers
 {
     [Authorize]
     [Area("Account")]
+    [Route("[area]/[action]")]
     [Route("[area]/[controller]/[action]")]
     public class SignController : Controller2
     {
@@ -107,6 +108,7 @@ namespace JudgeWeb.Areas.Account.Controllers
         }
 
         [HttpGet]
+        [AllowAnonymous]
         public IActionResult AccessDenied()
         {
             return View();

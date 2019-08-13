@@ -465,6 +465,7 @@ namespace JudgeWeb.Areas.Contest.Services
                 };
 
             var model = query.FirstOrDefault();
+            if (model == null) return null;
 
             var grades =
                 from g in DbContext.Judgings

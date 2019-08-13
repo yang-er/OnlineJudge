@@ -255,9 +255,18 @@ namespace JudgeWeb.Areas.Account.Controllers
         public async Task<IActionResult> Index(IndexViewModel model)
         {
             if (!ModelState.IsValid) return View(model);
-            var user = await UpdateFromModelAsync(model);
-            await SignInManager.RefreshSignInAsync(user);
-            StatusMessage = "Your profile has been updated";
+
+            try
+            {
+                var user = await UpdateFromModelAsync(model);
+                await SignInManager.RefreshSignInAsync(user);
+                StatusMessage = "Your profile has been updated";
+            }
+            catch (ApplicationException ex)
+            {
+                StatusMessage = ex.Message;
+            }
+
             return RedirectToAction(nameof(Index));
         }
 
@@ -285,7 +294,9 @@ namespace JudgeWeb.Areas.Account.Controllers
                 var setEmailResult = await UserManager.SetEmailAsync(user, model.Email);
                 if (!setEmailResult.Succeeded)
                 {
-                    throw new ApplicationException($"Unexpected error occurred setting email for user with ID '{user.Id}'.");
+                    throw new ApplicationException(
+                        $"Unexpected error occurred setting email for user with ID '{user.Id}'. "
+                        + (setEmailResult.Errors.FirstOrDefault()?.Description ?? ""));
                 }
             }
 
@@ -295,7 +306,9 @@ namespace JudgeWeb.Areas.Account.Controllers
                 var setPhoneResult = await UserManager.SetPhoneNumberAsync(user, model.PhoneNumber);
                 if (!setPhoneResult.Succeeded)
                 {
-                    throw new ApplicationException($"Unexpected error occurred setting phone number for user with ID '{user.Id}'.");
+                    throw new ApplicationException(
+                        $"Unexpected error occurred setting phone number for user with ID '{user.Id}'. "
+                        + (setPhoneResult.Errors.FirstOrDefault()?.Description ?? ""));
                 }
             }
 

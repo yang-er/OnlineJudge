@@ -1,6 +1,7 @@
 ﻿using JudgeWeb.Areas.Api.Models;
 using JudgeWeb.Data;
 using JudgeWeb.Features.Storage;
+using Microsoft.ApplicationInsights;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -36,6 +37,11 @@ namespace JudgeWeb.Areas.Api.Controllers
         AppDbContext DbContext { get; }
 
         /// <summary>
+        /// 遥测客户端
+        /// </summary>
+        TelemetryClient Telemetry { get; }
+
+        /// <summary>
         /// 异步锁
         /// </summary>
         static AsyncLock Lock { get; } = new AsyncLock();
@@ -47,10 +53,11 @@ namespace JudgeWeb.Areas.Api.Controllers
         /// <param name="rdbc">数据库</param>
         public JudgehostsController(
             ILogger<JudgehostsController> logger,
-            AppDbContext rdbc)
+            AppDbContext rdbc, TelemetryClient telemetry)
         {
             Logger = logger;
             DbContext = rdbc;
+            Telemetry = telemetry;
         }
 
         private bool AnyNull(params object[] objs) => objs.Any(s => s is null);
@@ -128,6 +135,14 @@ namespace JudgeWeb.Areas.Api.Controllers
                     Type = AuditLog.TargetType.Contest,
                     UserName = "judgehost",
                 });
+
+                Telemetry.TrackDependency(
+                    dependencyTypeName: "Language",
+                    dependencyName: langid,
+                    data: model.Description,
+                    startTime: DateTimeOffset.Now,
+                    duration: TimeSpan.Zero,
+                    success: false);
             }
             else if (kind == "judgehost")
             {
@@ -156,6 +171,24 @@ namespace JudgeWeb.Areas.Api.Controllers
                     Type = AuditLog.TargetType.Contest,
                     UserName = host.ServerName,
                 });
+
+                Telemetry.TrackDependency(
+                    dependencyTypeName: "JudgeHost",
+                    dependencyName: host.ServerName,
+                    data: model.Description,
+                    startTime: DateTimeOffset.Now,
+                    duration: TimeSpan.Zero,
+                    success: false);
+            }
+            else
+            {
+                Telemetry.TrackDependency(
+                    dependencyTypeName: "Unresolved",
+                    dependencyName: kind,
+                    data: model.Description,
+                    startTime: DateTimeOffset.Now,
+                    duration: TimeSpan.Zero,
+                    success: false);
             }
 
             var ie = new InternalError
@@ -228,6 +261,14 @@ namespace JudgeWeb.Areas.Api.Controllers
                     UserName = "judgerest",
                 });
 
+                Telemetry.TrackDependency(
+                    dependencyTypeName: "JudgeHost",
+                    dependencyName: item.ServerName,
+                    data: "registed",
+                    startTime: item.PollTime,
+                    duration: TimeSpan.Zero,
+                    success: true);
+
                 await DbContext.SaveChangesAsync();
                 return Json(new object[0]);
             }
@@ -250,6 +291,14 @@ namespace JudgeWeb.Areas.Api.Controllers
                     s.Status = Verdict.UndefinedError;
                     s.StopTime = DateTimeOffset.Now;
                     s.Active = false;
+
+                    Telemetry.TrackDependency(
+                        dependencyTypeName: "JudgeHost",
+                        dependencyName: item.ServerName,
+                        data: $"j{s.JudgingId} of s{s.SubmissionId} returned to queue",
+                        startTime: s.StartTime ?? DateTimeOffset.Now,
+                        duration: (s.StopTime - s.StartTime) ?? TimeSpan.Zero,
+                        success: false);
 
                     DbContext.Judgings.Update(s);
                     DbContext.Judgings.Add(new Judging
@@ -364,7 +413,7 @@ namespace JudgeWeb.Areas.Api.Controllers
                 OrigSubmitId = null,
                 MaxRunTime = timelimit / 1000.0, // as seconds
                 MemLimit = memlimit, // as kb
-                OutputLimit = 4096, // KB
+                OutputLimit = 12288, // KB
                 Run = problem.RunScript,
                 Compare = problem.CompareScript,
                 CompareArgs = problem.ComapreArguments,
@@ -425,6 +474,14 @@ namespace JudgeWeb.Areas.Api.Controllers
                     Type = AuditLog.TargetType.Judging,
                     UserName = hostname,
                 });
+
+                Telemetry.TrackDependency(
+                    dependencyTypeName: "JudgeHost",
+                    dependencyName: host.ServerName,
+                    data: $"j{judging.JudgingId} judged " + Verdict.CompileError,
+                    startTime: judging.StartTime ?? DateTimeOffset.Now,
+                    duration: (judging.StopTime - judging.StartTime) ?? TimeSpan.Zero,
+                    success: true);
             }
 
             judging.ServerId = host.ServerId;
@@ -527,6 +584,14 @@ namespace JudgeWeb.Areas.Api.Controllers
                     Type = AuditLog.TargetType.Judging,
                     UserName = hostname,
                 });
+
+                Telemetry.TrackDependency(
+                    dependencyTypeName: "JudgeHost",
+                    dependencyName: host.ServerName,
+                    data: $"j{judging.g.JudgingId} judged " + verdictsOfThis.Status,
+                    startTime: judging.g.StartTime ?? DateTimeOffset.Now,
+                    duration: (judging.g.StopTime - judging.g.StartTime) ?? TimeSpan.Zero,
+                    success: true);
 
                 await DbContext.SaveChangesAsync();
 
