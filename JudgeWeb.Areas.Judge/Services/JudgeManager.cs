@@ -64,7 +64,7 @@ namespace JudgeWeb.Areas.Judge.Services
             if (exec is null)
             {
                 if (string.IsNullOrWhiteSpace(description)
-                        || ExecType.Contains(type) || !file.HasValue)
+                        || !ExecType.Contains(type) || !file.HasValue)
                     return false;
 
                 var uploaded = file.Value;
