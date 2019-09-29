@@ -155,6 +155,8 @@ namespace JudgeWeb.Areas.Judge.Services
             prob.TimeLimit = model.TimeLimit;
             prob.RunScript = model.RunScript;
             prob.CompareScript = model.CompareScript;
+            prob.ComapreArguments = model.CompareArgument;
+            prob.CombinedRunCompare = model.RunAsCompare;
             prob.Flag = model.IsActive ? 0 : 1;
             prob.Source = model.Source;
             prob.Title = model.Title;
@@ -338,6 +340,8 @@ namespace JudgeWeb.Areas.Judge.Services
                         ProblemId = p.ProblemId,
                         CompareScript = p.CompareScript,
                         RunScript = p.RunScript,
+                        RunAsCompare = p.CombinedRunCompare,
+                        CompareArgument = p.ComapreArguments,
                         Source = p.Source,
                         MemoryLimit = p.MemoryLimit,
                         TimeLimit = p.TimeLimit,

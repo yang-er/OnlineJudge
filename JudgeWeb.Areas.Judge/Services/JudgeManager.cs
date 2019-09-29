@@ -39,6 +39,20 @@ namespace JudgeWeb.Areas.Judge.Services
                 .ToListAsync();
         }
 
+        public Task<List<Executable>> GetExecutablesByProblemEditorAsync()
+        {
+            return DbContext.Executable
+                .Where(e => e.Type == "run" || e.Type == "compare")
+                .Select(e =>
+                    new Executable
+                    {
+                        Type = e.Type,
+                        Description = e.Description,
+                        ExecId = e.ExecId,
+                    })
+                .ToListAsync();
+        }
+
         public async Task ToggleJudgehostAsync(string hostname)
         {
             var cur = await DbContext.JudgeHosts

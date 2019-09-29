@@ -28,6 +28,12 @@ namespace JudgeWeb.Areas.Judge.Models
         [DisplayName("Compare Script")]
         public string CompareScript { get; set; }
 
+        [DisplayName("Compare Argument")]
+        public string CompareArgument { get; set; }
+
+        [DisplayName("Use run script as compare script")]
+        public bool RunAsCompare { get; set; }
+
         [DisplayName("Is this problem active?")]
         public bool IsActive { get; set; }
 

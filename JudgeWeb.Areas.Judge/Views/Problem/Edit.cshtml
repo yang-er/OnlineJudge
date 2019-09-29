@@ -4,6 +4,13 @@
     IEnumerable<Testcase> Testcases = ViewBag.Testcase;
 }
 
+@inject JudgeWeb.Areas.Judge.Services.JudgeManager JudgeManager
+@{
+    var scripts = await JudgeManager.GetExecutablesByProblemEditorAsync();
+    var compares = scripts.Where(e => e.Type == "compare").Select(e => new SelectListItem($"{e.ExecId} - {e.Description}", e.ExecId));
+    var runs = scripts.Where(e => e.Type == "run").Select(e => new SelectListItem($"{e.ExecId} - {e.Description}", e.ExecId));
+}
+
 <div class="container-fluid mt-4 mb-4 pl-4 pr-4">
     <h2>@ViewData["Title"]</h2>
     <h5 class="mb-3">#@Model.ProblemId</h5>
@@ -50,17 +57,20 @@
                     <div class="row">
                         <div class="input-group col-lg-6">
                             <div class="input-group-prepend"><span class="input-group-text">Run</span></div>
-                            <select class="custom-select" asp-for="RunScript">
-                                <option value="run">run - Default run script</option>
-                            </select>
+                            <select class="custom-select" asp-for="RunScript" asp-items="runs"></select>
                         </div>
                         <div class="input-group col-lg-6 mt-3 mt-lg-0">
                             <div class="input-group-prepend"><span class="input-group-text">Compare</span></div>
-                            <select class="custom-select" asp-for="CompareScript">
-                                <option value="compare">compare - Default compare script</option>
-                                <option value="float">float - For floats with prec 1E-7</option>
-                            </select>
+                            <select class="custom-select" asp-for="CompareScript" asp-items="compares"></select>
                         </div>
+                        <div class="input-group col-12 mt-3">
+                            <div class="input-group-prepend"><span class="input-group-text" id="cmparg-tag">Compare Arguments</span></div>
+                            <input asp-for="CompareArgument" class="form-control" placeholder="Default to leave empty" aria-label="Time" aria-describedby="cmparg-tag" />
+                        </div>
+                    </div>
+                    <div class="custom-control custom-checkbox mt-3">
+                        <input type="checkbox" class="custom-control-input" asp-for="RunAsCompare">
+                        <label class="custom-control-label" asp-for="RunAsCompare"></label>
                     </div>
                 </div>
                 <div class="form-group">

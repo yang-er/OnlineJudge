@@ -64,7 +64,12 @@ namespace JudgeWeb.Areas.Judge.Controllers
                 return NotFound(); // No such problem or not visible.
             var view = await ProblemManager.GetViewAsync(pid);
 
-            if (string.IsNullOrEmpty(view)) return NotFound();
+            if (string.IsNullOrEmpty(view))
+            {
+                if (User.IsInRoles(privilege))
+                    return RedirectToAction("Edit", "Problem", new { area = "Judge", pid });
+                return NotFound();
+            }
 
             ViewData["Title"] = "Problem View";
             ViewData["Content"] = view;
