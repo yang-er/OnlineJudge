@@ -27,7 +27,7 @@ namespace JudgeWeb.Areas.Account.Controllers
             ViewBag.User = user;
 
             ViewBag.Stat = DbContext.SubmissionStatistics
-                .Where(s => s.Author == uid);
+                .Where(s => s.Author == uid && s.ContestId == 0);
             return View();
         }
     }

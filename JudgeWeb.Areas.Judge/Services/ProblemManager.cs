@@ -158,7 +158,7 @@ namespace JudgeWeb.Areas.Judge.Services
             prob.ComapreArguments = model.CompareArgument;
             prob.CombinedRunCompare = model.RunAsCompare;
             prob.Flag = model.IsActive ? 0 : 1;
-            prob.Source = model.Source;
+            prob.Source = model.Source ?? "";
             prob.Title = model.Title;
             DbContext.Problems.Update(prob);
             await DbContext.SaveChangesAsync();

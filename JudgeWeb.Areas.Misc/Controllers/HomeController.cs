@@ -14,6 +14,8 @@ namespace JudgeWeb.Areas.Misc.Controllers
     {
         private AppDbContext DbContext { get; }
 
+        private static string[] PhotoList { get; } = new[] { "2018qingdao", "2018xian" };
+
         public HomeController(AppDbContext adbc)
         {
             DbContext = adbc;
@@ -30,6 +32,7 @@ namespace JudgeWeb.Areas.Misc.Controllers
                 .Cacheable(TimeSpan.FromMinutes(50))
                 .ToList();
 
+            ViewData["Photo"] = PhotoList[DateTimeOffset.Now.Millisecond % PhotoList.Length];
             return View(news.Select(a => (a.NewsId, a.Title)));
         }
 

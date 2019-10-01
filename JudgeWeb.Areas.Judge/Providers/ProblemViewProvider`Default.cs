@@ -4,6 +4,7 @@ using JudgeWeb.Features.Problem;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Encodings.Web;
 
 namespace JudgeWeb.Areas.Judge.Providers
 {
@@ -11,9 +12,12 @@ namespace JudgeWeb.Areas.Judge.Providers
     {
         private IMarkdownService Markdown { get; }
 
-        public DefaultProblemViewProvider(IMarkdownService markdownService)
+        private HtmlEncoder Encoder { get; }
+
+        public DefaultProblemViewProvider(IMarkdownService markdownService, HtmlEncoder encoder)
         {
             Markdown = markdownService;
+            Encoder = encoder;
         }
 
         public StringBuilder Build(string description,
@@ -64,13 +68,13 @@ namespace JudgeWeb.Areas.Judge.Providers
                     {
                         htmlBuilder.AppendLine("<div class=\"input\">");
                         htmlBuilder.AppendLine("<div class=\"title\">Input</div>");
-                        htmlBuilder.AppendLine($"<pre>{item.Input}</pre>");
+                        htmlBuilder.Append("<pre>").Append(Encoder.Encode(item.Input)).AppendLine("</pre>");
                         htmlBuilder.AppendLine("</div>");
                     }
 
                     htmlBuilder.AppendLine("<div class=\"output\">");
                     htmlBuilder.AppendLine("<div class=\"title\">Output</div>");
-                    htmlBuilder.AppendLine($"<pre>{item.Output}</pre>");
+                    htmlBuilder.Append("<pre>").Append(Encoder.Encode(item.Output)).AppendLine("</pre>");
                     htmlBuilder.AppendLine("</div>");
                     htmlBuilder.AppendLine("</div>");
                     htmlBuilder.AppendLine();

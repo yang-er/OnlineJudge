@@ -76,7 +76,9 @@
             else
             {
                 <li class="page-item"><a class="page-link" asp-all-route-data="@ViewBag.Filter" asp-route-pg="">&laquo;</a></li>
-                <li class="page-item"><a class="page-link" asp-all-route-data="@ViewBag.Filter" asp-route-pg="@(pg-1)">@(pg - 1)</a></li>
+                @if (pg > 3 || pg < 0) { <li class="page-item"><a class="page-link" asp-all-route-data="@ViewBag.Filter" asp-route-pg="@(pg-3)">@(pg-3)</a></li> }
+                @if (pg > 2 || pg < 0) { <li class="page-item"><a class="page-link" asp-all-route-data="@ViewBag.Filter" asp-route-pg="@(pg-2)">@(pg-2)</a></li> }
+                <li class="page-item"><a class="page-link" asp-all-route-data="@ViewBag.Filter" asp-route-pg="@(pg-1)">@(pg-1)</a></li>
                 <li class="page-item active" aria-current="page">
                     <span class="page-link">
                         @pg
@@ -92,6 +94,8 @@
             else
             {
                 <li class="page-item"><a class="page-link" asp-all-route-data="@ViewBag.Filter" asp-route-pg="@(pg+1)">@(pg+1)</a></li>
+                @if (pg < -2 || pg >= 0) { <li class="page-item"><a class="page-link" asp-all-route-data="@ViewBag.Filter" asp-route-pg="@(pg+2)">@(pg+2)</a></li> }
+                @if (pg < -3 || pg >= 0) { <li class="page-item"><a class="page-link" asp-all-route-data="@ViewBag.Filter" asp-route-pg="@(pg+3)">@(pg+3)</a></li> }
                 <li class="page-item"><a class="page-link" asp-all-route-data="@ViewBag.Filter" asp-route-pg="-1">&raquo;</a></li>
             }
         </ul>
