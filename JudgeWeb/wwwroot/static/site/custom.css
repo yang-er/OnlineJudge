@@ -149,7 +149,7 @@ article {
 
 /* judge's .state */
 .state {
-  font-family: Tahoma;
+  font-family: Tahoma, sans-serif;
   color: gray;
 }
 

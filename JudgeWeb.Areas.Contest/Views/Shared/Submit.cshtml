@@ -6,7 +6,7 @@
 }
 
 <form asp-action="Submit" method="post" name="submit_problem">
-    <div class="modal fade" id="modal-@ViewData["HandleKey"]" tabindex="-1" role="dialog" aria-labelledby="modal-@ViewData["HandleKey"]-label" aria-hidden="true">
+    <div class="modal fade" data-backdrop="static" id="modal-@ViewData["HandleKey"]" tabindex="-1" role="dialog" aria-labelledby="modal-@ViewData["HandleKey"]-label" aria-hidden="true">
         <div class="modal-dialog" style="max-width:800px" role="document">
             <div class="modal-content">
                 <div class="modal-header">
@@ -39,8 +39,10 @@
                         </select>
                     </div>
                     <div class="form-group">
+                        <script src="~/static/ace/ace.js"></script>
                         <label class="required" asp-for="Code"></label>
-                        <textarea asp-for="Code" required class="form-control" style="min-height:20em;font-family:SFMono-Regular,Menlo,Monaco,Consolas,'Liberation Mono','Courier New',monospace;"></textarea>
+                        <textarea id="codearea" asp-for="Code" hidden="hidden" required></textarea>
+                        <div id="editor0" class="form-control"></div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -65,5 +67,23 @@
                 '\nMake submission?';
             return confirm(question);
         });
+    });
+
+    var editor0 = ace.edit("editor0");
+    editor0.setOptions({ maxLines: 13, minLines: 13 });
+    editor0.setTheme("ace/theme/eclipse");
+    editor0.session.on('change', function () {
+        $('#codearea').val(editor0.session.getValue());
+    });
+
+    function setEditorMode(lang) {
+        editor0.session.setMode({ path: lang, v: Date.now() });
+    }
+
+    var langlist = ["", "c_cpp", "c_cpp", "java", "python", "python",
+        "pascal", "csharp", "kotlin", "haskell", "perl", "fortran"];
+
+    $('#submit-lang').on('change', function () {
+        setEditorMode("ace/mode/" + langlist[$(this).val()]);
     });
 </script>

@@ -354,6 +354,7 @@ healthchecksdb
 /JudgeWeb/wwwroot/images/problem/
 
 # LibMan restores
+/JudgeWeb/wwwroot/static/ace
 /JudgeWeb/wwwroot/static/fonts
 /JudgeWeb/wwwroot/static/images
 /JudgeWeb/wwwroot/static/lib

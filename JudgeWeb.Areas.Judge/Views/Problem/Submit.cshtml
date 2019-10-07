@@ -1,5 +1,5 @@
 ﻿@model CodeSubmitModel
-@{ 
+@{
     IEnumerable<SelectListItem> langs = ViewBag.Language;
     string DisplayMessage = ViewBag.DisplayMessage;
 }
@@ -15,18 +15,41 @@
         </div>
     }
 
+    <script src="~/static/ace/ace.js"></script>
     <form asp-action="Submit" asp-route-pid="@ViewData["ProblemId"]" method="post">
         <input type="hidden" asp-for="ProblemId" />
         <div class="form-group">
             <label asp-for="Language"></label>
-            <select class="form-control" asp-for="Language" asp-items="langs"></select>
+            <select class="form-control" id="langsel" asp-for="Language" asp-items="langs"></select>
         </div>
         <div class="form-group">
             <label asp-for="Code"></label>
-            <textarea class="form-control" asp-for="Code" style="min-height:25em;font-family:SFMono-Regular,Menlo,Monaco,Consolas,'Liberation Mono','Courier New',monospace;"></textarea>
+            <textarea id="codearea" asp-for="Code" hidden="hidden"></textarea>
+            <div id="editor0" class="form-control"></div>
         </div>
         <div class="form-group">
             <input class="btn btn-success" name="submit" type="submit" value=" Submit " />
         </div>
     </form>
 </div>
+
+<script>
+    var editor0 = ace.edit("editor0");
+    editor0.setOptions({ maxLines: Infinity, minLines: 20 });
+    editor0.setTheme("ace/theme/eclipse");
+    editor0.session.setMode("ace/mode/c_cpp");
+    editor0.session.on('change', function () {
+        $('#codearea').val(editor0.session.getValue());
+    });
+
+    function setEditorMode(lang) {
+        editor0.session.setMode({ path: lang, v: Date.now() });
+    }
+
+    var langlist = ["", "c_cpp", "c_cpp", "java", "python", "python",
+        "pascal", "csharp", "kotlin", "haskell", "perl", "fortran"];
+
+    $('#langsel').on('change', function () {
+        setEditorMode("ace/mode/" + langlist[$(this).val()]);
+    });
+</script>

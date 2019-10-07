@@ -765,6 +765,10 @@
         "qrcode.min.js",
         "qrcode.js"
       ]
+    },
+    {
+      "library": "ace@1.4.6",
+      "destination": "wwwroot/static/ace/"
     }
   ]
 }
