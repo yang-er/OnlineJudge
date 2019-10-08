@@ -532,6 +532,8 @@ namespace JudgeWeb.Areas.Api.Controllers
             io.SetContext("Runs");
             foreach (var (b, e) in runEntities)
             {
+                if (b.OutputError is null || b.OutputRun is null)
+                    continue;
                 var stderr = TryUnbase64(b.OutputError);
                 var stdout = TryUnbase64(b.OutputRun);
 
