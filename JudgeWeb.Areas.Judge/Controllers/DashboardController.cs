@@ -76,6 +76,7 @@ namespace JudgeWeb.Areas.Judge.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [RequestSizeLimit(1 << 26)]
         public async Task<IActionResult> Executable(ExecutableUploadModel model)
         {
             if (string.IsNullOrEmpty(model.ID)) return BadRequest();
@@ -180,6 +181,7 @@ namespace JudgeWeb.Areas.Judge.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [ValidateInAjax]
+        [RequestSizeLimit(1 << 26)]
         public async Task<IActionResult> Images(IFormFile file)
         {
             try

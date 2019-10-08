@@ -28,6 +28,7 @@ namespace JudgeWeb.Areas.Judge.Controllers
         [HttpPost]
         [Authorize(Roles = privilege)]
         [ValidateAntiForgeryToken]
+        [RequestSizeLimit(1 << 30)]
         public async Task<IActionResult> Import(IFormFile file)
         {
             try

@@ -27,6 +27,7 @@ namespace JudgeWeb.Areas.Judge.Controllers
         [HttpPost("{pid}/{ttid}")]
         [Authorize(Roles = privilege)]
         [ValidateAntiForgeryToken]
+        [RequestSizeLimit(1 << 30)]
         public async Task<IActionResult> Testcase(int pid, string ttid, TestcaseUploadModel model)
         {
             try

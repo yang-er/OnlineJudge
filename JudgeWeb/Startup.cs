@@ -77,15 +77,6 @@ namespace JudgeWeb
                 options.SlidingExpiration = true;
             });
 
-            services.Configure<FormOptions>(options =>
-            {
-                options.ValueCountLimit = 1 << 26;
-                options.ValueLengthLimit = 1 << 26;
-                options.KeyLengthLimit = 1 << 26;
-                options.MultipartBodyLengthLimit = 1 << 26;
-                options.MultipartBoundaryLengthLimit = 1 << 26;
-            });
-
             services.AddDbContext<AppDbContext>(options =>
                 options.UseSqlServer(Configuration.GetConnectionString("UserDbConnection"))
                        .UseSecondLevelCache());

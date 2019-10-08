@@ -188,6 +188,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
         [HttpPost]
         [ValidateInAjax]
         [ValidateAntiForgeryToken]
+        [RequestSizeLimit(1 << 26)]
         public async Task<IActionResult> Import(IFormFile file)
         {
             // every line in file: [name]\t[affname]\t[category]\t[uid]\n
