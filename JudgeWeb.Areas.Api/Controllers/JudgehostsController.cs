@@ -436,6 +436,10 @@ namespace JudgeWeb.Areas.Api.Controllers
         /// <param name="model">更新数据</param>
         [HttpPut("{hostname}/{jid}")]
         [RequestSizeLimit(1 << 30)]
+        [RequestFormLimits(MultipartBodyLengthLimit = 1 << 30, KeyLengthLimit = 1 << 30,
+            MultipartBoundaryLengthLimit = 1 << 30, MultipartHeadersCountLimit = 1 << 30,
+            MultipartHeadersLengthLimit = 1 << 30, BufferBodyLengthLimit = 1 << 30,
+            ValueCountLimit = 1 << 30, ValueLengthLimit = 1 << 30)]
         public async Task<IActionResult> UpdateJudging([FromRoute] string hostname, [FromRoute] int jid, UpdateJudgingModel model)
         {
             var host = await DbContext.JudgeHosts
@@ -500,6 +504,10 @@ namespace JudgeWeb.Areas.Api.Controllers
         /// <param name="model">更新数据</param>
         [HttpPost("{hostname}/{jid}")]
         [RequestSizeLimit(1 << 30)]
+        [RequestFormLimits(MultipartBodyLengthLimit = 1 << 30, KeyLengthLimit = 1 << 30,
+            MultipartBoundaryLengthLimit = 1 << 30, MultipartHeadersCountLimit = 1 << 30,
+            MultipartHeadersLengthLimit = 1 << 30, BufferBodyLengthLimit = 1 << 30,
+            ValueCountLimit = 1 << 30, ValueLengthLimit = 1<< 30)]
         public async Task<IActionResult> AddJudgingRun([FromRoute] string hostname, [FromRoute] int jid, AddJudgingRunModel model)
         {
             var batches = model.Parse();

@@ -28,6 +28,10 @@ namespace JudgeWeb.Areas.Judge.Controllers
         [Authorize(Roles = privilege)]
         [ValidateAntiForgeryToken]
         [RequestSizeLimit(1 << 30)]
+        [RequestFormLimits(MultipartBodyLengthLimit = 1 << 30, KeyLengthLimit = 1 << 30,
+            MultipartBoundaryLengthLimit = 1 << 30, MultipartHeadersCountLimit = 1 << 30,
+            MultipartHeadersLengthLimit = 1 << 30, BufferBodyLengthLimit = 1 << 30,
+            ValueCountLimit = 1 << 30, ValueLengthLimit = 1 << 30)]
         public async Task<IActionResult> Testcase(int pid, string ttid, TestcaseUploadModel model)
         {
             try
