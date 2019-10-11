@@ -1,5 +1,7 @@
 ﻿using JudgeWeb.Areas.Contest.Models;
 using JudgeWeb.Areas.Contest.Services;
+using JudgeWeb.Features;
+using JudgeWeb.Features.Storage;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -254,6 +256,31 @@ namespace JudgeWeb.Areas.Contest.Controllers
             else
                 DisplayMessage = "Error " + string.Join('\n', result.Errors.Select(e => e.Description));
             return RedirectToAction(nameof(Home), new { cid = Contest.ContestId });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Description(
+            [FromServices] IFileRepository io)
+        {
+            io.SetContext("Problems");
+            ViewBag.ContestId = Contest.ContestId;
+            return View(new JuryMarkdownModel
+            {
+                Markdown = await io.ReadPartAsync("c" + Contest.ContestId, "readme.md")
+            });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Description(
+            JuryMarkdownModel model,
+            [FromServices] IFileRepository io,
+            [FromServices] IMarkdownService md)
+        {
+            io.SetContext("Problems");
+            model.Markdown = model.Markdown ?? "";
+            await io.WritePartAsync("c" + Contest.ContestId, "readme.md", model.Markdown);
+            await io.WritePartAsync("c" + Contest.ContestId, "readme.html", md.Render(model.Markdown));
+            return View(model);
         }
 
         [HttpGet("{uid}")]

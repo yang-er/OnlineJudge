@@ -18,9 +18,9 @@ namespace Microsoft.AspNetCore.Mvc.Rendering
             return $"{timeSpan.TotalSeconds:0} secs ago";
         }
 
-        public static IHtmlContent CstTime(this IHtmlHelper hh, DateTimeOffset dt)
+        public static IHtmlContent CstTime(this IHtmlHelper hh, DateTimeOffset? dt)
         {
-            return hh.Raw(dt.ToString("yyyy-MM-dd HH:mm:ss"));
+            return dt.HasValue ? hh.Raw(dt.Value.ToString("yyyy-MM-dd HH:mm:ss")) : hh.Raw("");
         }
 
         public static IHtmlContent RatioOf(this IHtmlHelper hh, int fz, int fm)

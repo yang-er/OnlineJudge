@@ -20,11 +20,14 @@
 <partial name="_StatusMessage" model="msg" />
 
 <div class="row">
+    <div class="col-lg-7">
+        <p>
+            <span class="sol">Registration</span> <verdict reg-status="ctx.RegisterDefaultCategory" /><br />
+            <span class="sol">Rule</span> <verdict rule="ctx.RankingStrategy" />
+        </p>
+        @Html.Raw(ViewBag.Markdown)
+    </div>
     <div class="col-lg-4">
-        <span class="sol">Registration</span> <verdict reg-status="ctx.RegisterDefaultCategory" />
-        <br />
-        <span class="sol">Rule</span> <verdict rule="ctx.RankingStrategy" />
-
         <h3 class="mt-4">Team info</h3>
         @if (team == null)
         {

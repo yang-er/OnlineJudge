@@ -1,4 +1,5 @@
-﻿using JudgeWeb.Areas.Judge.Services;
+﻿using JudgeWeb.Areas.Judge.Models;
+using JudgeWeb.Areas.Judge.Services;
 using JudgeWeb.Data;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
@@ -252,6 +253,42 @@ namespace JudgeWeb.Areas.Judge.Services
                     })
                 .OrderByDescending(e => e.ErrorId)
                 .ToListAsync();
+        }
+
+        public async Task<List<ContestListModel>> GetContestsAsync(int uid)
+        {
+            var cts = await DbContext.Contests
+                .GroupJoin(
+                    inner: DbContext.Teams,
+                    outerKeySelector: c => c.ContestId,
+                    innerKeySelector: t => t.ContestId,
+                    resultSelector: (c, ts) =>
+                        new ContestListModel
+                        {
+                            Name = c.Name,
+                            RankingStrategy = c.RankingStrategy,
+                            ContestId = c.ContestId,
+                            EndTime = c.EndTime,
+                            IsPublic = c.IsPublic,
+                            StartTime = c.StartTime,
+                            TeamCount = ts.Count(),
+                            OpenRegister = c.RegisterDefaultCategory > 0
+                        })
+                .ToListAsync();
+
+            cts.Sort();
+
+            if (uid > 0)
+            {
+                var cids = await DbContext.Teams
+                    .Where(t => t.UserId == uid)
+                    .Select(t => t.ContestId)
+                    .ToArrayAsync();
+                foreach (var cid in cids)
+                    cts.First(c => c.ContestId == cid).IsRegistered = true;
+            }
+
+            return cts;
         }
 
         public async Task<int> CreateContestAsync(string username)

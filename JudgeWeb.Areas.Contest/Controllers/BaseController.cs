@@ -55,7 +55,16 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 context.Result = BeforeActionExecuting();
         }
 
-        protected virtual IActionResult BeforeActionExecuting() => null;
+        protected virtual IActionResult BeforeActionExecuting()
+        {
+            if (Contest.IsPublic)
+                return null;
+            if (User.IsInRoles("Administrator,JuryOfContest" + Contest.ContestId))
+                return null;
+            if (Service.QueryUserTeam(Service.UserId).FirstOrDefault() != null)
+                return null;
+            return Forbid();
+        }
 
         protected virtual bool EnableScoreboard => true;
 

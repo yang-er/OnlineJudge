@@ -7,6 +7,10 @@
     bottom: 0;
 }
 
+.editormd-fullscreen {
+	z-index: 1200;
+}
+
 body {
     color: black;
     background-color: white;

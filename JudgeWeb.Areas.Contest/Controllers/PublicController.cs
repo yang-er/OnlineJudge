@@ -1,6 +1,8 @@
 ﻿using JudgeWeb.Areas.Contest.Services;
+using JudgeWeb.Features.Storage;
 using Microsoft.AspNetCore.Mvc;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace JudgeWeb.Areas.Contest.Controllers
 {
@@ -17,11 +19,14 @@ namespace JudgeWeb.Areas.Contest.Controllers
 
         [HttpGet]
         [Route("/[area]/{cid}")]
-        public IActionResult Info()
+        public async Task<IActionResult> Info(
+            [FromServices] IFileRepository io)
         {
             ViewBag.Affiliations = Service.QueryAffiliations(true).ToDictionary(a => a.AffiliationId);
             ViewBag.Categories = Service.QueryCategories(null).ToDictionary(a => a.CategoryId);
             ViewBag.DisplayMessage = DisplayMessage;
+            io.SetContext("Problems");
+            ViewBag.Markdown = await io.ReadPartAsync("c" + Contest.ContestId, "readme.html");
             return View();
         }
 

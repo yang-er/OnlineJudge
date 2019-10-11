@@ -124,7 +124,13 @@
   content: "\e936";
 }
 
+.bowtie-user::before {
+  content: "\e998";
+}
 
+.bowtie-watch-eye-off::before {
+  content: "\eaa4";
+}
 
 
 
@@ -752,10 +758,6 @@ unused heap
 
 .bowtie-tag-fill::before {
   content: "\e997";
-}
-
-.bowtie-user::before {
-  content: "\e998";
 }
 
 .bowtie-users::before {

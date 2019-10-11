@@ -530,6 +530,7 @@ namespace JudgeWeb.Areas.Contest.Services
                         return ("Error default category.", false);
                 }
 
+                model.Problems = model.Problems ?? new Dictionary<int, ContestProblem>();
                 if (model.Problems.Select(p => p.Value.ProblemId).Distinct().Count() != model.Problems.Count)
                     return ("Error duplicate problems.", false);
 

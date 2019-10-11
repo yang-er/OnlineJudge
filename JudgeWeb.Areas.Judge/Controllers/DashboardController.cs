@@ -156,23 +156,6 @@ namespace JudgeWeb.Areas.Judge.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> CreateContest(
-            [FromServices] UserManager userMgr,
-            [FromServices] RoleManager<IdentityRole<int>> roleMgr)
-        {
-            int cid = await JudgeManager.CreateContestAsync(userMgr.GetUserName(User));
-
-            var roleName = $"JuryOfContest{cid}";
-            var result = await roleMgr.CreateAsync(new IdentityRole<int>(roleName));
-            if (!result.Succeeded) return Json(result);
-
-            var firstUser = await userMgr.GetUserAsync(User);
-            var roleAttach = await userMgr.AddToRoleAsync(firstUser, roleName);
-            if (!roleAttach.Succeeded) return Json(roleAttach);
-            return RedirectToAction("Home", "Jury", new { area = "Contest", cid });
-        }
-
-        [HttpGet]
         public IActionResult Images()
         {
             return View(JudgeManager.GetImages());
