@@ -1,7 +1,8 @@
 ﻿using JudgeWeb.Areas.Judge.Models;
 using JudgeWeb.Areas.Judge.Providers;
-using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -9,13 +10,33 @@ namespace JudgeWeb.Areas.Judge.Controllers
 {
     public partial class ProblemController
     {
-        [Authorize(Roles = privilege)]
+        [ProblemAuthorize("ppid")]
         [HttpGet("{ppid}")]
         public async Task<IActionResult> Edit(string ppid)
         {
             if (ppid == "add")
             {
                 int pid = await ProblemManager.CreateAsync();
+
+                var roleManager = HttpContext.RequestServices
+                    .GetRequiredService<RoleManager<IdentityRole<int>>>();
+                var rmr = await roleManager.CreateAsync(
+                    new IdentityRole<int>("AuthorOfProblem" + pid));
+
+                if (!rmr.Succeeded)
+                {
+                    return Content("Error creating user role, please contact XiaoYang. Please do not retry.");
+                }
+                else
+                {
+                    var user = await UserManager.GetUserAsync(User);
+                    await UserManager.AddToRoleAsync(user, "AuthorOfProblem" + pid);
+
+                    var signInManager = HttpContext.RequestServices
+                        .GetRequiredService<SignInManager<Data.User>>();
+                    await signInManager.RefreshSignInAsync(user);
+                }
+
                 return RedirectToAction(nameof(Edit), new { ppid = pid.ToString() });
             }
             else if (int.TryParse(ppid, out int pid))
@@ -31,7 +52,7 @@ namespace JudgeWeb.Areas.Judge.Controllers
             }
         }
         
-        [Authorize(Roles = privilege)]
+        [ProblemAuthorize("pid")]
         [HttpPost("{pid}")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int pid, ProblemEditModel model,
@@ -61,10 +82,11 @@ namespace JudgeWeb.Areas.Judge.Controllers
             return View(model);
         }
 
-        [Authorize(Roles = privilege)]
-        [HttpGet("{backstore}/{target}")]
-        public async Task<IActionResult> Markdown(string target, string backstore)
+        [ProblemAuthorize("pid")]
+        [HttpGet("p{pid}/{target}")]
+        public async Task<IActionResult> Markdown(string target, int pid)
         {
+            var backstore = "p" + pid;
             var lastVersion = await ProblemManager
                 .ReadMarkdownAsync(backstore, target) ?? "";
 
@@ -76,12 +98,13 @@ namespace JudgeWeb.Areas.Judge.Controllers
             });
         }
 
-        [Authorize(Roles = privilege)]
-        [HttpPost("{backstore}/{target}")]
+        [ProblemAuthorize("pid")]
+        [HttpGet("p{pid}/{target}")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Markdown(string target,
-            string backstore, ProblemMarkdownModel model)
+            int pid, ProblemMarkdownModel model)
         {
+            var backstore = "p" + pid;
             if (target != model.Target || backstore != model.BackingStore)
                 return BadRequest();
             await ProblemManager.SaveMarkdownAsync(backstore, target, model.Markdown);

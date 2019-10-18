@@ -13,7 +13,6 @@ namespace JudgeWeb.Areas.Judge.Controllers
     [Route("[area]/[controller]/[action]")]
     public partial class ProblemController : Controller2
     {
-        const string privilege = "Administrator,Problem";
         const int ItemsPerPage = 50;
 
         private UserManager UserManager { get; }
@@ -37,9 +36,7 @@ namespace JudgeWeb.Areas.Judge.Controllers
             if (pg < 1) pg = 1;
             ViewBag.Page = pg;
             ViewBag.TotalPage = ProblemManager.TotalPages;
-
-            var probs = await ProblemManager
-                .ListAsync(pg, User.IsInRoles(privilege));
+            var probs = await ProblemManager.ListAsync(pg);
 
             int uid = int.Parse(UserManager.GetUserId(User) ?? "-1");
             ViewBag.Statistics = ProblemManager.StatisticsByUser(uid,
@@ -60,13 +57,13 @@ namespace JudgeWeb.Areas.Judge.Controllers
         {
             var prob = await ProblemManager.TitleFlagAsync(pid);
 
-            if (!prob.HasValue || prob.Value.Flag != 0 && !User.IsInRoles(privilege))
+            if (!prob.HasValue || prob.Value.Flag != 0 && !User.IsInRoles("Administrator,AuthorOfProblem" + pid))
                 return NotFound(); // No such problem or not visible.
             var view = await ProblemManager.GetViewAsync(pid);
 
             if (string.IsNullOrEmpty(view))
             {
-                if (User.IsInRoles(privilege))
+                if (User.IsInRoles("Administrator,AuthorOfProblem" + pid))
                     return RedirectToAction("Edit", "Problem", new { area = "Judge", pid });
                 return NotFound();
             }
@@ -88,7 +85,7 @@ namespace JudgeWeb.Areas.Judge.Controllers
         {
             var prob = await ProblemManager.TitleFlagAsync(pid);
             if (!prob.HasValue) return NotFound();
-            if (prob.Value.Flag != 0 && !User.IsInRoles(privilege)) return NotFound();
+            if (prob.Value.Flag != 0 && !User.IsInRoles("Administrator,AuthorOfProblem" + pid)) return NotFound();
 
             ViewData["ProblemTitle"] = prob.Value.Title;
             ViewData["ProblemId"] = pid;
@@ -124,7 +121,7 @@ namespace JudgeWeb.Areas.Judge.Controllers
 
             var prob = await ProblemManager.TitleFlagAsync(pid);
             if (!prob.HasValue) return NotFound();
-            if (prob.Value.Flag != 0 && !User.IsInRoles(privilege)) return NotFound();
+            if (prob.Value.Flag != 0 && !User.IsInRoles("Administrator,AuthorOfProblem" + pid)) return NotFound();
 
             if (User.IsInRole("Blocked"))
                 ModelState.AddModelError("xys::blocked",

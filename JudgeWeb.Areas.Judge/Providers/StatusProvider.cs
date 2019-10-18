@@ -34,7 +34,18 @@ namespace JudgeWeb.Areas.Judge.Providers
         {
             IQueryable<Judging> gradeSource;
 
-            bool admin = user.IsInRoles("Administrator,Problem");
+            bool admin = user.IsInRole("Administrator");
+
+            if (!admin)
+            {
+                var pid = await DbContext.Submissions
+                    .Where(s => s.SubmissionId == sid)
+                    .Select(s => new { s.ProblemId })
+                    .FirstOrDefaultAsync();
+                if (pid == null) return null;
+                admin = user.IsInRole("AuthorOfProblem" + pid.ProblemId);
+            }
+
             string uid = UserManager.GetUserId(user);
 
             if (gid is null || !admin)

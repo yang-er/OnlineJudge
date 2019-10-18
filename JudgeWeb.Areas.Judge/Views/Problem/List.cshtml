@@ -26,8 +26,9 @@
         <tbody>
             @foreach (var item in Model)
             {
+                if (item.Flag != 0 && !User.IsInRoles("Administrator,AuthorOfProblem" + item.ProblemId)) { continue; }
                 var stat = stats.ContainsKey(item.ProblemId) ? stats[item.ProblemId] : default((int Ac, int Total, int MeTot, int MeAc));
-                
+
                 <tr>
                     <td>
                         @Html.DisplayFor(modelItem => item.ProblemId)

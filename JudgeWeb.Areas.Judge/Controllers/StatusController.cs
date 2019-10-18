@@ -1,7 +1,6 @@
 ﻿using JudgeWeb.Areas.Judge.Providers;
 using JudgeWeb.Data;
 using JudgeWeb.Features.Storage;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
@@ -13,13 +12,14 @@ namespace JudgeWeb.Areas.Judge.Controllers
     [Route("[area]/[controller]/[action]")]
     public class StatusController : Controller2
     {
-        const string problemRole = "Administrator,Problem";
-
         [HttpGet("{id}/{full}")]
-        [Authorize(Roles = problemRole)]
         public async Task<IActionResult> Rejudge(int id, string full,
             [FromServices] JudgingManager judgingManager)
         {
+            if (!await judgingManager.WithUser(User)
+                .CheckAvaliabilityForAdminAsync(id))
+                return Forbid();
+
             var jid = await judgingManager.WithUser(User)
                 .RejudgeSubmissionAsync(id, full == "full");
 
@@ -28,10 +28,13 @@ namespace JudgeWeb.Areas.Judge.Controllers
         }
 
         [HttpGet("{gid}")]
-        [Authorize(Roles = problemRole)]
         public async Task<IActionResult> Activate(int gid,
             [FromServices] JudgingManager judgingManager)
         {
+            if (!await judgingManager.WithUser(User)
+                .CheckAvaliabilityForAdminByJudgingAsync(gid))
+                return Forbid();
+
             var sid = await judgingManager.WithUser(User)
                 .ActivateByIdAsync(gid);
 
@@ -47,11 +50,14 @@ namespace JudgeWeb.Areas.Judge.Controllers
         {
             var model = await statusProvider
                 .FetchCodeViewAsync(id, gid, User);
-            if (model is null) return NotFound();
+            if (model is null) return Forbid();
 
-            if (User.IsInRoles(problemRole))
+            bool probRole = User.IsInRoles("Administrator,AuthorOfProblem" + model.ProblemId);
+
+            if (probRole)
                 ViewBag.AllJudgings = await judgingManager.WithUser(User)
                     .EnumerateBySubmissionAsync(id);
+            ViewBag.ProbRole = probRole;
 
             return View(model);
         }
@@ -84,14 +90,17 @@ namespace JudgeWeb.Areas.Judge.Controllers
         }
 
         [HttpGet("{jid}/{rid}/{type}")]
-        [Authorize(Roles = problemRole)]
-        public IActionResult RunDetails(int jid, int rid, string type,
-            [FromServices] IFileRepository io)
+        public async Task<IActionResult> RunDetails(int jid, int rid, string type,
+            [FromServices] IFileRepository io,
+            [FromServices] JudgingManager judgingManager)
         {
             io.SetContext("Runs");
 
             if (!io.ExistPart($"j{jid}", $"r{rid}.{type}"))
                 return NotFound();
+
+            if (!await judgingManager.WithUser(User).CheckAvaliabilityForAdminByJudgingAsync(jid))
+                return Forbid();
 
             return ContentFile(
                 $"Runs/j{jid}/r{rid}.{type}",

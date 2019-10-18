@@ -171,15 +171,12 @@ namespace JudgeWeb.Areas.Judge.Services
             return IoContext.ReadPartAsync($"p{pid}", "view.html");
         }
 
-        public Task<List<Problem>> ListAsync(int pg, bool priv)
+        public Task<List<Problem>> ListAsync(int pg)
         {
-            var query = DbContext.Problems
-                .Where(p => p.ProblemId < 1000 + pg * ItemsPerPage
-                    && p.ProblemId >= 1000 + (pg - 1) * ItemsPerPage);
-
-            if (!priv) query = query.Where(p => p.Flag == 0);
-
-            return query.OrderBy(p => p.ProblemId).ToListAsync();
+            return DbContext.Problems
+                .Where(p => p.ProblemId <= 1000 + pg * ItemsPerPage
+                    && p.ProblemId > 1000 + (pg - 1) * ItemsPerPage)
+                .OrderBy(p => p.ProblemId).ToListAsync();
         }
 
         private async Task<int> NewIdAsync()

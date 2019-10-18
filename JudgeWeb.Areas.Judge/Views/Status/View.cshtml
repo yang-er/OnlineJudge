@@ -1,6 +1,7 @@
 ﻿@model CodeViewModel
 @{
     ViewData["Title"] = "View";
+    bool probRole = ViewBag.ProbRole;
 }
 
 <div class="container-fluid mt-4 mb-4 pl-4 pr-4">
@@ -12,7 +13,7 @@
         <span class="bowtie"><i class="bowtie-stopwatch"></i>@Html.CstTime(Model.Time.DateTime)</span>
     </h5>
 
-    @if (User.IsInRoles("Administrator,Problem"))
+    @if (probRole)
     {
         IEnumerable<(Judging g, string n)> judgings = ViewBag.AllJudgings;
         <h4>Judgings</h4>
@@ -82,7 +83,7 @@
         }
     </p>
 
-    @if (User.IsInRoles("Administrator,Problem"))
+    @if (probRole)
     {
         <div class="row">
             @foreach (var run in Model.Details.Where(d => d.Status != Verdict.Accepted))

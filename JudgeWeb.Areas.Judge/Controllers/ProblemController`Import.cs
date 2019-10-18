@@ -1,5 +1,7 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using JudgeWeb.Areas.Judge.Providers;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Threading.Tasks;
@@ -9,7 +11,7 @@ namespace JudgeWeb.Areas.Judge.Controllers
     public partial class ProblemController
     {
         [HttpGet("{pid}")]
-        [Authorize(Roles = privilege)]
+        [ProblemAuthorize("pid")]
         public async Task<IActionResult> Export(int pid)
         {
             var contentFile = await ProblemManager.ExportXmlAsync(pid);
@@ -18,7 +20,7 @@ namespace JudgeWeb.Areas.Judge.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = privilege)]
+        [Authorize(Roles = "Administrator,Problem")]
         [ValidateInAjax]
         public IActionResult Import()
         {
@@ -26,10 +28,12 @@ namespace JudgeWeb.Areas.Judge.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = privilege)]
+        [Authorize(Roles = "Administrator,Problem")]
         [ValidateAntiForgeryToken]
         [RequestSizeLimit(1 << 30)]
-        public async Task<IActionResult> Import(IFormFile file)
+        public async Task<IActionResult> Import(IFormFile file,
+            [FromServices] RoleManager<IdentityRole<int>> roleManager,
+            [FromServices] SignInManager<Data.User> signInManager)
         {
             try
             {
@@ -37,9 +41,23 @@ namespace JudgeWeb.Areas.Judge.Controllers
                 {
                     var p = await ProblemManager.ImportAsync(stream, User);
 
+                    var rmr = await roleManager.CreateAsync(
+                        new IdentityRole<int>("AuthorOfProblem" + p.ProblemId));
+                    var log = "Refresh this page to apply updates.";
+
+                    if (!rmr.Succeeded)
+                    {
+                        log = "Error creating user role, please contact XiaoYang. " + log;
+                    }
+                    else
+                    {
+                        var user = await UserManager.GetUserAsync(User);
+                        await UserManager.AddToRoleAsync(user, "AuthorOfProblem" + p.ProblemId);
+                        await signInManager.RefreshSignInAsync(user);
+                    }
+
                     return Message("Problem Import",
-                        $"Problem added succeeded. New Problem ID: {p.ProblemId}. " +
-                        "Refresh this page to apply updates.",
+                        $"Problem added succeeded. New Problem ID: {p.ProblemId}. {log}",
                         MessageType.Success);
                 }
             }

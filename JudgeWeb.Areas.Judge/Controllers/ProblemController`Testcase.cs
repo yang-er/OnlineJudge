@@ -1,5 +1,5 @@
 ﻿using JudgeWeb.Areas.Judge.Models;
-using Microsoft.AspNetCore.Authorization;
+using JudgeWeb.Areas.Judge.Providers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -9,7 +9,7 @@ namespace JudgeWeb.Areas.Judge.Controllers
 {
     public partial class ProblemController
     {
-        [Authorize(Roles = privilege)]
+        [ProblemAuthorize("pid")]
         [HttpGet("{pid}/{tid}/{filetype}")]
         public IActionResult Testcase(int pid, int tid, string filetype)
         {
@@ -25,7 +25,7 @@ namespace JudgeWeb.Areas.Judge.Controllers
         }
 
         [HttpPost("{pid}/{ttid}")]
-        [Authorize(Roles = privilege)]
+        [ProblemAuthorize("pid")]
         [ValidateAntiForgeryToken]
         [RequestSizeLimit(1 << 30)]
         [RequestFormLimits(MultipartBodyLengthLimit = 1 << 30, KeyLengthLimit = 1 << 30,
@@ -83,7 +83,7 @@ namespace JudgeWeb.Areas.Judge.Controllers
             }
         }
 
-        [Authorize(Roles = privilege)]
+        [ProblemAuthorize("pid")]
         [HttpGet("{pid}/{ttid}")]
         public async Task<IActionResult> Testcase(int pid, string ttid)
         {

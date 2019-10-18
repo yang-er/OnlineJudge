@@ -4,8 +4,8 @@
     ViewData["Title"] = "Realtime Judge Status";
     string uuid = UserManager.GetUserId(User);
     int uid = uuid != null ? int.Parse(uuid) : -1;
-    bool enableAll = User.IsInRoles("Administrator,Problem");
     int pg = (int)ViewData["Page"];
+    bool isAdmin = User.IsInRole("Administrator");
 }
 
 <div class="container-fluid mt-4 mb-4 pl-4 pr-4">
@@ -36,7 +36,7 @@
                     <td>@(item.ExecuteTime)ms</td>
                     <td>@(item.ExecuteMemory)k</td>
                     <td>
-                        @if (enableAll || item.Author == uid)
+                        @if (isAdmin || (item.ContestId == 0 && item.Author == uid) || User.IsInRole("AuthorOfProblem" + item.ProblemId))
                         {
                             <a asp-action="View" asp-route-id="@item.SubmissionId">@(item.CodeLength)B</a>
                         }

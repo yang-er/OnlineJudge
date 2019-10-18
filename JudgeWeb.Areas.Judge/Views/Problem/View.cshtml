@@ -6,7 +6,7 @@
         <div class="col" style="max-width:50em">
             @Html.Raw((string)ViewData["Content"])
             <a asp-action="Submit" class="btn btn-primary">Submit</a>
-            @if (User.IsInRoles("Administrator,Problem"))
+            @if (User.IsInRoles("Administrator,AuthorOfProblem" + ViewData["Id"]))
             {
                 <a asp-action="Edit" class="btn btn-danger">Edit</a>
             }

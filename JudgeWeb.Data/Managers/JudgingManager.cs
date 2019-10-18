@@ -30,6 +30,34 @@ namespace JudgeWeb.Data
             return this;
         }
 
+        public async Task<bool> CheckAvaliabilityForAdminAsync(int sid)
+        {
+            if (User.IsInRole("Administrator")) return true;
+            var pid = await DbContext.Submissions
+                .Where(s => s.SubmissionId == sid)
+                .Select(s => new { s.ProblemId })
+                .FirstOrDefaultAsync();
+            if (pid == null) return false;
+            if (!User.IsInRole("AuthorOfProblem" + pid.ProblemId)) return false;
+            return true;
+        }
+
+        public async Task<bool> CheckAvaliabilityForAdminByJudgingAsync(int jid)
+        {
+            if (User.IsInRole("Administrator")) return true;
+            var pid = await DbContext.Judgings
+                .Where(j => j.JudgingId == jid)
+                .Join(
+                    inner: DbContext.Submissions,
+                    outerKeySelector: j => j.SubmissionId,
+                    innerKeySelector: s => s.SubmissionId,
+                    resultSelector: (j, s) => new { s.ProblemId })
+                .FirstOrDefaultAsync();
+            if (pid == null) return false;
+            if (!User.IsInRole("AuthorOfProblem" + pid.ProblemId)) return false;
+            return true;
+        }
+
         public async Task<IEnumerable<(Judging, string)>> EnumerateBySubmissionAsync(int sid)
         {
             var grades =
