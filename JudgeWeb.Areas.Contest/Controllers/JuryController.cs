@@ -135,9 +135,9 @@ namespace JudgeWeb.Areas.Contest.Controllers
         }
 
         [HttpGet]
-        public IActionResult Submission()
+        public IActionResult Submission(bool all = false)
         {
-            var model = Service.GetSubmissions();
+            var model = Service.GetSubmissions(all: all);
             return View("Submissions", model);
         }
 

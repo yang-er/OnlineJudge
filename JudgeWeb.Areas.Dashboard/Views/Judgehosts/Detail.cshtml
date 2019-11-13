@@ -1,0 +1,45 @@
+﻿@{
+    JudgeHost host = ViewBag.Host;
+    ViewData["Title"] = "Judgehost " + host.ServerName;
+    IEnumerable<Judging> judgings = ViewBag.Judgings;
+    ViewData["DisableAjaxRefresh"] = true;
+}
+
+<h2 class="mt-2">Judgehost s@(host.ServerId)</h2>
+
+<div class="row">
+    <div class="col-lg-4">
+        <table class="table table-sm table-striped">
+            <tr><th>Name</th><td><span class="hostname">@host.ServerName</span></td></tr>
+            <tr><th>Active</th><td>@(host.Active ? "Yes" : "No")</td></tr>
+            <tr><th>Restriction</th><td><i>None</i></td></tr>
+            <tr><th>Status</th><td>Last checked in @Html.CstTime(host.PollTime)</td></tr>
+        </table>
+    </div>
+</div>
+
+<h4 class="text-left">Total judgings: @ViewData["Count"], showing top 100.</h4>
+
+<table class="data-table table table-sm table-striped dataTable no-footer" role="grid" style="width:auto">
+    <thead>
+        <tr role="row">
+            <th scope="col">ID</th>
+            <th scope="col">start</th>
+            <th scope="col">runtime</th>
+            <th scope="col">verdict</th>
+            <th scope="col">valid</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var g in judgings)
+        {
+            <tr asp-area="Judge" asp-controller="Status" asp-action="View" asp-route-id="@g.SubmissionId" asp-route-gid="@g.JudgingId" class="@(g.Active ? "" : "disabled")" role="row">
+                <td use-a style="padding-right:1em">j@(g.JudgingId) s@(g.SubmissionId)</td>
+                <td use-a>@Html.CstTime(g.StartTime)</td>
+                <td use-a>@Html.Timespan2(g.StopTime - g.StartTime)</td>
+                <td use-a><verdict target="DomJudge" value="@g.Status" /></td>
+                <td use-a>@(g.Active ? "Yes" : "No")</td>
+            </tr>
+        }
+    </tbody>
+</table>

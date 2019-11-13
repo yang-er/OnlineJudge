@@ -29,6 +29,9 @@ namespace JudgeWeb.Features.Razor
         [HtmlAttributeName("too-late")]
         public bool IsTooLate { get; set; }
 
+        [HtmlAttributeName("judging-pending")]
+        public bool IsJudgingPending { get; set; }
+
         [HtmlAttributeName("reg-status")]
         public int? RegistrationStatus { get; set; }
 
@@ -53,11 +56,11 @@ namespace JudgeWeb.Features.Razor
 
         static readonly (string, string)[] team = new[]
         {
-            ("sol sol_queued", "Pending"),
-            ("sol sol_correct", "Accepted"),
-            ("sol sol_incorrect", "Rejected"),
-            ("sol sol_incorrect", "Deleted"),
-            ("sol sol_queued", "Unknown"),
+            ("sol sol_queued", "pending"),
+            ("sol sol_correct", "accepted"),
+            ("sol sol_incorrect", "rejected"),
+            ("sol sol_incorrect", "deleted"),
+            ("sol sol_queued", "unknown"),
         };
 
         private (string, string) SolveAsTeamStatus()
@@ -89,7 +92,10 @@ namespace JudgeWeb.Features.Razor
             }
             else if (Target == VerdictTag.BadgeSmall)
             {
-                return ("verdict-sm badge badge-" + st[v].Item2, st[v].Item3);
+                if (IsJudgingPending && v == (int)Verdict.Pending)
+                    return ("verdict-sm badge badge-primary", st[v].Item3);
+                else
+                    return ("verdict-sm badge badge-" + st[v].Item2, st[v].Item3);
             }
             else if (IsTooLate)
             {

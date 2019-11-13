@@ -18,6 +18,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
+using System.Text.Encodings.Web;
+using System.Text.Unicode;
 
 namespace JudgeWeb
 {
@@ -81,12 +83,17 @@ namespace JudgeWeb
                 options.UseSqlServer(Configuration.GetConnectionString("UserDbConnection"))
                        .UseSecondLevelCache());
 
-            services.AddIdentity<User, IdentityRole<int>>()
+            services.AddIdentity<User, Role>()
                 .AddEntityFrameworkStores<AppDbContext>()
                 .AddUserManager<UserManager>()
                 .AddDefaultTokenProviders();
 
             services.AddSingleton(new ConfigurationBasicAuthorizationService(Configuration));
+
+            services.AddSingleton(
+                HtmlEncoder.Create(
+                    UnicodeRanges.BasicLatin,
+                    UnicodeRanges.CjkUnifiedIdeographs));
 
             services.AddAuthentication().AddQQ(qqOptions =>
             {
@@ -107,7 +114,7 @@ namespace JudgeWeb
                 .SetTokenTransform<SlugifyParameterTransformer>()
                 .EnableContentFileResult()
                 .SetCompatibilityVersion(CompatibilityVersion.Version_2_1)
-                .UseAreaParts("JudgeWeb.Areas.", new[] { "Misc", "Account", "Api", "Judge", "Contest" });
+                .UseAreaParts("JudgeWeb.Areas.", new[] { "Misc", "Account", "Api", "Judge", "Contest", "Dashboard" });
 
             services.AddDefaultManagers();
             services.AddScoreboardService();

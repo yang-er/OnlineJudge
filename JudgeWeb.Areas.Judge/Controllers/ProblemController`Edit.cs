@@ -1,5 +1,6 @@
 ﻿using JudgeWeb.Areas.Judge.Models;
 using JudgeWeb.Areas.Judge.Providers;
+using JudgeWeb.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
@@ -19,9 +20,9 @@ namespace JudgeWeb.Areas.Judge.Controllers
                 int pid = await ProblemManager.CreateAsync();
 
                 var roleManager = HttpContext.RequestServices
-                    .GetRequiredService<RoleManager<IdentityRole<int>>>();
+                    .GetRequiredService<RoleManager<Role>>();
                 var rmr = await roleManager.CreateAsync(
-                    new IdentityRole<int>("AuthorOfProblem" + pid));
+                    new Role("AuthorOfProblem" + pid));
 
                 if (!rmr.Succeeded)
                 {

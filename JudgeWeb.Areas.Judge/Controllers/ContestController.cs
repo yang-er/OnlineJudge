@@ -24,12 +24,12 @@ namespace JudgeWeb.Areas.Judge.Controllers
         [HttpGet]
         [Authorize(Roles = "Administrator")]
         public async Task<IActionResult> Create(
-            [FromServices] RoleManager<IdentityRole<int>> roleMgr)
+            [FromServices] RoleManager<Role> roleMgr)
         {
             int cid = await JudgeManager.CreateContestAsync(UserManager.GetUserName(User));
 
             var roleName = $"JuryOfContest{cid}";
-            var result = await roleMgr.CreateAsync(new IdentityRole<int>(roleName));
+            var result = await roleMgr.CreateAsync(new Role(roleName));
             if (!result.Succeeded) return Json(result);
 
             var firstUser = await UserManager.GetUserAsync(User);

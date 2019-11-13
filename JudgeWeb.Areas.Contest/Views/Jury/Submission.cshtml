@@ -27,11 +27,7 @@
 <div class="submission-summary mb-2">
     <span>
         <i class="fas fa-users" title="Team:"></i>
-        @Model.Team.TeamName (t@(Model.Team.TeamId))
-    </span>
-    <span>
-        <i class="fas fa-trophy" title="Contest:"></i>
-        @ctx.ShortName
+        <a asp-controller="JuryTeam" asp-action="Team" asp-route-teamid="@Model.Team.TeamId">@Model.Team.TeamName (t@(Model.Team.TeamId))</a>
     </span>
     <span>
         <i class="fas fa-book-open" title="Problem:"></i>

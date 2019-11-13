@@ -1,0 +1,46 @@
+﻿@model List<ExecutableViewContentModel>
+@{
+    Executable exec = ViewBag.Executable;
+    ViewData["Title"] = "View content of executable " + exec.ExecId;
+    ViewData["DisableAjaxRefresh"] = true;
+    IEnumerable<string> langs = ViewBag.AsCompile;
+    IEnumerable<int> cmps = ViewBag.AsCompare;
+    IEnumerable<int> runs = ViewBag.AsRun;
+    int t = 0, t2 = 0;
+}
+
+<h2 class="mt-2">@ViewData["Title"]</h2>
+
+<script src="~/static/ace/ace.js"></script>
+<script src="~/static/ace/ext-modelist.js"></script>
+<ul class="nav nav-tabs source-tab-nav">
+    @foreach (var item in Model)
+    {
+        int id = t++;
+        <li class="nav-item">
+            <a class="nav-link @(id > 0 ? "" : "active")" data-toggle="tab"
+               href="#source-@(id)" role="tab">@item.FileName</a>
+        </li>
+    }
+</ul>
+
+<div class="tab-content source-tab">
+    @foreach (var item in Model)
+    {
+        int id = t2++;
+        <div class="tab-pane fade @(id == 0 ? "show active" : "")" id="source-@id" role="tabpanel">
+            <div class="editor" id="editor@(id)" style="font-size:0.8em">@item.FileContent</div>
+            <script>
+                var editor@(id) = ace.edit("editor@(id)");
+                editor@(id).setTheme("ace/theme/eclipse");
+                editor@(id).setOptions({ maxLines: Infinity });
+                editor@(id).setReadOnly(true);
+                var modelist = ace.require('ace/ext/modelist');
+                var filePath = "@(item.Language)";
+                var mode = modelist.getModeForPath(filePath).mode;
+                editor@(id).getSession().setMode(mode);
+                document.getElementById("editor@(id)").editor = editor@(id);
+            </script>
+        </div>
+    }
+</div>

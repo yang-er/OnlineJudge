@@ -1,0 +1,86 @@
+﻿@model UserListModel
+@{
+    ViewData["Title"] = "Users";
+    ViewData["DisableAjaxRefresh"] = true;
+}
+
+<h2 class="mt-2">@ViewData["Title"]</h2>
+
+<style>
+    .data-table td {
+        padding-top: 3px;
+        padding-bottom: 3px;
+    }
+</style>
+
+<div class="table-wrapper">
+    <table class="data-table table table-sm table-striped" style="width:auto">
+        <thead>
+            <tr role="row">
+                <th scope="col" class="sortable searchable">ID</th>
+                <th scope="col" class="sortable searchable">username</th>
+                <th scope="col" class="sortable searchable">name</th>
+                <th scope="col" class="sortable searchable">email</th>
+                <th scope="col" class="sortable searchable">plan</th>
+                <th scope="col" class="sortable searchable">roles</th>
+                <th scope="col" class="sortable searchable">register date</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var (user, roles) in Model.List)
+            {
+                var (statStr, statIcon) = user.EmailConfirmed ? ("success", "check") : ("danger", "times");
+                <tr asp-action="Detail" asp-route-uid="@user.Id" role="row" data-target="gotoUrl">
+                    <td use-a>@user.Id</td>
+                    <td use-a>@user.UserName</td>
+                    <td use-a>@(user.NickName ?? user.UserName)</td>
+                    <td use-a><i class="text-@statStr fas fa-@statIcon-circle"></i> @user.Email</td>
+                    <td title="@user.Plan" use-a><span class="forceWidth" style="max-width:6rem">@user.Plan</span></td>
+                    <td use-a>@string.Join(',', roles)</td>
+                    <td use-a>@Html.CstTime(user.RegisterTime)</td>
+                    <td><a asp-action="Edit" asp-route-uid="@user.Id" title="edit this affiliation"><i class="fas fa-edit"></i></a></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<script>
+    $().ready(function () {
+        $('.data-table').DataTable({
+            "paging": false,
+            "searching": true,
+            "ordering": true,
+            "order": [[0, 'asc']],
+            "info": false,
+            "autoWidth": true,
+            "language": {
+                "searchPlaceholder": "filter table",
+                "search": "_INPUT_",
+            },
+            'aoColumnDefs': [
+                { aTargets: ['sortable'], bSortable: true },
+                { aTargets: ['searchable'], bSearchable: true },
+                { aTargets: ['_all'], bSortable: false, bSearchable: false }
+            ],
+        });
+    });
+</script>
+
+<ul class="pagination pagination-sm">
+    <li class="page-item @(1 == Model.CurrentPage ? "disabled" : "")">
+        <a class="page-link" asp-action="List" asp-route-page="@(Model.CurrentPage-1)">«</a>
+    </li>
+
+    @for (int i = 1; i <= Model.TotalPage; i++)
+    {
+        <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+            <a class="page-link" asp-action="List" asp-route-page="@i">@i</a>
+        </li>
+    }
+
+    <li class="page-item @(Model.CurrentPage == Model.TotalPage ? "disabled" : "")">
+        <a class="page-link" asp-action="List" asp-route-page="@(Model.CurrentPage+1)">»</a>
+    </li>
+</ul>

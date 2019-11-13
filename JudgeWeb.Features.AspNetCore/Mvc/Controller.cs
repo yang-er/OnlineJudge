@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace Microsoft.AspNetCore.Mvc
@@ -54,6 +55,27 @@ namespace Microsoft.AspNetCore.Mvc
                 Title = title,
                 Content = message,
                 Type = type,
+            };
+        }
+
+        [NonAction]
+        public ShowMessage2Result AskPost(
+            string title, string message,
+            string area, string ctrl, string act,
+            Dictionary<string, string> routeValues = null,
+            MessageType? type = null)
+        {
+            return new ShowMessage2Result
+            {
+                ViewData = ViewData,
+                TempData = TempData,
+                Title = title,
+                Content = message,
+                Type = type,
+                AreaName = area,
+                ControllerName = ctrl,
+                ActionName = act,
+                RouteValues = routeValues,
             };
         }
 

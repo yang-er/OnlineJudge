@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.Razor.TagHelpers;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace JudgeWeb.Features.Razor
 {
@@ -41,12 +42,12 @@ namespace JudgeWeb.Features.Razor
 
             if (ActiveController != null &&
                 ViewContext.ActionDescriptor is ControllerActionDescriptor cad &&
-                cad.ControllerName == ActiveController)
+                ActiveController.Split(',').Contains(cad.ControllerName))
                 setActive = true;
 
             if (ActiveAction != null &&
                 ViewContext.ActionDescriptor is ControllerActionDescriptor cad2 &&
-                cad2.ActionName == ActiveAction)
+                ActiveAction.Split(',').Contains(cad2.ActionName))
                 setActive = true;
 
             if (ActiveArea != null &&

@@ -1,0 +1,43 @@
+﻿@model ExecutableEditModel
+@{
+    ViewData["Title"] = "Upload new executable";
+    ViewData["DisableAjaxRefresh"] = true;
+}
+
+<h3>@ViewData["Title"]</h3>
+
+<div class="row">
+    <div class="col-lg-4">
+        <form asp-action="Add" method="post" enctype="multipart/form-data">
+            <div id="executable_upload">
+                <div class="form-group">
+                    <label asp-for="ExecId" class="required">Executable ID</label>
+                    <input asp-for="ExecId" required maxlength="255" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label asp-for="Description" class="required"></label>
+                    <input asp-for="Description" required maxlength="255" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label class="required" asp-for="Type"></label>
+                    <select asp-for="Type" class="form-control custom-select form-control">
+                        <option value="compare">compare</option>
+                        <option value="compile">compile</option>
+                        <option value="run">run</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label asp-for="Archive" class="required"></label>
+                    <div class="custom-file">
+                        <input asp-for="Archive" id="eua" required accept="application/zip" class="custom-file-input" />
+                        <label for="eua" class="custom-file-label"></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn-primary btn">Upload</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+

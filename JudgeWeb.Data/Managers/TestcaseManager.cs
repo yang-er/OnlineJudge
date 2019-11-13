@@ -24,7 +24,7 @@ namespace JudgeWeb.Data
             io.SetContext("Problems");
         }
 
-        public async Task<int> CreateAsync(int pid,
+        public async Task<int> CreateAsync(int pid, int pnt,
             (byte[], string) input, (byte[], string) output,
             bool isSecret, string description, ClaimsPrincipal user)
         {
@@ -33,6 +33,7 @@ namespace JudgeWeb.Data
             var tc = DbContext.Testcases.Add(new Testcase
             {
                 ProblemId = pid,
+                Point = pnt,
                 Rank = rank + 1,
                 Description = description,
                 IsSecret = isSecret,
@@ -75,7 +76,7 @@ namespace JudgeWeb.Data
                 .FirstOrDefaultAsync();
         }
 
-        public async Task EditAsync(Testcase last,
+        public async Task EditAsync(Testcase last, int pnt,
             (byte[], string)? input, (byte[], string)? output,
             bool isSecret, string description, ClaimsPrincipal user)
         {
@@ -97,6 +98,7 @@ namespace JudgeWeb.Data
 
             last.Description = description ?? last.Description;
             last.IsSecret = isSecret;
+            last.Point = pnt;
             DbContext.Testcases.Update(last);
 
             DbContext.AuditLogs.Add(new AuditLog

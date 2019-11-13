@@ -3,14 +3,14 @@
 <ul class="navbar-nav mr-auto">
     <li class="nav-item">
         <a class="nav-link" asp-controller="Jury" asp-action="Home">
-            <i class="fas fa-home d-md-none"></i>
+            <i class="fas fa-home"></i>
             Home
         </a>
     </li>
 
     <li class="nav-item">
         <a class="nav-link" asp-controller="JuryTeam" asp-action="Teams" id="menu_teams">
-            <i class="fas fa-address-book d-md-none"></i>
+            <i class="fas fa-address-book"></i>
             Teams
             <span class="badge badge-warning" id="num-alerts-teams">@ViewBag.ptc</span>
         </a>
@@ -18,7 +18,7 @@
 
     <li class="nav-item">
         <a class="nav-link active" asp-action="Clarifications" id="menu_clarifications">
-            <i class="fas fa-comments d-md-none"></i>
+            <i class="fas fa-comments"></i>
             Clarifications
             <span class="badge badge-info" id="num-alerts-clarifications">@ViewBag.ucc</span>
         </a>
@@ -26,13 +26,13 @@
 
     <li class="nav-item">
         <a class="nav-link" asp-controller="Jury" asp-action="Submission">
-            <i class="fas fa-file-code d-md-none"></i>
+            <i class="fas fa-file-code"></i>
             Submissions
         </a>
     </li>
     <li class="nav-item">
         <a class="nav-link" asp-controller="Jury" asp-action="Scoreboard">
-            <i class="fas fa-list-ol d-md-none"></i>
+            <i class="fas fa-list-ol"></i>
             Scoreboard
         </a>
     </li>

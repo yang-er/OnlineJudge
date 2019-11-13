@@ -9,7 +9,7 @@ using System.Linq;
 
 namespace JudgeWeb.Data
 {
-    public class AppDbContext : IdentityDbContext<User, IdentityRole<int>, int>
+    public class AppDbContext : IdentityDbContext<User, Role, int>
     {
         public AppDbContext(DbContextOptions<AppDbContext> options)
             : base(options)
@@ -67,6 +67,7 @@ namespace JudgeWeb.Data
             // If you add reference to MySql.Data.EntityFrameworkCore.Design,
             // you can change that line into
             //   bool isMySql = Database.IsMySQL();
+            // Warning: MySQL may bring unknown errors. Not fully checked.
 
             modelBuilder.Entity<Submission>()
                 .UseAttributes(isMySql);
@@ -134,6 +135,14 @@ namespace JudgeWeb.Data
                     .Property(e => e.ZipFile)
                         .HasColumnType("BLOB");
             }
+
+            modelBuilder.Entity<Role>()
+                .HasData(
+                    new Role { Id = 1, ConcurrencyStamp = "17337d8e-0118-4c42-9da6-e4ca600d5836", Name = "Administrator", NormalizedName = "ADMINISTRATOR", ShortName = "admin", Description = "Administrative User" },
+                    new Role { Id = 2, ConcurrencyStamp = "9ec57e90-312c-4eed-ac25-a40fbcf5f33b", Name = "Blocked", NormalizedName = "BLOCKED", ShortName = "blocked", Description = "Blocked User" },
+                    new Role { Id = 3, ConcurrencyStamp = "2bbf420d-6253-4ace-a825-4bf8e85cf41e", Name = "Problem", NormalizedName = "PROBLEM", ShortName = "prob", Description = "Problem Provider" },
+                    new Role { Id = -1, ConcurrencyStamp = "fd0d1cf4-2ccf-4fd6-9d47-7fd62923c5d2", Name = "Judgehost", NormalizedName = "JUDGEHOST", ShortName = "judgehost", Description = "(Internal/System) Judgehost" },
+                    new Role { Id = -2, ConcurrencyStamp = "81ffd1be-883c-4093-8adf-f2a4909370b7", Name = "CDS", NormalizedName = "CDS", ShortName = "cds_api", Description = "CDS API user" });
 
             modelBuilder.Query<SubmissionStatistics>();
             modelBuilder.Query<ContestTestcase>();

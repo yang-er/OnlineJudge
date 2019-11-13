@@ -1,0 +1,65 @@
+﻿@model IEnumerable<Language>
+@{
+    ViewData["Title"] = "Languages";
+    ViewData["DisableAjaxRefresh"] = true;
+}
+
+<h2 class="mt-2">Languages</h2>
+
+<div class="table-wrapper">
+    <table class="data-table table table-sm table-striped" style="width:auto">
+        <thead>
+            <tr role="row">
+                <th scope="col" class="sortable searchable">ID</th>
+                <th scope="col" class="sortable searchable">external ID</th>
+                <th scope="col" class="sortable searchable" style="min-width:6em">name</th>
+                <th scope="col" class="sortable searchable">allow submit</th>
+                <th scope="col" class="sortable searchable">allow judge</th>
+                <th scope="col" class="sortable searchable">timefactor</th>
+                <th scope="col" class="sortable searchable">file ext</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var lang in Model)
+            {
+            <tr asp-action="Detail" asp-route-langid="@lang.ExternalId" data-toggle="gotoUrl" class="@(lang.AllowSubmit ? "" : "disabled")">
+                <td use-a>@lang.LangId</td>
+                <td use-a>@lang.ExternalId</td>
+                <td use-a>@lang.Name</td>
+                <td use-a>@(lang.AllowSubmit ? "yes" : "no")</td>
+                <td use-a>@(lang.AllowJudge ? "yes" : "no")</td>
+                <td use-a>@(lang.TimeFactor)&times;</td>
+                <td use-a>@lang.FileExtension</td>
+                <td><a title="edit this language" asp-action="Edit" asp-route-langid="@lang.ExternalId"><i class="fas fa-edit"></i></a></td>
+            </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<script>
+    $().ready(function () {
+        $('.data-table').DataTable({
+            "paging": false,
+            "searching": true,
+            "ordering": true,
+            "order": [[0, 'asc']],
+            "info": false,
+            "autoWidth": true,
+            "language": {
+                "searchPlaceholder": "filter table",
+                "search": "_INPUT_",
+            },
+            'aoColumnDefs': [
+                { aTargets: ['sortable'], bSortable: true },
+                { aTargets: ['searchable'], bSearchable: true },
+                { aTargets: ['_all'], bSortable: false, bSearchable: false }
+            ],
+        });
+    });
+</script>
+
+<p>
+    <a asp-action="Add" class="btn btn-primary" title="Add new language"><i class="fas fa-plus"></i>&nbsp;Add new language</a>
+</p>

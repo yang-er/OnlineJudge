@@ -41,7 +41,7 @@ namespace JudgeWeb.Areas.Judge.Controllers
                     var input = await model.InputContent.ReadAsync();
                     var output = await model.OutputContent.ReadAsync();
 
-                    int tcid = await TestcaseManager.CreateAsync(pid,
+                    int tcid = await TestcaseManager.CreateAsync(pid, model.Point,
                         input, output, model.IsSecret, model.Description, User);
 
                     return Message(
@@ -64,7 +64,7 @@ namespace JudgeWeb.Areas.Judge.Controllers
                         input = await model.InputContent.ReadAsync();
                     if (model.OutputContent != null)
                         output = await model.OutputContent.ReadAsync();
-                    await TestcaseManager.EditAsync(last, input, output,
+                    await TestcaseManager.EditAsync(last, model.Point, input, output,
                         model.IsSecret, model.Description, User);
 
                     return Message(
@@ -95,7 +95,8 @@ namespace JudgeWeb.Areas.Judge.Controllers
                 return Window(new TestcaseUploadModel
                 {
                     Description = "",
-                    IsSecret = true
+                    IsSecret = true,
+                    Point = 0,
                 });
             }
             else if (int.TryParse(ttid, out int tid))

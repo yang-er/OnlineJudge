@@ -1,0 +1,57 @@
+﻿@model IEnumerable<InternalError>
+@{
+    ViewData["Title"] = "Internal errors";
+}
+
+@section Header {
+    <h2 class="mt-2">Internal errors</h2>
+}
+
+<div class="table-wrapper">
+    <table class="data-table table table-sm table-striped" style="width:auto">
+        <thead class="">
+            <tr>
+                <th scope="col" class="">ID</th>
+                <th scope="col" class="searchable">description</th>
+                <th scope="col" class="">time</th>
+                <th scope="col" class="searchable">status</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var ie in Model)
+            {
+                <tr asp-action="Detail" asp-route-eid="@ie.ErrorId" data-toggle="gotoUrl" class="@(ie.Status == InternalError.ErrorStatus.Open ? "" : "disabled")">
+                    <td use-a>@ie.ErrorId</td>
+                    <td use-a>@ie.Description</td>
+                    <td use-a>@Html.CstTime(ie.Time)</td>
+                    <td use-a>@ie.Status</td>
+                </tr>
+            }
+            @if (!Model.Any())
+            {
+                <tr role="row" class="disabled">
+                    <td colspan="5">No data available</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<script>
+    $().ready(function () {
+        $('.data-table').DataTable({
+            "paging": false,
+            "searching": true,
+            "info": false,
+            "autoWidth": true,
+            "language": {
+                "searchPlaceholder": "filter table",
+                "search": "_INPUT_",
+            },
+            'aoColumnDefs': [
+                { aTargets: ['searchable'], bSearchable: true },
+                { aTargets: ['_all'], bSortable: false, bSearchable: false }
+            ],
+        });
+    });
+</script>

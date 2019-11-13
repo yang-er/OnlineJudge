@@ -23,6 +23,13 @@ namespace Microsoft.AspNetCore.Mvc.Rendering
             return dt.HasValue ? hh.Raw(dt.Value.ToString("yyyy-MM-dd HH:mm:ss")) : hh.Raw("");
         }
 
+        public static IHtmlContent Timespan2(this IHtmlHelper hh, TimeSpan? timespan)
+        {
+            if (!timespan.HasValue) return hh.Raw("-");
+            int tot = (int)timespan.Value.TotalSeconds;
+            return hh.Raw($"{tot / 60:00}:{tot % 60:00}");
+        }
+
         public static IHtmlContent RatioOf(this IHtmlHelper hh, int fz, int fm)
         {
             return hh.Raw(fm == 0 ? "0.00% (0/0)" : $"{100.0 * fz / fm:F2}% ({fz}/{fm})");

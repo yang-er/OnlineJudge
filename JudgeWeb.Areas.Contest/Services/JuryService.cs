@@ -387,7 +387,7 @@ namespace JudgeWeb.Areas.Contest.Services
                 .ToList().Select(a => (a.Status, a.Time));
         }
 
-        public IEnumerable<JuryListSubmissionModel> GetSubmissions(int? teamid = null)
+        public IEnumerable<JuryListSubmissionModel> GetSubmissions(int? teamid = null, bool all = true)
         {
             var cid = ContestId;
             var tc = QueryTestcaseCount().ToDictionary(t => t.ProblemId);
@@ -400,15 +400,18 @@ namespace JudgeWeb.Areas.Contest.Services
                 submissions = submissions
                     .Where(s => s.Author == teamid.Value);
 
-            var subs = (
+            var query =
                 from s in submissions
                 orderby s.SubmissionId descending
                 join g in DbContext.Judgings on new { s.SubmissionId, Active = true } equals new { g.SubmissionId, g.Active }
                 join t in DbContext.Teams on new { TeamId = s.Author, s.ContestId } equals new { t.TeamId, t.ContestId }
                 join d in DbContext.Details on g.JudgingId equals d.JudgingId into dd
                 from d in dd.DefaultIfEmpty()
-                select new { g.Status, s.Time, s.ProblemId, s.Language, s.Author, s.SubmissionId, t.TeamName, d = (Verdict?)d.Status }
-            ).Cacheable(TimeSpan.FromSeconds(20)).ToList();
+                select new { g.Status, s.Time, s.ProblemId, s.Language, s.Author, s.SubmissionId, t.TeamName, d = (Verdict?)d.Status };
+
+            if (!all) query = query.Take(50);
+
+            var subs = query.Cacheable(TimeSpan.FromSeconds(20)).ToList();
 
             return subs
                 .GroupBy(
@@ -417,7 +420,7 @@ namespace JudgeWeb.Areas.Contest.Services
                 .Select(g =>
                     new JuryListSubmissionModel
                     {
-                        Details = g.Select(i => i ?? Verdict.Pending),
+                        Details = g.FirstOrDefault().HasValue ? g.Select(i => i.Value) : Enumerable.Empty<Verdict>(),
                         Language = lang[g.Key.Language],
                         Result = g.Key.Status,
                         SubmissionId = g.Key.SubmissionId,

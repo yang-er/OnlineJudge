@@ -1,0 +1,47 @@
+﻿@model LanguageEditModel
+@{
+    string op = ViewBag.Operator;
+    ViewData["Title"] = $"{op} language {Model.ExternalId}";
+    ViewData["DisableAjaxRefresh"] = true;
+    IEnumerable<string> execs = ViewBag.Executables;
+    var sli = execs.Select(s => new SelectListItem(s, s));
+}
+
+<h2 class="mt-2">@ViewData["Title"]</h2>
+
+<div class="row">
+    <div class="col-lg-4">
+        <form asp-action="@op" asp-route-langid="@Model.ExternalId" method="post">
+            <div class="form-group">
+                <label asp-for="ExternalId"></label>
+                <input asp-for="ExternalId" class="form-control @(op == "Edit" ? "readonly" : "")" />
+            </div>
+            <div class="form-group">
+                <label asp-for="Name" class="required"></label>
+                <input asp-for="Name" required class="form-control" />
+            </div>
+            <div class="form-group">
+                <label asp-for="TimeFactor" class="required"></label>
+                <div class="input-group">
+                    <input asp-for="TimeFactor" required class="form-control" />
+                    <div class="input-group-append">
+                        <div class="input-group-text">&times;</div>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="" asp-for="CompileScript">Compile script</label>
+                <select asp-for="CompileScript" asp-items="sli" required class="form-control custom-select form-control">
+                    <option value="">-- no executable --</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label asp-for="FileExtension" class="required">File extension (Main.x)</label>
+                <input asp-for="FileExtension" required class="form-control" />
+            </div>
+            <div class="form-group">
+                <button type="submit" class="btn-primary btn">Save</button>
+            </div>
+        </form>
+    </div>
+</div>

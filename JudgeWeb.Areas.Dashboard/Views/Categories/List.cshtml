@@ -1,0 +1,63 @@
+﻿@model IEnumerable<TeamCategory>
+@{
+    ViewData["Title"] = "Categories";
+    ViewData["DisableAjaxRefresh"] = true;
+}
+
+<h2 class="mt-2">@ViewData["Title"]</h2>
+
+<div class="table-wrapper">
+    <table class="data-table table table-sm table-striped" style="width:auto">
+        <thead>
+            <tr role="row">
+                <th scope="col" class="sortable searchable">ID</th>
+                <th scope="col" class="sortable searchable">sort</th>
+                <th scope="col" class="sortable searchable">name</th>
+                <th scope="col" class="sortable searchable">color</th>
+                <th scope="col" class="sortable">visible</th>
+                <th></th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var cat in Model)
+            {
+                <tr asp-action="Detail" asp-route-catid="@cat.CategoryId" style="background:@cat.Color" role="row" data-target="gotoUrl">
+                    <td use-a>@cat.CategoryId</td>
+                    <td use-a>@cat.SortOrder</td>
+                    <td use-a>@cat.Name</td>
+                    <td use-a>@cat.Color</td>
+                    <td use-a>@(cat.IsPublic ? "yes" : "no")</td>
+                    <td><a asp-action="Edit" asp-route-catid="@cat.CategoryId" title="edit this category"><i class="fas fa-edit"></i></a></td>
+                    <td><a asp-action="Delete" asp-route-catid="@cat.CategoryId" data-toggle="ajaxWindow" title="delete this category"><i class="fas fa-trash-alt"></i></a></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<script>
+    $().ready(function () {
+        $('.data-table').DataTable({
+            "paging": false,
+            "searching": true,
+            "ordering": true,
+            "order": [[1, 'asc']],
+            "info": false,
+            "autoWidth": true,
+            "language": {
+                "searchPlaceholder": "filter table",
+                "search": "_INPUT_",
+            },
+            'aoColumnDefs': [
+                { aTargets: ['sortable'], bSortable: true },
+                { aTargets: ['searchable'], bSearchable: true },
+                { aTargets: ['_all'], bSortable: false, bSearchable: false }
+            ],
+        });
+    });
+</script>
+
+<p>
+    <a asp-action="Add" class="btn btn-primary" title="Add new category"><i class="fas fa-plus"></i>&nbsp;Add new category</a>
+</p>

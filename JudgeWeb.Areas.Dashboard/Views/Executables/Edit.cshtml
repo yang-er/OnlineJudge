@@ -1,0 +1,37 @@
+﻿@model ExecutableEditModel
+@{
+    ViewData["Title"] = "Edit executable " + Model.ExecId;
+    ViewData["DisableAjaxRefresh"] = true;
+}
+
+<h2 class="mt-2">@ViewData["Title"]</h2>
+
+<div class="row">
+    <div class="col-lg-4">
+        <form asp-action="Edit" asp-route-execid="@Model.ExecId" enctype="multipart/form-data" method="post">
+            <div class="form-group">
+                <label asp-for="Description" class="required"></label>
+                <input asp-for="Description" required maxlength="255" class="form-control" />
+            </div>
+            <div class="form-group">
+                <label asp-for="Type" class="required"></label>
+                <select asp-for="Type" class="form-control custom-select form-control">
+                    <option value="compare" selected="selected">compare</option>
+                    <option value="compile">compile</option>
+                    <option value="run">run</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label asp-for="Archive" class="required">Upload archive</label>
+                <div class="custom-file">
+                    <input asp-for="Archive" id="form_archive" accept="application/zip" class="custom-file-input" />
+                    <label for="form_archive" class="custom-file-label"></label>
+                </div>
+            </div>
+            <div class="form-group">
+                <button type="submit" class="btn-primary btn">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+

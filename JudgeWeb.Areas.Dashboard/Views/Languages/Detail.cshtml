@@ -1,0 +1,79 @@
+﻿@{
+    Language lang = ViewBag.Language;
+    IEnumerable<(Submission s, Judging g)> subs = ViewBag.Submissions;
+    ViewData["Title"] = "Language " + lang.Name;
+    ViewData["DisableAjaxRefresh"] = true;
+}
+
+<h2 class="mt-2">Language @lang.Name</h2>
+
+<div class="row">
+    <div class="col-lg-4">
+        <table class="table table-sm table-striped">
+            <tr><th>ID</th><td>@lang.LangId</td></tr>
+            <tr><th>External ID</th><td>@lang.ExternalId</td></tr>
+            <tr><th>Name</th><td>@lang.Name</td></tr>
+            <tr>
+                <th>Allow submit</th>
+                <td>
+                    @(lang.AllowSubmit ? "Yes" : "No")
+                    <form asp-action="ToggleSubmit" asp-route-langid="@lang.ExternalId" method="post" class="d-inline">
+                        <input type="hidden" name="allow_submit" value="" />
+                        <input type="submit" class="btn btn-sm btn-outline-secondary" value="toggle" />
+                    </form>
+                </td>
+            </tr>
+            <tr>
+                <th>Allow judge</th>
+                <td>
+                    @(lang.AllowJudge ? "Yes" : "No")
+                    <form asp-action="ToggleJudge" asp-route-langid="@lang.ExternalId" method="post" class="d-inline">
+                        <input type="hidden" name="allow_judge" value="" />
+                        <input type="submit" class="btn btn-sm btn-outline-secondary" value="toggle" />
+                    </form>
+                </td>
+            </tr>
+            <tr><th>Time factor</th><td>@lang.TimeFactor &times;</td></tr>
+            <tr><th>Compile script</th><td><a asp-controller="Executables" asp-action="Detail" asp-route-execid="@lang.CompileScript">@lang.CompileScript</a></td></tr>
+            <tr><th>File Extension</th><td>Main.@lang.FileExtension</td></tr>
+        </table>
+    </div>
+</div>
+
+<p>
+    <a asp-action="Edit" asp-route-langid="@lang.ExternalId" class="btn btn-primary" title="Edit"><i class="fas fa-edit"></i>&nbsp;Edit</a>
+</p>
+
+<h3>Submissions in @lang.Name</h3>
+
+<table class="data-table table table-hover table-striped table-sm submissions-table" role="grid">
+    <thead class="thead-light">
+        <tr>
+            <th scope="col">ID</th>
+            <th scope="col">contest</th>
+            <th scope="col">problem</th>
+            <th scope="col">time</th>
+            <th scope="col">user/team</th>
+            <th scope="col">result</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var (sub, grade) in subs)
+        {
+            <tr asp-area="Judge" asp-controller="Status" asp-action="View" asp-route-id="@sub.SubmissionId" role="row">
+                <td use-a>s@(sub.SubmissionId)</td>
+                <td use-a>@(sub.ContestId == 0 ? "-" : "c" + sub.ContestId)</td>
+                <td use-a>p@(sub.ProblemId)</td>
+                <td use-a>@Html.CstTime(sub.Time)</td>
+                <td use-a>@((sub.ContestId == 0 ? "u" : "t") + sub.Author)</td>
+                <td use-a><verdict target="DomJudge" value="@grade.Status" /></td>
+            </tr>
+        }
+        @if (subs.Count() == 0)
+        {
+            <tr>
+                <td colspan="6" class="text-center">No submissions were found.</td>
+            </tr>
+        }
+    </tbody>
+</table>

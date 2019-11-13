@@ -1,0 +1,79 @@
+﻿@model IEnumerable<JuryListSubmissionModel>
+@{
+    ViewData["Title"] = "Submission";
+    bool inajax = ViewData.ContainsKey("InAjax");
+    Contest ctx = ViewBag.Contest;
+    if (inajax) { Layout = null; }
+    int correct = 0, total = 0;
+}
+
+<table class="data-table table table-hover table-striped table-sm submissions-table">
+    <thead class="thead-light">
+        <tr>
+            <th scope="col">ID</th>
+            <th scope="col">time</th>
+            <th scope="col">team</th>
+            <th scope="col">problem</th>
+            <th scope="col">lang</th>
+            <th scope="col">result</th>
+            <th scope="col" class="not-sortable not-searchable">test results</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var sub in Model)
+        {
+            var subTime = sub.Time.DateTime;
+            var tooLate = (ctx.EndTime ?? DateTimeOffset.MaxValue) < subTime;
+            if (sub.Result == Verdict.Accepted) { correct++; }
+            total++;
+            <tr asp-controller="Jury" asp-action="Submission" asp-route-sid="@sub.SubmissionId"
+                data-toggle="gotoUrl"
+                data-problem-id="@sub.Problem?.ProblemId"
+                data-team-id="@sub.TeamId"
+                data-language-id="@sub.Language"
+                data-submission-id="@sub.SubmissionId">
+                <td use-a>s@(sub.SubmissionId)</td>
+                <td use-a>@sub.Time.ToString("HH:mm")</td>
+                <td use-a>@sub.TeamName (t@(sub.TeamId))</td>
+                <td use-a class="probid">@sub.Problem?.ShortName</td>
+                <td use-a class="langid">@sub.Language</td>
+                <td use-a>
+                    <verdict value="sub.Result" too-late="tooLate" target="DomJudge" />@if (tooLate)
+                    {@(" (")<verdict value="sub.Result" target="DomJudge" />@(")")}
+                </td>
+                <td class="testcase-results">
+                    @{ int t = 0; foreach (var item in sub.Details){t++;<verdict target="BadgeSmall" value="item" />}@for (; t < (sub.Problem?.TestcaseCount ?? 1); t++){<verdict target="BadgeSmall" value="Verdict.Pending" judging-pending="@(sub.Result == Verdict.Pending || sub.Result == Verdict.Running)" />}}
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<p>
+    Total correct: @correct, submitted: @total.
+</p>
+
+<style>
+
+    .data-table td a, .data-table td a:hover {
+        display: block;
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .data-table th {
+        white-space: nowrap;
+    }
+
+    .data-table td {
+        white-space: nowrap;
+    }
+
+    .dataTables_filter {
+        text-align: inherit;
+    }
+
+    .table-wrapper {
+        display: inline-block;
+    }
+</style>

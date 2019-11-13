@@ -132,6 +132,10 @@
   content: "\eaa4";
 }
 
+.bowtie-search-filter::before {
+  content: "\e987";
+}
+
 
 
 

@@ -1,0 +1,35 @@
+﻿@model TeamAffiliation
+@{
+    string mode = Model.AffiliationId == 0 ? "Add" : "Edit";
+    ViewData["Title"] = Model.AffiliationId == 0
+        ? "Add affiliation"
+        : "Edit affiliation " + Model.AffiliationId;
+    ViewData["DisableAjaxRefresh"] = true;
+}
+
+<h2 class="mt-2">@ViewData["Title"]</h2>
+
+<div class="row">
+    <div class="col-lg-4">
+        <form asp-action="@mode" method="post" enctype="multipart/form-data">
+            <div class="form-group">
+                <label asp-for="ExternalId" class="required">Short Name (should be lowercase)</label>
+                <input asp-for="ExternalId" required maxlength="10" class="form-control" />
+            </div>
+            <div class="form-group">
+                <label asp-for="FormalName" class="required">Formal Name</label>
+                <input asp-for="FormalName" required maxlength="20" class="form-control" />
+            </div>
+            <div class="form-group">
+                <label for="logo" class="required">School Logo</label>
+                <div class="custom-file">
+                    <input name="logo" type="file" id="logo" accept="image/png" class="custom-file-input" />
+                    <label for="logo" class="custom-file-label"></label>
+                </div>
+            </div>
+            <div class="form-group">
+                <button type="submit" class="btn-primary btn">Save</button>
+            </div>
+        </form>
+    </div>
+</div>

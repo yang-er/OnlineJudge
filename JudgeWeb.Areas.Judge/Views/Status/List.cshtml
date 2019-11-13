@@ -9,20 +9,71 @@
 }
 
 <div class="container-fluid mt-4 mb-4 pl-4 pr-4">
-    <h2>Realtime Status</h2>
+    <div class="dropdown">
+        <h2 class="d-inline-block">Realtime Status</h2>
+        <button class="btn btn-outline-secondary btn-sm bowtie ml-1 mb-1" data-toggle="dropdown"
+                aria-haspopup="true" aria-expanded="false" id="filter-toggle">
+            <i class="bowtie-search-filter"></i>
+        </button>
+
+        <div class="dropdown-menu" aria-labelledby="filter-toggle">
+            <form asp-action="List" method="get">
+                <div class="m-2 p-2">
+                    <select class="form-control form-control-sm mt-0" name="status">
+                        <option value="">All verdicts</option>
+                        <option value="0">Unknown</option>
+                        <option value="11">Accepted</option>
+                        <option value="5">Wrong Answer</option>
+                        <option value="6">Compile Error</option>
+                        <option value="3">Runtime Error</option>
+                        <option value="1">Time Limit Exceeded</option>
+                        <option value="2">Memory Limit Exceeded</option>
+                        <option value="4">Output Limit Exceeded</option>
+                        <option value="8">Pending</option>
+                        <option value="9">Running</option>
+                        <option value="10">Undefined Error</option>
+                    </select>
+
+                    <input class="form-control form-control-sm mt-2" placeholder="Problem ID" name="pid" />
+
+                    <select class="form-control form-control-sm mt-2" name="lang">
+                        <option value="">All languages</option>
+                        <option value="c">C</option>
+                        <option value="cpp">C++</option>
+                        <option value="java">Java</option>
+                        <option value="python2">Python 2</option>
+                        <option value="python3">Python 3</option>
+                        <option value="pascal">Pascal</option>
+                        <option value="csharp">C#</option>
+                        <option value="kotlin">Kotlin</option>
+                        <option value="haskell">Haskell</option>
+                        <option value="pl">Perl</option>
+                        <option value="f95">Fortran</option>
+                    </select>
+
+                    <input class="form-control form-control-sm mt-2" placeholder="User ID" name="uid" />
+
+                    <input type="submit" class="btn btn-primary btn-sm mt-2" name="filter" value="filter" />
+                </div>
+            </form>
+        </div>
+    </div>
     <h5 class="mb-3">Previous judge submissions</h5>
+    
+    
+
     <table class="table table-responsive-lg">
         <thead>
             <tr>
                 <th style="width:8%;min-width:80px" scope="col">#</th>
                 <th style="width:18%;min-width:200px;max-width:200px" scope="col">Submit Time</th>
-                <th style="width:20%;min-width:200px" scope="col" class="dropdown"><partial name="_VerdictFilter" /></th>
-                <th style="width:6%;min-width:80px" scope="col" class="dropdown"><partial name="_ProblemFilter" /></th>
+                <th style="width:20%;min-width:200px" scope="col" class="dropdown">Verdict</th>
+                <th style="width:6%;min-width:80px" scope="col" class="dropdown">Prob</th>
                 <th style="width:10%;min-width:100px" scope="col">Exe.Time</th>
                 <th style="width:10%;min-width:100px" scope="col">Exe.Mem</th>
                 <th style="width:10%;min-width:100px" scope="col">Code Len</th>
-                <th style="width:8%;min-width:100px" scope="col" class="dropdown"><partial name="_LanguageFilter" /></th>
-                <th style="width:10%;min-width:100px" scope="col" class="dropdown"><partial name="_UserFilter" /></th>
+                <th style="width:8%;min-width:100px" scope="col" class="dropdown">Lang</th>
+                <th style="width:10%;min-width:100px" scope="col" class="dropdown">Author</th>
             </tr>
         </thead>
         <tbody>

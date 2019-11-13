@@ -1,0 +1,123 @@
+﻿@model User
+@{
+    ViewData["Title"] = "User u" + Model.Id;
+    ViewData["DisableAjaxRefresh"] = true;
+    IEnumerable<Role> roles = ViewBag.Roles;
+    IEnumerable<(Contest, Team, TeamAffiliation, TeamCategory)> teams = ViewBag.Teams;
+    IEnumerable<(Submission, Judging)> subs = ViewBag.Submissions;
+}
+
+<h2 class="mt-2">@ViewData["Title"]</h2>
+
+<div class="row">
+    <div class="col-lg-4">
+        <table class="table table-sm table-striped">
+            <tr><th>ID</th><td>@Model.Id</td></tr>
+            <tr><th>Login</th><td class="text-monospace text-small">@Model.UserName</td></tr>
+            <tr><th>Nick name</th><td>@Model.NickName</td></tr>
+            <tr><th>Email</th><td>@Model.Email</td></tr>
+            <tr><th>Password</th><td>@(Model.PasswordHash == null ? "Not set" : "Set")</td></tr>
+            <tr><th>Register date</th><td>@Html.CstTime(Model.RegisterTime)</td></tr>
+            <tr><th>Plan</th><td>@Model.Plan</td></tr>
+        </table>
+    </div>
+    <div class="col-lg-4">
+        <table class="table table-sm table-striped">
+            <tr><th>Roles</th><td>@Html.Raw(string.Join("<br>", roles.Where(r => r.ShortName != null).Select(r => r.Description)))</td></tr>
+            <tr><th>Jury of</th><td>@foreach (var r in roles.Where(r => r.Name.StartsWith("JuryOfContest"))) { int cid = int.Parse(r.Name.Substring("JuryOfContest".Length)); <a asp-area="Contest" asp-route-cid="@cid" asp-controller="Public" asp-action="Info">c@(cid)</a> }</td></tr>
+            <tr><th>Author of</th><td>@foreach (var r in roles.Where(r => r.Name.StartsWith("AuthorOfProblem"))) { int cid = int.Parse(r.Name.Substring("AuthorOfProblem".Length)); <a asp-area="Contest" asp-route-cid="@cid" asp-controller="Public" asp-action="Info">p@(cid)</a> }</td></tr>
+        </table>
+    </div>
+</div>
+
+<div class="mb-4">
+    <p>
+        <a asp-route-uid="@Model.Id" asp-action="Edit" class="btn btn-primary" title="Edit"><i class="fas fa-edit"></i>&nbsp;Edit</a>
+    </p>
+</div>
+
+<h3>Teams in contests</h3>
+
+<div class="table-wrapper">
+    <table class="data-table table table-sm table-striped" id="contest-list" style="width:auto">
+        <thead>
+            <tr>
+                <th scope="col" class="sortable searchable">contest</th>
+                <th scope="col" class="sortable searchable">team</th>
+                <th scope="col" class="sortable searchable">aff.</th>
+                <th scope="col" class="sortable searchable">cat.</th>
+                <th scope="col">status</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var (c, t, a, o) in teams)
+            {
+                <tr asp-area="Contest" asp-route-cid="@c.ContestId" asp-controller="JuryTeam" asp-action="Team" asp-route-teamid="@t.TeamId" data-toggle="gotoUrl">
+                    <td use-a title="c@(c.ContestId) - @c.Name"><span class="forceWidth" style="max-width:20em">c@(c.ContestId) - @c.Name</span></td>
+                    <td use-a title="t@(t.TeamId) - @t.TeamName"><span class="forceWidth" style="max-width:20em">t@(t.TeamId) - @t.TeamName</span></td>
+                    <td use-a class="text-variant" title="@a.FormalName">@a.ExternalId</td>
+                    <td use-a>@o.Name</td>
+                    <td use-a><verdict team-status="@t.Status" /></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<script>
+    $().ready(function () {
+        $('#contest-list').DataTable({
+            "paging": false,
+            "searching": true,
+            "ordering": true,
+            "order": [[0, 'desc']],
+            "info": false,
+            "autoWidth": true,
+            "language": {
+                "searchPlaceholder": "filter table",
+                "search": "_INPUT_",
+            },
+            'aoColumnDefs': [
+                { aTargets: ['sortable'], bSortable: true },
+                { aTargets: ['searchable'], bSearchable: true },
+                { aTargets: ['_all'], bSortable: false, bSearchable: false }
+            ],
+        });
+    });
+</script>
+
+<h3 class="mt-4">Submissions from u@(Model.Id)</h3>
+
+<table class="data-table table table-hover table-striped table-sm submissions-table" role="grid">
+    <thead class="thead-light">
+        <tr>
+            <th scope="col">ID</th>
+            <th scope="col">problem</th>
+            <th scope="col">time</th>
+            <th scope="col">result</th>
+            <th scope="col">length</th>
+            <th scope="col">stats</th>
+            <th scope="col">IP</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var (sub, grade) in subs)
+        {
+            <tr asp-area="Judge" asp-controller="Status" asp-action="View" asp-route-id="@sub.SubmissionId" role="row">
+                <td use-a>s@(sub.SubmissionId)</td>
+                <td use-a>p@(sub.ProblemId)</td>
+                <td use-a>@Html.CstTime(sub.Time)</td>
+                <td use-a><verdict target="DomJudge" value="@grade.Status" /></td>
+                <td use-a>@(sub.CodeLength)B</td>
+                <td use-a>@(grade.ExecuteTime)ms, @(grade.ExecuteMemory)kb</td>
+                <td use-a>@sub.Ip</td>
+            </tr>
+        }
+        @if (subs.Count() == 0)
+        {
+            <tr>
+                <td colspan="6" class="text-center">No submissions were found.</td>
+            </tr>
+        }
+    </tbody>
+</table>

@@ -32,7 +32,7 @@ namespace JudgeWeb.Areas.Judge.Controllers
         [ValidateAntiForgeryToken]
         [RequestSizeLimit(1 << 30)]
         public async Task<IActionResult> Import(IFormFile file,
-            [FromServices] RoleManager<IdentityRole<int>> roleManager,
+            [FromServices] RoleManager<Data.Role> roleManager,
             [FromServices] SignInManager<Data.User> signInManager)
         {
             try
@@ -42,7 +42,7 @@ namespace JudgeWeb.Areas.Judge.Controllers
                     var p = await ProblemManager.ImportAsync(stream, User);
 
                     var rmr = await roleManager.CreateAsync(
-                        new IdentityRole<int>("AuthorOfProblem" + p.ProblemId));
+                        new Data.Role("AuthorOfProblem" + p.ProblemId));
                     var log = "Refresh this page to apply updates.";
 
                     if (!rmr.Succeeded)

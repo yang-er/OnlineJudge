@@ -1,0 +1,61 @@
+﻿@model IEnumerable<Executable>
+@{
+    ViewData["Title"] = "Executables";
+    ViewData["DisableAjaxRefresh"] = true;
+}
+
+<h2 class="mt-2">@ViewData["Title"]</h2>
+
+<div class="table-wrapper mb-4">
+    <table class="data-table table table-sm table-striped" style="width:auto">
+        <thead>
+            <tr role="row">
+                <th scope="col" class="sortable searchable">ID</th>
+                <th scope="col" class="sortable searchable">type</th>
+                <th scope="col" class="sortable searchable">description</th>
+                <th scope="col" class="sortable searchable">size</th>
+                <th></th>
+                <th></th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var exec in Model)
+            {
+                <tr asp-action="Detail" asp-route-execid="@exec.ExecId" role="row" data-target="gotoUrl">
+                    <td use-a>@exec.ExecId</td>
+                    <td use-a>@exec.Type</td>
+                    <td use-a>@exec.Description</td>
+                    <td use-a>@Html.NiceByteSize(exec.ZipSize)</td>
+                    <td><a asp-action="Edit" asp-route-execid="@exec.ExecId" title="edit this executable"><i class="fas fa-edit"></i></a></td>
+                    <td><a asp-action="Delete" asp-route-execid="@exec.ExecId" data-toggle="ajaxWindow" title="delete this executable"><i class="fas fa-trash-alt"></i></a></td>
+                    <td><a asp-action="Download" asp-route-execid="@exec.ExecId" title="download this executable"><i class="fas fa-file-download"></i></a></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<script>
+    $().ready(function () {
+        $('.data-table').DataTable({
+            "paging": false,
+            "searching": true,
+            "ordering": true,
+            "order": [[2, 'asc']],
+            "info": false,
+            "autoWidth": true,
+            "language": {
+                "searchPlaceholder": "filter table",
+                "search": "_INPUT_",
+            },
+            'aoColumnDefs': [
+                { aTargets: ['sortable'], bSortable: true },
+                { aTargets: ['searchable'], bSearchable: true },
+                { aTargets: ['_all'], bSortable: false, bSearchable: false }
+            ],
+        });
+    });
+</script>
+
+<partial name="Add" model="@(new ExecutableEditModel())" />
