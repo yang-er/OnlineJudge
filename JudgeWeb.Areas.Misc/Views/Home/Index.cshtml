@@ -60,7 +60,7 @@
                 Teams of three, work to solve the most real-world problems, fostering collaboration, creativity, innovation, and the ability to perform under pressure.
                 Through training and competition, teams challenge each other to raise the bar on the possible.
             </p>
-            <a asp-area="Misc" asp-controller="Team" asp-action="Index" class="btn btn-primary">MORE ABOUT JLUCPC</a>
+            <a asp-controller="Team" asp-action="Index" class="btn btn-primary">MORE ABOUT JLUCPC</a>
         </div>
         <div class="col-12 col-md-1">
         </div>
@@ -69,7 +69,7 @@
             <ul style="list-style:none;padding-left:0">
                 @foreach (var item in Model)
                 {
-                    <li><a asp-controller="News" asp-action="View" asp-route-nid="@item.NewsId">@item.Title</a></li>
+                    <li><a asp-action="News" asp-route-nid="@item.NewsId">@item.Title</a></li>
                 }
             </ul>
         </div>

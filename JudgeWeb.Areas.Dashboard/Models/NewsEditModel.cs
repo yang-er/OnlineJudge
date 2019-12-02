@@ -1,4 +1,4 @@
-﻿namespace JudgeWeb.Areas.Misc.Models
+﻿namespace JudgeWeb.Areas.Dashboard.Models
 {
     public class NewsEditModel
     {

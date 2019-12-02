@@ -1,48 +1,63 @@
-﻿using JudgeWeb.Areas.Judge.Services;
+﻿using JudgeWeb.Areas.Judge.Models;
 using JudgeWeb.Data;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace JudgeWeb.Areas.Judge.Controllers
 {
     [Area("Judge")]
-    [Route("[area]/[controller]/[action]")]
+    [Route("[controller]s")]
     public class ContestController : Controller2
     {
-        private JudgeManager JudgeManager { get; }
+        private AppDbContext DbContext { get; }
 
         private UserManager UserManager { get; }
 
-        public ContestController(JudgeManager jm, UserManager um)
+        public ContestController(AppDbContext db, UserManager um)
         {
-            JudgeManager = jm;
+            DbContext = db;
             UserManager = um;
-        }
-
-        [HttpGet]
-        [Authorize(Roles = "Administrator")]
-        public async Task<IActionResult> Create(
-            [FromServices] RoleManager<Role> roleMgr)
-        {
-            int cid = await JudgeManager.CreateContestAsync(UserManager.GetUserName(User));
-
-            var roleName = $"JuryOfContest{cid}";
-            var result = await roleMgr.CreateAsync(new Role(roleName));
-            if (!result.Succeeded) return Json(result);
-
-            var firstUser = await UserManager.GetUserAsync(User);
-            var roleAttach = await UserManager.AddToRoleAsync(firstUser, roleName);
-            if (!roleAttach.Succeeded) return Json(roleAttach);
-            return RedirectToAction("Home", "Jury", new { area = "Contest", cid });
         }
 
         [HttpGet]
         public async Task<IActionResult> List()
         {
             int.TryParse(UserManager.GetUserId(User), out int uid);
-            return View(await JudgeManager.GetContestsAsync(uid));
+
+            var cts = await DbContext.Contests
+                .GroupJoin(
+                    inner: DbContext.Teams,
+                    outerKeySelector: c => c.ContestId,
+                    innerKeySelector: t => t.ContestId,
+                    resultSelector: (c, ts) =>
+                        new ContestListModel
+                        {
+                            Name = c.Name,
+                            RankingStrategy = c.RankingStrategy,
+                            ContestId = c.ContestId,
+                            EndTime = c.EndTime,
+                            IsPublic = c.IsPublic,
+                            StartTime = c.StartTime,
+                            TeamCount = ts.Count(),
+                            OpenRegister = c.RegisterDefaultCategory > 0
+                        })
+                .ToListAsync();
+
+            cts.Sort();
+
+            if (uid > 0)
+            {
+                var cids = await DbContext.Teams
+                    .Where(t => t.UserId == uid)
+                    .Select(t => t.ContestId)
+                    .ToArrayAsync();
+                foreach (var cid in cids)
+                    cts.First(c => c.ContestId == cid).IsRegistered = true;
+            }
+
+            return View(cts);
         }
     }
 }

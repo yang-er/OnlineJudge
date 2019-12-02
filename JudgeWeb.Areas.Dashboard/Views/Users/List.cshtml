@@ -1,7 +1,9 @@
-﻿@model UserListModel
+﻿@model IEnumerable<(User, IEnumerable<string>)>
 @{
     ViewData["Title"] = "Users";
     ViewData["DisableAjaxRefresh"] = true;
+    int currentPage = ViewBag.CurrentPage;
+    int totalPage = ViewBag.TotalPage;
 }
 
 <h2 class="mt-2">@ViewData["Title"]</h2>
@@ -28,7 +30,7 @@
             </tr>
         </thead>
         <tbody>
-            @foreach (var (user, roles) in Model.List)
+            @foreach (var (user, roles) in Model)
             {
                 var (statStr, statIcon) = user.EmailConfirmed ? ("success", "check") : ("danger", "times");
                 <tr asp-action="Detail" asp-route-uid="@user.Id" role="row" data-target="gotoUrl">
@@ -69,18 +71,18 @@
 </script>
 
 <ul class="pagination pagination-sm">
-    <li class="page-item @(1 == Model.CurrentPage ? "disabled" : "")">
-        <a class="page-link" asp-action="List" asp-route-page="@(Model.CurrentPage-1)">«</a>
+    <li class="page-item @(1 == currentPage ? "disabled" : "")">
+        <a class="page-link" asp-action="List" asp-route-page="@(currentPage-1)">«</a>
     </li>
 
-    @for (int i = 1; i <= Model.TotalPage; i++)
+    @for (int i = 1; i <= totalPage; i++)
     {
-        <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+        <li class="page-item @(i == currentPage ? "active" : "")">
             <a class="page-link" asp-action="List" asp-route-page="@i">@i</a>
         </li>
     }
 
-    <li class="page-item @(Model.CurrentPage == Model.TotalPage ? "disabled" : "")">
-        <a class="page-link" asp-action="List" asp-route-page="@(Model.CurrentPage+1)">»</a>
+    <li class="page-item @(currentPage == totalPage ? "disabled" : "")">
+        <a class="page-link" asp-action="List" asp-route-page="@(currentPage+1)">»</a>
     </li>
 </ul>

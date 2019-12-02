@@ -385,6 +385,21 @@ tr.ignore td, td.ignore, span.ignore {
     transform: rotate(90deg);
 }
 
+.upload-progress {
+    width: 100%;
+    height: 10px;
+    background: #ccc;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+    .upload-progress > div {
+        width: 0px;
+        height: 100%;
+        background-color: dodgerblue;
+        transition: all .3s ease;
+    }
+
 .banner {
     width: 98%;
     height: auto;

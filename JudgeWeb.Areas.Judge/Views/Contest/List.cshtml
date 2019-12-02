@@ -14,11 +14,6 @@
     <h2>Contests</h2>
     <h5 class="mb-3">
         List of contests
-        @if (User.IsInRoles("Administrator"))
-        {
-            @("or")
-            <a asp-action="Create">create</a>
-        }
     </h5>
 
     <table class="table table-responsive-lg">

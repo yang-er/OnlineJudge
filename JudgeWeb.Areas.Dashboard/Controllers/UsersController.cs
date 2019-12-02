@@ -35,17 +35,14 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
                 .Where(r => r.ShortName != null)
                 .ToDictionaryAsync(r => r.Id);
 
-            return View(new UserListModel
-            {
-                CurrentPage = page,
-                TotalPage = (total + 99) / 100,
-                List = users.Select(a => (
-                    a.User,
-                    a.Roles.Where(r => roles.ContainsKey(r.RoleId))
-                           .Select(ur => roles[ur.RoleId].ShortName)
-                    )),
-                Roles = roles
-            });
+            ViewBag.CurrentPage = page;
+            ViewBag.TotalPage = (total + 99) / 100;
+
+            return View(users.Select(a => (
+                a.User,
+                a.Roles.Where(r => roles.ContainsKey(r.RoleId))
+                       .Select(ur => roles[ur.RoleId].ShortName)
+                )));
         }
 
         [HttpGet("{uid}")]
@@ -81,6 +78,89 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
             ViewBag.Submissions = (await submitQuery.Take(100).ToListAsync()).Select(a => (a.s, a.j));
             ViewBag.Teams = (await teamQuery.ToListAsync()).Select(a => (a.c, a.t, a.a, a.o));
             return View(user);
+        }
+
+        [HttpGet("{uid}/[action]")]
+        public async Task<IActionResult> Edit(int uid)
+        {
+            var user = await DbContext.Users
+                .Where(u => u.Id == uid)
+                .FirstOrDefaultAsync();
+            if (user == null) return NotFound();
+
+            var hasRole = await DbContext.UserRoles
+                .Where(u => u.UserId == uid)
+                .Select(ur => ur.RoleId)
+                .ToArrayAsync();
+
+            var roles = await DbContext.Roles
+                .Where(r => r.ShortName != null)
+                .ToDictionaryAsync(r => r.Id);
+            ViewBag.Roles = roles;
+
+            return View(new UserEditModel
+            {
+                Email = user.Email,
+                NickName = user.NickName,
+                UserId = user.Id,
+                UserName = user.UserName,
+                Roles = roles.Keys.Intersect(hasRole).ToArray()
+            });
+        }
+
+        [HttpPost("{uid}/[action]")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(
+            int uid, UserEditModel model,
+            [FromServices] UserManager userManager)
+        {
+            var user = await userManager.FindByIdAsync($"{uid}");
+            if (user == null) return NotFound();
+
+            var msg = "";
+
+            if (model.Password != null)
+            {
+                var token = await userManager.GeneratePasswordResetTokenAsync(user);
+                var result = await userManager.ResetPasswordAsync(user, token, model.Password);
+                if (!result.Succeeded) msg += $"Error in reset password: {result.Errors.First().Description}.\n";
+            }
+
+            if (model.Email != null)
+            {
+                var result = await userManager.SetEmailAsync(user, model.Email);
+                if (!result.Succeeded) msg += $"Error in set email: {result.Errors.First().Description}.\n";
+            }
+
+            if (model.NickName != null)
+            {
+                user.NickName = model.NickName;
+                var result = await userManager.UpdateAsync(user);
+                if (!result.Succeeded) msg += $"Error in set nickname: {result.Errors.First().Description}.\n";
+            }
+
+            // checking roles
+            var hasRole = await DbContext.UserRoles
+                .Where(u => u.UserId == uid)
+                .Select(ur => ur.RoleId)
+                .ToArrayAsync();
+            var roles = await DbContext.Roles
+                .Where(r => r.ShortName != null)
+                .ToDictionaryAsync(r => r.Id);
+            hasRole = roles.Keys.Intersect(hasRole).ToArray();
+            model.Roles = roles.Keys.Intersect(model.Roles ?? Enumerable.Empty<int>()).ToArray();
+            if (userManager.GetUserName(User) == user.UserName)
+                model.Roles = model.Roles.Append(1).Distinct().ToArray();
+            var r1 = await userManager.AddToRolesAsync(user,
+                model.Roles.Except(hasRole).Select(i => roles[i].Name));
+            var r2 = await userManager.RemoveFromRolesAsync(user,
+                hasRole.Except(model.Roles).Select(i => roles[i].Name));
+            if (!r1.Succeeded) msg += $"Error in adding roles: {r1.Errors.First().Description}.\n";
+            if (!r2.Succeeded) msg += $"Error in removing roles: {r2.Errors.First().Description}.\n";
+
+            if (msg == "") msg = null;
+            StatusMessage = msg;
+            return RedirectToAction(nameof(Detail), new { uid });
         }
     }
 }

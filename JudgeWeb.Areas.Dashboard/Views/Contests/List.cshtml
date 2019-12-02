@@ -1,0 +1,82 @@
+﻿@model IEnumerable<Contest>
+@{
+    ViewData["Title"] = "Contests";
+    ViewData["DisableAjaxRefresh"] = true;
+    Dictionary<int, int> teams = ViewBag.Teams;
+    Dictionary<int, int> probs = ViewBag.Problems;
+    
+    string ContestState(Contest c)
+    {
+        if (!c.StartTime.HasValue) return "table-primary";
+        if (DateTime.Now < c.EndTime) return "table-warning";
+        return "";
+    }
+}
+
+<h2 class="mt-2">@ViewData["Title"]</h2>
+
+<style>
+    .rks .sol { font-weight: normal; }
+</style>
+
+<div class="table-wrapper">
+    <table class="data-table table table-sm table-striped" style="width:auto">
+        <thead>
+            <tr role="row">
+                <th scope="col" class="sortable searchable">CID</th>
+                <th scope="col" class="sortable searchable">shortname</th>
+                <th scope="col" class="sortable searchable">name</th>
+                <th scope="col" class="sortable">public?</th>
+                <th scope="col" class="sortable searchable">start</th>
+                <th scope="col" class="sortable searchable">length</th>
+                <th scope="col" class="sortable searchable"># teams</th>
+                <th scope="col" class="sortable searchable"># problems</th>
+                <th scope="col" class="sortable searchable">style</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var cts in Model)
+            {
+                <tr asp-area="Contest" asp-controller="Jury" asp-action="Home" asp-route-cid="@cts.ContestId" role="row" data-target="gotoUrl" class="@ContestState(cts)">
+                    <td use-a>@cts.ContestId</td>
+                    <td use-a>@cts.ShortName</td>
+                    <td use-a><span class="forceWidth" style="max-width:20em">@(string.IsNullOrEmpty(cts.Name) ? "(unnamed)" : cts.Name)</span></td>
+                    <td use-a>@(cts.IsPublic ? "yes" : "no")</td>
+                    <td use-a>@Html.CstTime(cts.StartTime)</td>
+                    <td use-a>@(cts.EndTime - cts.StartTime)</td>
+                    <td use-a>@teams.GetValueOrDefault(cts.ContestId)</td>
+                    <td use-a>@probs.GetValueOrDefault(cts.ContestId)</td>
+                    <td use-a class="rks"><verdict rule="cts.RankingStrategy" /></td>
+                    <td><a asp-area="Contest" asp-controller="Jury" asp-action="Edit" asp-route-cid="@cts.ContestId" title="edit this contest"><i class="fas fa-edit"></i></a></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<script>
+    $().ready(function () {
+        $('.data-table').DataTable({
+            "paging": false,
+            "searching": true,
+            "ordering": true,
+            "order": [[0, 'desc']],
+            "info": false,
+            "autoWidth": true,
+            "language": {
+                "searchPlaceholder": "filter table",
+                "search": "_INPUT_",
+            },
+            'aoColumnDefs': [
+                { aTargets: ['sortable'], bSortable: true },
+                { aTargets: ['searchable'], bSearchable: true },
+                { aTargets: ['_all'], bSortable: false, bSearchable: false }
+            ],
+        });
+    });
+</script>
+
+<p>
+    <a asp-action="Add" class="btn btn-primary" title="Add new contest"><i class="fas fa-plus"></i>&nbsp;Add new contest</a>
+</p>

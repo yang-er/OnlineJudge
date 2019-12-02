@@ -7,7 +7,7 @@
     <h2 class="mt-2">Internal error e@(Model.ErrorId)</h2>
 }
 
-<table class="data-table table table-sm table-striped dataTable no-footer" id="DataTables_Table_12" role="grid" style="width:auto">
+<table class="table table-sm table-striped" role="grid" style="width:auto">
     <tbody>
         <tr role="row">
             <th>Description</th>
@@ -25,12 +25,11 @@
             <th>Affect</th>
             <td>Disabled @Model.Disabled</td>
         </tr>
-        <tr role="row">
-            <th>Judgehost log snippet</th>
-            <td><base64 value="@Model.JudgehostLog" /></td>
-        </tr>
     </tbody>
 </table>
+
+<h4 class="text-left mt-4">Judgehost log snippet</h4>
+<base64 value="@Model.JudgehostLog" />
 
 @if (Model.Status == InternalError.ErrorStatus.Open)
 {

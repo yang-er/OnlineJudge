@@ -1,0 +1,42 @@
+﻿@model IEnumerable<Configure>
+@{
+    ViewData["Title"] = "Configuration";
+    ViewData["DisableAjaxRefresh"] = true;
+
+    var groups = Model.GroupBy(c => c.Category);
+}
+
+<h2 class="mt-2 mb-3">@ViewData["Title"]</h2>
+
+<form asp-action="Config" method="post">
+    @foreach (var group in groups)
+    {
+        <div class="card">
+            <div class="card-header">@group.Key Options</div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    @foreach (var little in group)
+                    {
+                        var (type, val) = little.Type == "int"
+                            ? ("number", little.Value)
+                            : ("text", Newtonsoft.Json.Linq.JToken.Parse(little.Value).ToObject<string>());
+                        <li class="list-group-item" style="padding:0;padding-top:10px;">
+                            <div class="form-group">
+                                @little.Name
+                                <input class="form-control form-control-sm"
+                                       style="margin-left:5px;width:7em;text-align:right;display:inline-block;"
+                                       type="@type"
+                                       name="config[@little.Name]" id="@little.Name"
+                                       value="@val">
+                                <br />
+                                <small class="text-muted">@little.Description</small>
+                            </div>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+    }
+
+    <button type="submit" class="btn btn-primary mt-4">Save</button>
+</form>

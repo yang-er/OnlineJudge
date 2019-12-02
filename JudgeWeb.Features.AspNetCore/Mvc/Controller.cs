@@ -35,6 +35,13 @@ namespace Microsoft.AspNetCore.Mvc
             }
         }
 
+        public override void OnActionExecuted(ActionExecutedContext context)
+        {
+            base.OnActionExecuted(context);
+            if (context.Result is RedirectToActionResult rtas)
+                context.Result = new RedirectToActionWithAjaxSupportResult(rtas, InAjax);
+        }
+
         [NonAction]
         public ContentFileResult ContentFile(
             string fileName, string contentType, string downloadName)

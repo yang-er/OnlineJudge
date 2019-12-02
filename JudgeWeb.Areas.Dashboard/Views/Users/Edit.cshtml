@@ -1,0 +1,46 @@
+﻿@model UserEditModel
+@{
+    ViewData["Title"] = "Edit user u" + Model.UserId;
+    ViewData["DisableAjaxRefresh"] = true;
+    Dictionary<int, Role> roles = ViewBag.Roles;
+}
+
+<h2 class="mt-2">@ViewData["Title"]</h2>
+
+<div class="row">
+    <div class="col-lg-4">
+        <form asp-action="Edit" asp-route-uid="@Model.UserId" method="post">
+            <div class="form-group">
+                <label class="required">Username</label>
+                <span class="form-control readonly">@Model.UserName</span>
+            </div>
+            <div class="form-group">
+                <label asp-for="NickName">Nick name</label>
+                <input asp-for="NickName" class="form-control" />
+            </div>
+            <div class="form-group">
+                <label asp-for="Email" class="required"></label>
+                <input type="email" asp-for="Email" required autocomplete="new-password" class="form-control" />
+            </div>
+            <div class="form-group">
+                <label asp-for="Password"></label>
+                <input type="password" asp-for="Password" autocomplete="new-password" class="form-control" />
+            </div>
+            <fieldset class="form-group">
+                <legend class="col-form-label">Roles</legend>
+                <div id="user_user_roles">
+                    @foreach (var (_, role) in roles)
+                    {
+                        <div class="custom-control custom-checkbox">
+                            <input type="checkbox" id="user_user_roles_@role.Id" name="Roles[]" class="custom-control-input" value="@role.Id" issel="Model.Roles.Contains(role.Id)" />
+                            <label class="custom-control-label" for="user_user_roles_@role.Id">@role.Description</label>
+                        </div>
+                    }
+                </div>
+            </fieldset>
+            <div class="form-group">
+                <button type="submit" class="btn-primary btn">Save</button>
+            </div>
+        </form>
+    </div>
+</div>

@@ -113,7 +113,7 @@
             </tr>
         </thead>
         <tbody data-collection-holder data-after-add="bindColor">
-            @foreach (var (ii, item) in Model.Problems)
+            @foreach (var (ii, item) in Model.Problems ?? Enumerable.Empty<KeyValuePair<int, ContestProblem>>())
             {
                 <tr>
                     <td>

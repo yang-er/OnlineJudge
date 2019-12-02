@@ -9,6 +9,9 @@ function ajaxget(geturl, dom) {
         dataType: "html",
         complete: function (jqXHR) {
             if (jqXHR.status == 200) {
+                if (jqXHR.getResponseHeader('X-Login-Page')) {
+                    window.location = jqXHR.getResponseHeader('X-Login-Page');
+                }
                 $(dom).html(jqXHR.responseText);
             }
         },
@@ -29,6 +32,9 @@ function showWindow(handlekey, geturl) {
         dataType: "html",
         complete: function (jqXHR) {
             if (jqXHR.status == 200) {
+                if (jqXHR.getResponseHeader('X-Login-Page')) {
+                    window.location = jqXHR.getResponseHeader('X-Login-Page');
+                }
                 $("#append-parent").append('<div id="ajax_result_' + handlekey + '">' + jqXHR.responseText + '</div>');
                 $("#modal-" + handlekey).on(
                     "hidden.bs.modal",
@@ -77,7 +83,10 @@ function ajaxpost(Form, handlekey, parent, arg2) {
             });
             return xhr;
         },
-        success: function (data) {
+        success: function (data, statusCode, jqXHR) {
+            if (jqXHR.getResponseHeader('X-Login-Page')) {
+                window.location = jqXHR.getResponseHeader('X-Login-Page');
+            }
             parent && $("#modal-" + parent).modal("hide");
             $("#append-parent").append('<div id="ajax_result_' + handlekey + '">' + data + '</div>');
             $("#modal-" + handlekey).on(

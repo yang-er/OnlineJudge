@@ -5,11 +5,12 @@ using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Diagnostics;
 using System.Linq;
+using System.Text;
 
 namespace JudgeWeb.Areas.Misc.Controllers
 {
     [Area("Misc")]
-    [Route("[controller]/[action]")]
+    [Route("[action]")]
     public class HomeController : Controller
     {
         private AppDbContext DbContext { get; }
@@ -39,6 +40,50 @@ namespace JudgeWeb.Areas.Misc.Controllers
         public IActionResult About()
         {
             return View();
+        }
+
+        [HttpGet("{nid}")]
+        public IActionResult News(int nid)
+        {
+            var news = DbContext.News
+                .Where(n => n.NewsId == nid)
+                .Cacheable(TimeSpan.FromMinutes(10))
+                .FirstOrDefault();
+
+            var list = DbContext.News
+                .Where(n => n.Active)
+                .Select(n => new { n.NewsId, n.Title })
+                .OrderByDescending(n => n.NewsId)
+                .Take(100)
+                .Cacheable(TimeSpan.FromMinutes(10))
+                .ToList();
+
+            var newsList = list.Select(a => (a.NewsId, a.Title));
+
+            if (news is null || !news.Active && !User.IsInRoles("Administrator"))
+            {
+                return View(new NewsViewModel
+                {
+                    NewsList = newsList,
+                    NewsId = -1,
+                    Title = "404 Not Found",
+                    HtmlContent = "Sorry, the requested content is not found.",
+                    LastUpdate = DateTimeOffset.Now,
+                    Tree = "",
+                });
+            }
+            else
+            {
+                return View(new NewsViewModel
+                {
+                    NewsList = newsList,
+                    NewsId = nid,
+                    Title = news.Title,
+                    HtmlContent = Encoding.UTF8.GetString(news.Content),
+                    LastUpdate = news.LastUpdate,
+                    Tree = Encoding.UTF8.GetString(news.Tree),
+                });
+            }
         }
 
         [Route("/error")]

@@ -59,16 +59,6 @@
 
         <div class="collapse navbar-collapse" id="menuDefault">
             <ul class="navbar-nav mr-auto">
-                <li class="nav-item">
-                    <a class="nav-link" href="/api/doc/">
-                        <i class="fas fa-feather"></i> API
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" active-act="Config" asp-action="Config">
-                        <i class="fas fa-cog"></i> Config
-                    </a>
-                </li>
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" active-ctrl="Judgehosts,InternalErrors" href="#" id="navbarDropdownJudgehosts" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                         <i class="fas fa-gavel"></i> Judgings
@@ -83,6 +73,11 @@
                             <i class="fas fa-bolt fa-fw"></i> internal error <span class="badge badge-danger" id="num-alerts-internalerrors-sub">@(iec > 0 ? $"{iec} new" : "")</span>
                         </a>
                     </div>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" active-ctrl="Contests" asp-controller="Contests" asp-action="List">
+                        <i class="fas fa-trophy"></i> Contests
+                    </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" active-ctrl="Users" asp-controller="Users" asp-action="List">

@@ -1,7 +1,6 @@
 ﻿@model ProblemEditModel
 @{
     ViewData["Title"] = "Problem Editor";
-    IEnumerable<Testcase> Testcases = ViewBag.Testcase;
 }
 
 @inject JudgeWeb.Areas.Judge.Services.JudgeManager JudgeManager
@@ -95,59 +94,6 @@
                     <a asp-action="Export" asp-route-pid="@Model.ProblemId" class="btn btn-secondary"> Export </a>
                 </div>
             </form>
-        </div>
-        <div class="col-md-6">
-            <div class="setting-form-group">
-                <div class="form-group">
-                    <label class="font-weight-bold">Testcases</label>
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th scope="col">ID</th>
-                                <th scope="col">Rank</th>
-                                <th scope="col">Score</th>
-                                <th scope="col">Description</th>
-                                <th scope="col">Input</th>
-                                <th scope="col">Output</th>
-                                <th scope="col"><a asp-action="Testcase" asp-route-pid="@Model.ProblemId" asp-route-ttid="add" data-toggle="ajaxWindow" data-target="restore"><span class="bowtie text-dark"><i class="bowtie-plan"></i> Add</span></a></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var tc in Testcases)
-                            {
-                                <tr>
-                                    <td scope="row">@tc.TestcaseId</td>
-                                    <td scope="row">@tc.Rank</td>
-                                    <td scope="row">@tc.Point</td>
-                                    <td scope="row">
-                                        @if (tc.IsSecret)
-                                        {
-                                            <span class="badge badge-danger">Secret</span>
-                                        }
-                                        else
-                                        {
-                                            <span class="badge badge-primary">Sample</span>
-                                        }
-                                        @tc.Description
-                                    </td>
-                                    <td scope="row"><a asp-action="Testcase" asp-route-pid="@Model.ProblemId" asp-route-tid="@tc.TestcaseId" asp-route-filetype="input" class="text-dark">@Html.NiceByteSize(tc.InputLength)</a></td>
-                                    <td scope="row"><a asp-action="Testcase" asp-route-pid="@Model.ProblemId" asp-route-tid="@tc.TestcaseId" asp-route-filetype="output" class="text-dark">@Html.NiceByteSize(tc.OutputLength)</a></td>
-                                    <td><a asp-action="Testcase" asp-route-pid="@Model.ProblemId" asp-route-ttid="@tc.TestcaseId" data-toggle="ajaxWindow" data-target="restore"><span class="bowtie text-dark"><i class="bowtie-edit"></i> Edit</span></a></td>
-                                </tr>
-                            }
-                            @if (!Testcases.Any())
-                            {
-                                <tr>
-                                    <td colspan="4">
-                                        No testcase data.
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                    <small class="form-text text-muted">Sample test cases will be used in real judge. Judge test cases should be checked with standard programs.</small>
-                </div>
-            </div>
         </div>
     </div>
 </div>

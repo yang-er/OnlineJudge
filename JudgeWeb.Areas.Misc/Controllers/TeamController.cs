@@ -1,6 +1,7 @@
 ﻿using JudgeWeb.Features.OjUpdate;
 using JudgeWeb.Areas.Misc.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace JudgeWeb.Areas.Misc.Controllers
 {
@@ -8,8 +9,8 @@ namespace JudgeWeb.Areas.Misc.Controllers
     /// 队伍管理相关的控制器。
     /// </summary>
     [Area("Misc")]
+    [Authorize(Roles = "Student")]
     [Route("[controller]/[action]")]
-    [BasicAuthenticationFilter("Where is JLUCPC?", "jlucpc:A103", "jlucpc:a103")]
     public class TeamController : Controller2
     {
         [HttpGet("{year?}")]

@@ -44,7 +44,6 @@ namespace JudgeWeb.Areas.Judge.Controllers
             {
                 var prob = await ProblemManager.GetEditModelAsync(pid);
                 if (prob is null) return NotFound();
-                ViewBag.Testcase = await TestcaseManager.EnumerateAsync(pid);
                 return View(prob);
             }
             else
@@ -79,7 +78,6 @@ namespace JudgeWeb.Areas.Judge.Controllers
                 ViewData["Message"] = errors;
             }
 
-            ViewBag.Testcase = await TestcaseManager.EnumerateAsync(pid);
             return View(model);
         }
 

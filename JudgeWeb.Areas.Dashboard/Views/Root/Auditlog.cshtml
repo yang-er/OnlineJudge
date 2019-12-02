@@ -1,0 +1,51 @@
+﻿@model (List<AuditLog>, int)
+@{
+    ViewData["Title"] = "Auditlog";
+    ViewData["DisableAjaxRefresh"] = true;
+    int currentPage = ViewBag.Page;
+}
+
+<h2 class="mt-2">@ViewData["Title"]</h2>
+
+<ul class="pagination pagination-sm">
+    <li class="page-item @(1 == currentPage ? "disabled" : "")">
+        <a class="page-link" asp-action="Auditlog" asp-route-page="@(currentPage-1)">«</a>
+    </li>
+
+    @for (int i = 1; i <= Model.Item2; i++)
+    {
+        <li class="page-item @(i == currentPage ? "active" : "")">
+            <a class="page-link" asp-action="Auditlog" asp-route-page="@i">@i</a>
+        </li>
+    }
+
+    <li class="page-item @(Model.Item2 == currentPage ? "disabled" : "")">
+        <a class="page-link" asp-action="Auditlog" asp-route-page="@(currentPage+1)">»</a>
+    </li>
+</ul>
+
+<div class="table-wrapper">
+    <table class="data-table table table-sm table-striped" style="width:auto">
+        <thead>
+            <tr>
+                <th scope="col" class="searchable">ID</th>
+                <th scope="col" class="searchable">time</th>
+                <th scope="col" class="searchable">user</th>
+                <th scope="col" class="searchable">type</th>
+                <th scope="col" class="searchable">comment</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.Item1)
+            {
+                <tr>
+                    <td>@item.LogId</td>
+                    <td title="@Html.CstTime(item.Time)">@Html.CstTime(item.Time)</td>
+                    <td>@item.UserName</td>
+                    <td>@item.Type</td>
+                    <td>@item.Comment</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

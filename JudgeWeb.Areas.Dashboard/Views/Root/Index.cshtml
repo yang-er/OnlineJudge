@@ -13,7 +13,7 @@
             </div>
             <div class="card-body">
                 <ul>
-                    <li><a>Configuration settings</a></li>
+                    <li><a asp-action="Config">Configuration settings</a></li>
                     <li><a>Problems</a></li>
                     <li><a asp-controller="Executables" asp-action="List">Executables</a></li>
                     <li><a asp-controller="Judgehosts" asp-action="List">Judgehosts</a></li>
@@ -30,9 +30,9 @@
             </div>
             <div class="card-body">
                 <ul>
-                    <li><a>News</a></li>
+                    <li><a asp-controller="News" asp-action="List">News</a></li>
                     <li><a asp-controller="Users" asp-action="List">Users</a></li>
-                    <li><a>Contests</a></li>
+                    <li><a asp-controller="Contests" asp-action="List">Contests</a></li>
                     <li><a>Problem Archive</a></li>
                     <li><a asp-controller="Categories" asp-action="List">Team Categories</a></li>
                     <li><a asp-controller="Affiliations" asp-action="List">Team Affiliations</a></li>
@@ -42,14 +42,13 @@
     </div>
 
     <div class="col-lg-4 col-md-5 col-sm-6 mt-3">
-
         <div class="card mb-3">
             <div class="card-header">
                 Documentation
             </div>
             <div class="card-body">
                 <ul>
-                    <li><a>Auditlogs</a></li>
+                    <li><a asp-action="Auditlog">Audit log</a></li>
                     <!--
     <li>
         <a href="/domjudge/doc/judge/judge-manual.html?v=7.1.1">Judge manual</a>
