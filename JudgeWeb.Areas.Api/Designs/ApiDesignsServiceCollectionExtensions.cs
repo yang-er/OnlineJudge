@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.OpenApi.Models;
+using System.IO;
+using System.Reflection;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
@@ -29,6 +31,10 @@ namespace Microsoft.Extensions.DependencyInjection
                     Scheme = "basic",
                     Type = SecuritySchemeType.Http,
                 });
+
+                var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+                var xmlPath = Path.Combine(System.AppContext.BaseDirectory, xmlFile);
+                options.IncludeXmlComments(xmlPath);
             });
 
             return services;

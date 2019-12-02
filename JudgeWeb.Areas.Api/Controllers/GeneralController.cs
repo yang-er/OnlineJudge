@@ -1,8 +1,11 @@
-﻿using JudgeWeb.Data;
+﻿using JudgeWeb.Areas.Api.Models;
+using JudgeWeb.Data;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -11,12 +14,10 @@ namespace JudgeWeb.Areas.Api.Controllers
     /// <summary>
     /// 用于和 DOMjudge 对接的API控制器。
     /// </summary>
-    [BasicAuthenticationFilter("DOMjudge API")]
     [Area("Api")]
+    [Authorize(AuthenticationSchemes = "Basic")]
     [Route("[area]/[action]")]
-    [ProducesResponseType(200)]
-    [ProducesResponseType(401)]
-    [ProducesResponseType(404)]
+    [Produces("application/json")]
     public class GeneralController : ControllerBase
     {
         /// <summary>
@@ -33,56 +34,88 @@ namespace JudgeWeb.Areas.Api.Controllers
             DbContext = rdbc;
         }
 
-        private JsonResult Json(object value)
-        {
-            return new JsonResult(value);
-        }
-
+        
         /// <summary>
-        /// 获取当前 DOMjudge API 版本。
+        /// Get the current API version
         /// </summary>
         [HttpGet]
-        public IActionResult Version()
+        public ActionResult<object> Version()
         {
-            return Json(new { api_version = 4 });
+            return new { api_version = 4 };
         }
 
+
         /// <summary>
-        /// 获取评测队列统计。
+        /// Get information about the currently logged in user
         /// </summary>
+        /// <response code="200">Information about the logged in user</response>
         [HttpGet]
-        public async Task<IActionResult> Status()
+        [Authorize]
+        [ActionName("User")]
+        public async Task<ActionResult<UserInfo>> Users(
+            [FromServices] UserManager userManager)
+        {
+            var user = await userManager.GetUserAsync(User);
+            var roles = await userManager.GetRolesAsync(user);
+
+            return new UserInfo
+            {
+                email = user.Email,
+                id = user.Id,
+                lastip = HttpContext.Connection.RemoteIpAddress.ToString(),
+                name = string.IsNullOrEmpty(user.NickName) ? user.UserName : user.NickName,
+                username = user.UserName,
+                roles = roles,
+            };
+        }
+
+
+        /// <summary>
+        /// Get general status information
+        /// </summary>
+        /// <response code="200">General status information for the currently active contests</response>
+        [HttpGet]
+        [Authorize(Roles = "Judgehost,Administrator")]
+        public async Task<ActionResult<List<ServerStatus>>> Status()
         {
             var judgingStatus = await DbContext.Judgings
-                .GroupBy(g => g.Status)
-                .Select(g => new { Status = g.Key, Count = g.Count() })
+                .Where(j => j.Active)
+                .Join(
+                    inner: DbContext.Submissions,
+                    outerKeySelector: j => j.SubmissionId,
+                    innerKeySelector: s => s.SubmissionId,
+                    resultSelector: (j, s) => new { j.Status, s.ContestId })
+                .GroupBy(g => new { g.Status, g.ContestId })
+                .Select(g => new { g.Key.Status, Cid = g.Key.ContestId, Count = g.Count() })
                 .ToListAsync();
 
-            return Json(new[]
-            {
-                new
+            return judgingStatus
+                .GroupBy(a => a.Cid)
+                .Select(g => new ServerStatus
                 {
-                    cid = 0,
-                    num_submissions = judgingStatus
-                        .Sum(a => a.Count),
-                    num_queued = judgingStatus
+                    cid = g.Key,
+                    num_submissions = g.Count(),
+                    num_queued = g
                         .Where(a => a.Status == Verdict.Pending)
                         .Select(a => a.Count)
                         .FirstOrDefault(),
-                    num_judging = judgingStatus
+                    num_judging = g
                         .Where(a => a.Status == Verdict.Running)
                         .Select(a => a.Count)
                         .FirstOrDefault(),
-                }
-            });
+                })
+                .ToList();
         }
 
+
         /// <summary>
-        /// 获取数据库中某一个可执行程序。
+        /// Get the executable with the given ID
         /// </summary>
-        /// <param name="target">可执行程序名</param>
+        /// <param name="target">The ID of the entity to get</param>
+        /// <response code="200">Base64-encoded executable contents</response>
         [HttpGet("{target}")]
-        public async Task<IActionResult> Executables(string target)
+        [Authorize(Roles = "Judgehost")]
+        public async Task<ActionResult<string>> Executables(string target)
         {
             var zipContent = await DbContext.Executable
                 .Where(e => e.ExecId == target)
@@ -90,14 +123,17 @@ namespace JudgeWeb.Areas.Api.Controllers
                 .FirstOrDefaultAsync();
             if (zipContent is null) return NotFound();
             var base64encoded = Convert.ToBase64String(zipContent);
-            return Json(base64encoded);
+            return base64encoded;
         }
 
+
         /// <summary>
-        /// 获取数据库中的设置。
+        /// Get configuration variables
         /// </summary>
-        /// <param name="name">设置名称</param>
+        /// <param name="name">Get only this configuration variable</param>
+        /// <response code="200">The configuration variables</response>
         [HttpGet]
+        [Authorize(Roles = "Judgehost,Administrator")]
         public async Task<IActionResult> Config(string name)
         {
             var jo = new JObject();
@@ -111,7 +147,7 @@ namespace JudgeWeb.Areas.Api.Controllers
 
             var value = await query.ToListAsync();
             value.ForEach(a => jo[a.Name] = JToken.Parse(a.Value));
-            return Json(jo);
+            return new JsonResult(jo);
         }
     }
 }

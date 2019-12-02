@@ -1,71 +1,29 @@
-﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+﻿using System.Collections.Generic;
 
 namespace JudgeWeb.Areas.Api.Models
 {
-    public class SubmissionNextToJudgeModel
+    public class NextJudging
     {
-        [JsonProperty("submitid")]
-        public int SubmitId { get; set; }
-
-        [JsonProperty("cid")]
-        public int ContestId { get; set; }
-
-        [JsonProperty("teamid")]
-        public int TeamId { get; set; }
-
-        [JsonProperty("probid")]
-        public int ProblemId { get; set; }
-
-        [JsonProperty("langid")]
-        public string LanguageId { get; set; }
-
-        [JsonProperty("rejudgingid")]
-        public int? RejudgingId { get; set; }
-
-        [JsonProperty("entry_point")]
-        public string EntryPoint { get; set; }
-
-        [JsonProperty("origsubmitid")]
-        public int? OrigSubmitId { get; set; }
-
-        [JsonProperty("maxruntime")]
-        public double MaxRunTime { get; set; }
-
-        [JsonProperty("memlimit")]
-        public int MemLimit { get; set; }
-
-        [JsonProperty("outputlimit")]
-        public int OutputLimit { get; set; }
-
-        [JsonProperty("run")]
-        public string Run { get; set; }
-
-        [JsonProperty("compare")]
-        public string Compare { get; set; }
-
-        [JsonProperty("compare_args")]
-        public string CompareArgs { get; set; }
-
-        [JsonProperty("compile_script")]
-        public string CompileScript { get; set; }
-
-        [JsonProperty("combined_run_compare")]
-        public bool CombinedRunCompare { get; set; }
-
-        [JsonProperty("compare_md5sum")]
-        public string CompareMd5sum { get; set; }
-
-        [JsonProperty("run_md5sum")]
-        public string RunMd5sum { get; set; }
-
-        [JsonProperty("compile_script_md5sum")]
-        public string CompileScriptMd5sum { get; set; }
-
-        [JsonProperty("judgingid")]
-        public int JudgingId { get; set; }
-
-        [JsonProperty("testcases")]
-        public JObject Testcases { get; set; }
+        public int submitid { get; set; }
+        public int cid { get; set; }
+        public int teamid { get; set; }
+        public int probid { get; set; }
+        public string langid { get; set; }
+        public int? rejudgingid { get; set; }
+        public string entry_point { get; set; }
+        public int? origsubmitid { get; set; }
+        public double maxruntime { get; set; }
+        public int memlimit { get; set; }
+        public int outputlimit { get; set; }
+        public string run { get; set; }
+        public string compare { get; set; }
+        public string compare_args { get; set; }
+        public string compile_script { get; set; }
+        public bool combined_run_compare { get; set; }
+        public string compare_md5sum { get; set; }
+        public string run_md5sum { get; set; }
+        public string compile_script_md5sum { get; set; }
+        public int judgingid { get; set; }
+        public Dictionary<string, TestcaseToJudge> testcases { get; set; }
     }
 }

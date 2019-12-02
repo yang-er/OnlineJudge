@@ -1,10 +1,13 @@
-﻿using JudgeWeb.Data;
+﻿using JudgeWeb.Areas.Api.Models;
+using JudgeWeb.Data;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.IO.Compression;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace JudgeWeb.Areas.Api.Controllers
@@ -12,27 +15,17 @@ namespace JudgeWeb.Areas.Api.Controllers
     /// <summary>
     /// 实现 DOMjudge API 的提交控制器。
     /// </summary>
-    [BasicAuthenticationFilter("DOMjudge API")]
     [Area("Api")]
-    [Route("[area]/contests/{cid}/[controller]/{sid}/[action]")]
-    [ProducesResponseType(200)]
-    [ProducesResponseType(401)]
-    [ProducesResponseType(404)]
+    [Route("[area]/contests/{cid}/[controller]")]
+    [Authorize(AuthenticationSchemes = "Basic")]
+    [Authorize(Roles = "Administrator,Judgehost")]
+    [Produces("application/json")]
     public class SubmissionsController : ControllerBase
     {
         /// <summary>
         /// 数据库上下文
         /// </summary>
         AppDbContext DbContext { get; }
-
-        /// <summary>
-        /// 将对象转为Json输出。
-        /// </summary>
-        /// <param name="value">对象</param>
-        private JsonResult Json(object value)
-        {
-            return new JsonResult(value);
-        }
 
         /// <summary>
         /// 构建控制器。
@@ -43,32 +36,37 @@ namespace JudgeWeb.Areas.Api.Controllers
             DbContext = rdbc;
         }
 
+
         /// <summary>
-        /// 获取某个提交记录的源代码。
+        /// Get the source code of all the files for the given submission
         /// </summary>
-        /// <param name="cid">比赛ID</param>
-        /// <param name="sid">提交ID</param>
-        [HttpGet]
-        public async Task<IActionResult> SourceCode(int cid, int sid)
+        /// <param name="cid">The contest ID</param>
+        /// <param name="sid">The ID of the entity to get</param>
+        /// <response code="200">The files for the submission</response>
+        [HttpGet("{sid}/[action]")]
+        public async Task<ActionResult<SubmissionFile[]>> SourceCode(int cid, int sid)
         {
-            var src = await (
-                from s in DbContext.Submissions
-                where s.SubmissionId == sid && s.ContestId == cid
-                join l in DbContext.Languages on s.Language equals l.LangId
-                select new { s.SourceCode, l.FileExtension }
-            ).FirstOrDefaultAsync();
+            var src = await DbContext.Submissions
+                .Where(s => s.SubmissionId == sid && s.ContestId == cid)
+                .Join(
+                    inner: DbContext.Languages,
+                    outerKeySelector: s => s.Language,
+                    innerKeySelector: l => l.LangId,
+                    resultSelector: (s, l) => new { s.SourceCode, l.FileExtension })
+                .FirstOrDefaultAsync();
 
             if (src is null) return NotFound();
-            return Json(new[]
+
+            return new[]
             {
-                new
+                new SubmissionFile
                 {
                     id = sid.ToString(),
                     submission_id = sid.ToString(),
                     filename = "Main." + src.FileExtension,
                     source = src.SourceCode
                 }
-            });
+            };
         }
     }
 }

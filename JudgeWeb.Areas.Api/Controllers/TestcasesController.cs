@@ -1,6 +1,7 @@
 ﻿using JudgeWeb.Areas.Api.Models;
 using JudgeWeb.Data;
 using JudgeWeb.Features.Storage;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -14,12 +15,10 @@ namespace JudgeWeb.Areas.Api.Controllers
     /// <summary>
     /// 实现 DOMjudge API 的测试样例控制器。
     /// </summary>
-    [BasicAuthenticationFilter("DOMjudge API")]
     [Area("Api")]
-    [Route("[area]/[controller]/[action]")]
-    [ProducesResponseType(200)]
-    [ProducesResponseType(401)]
-    [ProducesResponseType(404)]
+    [Authorize(AuthenticationSchemes = "Basic")]
+    [Authorize(Roles = "Judgehost")]
+    [Route("[area]/[controller]")]
     [Produces("application/json")]
     public class TestcasesController : ControllerBase
     {
@@ -27,15 +26,6 @@ namespace JudgeWeb.Areas.Api.Controllers
         /// 数据库上下文
         /// </summary>
         AppDbContext DbContext { get; }
-
-        /// <summary>
-        /// 将对象转为Json输出。
-        /// </summary>
-        /// <param name="value">对象</param>
-        private JsonResult Json(object value)
-        {
-            return new JsonResult(value);
-        }
 
         /// <summary>
         /// 构建控制器。
@@ -47,20 +37,26 @@ namespace JudgeWeb.Areas.Api.Controllers
         }
 
         /// <summary>
-        /// 判断还未执行的测试样例。
+        /// Json返回空字符串
         /// </summary>
-        /// <param name="jid">评测ID</param>
-        [HttpGet("{jid}")]
-        public async Task<IActionResult> NextToJudge(int jid)
+        private JsonResult JsonEmpty() => new JsonResult("");
+
+
+        /// <summary>
+        /// Get the next to judge testcase for the given judging ID
+        /// </summary>
+        /// <param name="id">The ID of the entity to get</param>
+        [HttpGet("[action]/{id}")]
+        public async Task<ActionResult<TestcaseToJudge>> NextToJudge(int id)
         {
             // 先获取当前的评测信息
             var stat = await (
                 from g in DbContext.Judgings
-                where g.JudgingId == jid && g.Status == Verdict.Running
+                where g.JudgingId == id && g.Status == Verdict.Running
                 join s in DbContext.Submissions on g.SubmissionId equals s.SubmissionId
                 select new { g.JudgingId, s.ProblemId, g.FullTest }
             ).FirstOrDefaultAsync();
-            if (stat is null) return Json("");
+            if (stat is null) return JsonEmpty();
 
             // 获取当前评测通过样例信息
             var thisGrade = await DbContext.Details
@@ -77,7 +73,7 @@ namespace JudgeWeb.Areas.Api.Controllers
 
             // 如果不是全部测试并且存在非AC结果则停止判题
             if (!stat.FullTest && thisGrade.Any(a => a.Status != Verdict.Accepted))
-                return Json("");
+                return JsonEmpty();
 
             // 检测有哪个样例还没跑
             // TODO: 世界上最蠢的算法，是否救得了QAQ
@@ -85,49 +81,47 @@ namespace JudgeWeb.Areas.Api.Controllers
             {
                 if (!thisGrade.Any(a => a.TestcaseId == item.TestcaseId))
                 {
-                    return Json(new TestcaseNextToJudgeModel
+                    return new TestcaseToJudge
                     {
-                        ProblemId = stat.ProblemId,
-                        Rank = item.Rank,
-                        Md5sumInput = item.Md5sumInput,
-                        Md5sumOutput = item.Md5sumOutput,
-                        TestcaseId = item.TestcaseId
-                    });
+                        probid = stat.ProblemId,
+                        rank = item.Rank,
+                        md5sum_input = item.Md5sumInput,
+                        md5sum_output = item.Md5sumOutput,
+                        testcaseid = item.TestcaseId
+                    };
                 }
             }
 
-            return Json("");
+            return JsonEmpty();
         }
 
+
         /// <summary>
-        /// 从数据库中拉取一条测试样例。
+        /// Get the input or output file for the given testcase
         /// </summary>
-        /// <param name="tcid">测试样例ID</param>
-        /// <param name="filetype">文件类型</param>
-        [HttpGet("/[area]/[controller]/{tcid}/[action]/{filetype}")]
-        public async Task<IActionResult> File(int tcid, string filetype)
+        /// <param name="id">The ID of the entity to get</param>
+        /// <param name="type">Type of file to get</param>
+        /// <response code="200">Information about the file of the given testcase</response>
+        [HttpGet("{id}/[action]/{type}")]
+        public async Task<ActionResult<string>> File(int id, string type)
         {
             var tcq = await DbContext.Testcases
-                .Where(tc => tc.TestcaseId == tcid)
+                .Where(tc => tc.TestcaseId == id)
                 .Select(tc => new { pid = tc.ProblemId })
                 .FirstOrDefaultAsync();
-
             if (tcq is null) return NotFound();
 
-            if (filetype == "input")
-                filetype = "in";
-            else if (filetype == "output")
-                filetype = "out";
+            if (type == "input") type = "in";
+            else if (type == "output") type = "out";
             else return BadRequest();
 
             var io = HttpContext.RequestServices
                 .GetRequiredService<IFileRepository>();
             io.SetContext("Problems");
 
-            var bytes = await io.ReadBinaryAsync($"p{tcq.pid}", $"t{tcid}.{filetype}");
+            var bytes = await io.ReadBinaryAsync($"p{tcq.pid}", $"t{id}.{type}");
             if (bytes is null) return NotFound();
-            var base64encoded = Convert.ToBase64String(bytes);
-            return Json(base64encoded);
+            return Convert.ToBase64String(bytes);
         }
     }
 }
