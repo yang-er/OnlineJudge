@@ -16,11 +16,11 @@
 
   <ItemGroup>
     <PackageReference Include="EntityFrameworkCore.Cacheable" Version="2.0.1.1" />
+    <PackageReference Include="idunno.Authentication.Basic" Version="2.1.1" />
     <PackageReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.QQ" Version="2.0.1" />
     <PackageReference Include="Microsoft.AspNetCore.Razor.Design" Version="2.2.0" PrivateAssets="All" />
     <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.7.1" />
-    <PackageReference Include="Microsoft.Web.LibraryManager.Build" Version="2.0.48" />
     <PackageReference Include="System.Text.Encoding.CodePages" Version="4.5.1" />
   </ItemGroup>
 
@@ -32,6 +32,7 @@
     <ProjectReference Include="..\JudgeWeb.Areas.Dashboard\JudgeWeb.Areas.Dashboard.csproj" />
     <ProjectReference Include="..\JudgeWeb.Areas.Judge\JudgeWeb.Areas.Judge.csproj" />
     <ProjectReference Include="..\JudgeWeb.Areas.Misc\JudgeWeb.Areas.Misc.csproj" />
+    <ProjectReference Include="..\JudgeWeb.Areas.Polygon\JudgeWeb.Areas.Polygon.csproj" />
     <ProjectReference Include="..\JudgeWeb.Data\JudgeWeb.Data.csproj" />
     <ProjectReference Include="..\JudgeWeb.Features.AspNetCore\JudgeWeb.Features.AspNetCore.csproj" />
     <ProjectReference Include="..\JudgeWeb.Features.Extensions\JudgeWeb.Features.Extensions.csproj" />

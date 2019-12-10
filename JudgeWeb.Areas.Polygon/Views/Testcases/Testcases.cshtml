@@ -1,0 +1,66 @@
+﻿@model Problem
+@{
+    List<Testcase> Testcases = ViewBag.Testcases;
+    ViewData["Title"] = "Testcases for p" + Model.ProblemId;
+    ViewData["DisableAjaxRefresh"] = true;
+}
+
+<h2 class="mt-2">@ViewData["Title"] - @Model.Title</h2>
+
+<div class="mb-2">
+    <a asp-controller="Editor" asp-action="Overview">Back to problem p@(Model.ProblemId)</a>
+    |
+    <a asp-action="Create" data-toggle="ajaxWindow" data-target="createTc">Add a testcase</a>
+</div>
+
+<style>
+    .table td, .table th { vertical-align: middle; }
+</style>
+
+<table class="table table-sm table-striped" style="width:auto">
+    <thead>
+        <tr>
+            <th scope="col" class="text-center"></th>
+            <th scope="col" style="padding-left:1em;min-width:15em"># testcase</th>
+            <th scope="col">download</th>
+            <th scope="col" class="text-right">size</th>
+            <th scope="col"></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var tc in Testcases)
+        {
+            <tr>
+                <td rowspan="2" class="text-center bg-light">
+                    <a asp-action="Move" asp-route-tid="@tc.TestcaseId" asp-route-direction="up"
+                       title="Move testcase up"><i class="fas fa-arrow-up"></i></a><br>
+                    @tc.Rank<br>
+                    <a asp-action="Move" asp-route-tid="@tc.TestcaseId" asp-route-direction="down"
+                       title="Move testcase down"><i class="fas fa-arrow-down"></i></a></td>
+                <td rowspan="2" style="padding-left:1em" class="bg-light">
+                    <span class="badge badge-@(tc.IsSecret ? "danger" : "primary")">@(tc.IsSecret ? "secret" : "sample")</span>
+                    @if (tc.Point > 0) {<span class="badge badge-success">@tc.Point pts</span>}<br />
+                    @tc.Description
+                </td>
+                <td scope="row" class="filename"><a asp-route-tid="@tc.TestcaseId" title="MD5: @tc.Md5sumInput" asp-action="Fetch" asp-route-filetype="input">p@(tc.ProblemId).t@(tc.TestcaseId).in</a></td>
+                <td scope="row" class="text-right">@Html.NiceByteSize(tc.InputLength)</td>
+                <td><a asp-action="Edit" asp-route-tid="@tc.TestcaseId" data-toggle="ajaxWindow" data-target="editTc" class="text-reset"><i class="fas fa-edit"></i></a></td>
+            </tr>
+            <tr>
+                <td scope="row" class="filename"><a asp-route-tid="@tc.TestcaseId" title="MD5: @tc.Md5sumOutput" asp-action="Fetch" asp-route-filetype="output">p@(tc.ProblemId).t@(tc.TestcaseId).out</a></td>
+                <td scope="row" class="text-right">@Html.NiceByteSize(tc.OutputLength)</td>
+                <td><a asp-action="Delete" asp-route-tid="@tc.TestcaseId" data-toggle="ajaxWindow" data-target="delTc" class="text-reset"><i class="fas fa-trash-alt"></i></a></td>
+            </tr>
+        }
+        @if (!Testcases.Any())
+        {
+            <tr>
+                <td colspan="4">
+                    No testcase data.
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<small class="form-text text-muted">Sample test cases will be used in real judge. Judge test cases should be checked with standard programs.</small>

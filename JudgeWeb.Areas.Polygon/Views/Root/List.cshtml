@@ -1,0 +1,81 @@
+﻿@model IEnumerable<(Problem, int?, string)>
+@{
+    ViewData["Title"] = "Problems";
+    ViewData["DisableAjaxRefresh"] = true;
+    int curPage = ViewBag.Page;
+    int totPage = ViewBag.TotalPage;
+}
+
+<h2 class="mt-2 mb-3">@ViewData["Title"]</h2>
+
+<div class="d-none" id="paging">
+    <partial name="_Pagination" model="(curPage, totPage)" />
+</div>
+
+<div class="table-wrapper">
+    <table class="data-table table table-sm table-striped" style="width:auto">
+        <thead>
+            <tr role="row">
+                <th scope="col" class="sortable">ID</th>
+                <th scope="col" class="sortable">arch.</th>
+                <th scope="col" class="sortable searchable">name</th>
+                <th scope="col" class="sortable">time limit</th>
+                <th scope="col" class="sortable">memory limit</th>
+                <th scope="col" class="sortable">output limit</th>
+                <th scope="col" class="sortable searchable">source</th>
+                <th></th>
+                <th></th>
+                <th></th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var (prob, extid, tags) in Model)
+            {
+                <tr asp-action="Overview" asp-route-pid="@prob.ProblemId" asp-controller="Editor" role="row" data-toggle="gotoUrl">
+                    <td use-a>@prob.ProblemId</td>
+                    <td class="@(extid.HasValue ? "" : "disabled")" title="@tags" use-a>@(extid.HasValue ? $"{extid.Value}" : "none")</td>
+                    <td use-a>@prob.Title</td>
+                    <td use-a>@(prob.TimeLimit / 1000.0)s</td>
+                    <td class="@(prob.MemoryLimit == 524288 ? "disabled" : "")" use-a>@(prob.MemoryLimit == 524288 ? "default" : $"{prob.MemoryLimit / 1024} MB")</td>
+                    <td class="@(prob.OutputLimit == 4096 ? "disabled" : "")" use-a>@(prob.OutputLimit == 4096 ? "default" : $"{prob.OutputLimit} KB")</td>
+                    <td class="@(string.IsNullOrEmpty(prob.Source) ? "disabled" : "")" use-a>@(string.IsNullOrEmpty(prob.Source) ? "empty" : prob.Source)</td>
+                    <td><a asp-action="Preview" asp-route-pid="@prob.ProblemId" asp-controller="Description" title="view problem description"><i class="fas fa-file-pdf"></i></a></td>
+                    <td><a asp-action="Export" asp-route-pid="@prob.ProblemId" asp-controller="Editor" title="export problem as kattis package"><i class="fas fa-save"></i></a></td>
+                    <td><a asp-action="Edit" asp-route-pid="@prob.ProblemId" asp-controller="Editor" title="edit this problem"><i class="fas fa-edit"></i></a></td>
+                    <td><a asp-action="Delete" asp-route-pid="@prob.ProblemId" asp-controller="Editor" title="delete this problem" data-toggle="ajaxWindow" data-target="deleteProb"><i class="fas fa-trash-alt"></i></a></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<script>
+    $().ready(function () {
+        $('.data-table').DataTable({
+            "paging": false,
+            "searching": true,
+            "ordering": true,
+            "order": [[0, 'asc']],
+            "info": false,
+            "autoWidth": true,
+            "language": {
+                "searchPlaceholder": "filter table",
+                "search": "_INPUT_",
+            },
+            'aoColumnDefs': [
+                { aTargets: ['sortable'], bSortable: true },
+                { aTargets: ['searchable'], bSearchable: true },
+                { aTargets: ['_all'], bSortable: false, bSearchable: false }
+            ],
+        });
+
+        $('.dataTables_wrapper .row:first-child .col-md-6:first-child').html($('#paging').html());
+        $('.dataTables_wrapper .pagination-sm').addClass('mb-0');
+    });
+</script>
+
+<p>
+    <a asp-action="Create" class="btn btn-primary" title="Create new problem"><i class="fas fa-plus"></i>&nbsp;Create</a>
+    <a asp-action="Import" data-toggle="ajaxWindow" data-target="importProb" class="btn btn-secondary" title="Import new problem"><i class="fas fa-file-upload"></i>&nbsp;Import</a>
+</p>

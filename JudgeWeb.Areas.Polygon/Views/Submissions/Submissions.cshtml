@@ -1,0 +1,81 @@
+﻿@model IEnumerable<ListSubmissionModel>
+@{
+    ViewData["Title"] = "Submissions";
+    ViewData["DisableAjaxRefresh"] = true;
+    List<Testcase> tc = ViewBag.Testcase;
+}
+
+<h2 class="mt-2 mb-0">Submissions</h2>
+
+<div class="table-wrapper">
+    <table class="data-table table table-sm table-striped" style="width:auto">
+        <thead class="thead-light">
+            <tr>
+                <th scope="col" class="sortable searchable">ID</th>
+                <th scope="col" class="sortable searchable">time</th>
+                <th scope="col" class="sortable searchable">expected</th>
+                <th scope="col" class="sortable searchable">user</th>
+                <th scope="col" class="sortable searchable">lang</th>
+                <th scope="col" class="sortable searchable">run</th>
+                <th scope="col" class="sortable searchable">result</th>
+                <th scope="col">test results</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var sub in Model)
+            {
+                <tr asp-action="Detail" asp-route-sid="@sub.SubmissionId" data-toggle="gotoUrl">
+                    <td use-a>s@(sub.SubmissionId)</td>
+                    <td use-a>@Html.CstTime(sub.Time)</td>
+                    <td use-a><verdict value="sub.Expected" target="DomJudge" /></td>
+                    <td use-a>@sub.UserName</td>
+                    <td use-a class="langid">@sub.Language</td>
+                    <td use-a>@(sub.ExecutionTime)ms</td>
+                    <td use-a><verdict value="sub.Result" target="DomJudge" /></td>
+                    <td class="testcase-results">
+                        @{
+                            int t = 0;
+                            bool jp = sub.Result == Verdict.Pending || sub.Result == Verdict.Running;
+                            foreach (var item in tc)
+                            {
+                                t++;
+                                if (sub.Details.TryGetValue(item.TestcaseId, out var de))
+                                {<verdict target="BadgeSmall" value="de.Result" tooltip="#@item.Rank, desc: @item.Description, runtime: @(de.ExecutionTime)ms." />}
+                                else
+                                {<verdict target="BadgeSmall" value="Verdict.Pending" judging-pending="jp" tooltip="#@item.Rank, desc: @item.Description, not used." />}
+                            }
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<p>
+    <a asp-action="Submit" data-toggle="ajaxWindow" data-target="submitCode" class="btn btn-info"><i class="fas fa-cloud-upload-alt"></i>&nbsp;Submit</a>
+</p>
+
+<script>
+    $().ready(function () {
+        $('.data-table').DataTable({
+            "paging": false,
+            "searching": true,
+            "ordering": true,
+            "order": [[0, 'asc']],
+            "info": false,
+            "autoWidth": true,
+            "language": {
+                "searchPlaceholder": "filter table",
+                "search": "_INPUT_",
+            },
+            'aoColumnDefs': [
+                { aTargets: ['sortable'], bSortable: true },
+                { aTargets: ['searchable'], bSearchable: true },
+                { aTargets: ['_all'], bSortable: false, bSearchable: false }
+            ],
+        });
+
+        $('[data-toggle="tooltip"]').tooltip()
+    });
+</script>

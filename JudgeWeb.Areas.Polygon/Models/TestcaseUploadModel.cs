@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using System.ComponentModel;
 
-namespace JudgeWeb.Areas.Judge.Models
+namespace JudgeWeb.Areas.Polygon.Models
 {
     public class TestcaseUploadModel
     {

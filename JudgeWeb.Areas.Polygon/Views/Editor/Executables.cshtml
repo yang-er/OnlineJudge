@@ -1,0 +1,29 @@
+﻿@model List<ExecutableViewContentModel>
+@{
+    Executable exec = ViewBag.Executable;
+    ViewData["Title"] = "View content of executable " + exec.ExecId;
+    ViewData["DisableAjaxRefresh"] = true;
+    int t = 0, t2 = 0;
+}
+
+<h2 class="mt-2">@ViewData["Title"]</h2>
+
+<ul class="nav nav-tabs source-tab-nav">
+    @foreach (var item in Model)
+    {
+        int id = t++;
+        <li class="nav-item">
+            <a class="nav-link @(id > 0 ? "" : "active")" data-toggle="tab"
+               href="#source-@(id)" role="tab">@item.FileName</a>
+        </li>
+    }
+</ul>
+
+<div class="tab-content source-tab">
+    @foreach (var item in Model)
+    {
+        int id = t2++;
+        <ace class="tab-pane fade @(id == 0 ? "show active" : "")" id="source-@id" role="tabpanel"
+             file="@item.Language" value="@item.FileContent" />
+    }
+</div>

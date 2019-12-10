@@ -1,0 +1,213 @@
+﻿@model ViewSubmissionModel
+@{
+    ViewData["Title"] = "Submission s" + Model.SubmissionId;
+    ViewData["DisableAjaxRefresh"] = true;
+    double timeLimit = Model.TimeLimit * Model.TimeFactor / 1000;
+}
+
+<style>
+
+    .judging-table td a, .judging-table td a:hover {
+        display: block;
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .judging-table tr.disabled td a {
+        color: silver
+    }
+</style>
+
+<h2 class="mt-2">Submission @Model.SubmissionId</h2>
+
+<div class="submission-summary mb-2">
+    <span>
+        <i class="fas fa-user" title="Author:"></i>
+        <a>@(Model.UserName ?? "SYSTEM") (u@(Model.Author))</a>
+    </span>
+    <span>
+        <i class="fas fa-comments" title="Language:"></i>
+        @Model.LanguageName
+    </span>
+    <span>
+        <i class="fas fa-clock" title="Submittime:"></i>
+        @Html.CstTime(Model.Time)
+    </span>
+    <span>
+        <i class="fas fa-stopwatch" title="Allowed runtime:"></i>
+        @(timeLimit)s
+    </span>
+    <span>
+        <i class="fas fa-code" title="Source code:"></i>
+        <a href="#src-0">View source code</a>
+    </span>
+</div>
+
+@if (Model.AllJudgings.Count() > 1)
+{
+    <table class="judging-table table table-striped table-hover table-sm" style="width: auto;">
+        <caption>Judgings</caption>
+        <thead>
+            <tr>
+                <td></td>
+                <th scope="col">ID</th>
+                <th scope="col">start</th>
+                <th scope="col">time</th>
+                <th scope="col">memory</th>
+                <th scope="col">judgehost</th>
+                <th scope="col">result</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var (judging, serverName) in Model.AllJudgings)
+            {
+                var subTime = judging.StartTime;
+                <tr asp-route-jid="@judging.JudgingId" data-toggle="gotoUrl" class="@(judging.Active ? "" : "disabled")">
+                    <td use-a>@if (judging.JudgingId == Model.JudgingId)
+                    {<i class="fas fa-long-arrow-alt-right"></i>}</td>
+                    <td use-a>j@(judging.JudgingId)</td>
+                    <td use-a>@subTime?.ToString("HH:mm")</td>
+                    <td use-a>@(judging.ExecuteTime)ms</td>
+                    <td use-a>@(judging.ExecuteMemory)K</td>
+                    <td use-a><span class="hostname">@serverName</span></td>
+                    <td use-a><verdict target="DomJudge" value="@judging.Status" class="@(judging.Active ? "" : "disabled")" /></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+}
+
+<div>
+    @if (Model.AllJudgings.Count() > 1)
+    {
+        <nvd3 id="maxruntime" title="Max Runtimes" key="Max Runtime"
+              baseline="@timeLimit"
+              max-value="@(Model.AllJudgings.Max(j => j.g.ExecuteTime) / 1000.0)"
+              data="@Model.AllJudgings.Select(j => new { label = $"j{j.g.JudgingId}", value = j.g.ExecuteTime / 1000.0, color = Html.ColorNvd3(j.g.Status) })"
+              x-axis="Judging" y-axis="Runtime (in s)" />
+    }
+    <nvd3 id="testcaseruntime" title="Testcase Runtimes" key="Runtime"
+          baseline="@timeLimit"
+          max-value="@(Model.Details.Max(d => d.Item1?.ExecuteTime).GetValueOrDefault() / 1000.0)"
+          data="@Model.Details.Select(r => new { label = $"r{r.Item2.Rank}", value = (r.Item1?.ExecuteTime ?? 0) / 1000.0, color = Html.ColorNvd3(r.Item1?.Status ?? Verdict.Pending) })"
+          x-axis="Testcase Rank" y-axis="Runtime (in s)"/>
+</div>
+
+<h2 class="mb-2">Judging j@(Model.JudgingId)</h2>
+
+<div class="mb-2">
+    <div>
+        Result: <verdict target="DomJudge" value="@Model.Status" class="@(Model.Judging.Active ? "" : "disabled")" />,
+        Judgehost: <span class="hostname">@Model.ServerName</span>,
+        <span class="judgetime">
+            @if (Model.Judging.StartTime.HasValue)
+            {
+                @("Judging started: " + Model.Judging.StartTime?.ToString("HH:mm:ss") + ", ")
+                if (Model.Judging.StopTime.HasValue)
+                {
+                    @("finished in " + (Model.Judging.StopTime - Model.Judging.StartTime)?.ToString("mm\\:ss") + "s")
+                }
+                else
+                {
+                    @("not finished yet")
+                }
+            }
+            else
+            {
+                @("Judging not started yet")
+            }
+        </span>
+    </div>
+    @if (Model.Status != Verdict.CompileError)
+    {
+        <table>
+            <tr>
+                <td>testcase runs: </td>
+                <td>@foreach (var (d, t) in Model.Details) {<a title="#@t.Rank, @(d == null ? "unknown" : $"runtime: {d.ExecuteTime}ms, result: {d.Status}")" href="#run-@t.Rank"><verdict target="BadgeSmall" value="@(d?.Status ?? Verdict.Pending)" /></a>}</td>
+            </tr>
+        </table>
+    }
+</div>
+
+<h3>
+    <a class="collapse-link" href="javascript:collapse('#detailcompile')">
+        Compilation
+        <span style="color: @(Model.Status == Verdict.CompileError ? "red" : Model.Status == Verdict.Pending ? "gray" : "#1daa1d");">
+            @(Model.Status == Verdict.CompileError ? "unsuccessful" : Model.Status == Verdict.Pending ? "waiting" : "successful")
+        </span>
+    </a>
+</h3>
+
+<base64 class="@(Model.Status == Verdict.CompileError ? "" : "d-none")" id="detailcompile" value="@Model.CompileError" />
+
+@if (Model.Status != Verdict.CompileError)
+{
+    foreach (var (detail, testcase) in Model.Details)
+    {
+        <div class="run">
+            <h4 id="run-@testcase.Rank">Run @testcase.Rank</h4>
+            @if  (detail == null)
+            {
+                <p class="nodata">Testcase not used.</p>
+            }
+            else
+            {
+            <table>
+                <tr>
+                    <td>
+                        <table class="table table-sm table-striped table-bordered table-hover">
+                            <tr>
+                                <th>Reference</th>
+                                <td>
+                                    <a asp-area="Judge" asp-controller="Problem" asp-action="Testcase" asp-route-tid="@detail.TestcaseId" asp-route-filetype="input">data.in</a>
+                                    <a asp-area="Judge" asp-controller="Problem" asp-action="Testcase" asp-route-tid="@detail.TestcaseId" asp-route-filetype="output">data.out</a>
+                                    <a asp-area="Judge" asp-controller="Status" asp-action="RunDetails" asp-route-jid="@detail.JudgingId" asp-route-rid="@detail.TestId" asp-route-type="out">user.out</a>
+                                    <a asp-area="Judge" asp-controller="Status" asp-action="RunDetails" asp-route-jid="@detail.JudgingId" asp-route-rid="@detail.TestId" asp-route-type="err">user.err</a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Status</th>
+                                <td>@(detail.ExecuteTime)ms, @(detail.ExecuteMemory)kb.</td>
+                            </tr>
+                            <tr>
+                                <th>Result</th>
+                                <td><verdict target="DomJudge" value="detail.Status" /></td>
+                            </tr>
+                        </table>
+                    </td>
+                    <td></td>
+                </tr>
+            </table>
+
+            <h5>Diff output</h5>
+            @if (string.IsNullOrEmpty(detail.OutputDiff))
+            {
+                <p class="nodata">There was no diff output.</p>
+            }
+            else
+            {
+                <base64 value="@detail.OutputDiff" />
+            }
+
+            <h5>Judging system output (info/debug/errors)</h5>
+            <base64 value="@detail.OutputSystem" />
+
+            }
+        </div>
+    }
+}
+
+<style>
+    div.submission-summary > span {
+        margin-right: 10px;
+    }
+
+    .run > h4, .run > h5 {
+        text-align: left;
+    }
+</style>
+
+
+<h2 class="mt-3" id="src-0">Source code</h2>
+<ace file="Main.@Model.LanguageExternalId" value="@Model.SourceCode.UnBase64()" />

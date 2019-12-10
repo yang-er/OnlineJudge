@@ -80,34 +80,5 @@ namespace JudgeWeb.Areas.Judge.Controllers
 
             return View(model);
         }
-
-        [ProblemAuthorize("pid")]
-        [HttpGet("p{pid}/{target}")]
-        public async Task<IActionResult> Markdown(string target, int pid)
-        {
-            var backstore = "p" + pid;
-            var lastVersion = await ProblemManager
-                .ReadMarkdownAsync(backstore, target) ?? "";
-
-            return View(new ProblemMarkdownModel
-            {
-                Markdown = lastVersion,
-                BackingStore = backstore,
-                Target = target
-            });
-        }
-
-        [ProblemAuthorize("pid")]
-        [HttpGet("p{pid}/{target}")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Markdown(string target,
-            int pid, ProblemMarkdownModel model)
-        {
-            var backstore = "p" + pid;
-            if (target != model.Target || backstore != model.BackingStore)
-                return BadRequest();
-            await ProblemManager.SaveMarkdownAsync(backstore, target, model.Markdown);
-            return View(model);
-        }
     }
 }

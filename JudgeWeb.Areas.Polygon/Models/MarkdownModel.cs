@@ -1,6 +1,6 @@
-﻿namespace JudgeWeb.Areas.Judge.Models
+﻿namespace JudgeWeb.Areas.Polygon.Models
 {
-    public class ProblemMarkdownModel
+    public class MarkdownModel
     {
         /// <summary>
         /// Markdown实际内容

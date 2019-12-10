@@ -1,4 +1,5 @@
 ﻿using EntityFrameworkCore.Cacheable;
+using idunno.Authentication.Basic;
 using JudgeWeb.Data;
 using JudgeWeb.Features;
 using JudgeWeb.Features.Mailing;
@@ -8,7 +9,6 @@ using Microsoft.AspNetCore.Authentication.QQ;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -45,67 +45,68 @@ namespace JudgeWeb
                 options.MinimumSameSitePolicy = SameSiteMode.None;
             });
 
-            services.Configure<IdentityOptions>(options =>
-            {
-                options.Password.RequireDigit = false;
-                options.Password.RequiredLength = 6;
-                options.Password.RequireNonAlphanumeric = false;
-                options.Password.RequireUppercase = false;
-                options.Password.RequireLowercase = false;
-                options.Password.RequiredUniqueChars = 2;
-
-                options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
-                options.Lockout.MaxFailedAccessAttempts = 10;
-                options.Lockout.AllowedForNewUsers = true;
-
-                options.User.RequireUniqueEmail = true;
-                options.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_.@";
-
-                options.SignIn.RequireConfirmedEmail = false;
-                options.SignIn.RequireConfirmedPhoneNumber = false;
-            });
-
-            services.ConfigureApplicationCookie(options =>
-            {
-                // Cookie settings
-                options.Cookie.HttpOnly = true;
-                options.Cookie.Expiration = TimeSpan.FromDays(150);
-                // If the LoginPath isn't set, ASP.NET Core defaults 
-                // the path to /Account/Login.
-                options.LoginPath = "/account/sign/login";
-                // If the AccessDeniedPath isn't set, ASP.NET Core defaults 
-                // the path to /Account/AccessDenied.
-                options.AccessDeniedPath = "/account/sign/access-denied";
-                options.SlidingExpiration = true;
-            });
-
             services.AddDbContext<AppDbContext>(options =>
                 options.UseSqlServer(Configuration.GetConnectionString("UserDbConnection"))
                        .UseSecondLevelCache());
 
-            services.AddIdentity<User, Role>()
+            services.AddIdentity<User, Role>(
+                options =>
+                {
+                    options.Password.RequireDigit = false;
+                    options.Password.RequiredLength = 6;
+                    options.Password.RequireNonAlphanumeric = false;
+                    options.Password.RequireUppercase = false;
+                    options.Password.RequireLowercase = false;
+                    options.Password.RequiredUniqueChars = 2;
+
+                    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
+                    options.Lockout.MaxFailedAccessAttempts = 10;
+                    options.Lockout.AllowedForNewUsers = true;
+
+                    options.User.RequireUniqueEmail = true;
+                    options.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_.@";
+
+                    options.SignIn.RequireConfirmedEmail = false;
+                    options.SignIn.RequireConfirmedPhoneNumber = false;
+
+                    options.Tokens.ProviderMap.Add("Email2", Email2TokenProvider.Descriptor);
+                })
                 .AddEntityFrameworkStores<AppDbContext>()
                 .AddUserManager<UserManager>()
                 .AddDefaultTokenProviders();
 
-            services.AddSingleton(new ConfigurationBasicAuthorizationService(Configuration));
+            services.AddAuthentication()
+                .AddCookie(options =>
+                {
+                    options.Cookie.HttpOnly = true;
+                    options.Cookie.Expiration = TimeSpan.FromDays(30);
+                    options.LoginPath = "/account/sign/login";
+                    options.LogoutPath = "/account/sign/logout";
+                    options.AccessDeniedPath = "/account/sign/access-denied";
+                    options.SlidingExpiration = true;
+                })
+                .AddQQ(options =>
+                {
+                    options.AppId = Configuration["Authentication:QQ:AppId"];
+                    options.AppKey = Configuration["Authentication:QQ:AppKey"];
+                })
+                .AddBasic(options =>
+                {
+                    options.Realm = "JudgeWeb";
+                    options.AllowInsecureProtocol = true;
+                    options.Events = new BasicAuthenticationValidator<User>();
+                });
 
             services.AddSingleton(
                 HtmlEncoder.Create(
                     UnicodeRanges.BasicLatin,
                     UnicodeRanges.CjkUnifiedIdeographs));
 
-            services.AddAuthentication().AddQQ(qqOptions =>
-            {
-                qqOptions.AppId = Configuration["Authentication:QQ:AppId"];
-                qqOptions.AppKey = Configuration["Authentication:QQ:AppKey"];
-            });
-
             services.AddEmailSender(options =>
                 options.Bind(Configuration.GetSection("SendGrid")));
 
-            services.AddOjUpdateService(confBuilder =>
-                confBuilder.AddJsonFile("ojconfig.json", true));
+            services.AddOjUpdateService(
+                Environment.IsDevelopment() ? 24 * 7 * 60 : 3 * 24 * 60);
 
             services.AddProblemRepository();
             services.AddMarkdown();
@@ -114,10 +115,11 @@ namespace JudgeWeb
                 .SetTokenTransform<SlugifyParameterTransformer>()
                 .EnableContentFileResult()
                 .SetCompatibilityVersion(CompatibilityVersion.Version_2_1)
-                .UseAreaParts("JudgeWeb.Areas.", new[] { "Misc", "Account", "Api", "Judge", "Contest", "Dashboard" });
+                .UseAreaParts("JudgeWeb.Areas.",
+                    new[] { "Misc", "Account", "Api", "Judge", "Contest", "Dashboard", "Polygon" });
 
             services.AddDefaultManagers();
-            services.AddScoreboardService();
+            //services.AddScoreboardService();
             services.AddSwagger();
         }
 
