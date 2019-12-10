@@ -38,6 +38,43 @@ namespace JudgeWeb.Areas.Api.Controllers
 
 
         /// <summary>
+        /// Get the files for the given submission as a ZIP archive
+        /// </summary>
+        /// <param name="cid">The ID of the entity to get</param>
+        /// <param name="sid">The contest ID</param>
+        /// <response code="200">The files for the submission as a ZIP archive</response>
+        /// <response code="500">An error occurred while creating the ZIP file</response>
+        [HttpGet("{sid}/[action]")]
+        [Produces("application/zip")]
+        public async Task<IActionResult> Files(int cid, int sid)
+        {
+            var src = await DbContext.Submissions
+                .Where(s => s.SubmissionId == sid && s.ContestId == cid)
+                .Join(
+                    inner: DbContext.Languages,
+                    outerKeySelector: s => s.Language,
+                    innerKeySelector: l => l.LangId,
+                    resultSelector: (s, l) => new { s.SourceCode, l.FileExtension })
+                .FirstOrDefaultAsync();
+
+            if (src is null) return NotFound();
+
+            var srcDecoded = Convert.FromBase64String(src.SourceCode);
+            var memStream = new MemoryStream();
+
+            using (var zip = new ZipArchive(memStream, ZipArchiveMode.Create, true))
+            {
+                var entry = zip.CreateEntry("Main." + src.FileExtension);
+                using (var fileStream = entry.Open())
+                    await fileStream.WriteAsync(srcDecoded, 0, srcDecoded.Length);
+            }
+
+            memStream.Position = 0;
+            return File(memStream, "application/zip");
+        }
+
+
+        /// <summary>
         /// Get the source code of all the files for the given submission
         /// </summary>
         /// <param name="cid">The contest ID</param>

@@ -1,0 +1,32 @@
+﻿@using JudgeWeb.Features.Razor
+@using System.Text.Encodings.Web
+@model Nvd3TagHelper
+@inject JavaScriptEncoder JSEncoder
+
+<h3 id="graphs">@Model.Title</h3>
+<svg style="width:500px; height:250px;"></svg>
+<script>
+    $(function () {
+        var curdata = [@Html.Raw(Model.GeneratedValue)];
+        nv.addGraph(function () {
+            var chart = createNvd3Chart(@(Math.Max(Model.Baseline, Model.MaxValue)));
+            chart.xAxis.axisLabel("@JSEncoder.Encode(Model.XAxis)");
+            chart.yAxis.axisLabel("@JSEncoder.Encode(Model.YAxis)");
+            d3.select('#@Model.Id svg')
+                .datum(curdata)
+                .call(chart);
+            var svgsize = chart.container.clientWidth || chart.container.parentNode.clientWidth;
+            d3.select('#@Model.Id svg')
+                .append('line')
+                .attr({
+                    x1: chart.margin().left,
+                    y1: chart.yAxis.scale()(@Model.Baseline) + chart.margin().top,
+                    x2: +svgsize - chart.margin().right,
+                    y2: chart.yAxis.scale()(@Model.Baseline) + chart.margin().top,
+                })
+                .style("stroke", "#F00");
+            nv.utils.windowResize(chart.update);
+            return chart;
+        });
+    });
+</script>

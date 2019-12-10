@@ -1,8 +1,10 @@
-﻿using Microsoft.Extensions.Hosting;
+﻿using JudgeWeb.Data;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Threading;
@@ -13,13 +15,17 @@ namespace JudgeWeb.Features.OjUpdate
     public abstract class OjUpdateService : BackgroundService
     {
         private CancellationTokenSource manualCancellatinSource;
-        private readonly int sleepToken;
         private bool firstUpdate = true;
 
         /// <summary>
         /// 评测网站列表
         /// </summary>
         public static Dictionary<string, OjUpdateService> OjList { get; }
+
+        /// <summary>
+        /// 睡眠间隔时长
+        /// </summary>
+        public static int SleepLength { get; set; }
 
         /// <summary>
         /// 初始化字典。
@@ -50,9 +56,14 @@ namespace JudgeWeb.Features.OjUpdate
         public string ColumnName { get; set; }
 
         /// <summary>
-        /// 账户列表
+        /// 分类编号，对应数据库
         /// </summary>
-        public List<OjAccount> NameSet { get; }
+        public int CategoryId { get; }
+
+        /// <summary>
+        /// 服务提供程序
+        /// </summary>
+        public IServiceProvider ServiceProvider { get; }
 
         /// <summary>
         /// 日志
@@ -73,20 +84,21 @@ namespace JudgeWeb.Features.OjUpdate
         /// 构造基础刷新服务实例。
         /// </summary>
         /// <param name="logger">日志器</param>
-        /// <param name="nameSet">账户列表</param>
-        /// <param name="sleepLength">睡眠间隔分钟</param>
+        /// <param name="catId">分类编号</param>
+        /// <param name="serviceProvider">服务提供程序</param>
+        /// <param name="siteName">站点名称</param>
         public OjUpdateService(
             ILogger<OjUpdateService> logger,
-            List<OjAccount> nameSet,
-            int sleepLength,
+            IServiceProvider serviceProvider,
+            int catId,
             string siteName)
         {
             Logger = logger;
-            NameSet = nameSet ?? new List<OjAccount>();
             LastUpdate = DateTimeOffset.UnixEpoch;
-            sleepToken = sleepLength <= 0 ? 44640 : sleepLength;
             SiteName = siteName;
             OjList[siteName] = this;
+            CategoryId = catId;
+            ServiceProvider = serviceProvider;
             ColumnName = "Count";
         }
 
@@ -103,10 +115,20 @@ namespace JudgeWeb.Features.OjUpdate
         /// </summary>
         /// <param name="year">年份</param>
         /// <returns>账户列表</returns>
-        public IEnumerable<OjAccount> GetAccounts(int year = -1)
+        public IQueryable<OjAccount> GetAccounts(IQueryable<PersonRank> query, int year = -1)
         {
-            if (year == -1) return NameSet;
-            return NameSet.Where(a => a.Grade == year);
+            int cid = CategoryId;
+            query = query.Where(p => p.Category == cid);
+            if (year != -1) query = query.Where(p => p.Grade == year);
+
+            return query
+                .Select(p => new OjAccount
+                {
+                    Account = p.Account,
+                    NickName = p.ACMer,
+                    Solved = p.Result,
+                    Grade = p.Grade,
+                });
         }
 
         /// <summary>
@@ -135,12 +157,12 @@ namespace JudgeWeb.Features.OjUpdate
         /// <param name="httpClient">HttpClient实例</param>
         /// <param name="id">账户信息</param>
         /// <param name="stoppingToken">提前终止令牌</param>
-        protected virtual async Task UpdateOne(HttpClient httpClient, OjAccount id, CancellationToken stoppingToken)
+        protected virtual async Task UpdateOne(HttpClient httpClient, PersonRank id, CancellationToken stoppingToken)
         {
             var getSrc = GenerateGetSource(id.Account);
             var resp = await httpClient.GetAsync(getSrc, stoppingToken);
             var result = await resp.Content.ReadAsStringAsync();
-            id.Solved = MatchCount(result);
+            id.Result = MatchCount(result);
         }
 
         /// <summary>
@@ -169,12 +191,24 @@ namespace JudgeWeb.Features.OjUpdate
                         LastUpdate = DateTimeOffset.UnixEpoch;
                         ConfigureHttpClient(httpClient);
 
-                        foreach (var id in NameSet)
+                        using (var scope = ServiceProvider.CreateScope())
                         {
-                            await UpdateOne(httpClient, id, stoppingToken);
+                            var dbContext = scope.ServiceProvider
+                                .GetRequiredService<AppDbContext>();
+                            int category = CategoryId;
+
+                            var names = await dbContext.PersonRanks
+                                .Where(r => r.Category == category)
+                                .ToListAsync();
+
+                            foreach (var id in names)
+                            {
+                                await UpdateOne(httpClient, id, stoppingToken);
+                                dbContext.PersonRanks.Update(id);
+                                await dbContext.SaveChangesAsync();
+                            }
                         }
 
-                        NameSet.Sort();
                         LastUpdate = DateTimeOffset.Now;
                     }
                 }
@@ -194,34 +228,6 @@ namespace JudgeWeb.Features.OjUpdate
         }
         
         /// <summary>
-        /// 检查是否可以直接从缓存中读取值。
-        /// </summary>
-        /// <returns>是否跳过更新，剩余时间</returns>
-        private async Task<(bool, int)> CheckCacheAsync()
-        {
-            var cacheNotHit = (false, sleepToken * 60000);
-            var cacheFile = $"ojcache.{SiteName}.json";
-            if (!File.Exists(cacheFile)) return cacheNotHit;
-            
-            var content = await File.ReadAllTextAsync(cacheFile);
-            var lastCache = content.AsJson<OjUpdateCache>();
-            if (lastCache?.NameSet == null) return cacheNotHit;
-
-            // this hit because of the change of list.
-            if (lastCache.NameSet.Count != NameSet.Count) return cacheNotHit;
-
-            var updateGap = DateTimeOffset.Now - lastCache.LastUpdate;
-            if (updateGap.TotalMinutes > sleepToken) return cacheNotHit;
-            
-            NameSet.Clear();
-            NameSet.AddRange(lastCache.NameSet);
-            int awaitTime = cacheNotHit.Item2 - (int)updateGap.TotalMilliseconds;
-            if (awaitTime <= 0) awaitTime = 1000;
-            LastUpdate = lastCache.LastUpdate;
-            return (true, awaitTime);
-        }
-
-        /// <summary>
         /// 执行后台任务。
         /// </summary>
         /// <param name="stoppingToken">提前停止令牌</param>
@@ -236,13 +242,12 @@ namespace JudgeWeb.Features.OjUpdate
                     IsUpdating = true;
                     manualCancellatinSource = null;
                     bool jumpFromUpdate = false;
-                    int sleepLength = sleepToken * 60000;
+                    int sleepLength = SleepLength * 60000;
 
                     if (firstUpdate)
                     {
                         firstUpdate = false;
-                        (jumpFromUpdate, sleepLength) = await CheckCacheAsync();
-                        if (jumpFromUpdate) Logger.LogDebug("Cache hit.");
+                        jumpFromUpdate = true;
                     }
 
                     if (!jumpFromUpdate)
@@ -250,16 +255,6 @@ namespace JudgeWeb.Features.OjUpdate
                         Logger.LogInformation("Fetch scope began!");
                         await TryUpdateAsync(stoppingToken);
                         Logger.LogInformation("Fetch scope finished~");
-
-                        var result = new OjUpdateCache
-                        {
-                            LastUpdate = LastUpdate,
-                            NameSet = NameSet
-                        };
-
-                        await File.WriteAllTextAsync(
-                            $"ojcache.{SiteName}.json",
-                            result.ToJson());
                     }
 
                     // wait for task cancellation or next scope.

@@ -1,0 +1,18 @@
+﻿@using JudgeWeb.Features.Razor
+@model AceTagHelper
+@{ var idd = $"editor{Model.RandomId}"; }
+
+<div class="editor" id="@idd" style="font-size:0.8em">@Model.Content</div>
+<script>
+    $(function () {
+        var @idd = ace.edit("@idd");
+        @(idd).setTheme("ace/theme/eclipse");
+        @(idd).setOptions({ maxLines: Infinity });
+        @(idd).setReadOnly(true);
+        var modelist = ace.require('ace/ext/modelist');
+        var filePath = "@(Model.File)";
+        var mode = modelist.getModeForPath(filePath).mode;
+        @(idd).getSession().setMode(mode);
+        document.getElementById("@(idd)").editor = @(idd);
+    });
+</script>

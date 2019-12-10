@@ -10,7 +10,7 @@ namespace JudgeWeb.Data
         /// <summary>
         /// 题目编号
         /// </summary>
-        [Key(ValueGeneratedNever = true)]
+        [Key]
         public int ProblemId { get; set; }
 
         /// <summary>
@@ -28,6 +28,16 @@ namespace JudgeWeb.Data
         public string Source { get; set; }
 
         /// <summary>
+        /// 允许评测
+        /// </summary>
+        public bool AllowJudge { get; set; }
+
+        /// <summary>
+        /// 允许提交
+        /// </summary>
+        public bool AllowSubmit { get; set; }
+
+        /// <summary>
         /// 题目信息的标志
         /// </summary>
         public int Flag { get; set; }
@@ -40,7 +50,12 @@ namespace JudgeWeb.Data
         /// <summary>
         /// 内存限制，以kb为单位
         /// </summary>
-        public int MemoryLimit { get; set; }
+        public int MemoryLimit { get; set; } = 524288;
+
+        /// <summary>
+        /// 输出限制，以kb为单位
+        /// </summary>
+        public int OutputLimit { get; set; } = 4096;
 
         /// <summary>
         /// 运行脚本

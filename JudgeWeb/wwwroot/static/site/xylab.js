@@ -103,6 +103,30 @@ function ajaxpost(Form, handlekey, parent, arg2) {
     return false;
 }
 
+function createNvd3Chart(maxY) {
+    var tickStep = 1;
+    if (maxY <= 2) {
+        tickStep = 0.2;
+    } else if (maxY <= 5) {
+        tickStep = 0.5;
+    }
+    maxY += tickStep;
+    var chart = nv.models.multiBarChart()
+        .x(function (d) { return d.label; })
+        .y(function (d) { return d.value; })
+        .showControls(false)
+        .reduceXTicks(true)
+        .forceY([0, maxY])
+        .duration(250)
+        .showLegend(false);
+    var tickValues = [];
+    for (i = 0; i <= maxY; i += tickStep) {
+        tickValues.push(i);
+    }
+    chart.yAxis.tickValues(tickValues);
+    return chart;
+}
+
 function initXylabFunctions() {
 	var $body = $('body');
 

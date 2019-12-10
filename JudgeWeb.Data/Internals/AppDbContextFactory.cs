@@ -1,5 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
+using Microsoft.Extensions.Logging;
+#pragma warning disable CS0618
 
 namespace JudgeWeb.Data
 {
@@ -7,6 +9,9 @@ namespace JudgeWeb.Data
     {
         public AppDbContext CreateDbContext(string[] args)
         {
+            var optionsBuilder = new DbContextOptionsBuilder<AppDbContext>();
+            optionsBuilder.UseLoggerFactory(new LoggerFactory().AddConsole());
+
             // For dotnet cli users: 
             //   dotnet ef migrations add InitialForMyDbContext
             //   dotnet ef database update
@@ -16,8 +21,13 @@ namespace JudgeWeb.Data
             //   Update-Database
 
             // You can change UseSqlServer to your dbs, e.g. MySQL
-            var optionsBuilder = new DbContextOptionsBuilder<AppDbContext>();
-            optionsBuilder.UseSqlServer("Server=(localdb)\\mssqllocaldb;Database=aspnet-JudgeWeb;Trusted_Connection=True;MultipleActiveResultSets=true");
+
+            optionsBuilder.UseSqlServer(
+                "Server=(localdb)\\mssqllocaldb;" +
+                "Database=aspnet-JudgeWeb;" +
+                "Trusted_Connection=True;" +
+                "MultipleActiveResultSets=true");
+
             return new AppDbContext(optionsBuilder.Options);
         }
     }

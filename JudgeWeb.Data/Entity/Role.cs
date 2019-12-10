@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 namespace JudgeWeb.Data
 {
@@ -30,5 +31,17 @@ namespace JudgeWeb.Data
         /// 描述内容
         /// </summary>
         public string Description { get; set; }
+
+        /// <summary>
+        /// 题目编号
+        /// </summary>
+        [HasOneWithMany(typeof(Problem), DeleteBehavior.Cascade)]
+        public int? ProblemId { get; set; }
+
+        /// <summary>
+        /// 实体类型，1为题目，2为比赛
+        /// </summary>
+        [HasOneWithMany(typeof(Contest), DeleteBehavior.Cascade)]
+        public int? ContestId { get; set; }
     }
 }

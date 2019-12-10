@@ -22,7 +22,7 @@ namespace JudgeWeb.Data
         /// 评测编号
         /// </summary>
         [Index]
-        [HasOneWithMany(typeof(Judging), DeleteBehavior.Restrict)]
+        [HasOneWithMany(typeof(Judging), DeleteBehavior.Cascade)]
         public int JudgingId { get; set; }
 
         /// <summary>
@@ -41,6 +41,33 @@ namespace JudgeWeb.Data
         /// 执行时间，以ms为单位
         /// </summary>
         public int ExecuteTime { get; set; }
+
+        /*
+        /// <summary>
+        /// 交互输入大小
+        /// </summary>
+        public int StdinBytes { get; set; }
+
+        /// <summary>
+        /// 标准输出大小
+        /// </summary>
+        public int StdoutBytes { get; set; }
+
+        /// <summary>
+        /// 标准错误输出大小
+        /// </summary>
+        public int StderrBytes { get; set; }
+
+        /// <summary>
+        /// 退出代码
+        /// </summary>
+        public int ExitCode { get; set; }
+
+        /// <summary>
+        /// 是否爆了WallTime
+        /// </summary>
+        public bool BreakingWallTime { get; set; }
+        */
 
         /// <summary>
         /// 系统输出，以BASE64编码

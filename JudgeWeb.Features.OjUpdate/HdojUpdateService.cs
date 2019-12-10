@@ -1,19 +1,15 @@
 ﻿using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using System;
 using System.Net.Http;
 using System.Text.RegularExpressions;
 
 namespace JudgeWeb.Features.OjUpdate
 {
-    public class HdojUpdateOptions : OjUpdateOptions { }
-
     public class HdojUpdateService : OjUpdateService
     {
         public HdojUpdateService(
-            ILogger<HdojUpdateService> logger,
-            IOptions<HdojUpdateOptions> options)
-            : base(logger, options.Value.NameSet, options.Value.SleepMinute, "HDOJ")
+            ILogger<HdojUpdateService> logger, IServiceProvider serviceProvider)
+            : base(logger, serviceProvider, 1, "HDOJ")
         {
             AccountTemplate = "http://acm.hdu.edu.cn/userstatus.php?user={0}";
         }

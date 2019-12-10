@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Html;
+﻿using JudgeWeb;
+using Microsoft.AspNetCore.Html;
 using System;
 
 namespace Microsoft.AspNetCore.Mvc.Rendering
@@ -16,6 +17,28 @@ namespace Microsoft.AspNetCore.Mvc.Rendering
             else if (timeSpan.TotalHours > 1) return $"{timeSpan.TotalHours:0} hours ago";
             else if (timeSpan.TotalMinutes > 1) return $"{timeSpan.TotalMinutes:0} mins ago";
             return $"{timeSpan.TotalSeconds:0} secs ago";
+        }
+
+
+        private static string[] verdictColor = new[]
+        {
+            "grey", // 0
+            "orange",
+            "purple",
+            "#ff3399",
+            "black",
+            "#dc3545", // 5
+            "grey",
+            "#dc3545",
+            "grey",
+            "grey",
+            "grey", // 10
+            "#28a745",
+        };
+
+        public static string ColorNvd3(this IHtmlHelper hh, Verdict result)
+        {
+            return verdictColor[(int)result];
         }
 
         public static IHtmlContent CstTime(this IHtmlHelper hh, DateTimeOffset? dt)

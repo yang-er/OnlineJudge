@@ -1,0 +1,18 @@
+@model (int CurrentPage, int TotalPage)
+
+<ul class="pagination pagination-sm">
+    <li class="page-item @(1 == Model.CurrentPage ? "disabled" : "")">
+        <a class="page-link" asp-route-page="@(Model.CurrentPage-1)">&laquo;</a>
+    </li>
+
+    @for (int i = 1; i <= Model.Item2; i++)
+    {
+        <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+            <a class="page-link" asp-route-page="@i">@i</a>
+        </li>
+    }
+
+    <li class="page-item @(Model.TotalPage == Model.CurrentPage ? "disabled" : "")">
+        <a class="page-link" asp-route-page="@(Model.CurrentPage+1)">&raquo;</a>
+    </li>
+</ul>

@@ -35,7 +35,7 @@ namespace JudgeWeb.Data
         /// 题目编号
         /// </summary>
         [Index]
-        [HasOneWithMany(typeof(Problem), DeleteBehavior.Restrict)]
+        [HasOneWithMany(typeof(Problem), DeleteBehavior.Cascade)]
         public int ProblemId { get; set; }
 
         /// <summary>
@@ -63,5 +63,17 @@ namespace JudgeWeb.Data
         [IsRequired]
         [NonUnicode(MaxLength = 128)]
         public string Ip { get; set; }
+
+        /// <summary>
+        /// 期望的验题结果
+        /// </summary>
+        public Verdict? ExpectedResult { get; set; }
+
+        /// <summary>
+        /// 重测请求编号
+        /// </summary>
+        [Index]
+        [HasOneWithMany(typeof(Rejudge), DeleteBehavior.SetNull)]
+        public int? RejudgeId { get; set; }
     }
 }

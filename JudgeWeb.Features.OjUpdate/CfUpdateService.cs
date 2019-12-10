@@ -1,19 +1,15 @@
 ﻿using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using System;
 using System.Net.Http;
 using System.Text.RegularExpressions;
 
 namespace JudgeWeb.Features.OjUpdate
 {
-    public class CfUpdateOptions : OjUpdateOptions { }
-
     public class CfUpdateService : OjUpdateService
     {
         public CfUpdateService(
-            ILogger<CfUpdateService> logger,
-            IOptions<CfUpdateOptions> options)
-            : base(logger, options.Value.NameSet, options.Value.SleepMinute, "Codeforces")
+            ILogger<CfUpdateService> logger, IServiceProvider serviceProvider)
+            : base(logger, serviceProvider, 2, "Codeforces")
         {
             AccountTemplate = "https://codeforces.com/profile/{0}";
             ColumnName = "Rating";

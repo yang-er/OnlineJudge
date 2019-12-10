@@ -69,7 +69,6 @@ namespace JudgeWeb.Data
                 FullTest = false,
                 Active = true,
                 Status = Verdict.Pending,
-                RejudgeId = 0,
             });
 
             await DbContext.SaveChangesAsync();

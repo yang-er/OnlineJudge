@@ -13,6 +13,15 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Migrations\20191205163420_RoleAddPidCid.cs" />
+    <Compile Remove="Migrations\20191205163420_RoleAddPidCid.Designer.cs" />
+    <Compile Remove="Migrations\20191210125004_TeamRanking.cs" />
+    <Compile Remove="Migrations\20191210125004_TeamRanking.Designer.cs" />
+    <Compile Remove="Migrations\20191210130732_TeamRanking.cs" />
+    <Compile Remove="Migrations\20191210130732_TeamRanking.Designer.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="EntityFrameworkCore.Cacheable" Version="2.0.1.1" />
     <PackageReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>

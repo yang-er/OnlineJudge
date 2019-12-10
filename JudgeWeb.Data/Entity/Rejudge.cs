@@ -1,4 +1,7 @@
-﻿namespace JudgeWeb.Data
+﻿using Microsoft.EntityFrameworkCore;
+using System;
+
+namespace JudgeWeb.Data
 {
     /// <summary>
     /// 重判请求
@@ -22,6 +25,22 @@
         /// </summary>
         [IsRequired]
         public string Reason { get; set; }
+
+        /// <summary>
+        /// 开始时间
+        /// </summary>
+        public DateTimeOffset? StartTime { get; set; }
+
+        /// <summary>
+        /// 结束时间
+        /// </summary>
+        public DateTimeOffset? EndTime { get; set; }
+
+        /// <summary>
+        /// 操作员
+        /// </summary>
+        [HasOneWithMany(typeof(User), DeleteBehavior.SetNull)]
+        public int? OperatedBy { get; set; }
 
         /// <summary>
         /// 是否已应用

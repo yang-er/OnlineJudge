@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using System;
 
 namespace JudgeWeb.Data
@@ -39,5 +40,21 @@ namespace JudgeWeb.Data
         /// 注册时间
         /// </summary>
         public DateTimeOffset? RegisterTime { get; set; }
+
+        /// <summary>
+        /// 学生教学号
+        /// </summary>
+        [HasOneWithMany(typeof(Student), DeleteBehavior.SetNull)]
+        public int? StudentId { get; set; }
+
+        /// <summary>
+        /// 学生邮箱
+        /// </summary>
+        public string StudentEmail { get; set; }
+
+        /// <summary>
+        /// 学生已验证
+        /// </summary>
+        public bool StudentVerified { get; set; }
     }
 }

@@ -1,19 +1,15 @@
 ﻿using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using System;
 using System.Net.Http;
 using System.Text.RegularExpressions;
 
 namespace JudgeWeb.Features.OjUpdate
 {
-    public class VjUpdateOptions : OjUpdateOptions { }
-
     public class VjUpdateService : OjUpdateService
     {
         public VjUpdateService(
-            ILogger<VjUpdateService> logger,
-            IOptions<VjUpdateOptions> options)
-            : base(logger, options.Value.NameSet, options.Value.SleepMinute, "Vjudge")
+            ILogger<VjUpdateService> logger, IServiceProvider serviceProvider)
+            : base(logger, serviceProvider, 4, "Vjudge")
         {
             AccountTemplate = "https://vjudge.net/user/{0}";
         }

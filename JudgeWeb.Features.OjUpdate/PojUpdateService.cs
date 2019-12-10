@@ -1,5 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
+﻿using JudgeWeb.Data;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Net.Http;
 using System.Threading;
@@ -7,14 +7,11 @@ using System.Threading.Tasks;
 
 namespace JudgeWeb.Features.OjUpdate
 {
-    public class PojUpdateOptions : OjUpdateOptions { }
-
     public class PojUpdateService : OjUpdateService
     {
         public PojUpdateService(
-            ILogger<PojUpdateService> logger,
-            IOptions<PojUpdateOptions> options)
-            : base(logger, options.Value.NameSet, options.Value.SleepMinute, "POJ")
+            ILogger<PojUpdateService> logger, IServiceProvider serviceProvider)
+            : base(logger, serviceProvider, 3, "POJ")
         {
             AccountTemplate = "http://poj.org/userstatus?user_id={0}";
         }
@@ -61,7 +58,7 @@ namespace JudgeWeb.Features.OjUpdate
         }
 
         protected override async Task UpdateOne(HttpClient httpClient,
-            OjAccount id, CancellationToken stoppingToken)
+            PersonRank id, CancellationToken stoppingToken)
         {
             await base.UpdateOne(httpClient, id, stoppingToken);
             await Task.Delay(10000, stoppingToken);

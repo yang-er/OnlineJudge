@@ -20,10 +20,13 @@ namespace JudgeWeb.Data
         public virtual DbSet<AuditLog> AuditLogs { get; set; }
         public virtual DbSet<Submission> Submissions { get; set; }
         public virtual DbSet<Problem> Problems { get; set; }
+        public virtual DbSet<ProblemArchive> Archives { get; set; }
         public virtual DbSet<Detail> Details { get; set; }
         public virtual DbSet<Judging> Judgings { get; set; }
         public virtual DbSet<Rejudge> Rejudges { get; set; }
         public virtual DbSet<News> News { get; set; }
+        public virtual DbSet<Student> Students { get; set; }
+        public virtual DbSet<PersonRank> PersonRanks { get; set; }
 
 
         public virtual DbSet<Contest> Contests { get; set; }
@@ -73,6 +76,8 @@ namespace JudgeWeb.Data
                 .UseAttributes(isMySql);
             modelBuilder.Entity<Problem>()
                 .UseAttributes(isMySql);
+            modelBuilder.Entity<ProblemArchive>()
+                .UseAttributes(isMySql);
             modelBuilder.Entity<AuditLog>()
                 .UseAttributes(isMySql);
             modelBuilder.Entity<Detail>()
@@ -82,6 +87,8 @@ namespace JudgeWeb.Data
             modelBuilder.Entity<Rejudge>()
                 .UseAttributes(isMySql);
             modelBuilder.Entity<News>()
+                .UseAttributes(isMySql);
+            modelBuilder.Entity<PersonRank>()
                 .UseAttributes(isMySql);
 
             modelBuilder.Entity<Contest>()
@@ -116,6 +123,10 @@ namespace JudgeWeb.Data
 
             modelBuilder.Entity<User>()
                 .UseAttributes(isMySql);
+            modelBuilder.Entity<Role>()
+                .UseAttributes(isMySql);
+            modelBuilder.Entity<Student>()
+                .UseAttributes(isMySql);
 
             if (isMySql)
             {
@@ -138,11 +149,12 @@ namespace JudgeWeb.Data
 
             modelBuilder.Entity<Role>()
                 .HasData(
-                    new Role { Id = 1, ConcurrencyStamp = "17337d8e-0118-4c42-9da6-e4ca600d5836", Name = "Administrator", NormalizedName = "ADMINISTRATOR", ShortName = "admin", Description = "Administrative User" },
-                    new Role { Id = 2, ConcurrencyStamp = "9ec57e90-312c-4eed-ac25-a40fbcf5f33b", Name = "Blocked", NormalizedName = "BLOCKED", ShortName = "blocked", Description = "Blocked User" },
-                    new Role { Id = 3, ConcurrencyStamp = "2bbf420d-6253-4ace-a825-4bf8e85cf41e", Name = "Problem", NormalizedName = "PROBLEM", ShortName = "prob", Description = "Problem Provider" },
-                    new Role { Id = -1, ConcurrencyStamp = "fd0d1cf4-2ccf-4fd6-9d47-7fd62923c5d2", Name = "Judgehost", NormalizedName = "JUDGEHOST", ShortName = "judgehost", Description = "(Internal/System) Judgehost" },
-                    new Role { Id = -2, ConcurrencyStamp = "81ffd1be-883c-4093-8adf-f2a4909370b7", Name = "CDS", NormalizedName = "CDS", ShortName = "cds_api", Description = "CDS API user" });
+                    new Role { Id = -1, ConcurrencyStamp = "17337d8e-0118-4c42-9da6-e4ca600d5836", Name = "Administrator", NormalizedName = "ADMINISTRATOR", ShortName = "admin", Description = "Administrative User" },
+                    new Role { Id = -2, ConcurrencyStamp = "9ec57e90-312c-4eed-ac25-a40fbcf5f33b", Name = "Blocked", NormalizedName = "BLOCKED", ShortName = "blocked", Description = "Blocked User" },
+                    new Role { Id = -3, ConcurrencyStamp = "2bbf420d-6253-4ace-a825-4bf8e85cf41e", Name = "Problem", NormalizedName = "PROBLEM", ShortName = "prob", Description = "Problem Provider" },
+                    new Role { Id = -4, ConcurrencyStamp = "fd0d1cf4-2ccf-4fd6-9d47-7fd62923c5d2", Name = "Judgehost", NormalizedName = "JUDGEHOST", ShortName = "judgehost", Description = "(Internal/System) Judgehost" },
+                    new Role { Id = -5, ConcurrencyStamp = "81ffd1be-883c-4093-8adf-f2a4909370b7", Name = "CDS", NormalizedName = "CDS", ShortName = "cds_api", Description = "CDS API user" },
+                    new Role { Id = -6, ConcurrencyStamp = "e5db5526-f7cd-41d5-aaf9-391b3ed17b3d", Name = "Student", NormalizedName = "STUDENT", ShortName = "stud", Description = "Verified Student" });
 
             modelBuilder.Entity<Configure>()
                 .HasData(
@@ -154,6 +166,14 @@ namespace JudgeWeb.Data
                     new Configure { ConfigId = -6, Category = "Judging", Name = "output_storage_limit", Value = "60000", Type = "int", Description = "Maximum size of error/system output stored in the database (in bytes); use \"-1\" to disable any limits.", Public = 0 },
                     new Configure { ConfigId = -7, Category = "Judging", Name = "diskspace_error", Value = "1048576", Type = "int", Description = "Minimum free disk space (in kB) on judgehosts.", Public = 0 },
                     new Configure { ConfigId = -8, Category = "Judging", Name = "update_judging_seconds", Value = "0", Type = "int", Description = "Post updates to a judging every X seconds. Set to 0 to update after each judging_run.", Public = 0 });
+
+            modelBuilder.Entity<User>()
+                .HasData(
+                    new User { Id = -1, UserName = "judgehost", NormalizedUserName = "JUDGEHOST", Email = "acm@xylab.fun", NormalizedEmail = "ACM@XYLAB.FUN", EmailConfirmed = true, ConcurrencyStamp = "e1a1189a-38f5-487b-907b-6d0533722f02", SecurityStamp = "AAAABBBBCCCCDDDDEEEEFFFFGGGGHHHH", LockoutEnabled = false, NickName = "User for judgedaemons" });
+
+            modelBuilder.Entity<IdentityUserRole<int>>()
+                .HasData(
+                    new IdentityUserRole<int> { RoleId = -4, UserId = -1 });
 
             modelBuilder.Query<SubmissionStatistics>();
             modelBuilder.Query<ContestTestcase>();

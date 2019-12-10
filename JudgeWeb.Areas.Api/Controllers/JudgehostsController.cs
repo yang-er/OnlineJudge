@@ -281,6 +281,7 @@ namespace JudgeWeb.Areas.Api.Controllers
             Problem problem;
             Judging judging;
             int cccid, teamid;
+            int? rjid;
 
             using (await Lock.LockAsync())
             {
@@ -291,7 +292,7 @@ namespace JudgeWeb.Areas.Api.Controllers
                     join l in DbContext.Languages on s.Language equals l.LangId
                     join p in DbContext.Problems on s.ProblemId equals p.ProblemId
                     where l.AllowJudge
-                    select new { g, l, p, s.ContestId, s.Author }
+                    select new { g, l, p, s.ContestId, s.Author, s.RejudgeId }
                 ).FirstOrDefaultAsync();
 
                 if (next is null)
@@ -305,6 +306,7 @@ namespace JudgeWeb.Areas.Api.Controllers
                 cccid = next.ContestId;
                 teamid = next.Author;
                 judging = next.g;
+                rjid = next.RejudgeId;
                 judging.Status = Verdict.Running;
                 judging.ServerId = host.ServerId;
                 judging.StartTime = DateTimeOffset.Now;
@@ -341,7 +343,7 @@ namespace JudgeWeb.Areas.Api.Controllers
                 teamid = teamid,
                 probid = problem.ProblemId,
                 langid = lang.ExternalId,
-                rejudgingid = judging.RejudgeId,
+                rejudgingid = rjid,
                 entry_point = null,
                 origsubmitid = null,
                 maxruntime = timelimit / 1000.0, // as seconds

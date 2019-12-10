@@ -296,7 +296,6 @@ namespace JudgeWeb.Areas.Contest.Services
                 FullTest = false,
                 Active = true,
                 Status = Verdict.Pending,
-                RejudgeId = 0,
             });
 
             DbContext.AuditLogs.Add(new AuditLog

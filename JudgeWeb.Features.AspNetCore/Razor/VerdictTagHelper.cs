@@ -35,6 +35,9 @@ namespace JudgeWeb.Features.Razor
         [HtmlAttributeName("reg-status")]
         public int? RegistrationStatus { get; set; }
 
+        [HtmlAttributeName("tooltip")]
+        public string TooltipTitle { get; set; }
+
         [HtmlAttributeName("rule")]
         public int? ContestRule { get; set; }
 
@@ -164,6 +167,13 @@ namespace JudgeWeb.Features.Razor
 
             output.Attributes.TryGetAttribute("class", out var clv);
             output.Attributes.SetAttribute("class", (clv?.Value ?? "") + " " + @class);
+
+            if (!string.IsNullOrEmpty(TooltipTitle))
+            {
+                output.Attributes.SetAttribute("data-toggle", "tooltip");
+                output.Attributes.SetAttribute("title", TooltipTitle);
+            }
+
             output.Content.AppendHtml(content);
         }
     }

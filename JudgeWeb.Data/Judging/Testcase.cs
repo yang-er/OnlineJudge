@@ -17,7 +17,7 @@ namespace JudgeWeb.Data
         /// 题目编号
         /// </summary>
         [Index]
-        [HasOneWithMany(typeof(Problem), DeleteBehavior.Restrict)]
+        [HasOneWithMany(typeof(Problem), DeleteBehavior.Cascade)]
         public int ProblemId { get; set; }
 
         /// <summary>
