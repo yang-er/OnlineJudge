@@ -82,7 +82,7 @@
                 <tr>
                     <th scope="row">@(item.SubmissionId)</th>
                     <td>@Html.CstTime(item.Time.DateTime)</td>
-                    <td><verdict target="StatusText" value="@item.Status" /></td>
+                    <td><verdict3 value="@item.Status" /></td>
                     <td><a asp-area="Judge" asp-controller="Problem" asp-action="View" asp-route-pid="@item.ProblemId">@item.ProblemId</a></td>
                     <td>@(item.ExecuteTime)ms</td>
                     <td>@(item.ExecuteMemory)k</td>

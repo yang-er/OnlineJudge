@@ -38,11 +38,11 @@
                 <td use-a class="probid">@sub.Problem?.ShortName</td>
                 <td use-a class="langid">@sub.Language</td>
                 <td use-a>
-                    <verdict value="sub.Result" too-late="tooLate" target="DomJudge" />@if (tooLate)
-                    {@(" (")<verdict value="sub.Result" target="DomJudge" />@(")")}
+                    <verdict3 value="@sub.Result" too-late="tooLate" />@if (tooLate)
+                    {@(" (")<verdict3 value="@sub.Result" />@(")")}
                 </td>
                 <td class="testcase-results">
-                    @{ int t = 0; foreach (var item in sub.Details){t++;<verdict target="BadgeSmall" value="item" />}@for (; t < (sub.Problem?.TestcaseCount ?? 1); t++){<verdict target="BadgeSmall" value="Verdict.Pending" judging-pending="@(sub.Result == Verdict.Pending || sub.Result == Verdict.Running)" />}}
+                    @{ int t = 0; foreach (var item in sub.Details){t++;<verdict6 value="@item" />}@for (; t < (sub.Problem?.TestcaseCount ?? 1); t++){<verdict6 value="Pending" judging-pending="@(sub.Result == Verdict.Pending || sub.Result == Verdict.Running)" />}}
                 </td>
             </tr>
         }

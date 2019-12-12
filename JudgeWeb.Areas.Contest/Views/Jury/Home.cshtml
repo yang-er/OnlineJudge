@@ -57,7 +57,7 @@
                             <tr>
                                 <td><i class="fas fa-@((int)state >= 2 ? "check" : "")"></i></td>
                                 <td><b>Start time:</b></td>
-                                <td show-time="Model.Contest.StartTime" null-value="not scheduled"></td>
+                                <td><difftime show-time="Model.Contest.StartTime" null-value="not scheduled" /></td>
                                 <td>
                                     @if (state == ContestState.ScheduledToStart && User.IsInRole("Administrator"))
                                     {
@@ -73,7 +73,7 @@
                             <tr>
                                 <td><i class="fas fa-@(Model.Contest.FreezeTime.HasValue && (int)state >= 3 ? "check" : "")"></i></td>
                                 <td><b>Freeze time:</b></td>
-                                <td show-time="Model.Contest.FreezeTime"></td>
+                                <td><difftime show-time="Model.Contest.FreezeTime" /></td>
                                 <td>
                                     @if (state == ContestState.Started && User.IsInRole("Administrator"))
                                     {
@@ -84,7 +84,7 @@
                             <tr>
                                 <td class=""><i class="fas fa-@(Model.Contest.EndTime.HasValue && (int)state >= 4 ? "check" : "")"></i></td>
                                 <td class=""><b>End time:</b></td>
-                                <td show-time="Model.Contest.EndTime"></td>
+                                <td><difftime show-time="Model.Contest.EndTime" /></td>
                                 <td>
                                     @if ((state == ContestState.Started || state == ContestState.Frozen) && User.IsInRole("Administrator"))
                                     {
@@ -95,7 +95,7 @@
                             <tr>
                                 <td><i class="fas fa-@(Model.Contest.UnfreezeTime.HasValue && (int)state >= 5 ? "check" : "")"></i></td>
                                 <td><b>Unfreeze time:</b></td>
-                                <td show-time="Model.Contest.UnfreezeTime"></td>
+                                <td><difftime show-time="Model.Contest.UnfreezeTime" /></td>
                                 <td>
                                     @if (state == ContestState.Ended && User.IsInRole("Administrator"))
                                     {

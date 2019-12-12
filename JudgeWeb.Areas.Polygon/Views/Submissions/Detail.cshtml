@@ -1,12 +1,32 @@
 ﻿@model ViewSubmissionModel
 @{
+    var verdictColor = new[]
+    {
+        "grey", // 0
+        "orange",
+        "purple",
+        "#ff3399",
+        "black",
+        "#dc3545", // 5
+        "grey",
+        "#dc3545",
+        "grey",
+        "grey",
+        "grey", // 10
+        "#28a745",
+    };
+
+    string ColorNvd3(Verdict result)
+    {
+        return verdictColor[(int)result];
+    }
+
     ViewData["Title"] = "Submission s" + Model.SubmissionId;
     ViewData["DisableAjaxRefresh"] = true;
     double timeLimit = Model.TimeLimit * Model.TimeFactor / 1000;
 }
 
 <style>
-
     .judging-table td a, .judging-table td a:hover {
         display: block;
         text-decoration: none;
@@ -74,7 +94,7 @@
                     <td use-a>@(judging.ExecuteTime)ms</td>
                     <td use-a>@(judging.ExecuteMemory)K</td>
                     <td use-a><span class="hostname">@serverName</span></td>
-                    <td use-a><verdict target="DomJudge" value="@judging.Status" class="@(judging.Active ? "" : "disabled")" /></td>
+                    <td use-a><verdict3 value="@judging.Status" class="@(judging.Active ? "" : "disabled")" /></td>
                 </tr>
             }
         </tbody>
@@ -88,13 +108,13 @@
         <nvd3 id="maxruntime" title="Max Runtimes" key="Max Runtime"
               baseline="@timeLimit"
               max-value="@(Model.AllJudgings.Max(j => j.g.ExecuteTime) / 1000.0)"
-              data="@Model.AllJudgings.Select(j => new { label = $"j{j.g.JudgingId}", value = j.g.ExecuteTime / 1000.0, color = Html.ColorNvd3(j.g.Status) })"
+              data="@Model.AllJudgings.Select(j => new { label = $"j{j.g.JudgingId}", value = j.g.ExecuteTime / 1000.0, color = ColorNvd3(j.g.Status) })"
               x-axis="Judging" y-axis="Runtime (in s)" />
     }
     <nvd3 id="testcaseruntime" title="Testcase Runtimes" key="Runtime"
           baseline="@timeLimit"
           max-value="@(Model.Details.Max(d => d.Item1?.ExecuteTime).GetValueOrDefault() / 1000.0)"
-          data="@Model.Details.Select(r => new { label = $"r{r.Item2.Rank}", value = (r.Item1?.ExecuteTime ?? 0) / 1000.0, color = Html.ColorNvd3(r.Item1?.Status ?? Verdict.Pending) })"
+          data="@Model.Details.Select(r => new { label = $"r{r.Item2.Rank}", value = (r.Item1?.ExecuteTime ?? 0) / 1000.0, color = ColorNvd3(r.Item1?.Status ?? Verdict.Pending) })"
           x-axis="Testcase Rank" y-axis="Runtime (in s)"/>
 </div>
 
@@ -102,7 +122,7 @@
 
 <div class="mb-2">
     <div>
-        Result: <verdict target="DomJudge" value="@Model.Status" class="@(Model.Judging.Active ? "" : "disabled")" />,
+        Result: <verdict3 value="@Model.Status" class="@(Model.Judging.Active ? "" : "disabled")" />,
         Judgehost: <span class="hostname">@Model.ServerName</span>,
         <span class="judgetime">
             @if (Model.Judging.StartTime.HasValue)
@@ -128,7 +148,7 @@
         <table>
             <tr>
                 <td>testcase runs: </td>
-                <td>@foreach (var (d, t) in Model.Details) {<a title="#@t.Rank, @(d == null ? "unknown" : $"runtime: {d.ExecuteTime}ms, result: {d.Status}")" href="#run-@t.Rank"><verdict target="BadgeSmall" value="@(d?.Status ?? Verdict.Pending)" /></a>}</td>
+                <td>@foreach (var (d, t) in Model.Details) {<a title="#@t.Rank, @(d == null ? "unknown" : $"runtime: {d.ExecuteTime}ms, result: {d.Status}")" href="#run-@t.Rank"><verdict6 value="@(d?.Status ?? Verdict.Pending)" /></a>}</td>
             </tr>
         </table>
     }
@@ -143,7 +163,7 @@
     </a>
 </h3>
 
-<base64 class="@(Model.Status == Verdict.CompileError ? "" : "d-none")" id="detailcompile" value="@Model.CompileError" />
+<snippet class="@(Model.Status == Verdict.CompileError ? "" : "d-none")" id="detailcompile" base64="@Model.CompileError" />
 
 @if (Model.Status != Verdict.CompileError)
 {
@@ -176,7 +196,7 @@
                             </tr>
                             <tr>
                                 <th>Result</th>
-                                <td><verdict target="DomJudge" value="detail.Status" /></td>
+                                <td><verdict3 value="@detail.Status" /></td>
                             </tr>
                         </table>
                     </td>
@@ -191,11 +211,11 @@
             }
             else
             {
-                <base64 value="@detail.OutputDiff" />
+                <snippet base64="@detail.OutputDiff" />
             }
 
             <h5>Judging system output (info/debug/errors)</h5>
-            <base64 value="@detail.OutputSystem" />
+            <snippet base64="@detail.OutputSystem" />
 
             }
         </div>

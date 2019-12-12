@@ -13,6 +13,17 @@
     <OutputPath>..\bin\Release</OutputPath>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Compile Remove="Problems\**" />
+    <Compile Remove="Runs\**" />
+    <Content Remove="Problems\**" />
+    <Content Remove="Runs\**" />
+    <EmbeddedResource Remove="Problems\**" />
+    <EmbeddedResource Remove="Runs\**" />
+    <None Remove="Problems\**" />
+    <None Remove="Runs\**" />
+  </ItemGroup>
+
 
   <ItemGroup>
     <PackageReference Include="EntityFrameworkCore.Cacheable" Version="2.0.1.1" />

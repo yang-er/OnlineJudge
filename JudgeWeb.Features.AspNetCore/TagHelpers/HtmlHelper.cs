@@ -1,16 +1,10 @@
-﻿using JudgeWeb;
-using Microsoft.AspNetCore.Html;
+﻿using Microsoft.AspNetCore.Html;
 using System;
 
 namespace Microsoft.AspNetCore.Mvc.Rendering
 {
     public static class HtmlHelperExtensions
     {
-        public static IHtmlContent Timestamp(this IHtmlHelper hh, long timestamp)
-        {
-            return hh.CstTime(DateTimeOffset.UnixEpoch.AddSeconds(timestamp));
-        }
-
         public static string Timespan(this IHtmlHelper hh, TimeSpan timeSpan)
         {
             if (timeSpan.TotalDays > 1) return $"{timeSpan.TotalDays:0} days ago";
@@ -19,31 +13,9 @@ namespace Microsoft.AspNetCore.Mvc.Rendering
             return $"{timeSpan.TotalSeconds:0} secs ago";
         }
 
-
-        private static string[] verdictColor = new[]
-        {
-            "grey", // 0
-            "orange",
-            "purple",
-            "#ff3399",
-            "black",
-            "#dc3545", // 5
-            "grey",
-            "#dc3545",
-            "grey",
-            "grey",
-            "grey", // 10
-            "#28a745",
-        };
-
-        public static string ColorNvd3(this IHtmlHelper hh, Verdict result)
-        {
-            return verdictColor[(int)result];
-        }
-
         public static IHtmlContent CstTime(this IHtmlHelper hh, DateTimeOffset? dt)
         {
-            return dt.HasValue ? hh.Raw(dt.Value.ToString("yyyy-MM-dd HH:mm:ss")) : hh.Raw("");
+            return dt.HasValue ? hh.Raw(dt.Value.ToString("yyyy/MM/dd HH:mm:ss")) : hh.Raw("");
         }
 
         public static IHtmlContent Timespan2(this IHtmlHelper hh, TimeSpan? timespan)

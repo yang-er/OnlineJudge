@@ -122,7 +122,7 @@
                     </td>
                     <td><input type="text" name="Problems[@ii].ShortName" required class="form-control" value="@item.ShortName" /></td>
                     <td><select name="Problems[@ii].AllowSubmit" class="form-control custom-select form-control"><option value="True" issel="item.AllowSubmit">Yes</option><option value="False" issel="!item.AllowSubmit">No</option></select></td>
-                    <td><select name="Problems[@ii].AllowJudge" class="form-control custom-select form-control"><option value="True" issel="!item.AllowJudge">Yes</option><option value="False" issel="!item.AllowJudge">No</option></select></td>
+                    <td><select name="Problems[@ii].AllowJudge" class="form-control custom-select form-control"><option value="True" issel="item.AllowJudge">Yes</option><option value="False" issel="!item.AllowJudge">No</option></select></td>
                     <td><input type="text" name="Problems[@ii].Color" class="color form-control" value="@Html.Raw(item.Color)" /></td>
                     <td><button type="button" data-delete class="btn btn-danger"><i class="fas fa-trash-alt"></i></button></td>
                 </tr>

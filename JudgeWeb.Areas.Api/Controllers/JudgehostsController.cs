@@ -281,9 +281,9 @@ namespace JudgeWeb.Areas.Api.Controllers
                     join s in DbContext.Submissions on g.SubmissionId equals s.SubmissionId
                     join l in DbContext.Languages on s.Language equals l.LangId
                     join p in DbContext.Problems on s.ProblemId equals p.ProblemId
-                    //join cp in DbContext.ContestProblem on new { s.ContestId, s.ProblemId } equals new { cp.ContestId, cp.ProblemId } into cps
-                    //from cp in cps.DefaultIfEmpty()
-                    where l.AllowJudge && p.AllowJudge //&& (cp == null || cp.AllowJudge)
+                    join cp in DbContext.ContestProblem on new { s.ContestId, s.ProblemId } equals new { cp.ContestId, cp.ProblemId } into cps
+                    from cp in cps.DefaultIfEmpty()
+                    where l.AllowJudge && p.AllowJudge && (cp == null || cp.AllowJudge)
                     select new { g, l, p, s.ContestId, s.Author, s.RejudgeId }
                 ).FirstOrDefaultAsync();
 
@@ -364,10 +364,7 @@ namespace JudgeWeb.Areas.Api.Controllers
         /// <param name="model">Model</param>
         [HttpPut("[action]/{hostname}/{judgingId}")]
         [RequestSizeLimit(1 << 30)]
-        [RequestFormLimits(MultipartBodyLengthLimit = 1 << 30, KeyLengthLimit = 1 << 30,
-            MultipartBoundaryLengthLimit = 1 << 30, MultipartHeadersCountLimit = 1 << 30,
-            MultipartHeadersLengthLimit = 1 << 30, BufferBodyLengthLimit = 1 << 30,
-            ValueCountLimit = 1 << 30, ValueLengthLimit = 1 << 30)]
+        [RequestFormLimits2(1 << 30)]
         public async Task<IActionResult> UpdateJudging(
             [FromRoute] string hostname,
             [FromRoute] int judgingId,
@@ -438,10 +435,7 @@ namespace JudgeWeb.Areas.Api.Controllers
         /// <response code="200">When the judging run has been added</response>
         [HttpPost("[action]/{hostname}/{judgingId}")]
         [RequestSizeLimit(1 << 30)]
-        [RequestFormLimits(MultipartBodyLengthLimit = 1 << 30, KeyLengthLimit = 1 << 30,
-            MultipartBoundaryLengthLimit = 1 << 30, MultipartHeadersCountLimit = 1 << 30,
-            MultipartHeadersLengthLimit = 1 << 30, BufferBodyLengthLimit = 1 << 30,
-            ValueCountLimit = 1 << 30, ValueLengthLimit = 1<< 30)]
+        [RequestFormLimits2(1 << 30)]
         public async Task<IActionResult> AddJudgingRun(
             [FromRoute] string hostname,
             [FromRoute] int judgingId,

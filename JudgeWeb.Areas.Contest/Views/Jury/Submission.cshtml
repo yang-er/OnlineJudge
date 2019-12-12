@@ -76,7 +76,7 @@
                     <td use-a>@(judging.ExecuteTime)ms</td>
                     <td use-a>@(judging.ExecuteMemory)K</td>
                     <td use-a><span class="hostname">@serverName</span></td>
-                    <td use-a><verdict target="DomJudge" value="@judging.Status" class="@(judging.Active ? "" : "disabled")" /></td>
+                    <td use-a><verdict3 value="@judging.Status" class="@(judging.Active ? "" : "disabled")" /></td>
                 </tr>
             }
         </tbody>
@@ -168,7 +168,7 @@
 
 <div class="mb-2">
     <div>
-        Result: <verdict target="DomJudge" value="@Model.Status" class="@(Model.Judging.Active ? "" : "disabled")" />,
+        Result: <verdict3 value="@Model.Status" class="@(Model.Judging.Active ? "" : "disabled")" />,
         Judgehost: <span class="hostname">@Model.ServerName</span>,
         <span class="judgetime">
             @if (Model.Judging.StartTime.HasValue)
@@ -201,8 +201,8 @@
                 <td>
                     @{ i = 0; }@foreach (var d in Model.Details)
                     {
-                        i++;<a title="#@i, runtime: @(d.ExecuteTime)ms, result: @(d.Status)" href="#run-@i" onclick="@if (d.Status == Verdict.Accepted) {@("display_correctruns(true);")}"><verdict target="BadgeSmall" value="d.Status" /></a>}@for (i++; i <= Model.TestcaseNumber; i++)
-                    {<a title="#@i, pending" href="#run-@i" onclick="display_correctruns(true);"><verdict target="BadgeSmall" val="8" /></a>}
+                        i++;<a title="#@i, runtime: @(d.ExecuteTime)ms, result: @(d.Status)" href="#run-@i" onclick="@if (d.Status == Verdict.Accepted) {@("display_correctruns(true);")}"><verdict6 value="@d.Status" /></a>}@for (i++; i <= Model.TestcaseNumber; i++)
+                    {<a title="#@i, pending" href="#run-@i" onclick="display_correctruns(true);"><verdict6 value="Pending" /></a>}
                     </td>
                 </tr>
             </table>
@@ -218,7 +218,7 @@
     </a>
 </h3>
 
-<base64 class="@(Model.Status == Verdict.CompileError ? "" : "d-none")" id="detailcompile" value="@Model.CompileError" />
+<snippet class="@(Model.Status == Verdict.CompileError ? "" : "d-none")" id="detailcompile" base64="@Model.CompileError" />
 
 @if (Model.Status != Verdict.CompileError)
 {
@@ -247,7 +247,7 @@
                             </tr>
                             <tr>
                                 <th>Result</th>
-                                <td><verdict target="DomJudge" value="detail.Status" /></td>
+                                <td><verdict3 value="@detail.Status" /></td>
                             </tr>
                         </table>
                     </td>
@@ -262,11 +262,11 @@
             }
             else
             {
-                <base64 value="@detail.OutputDiff" />
+                <snippet base64="@detail.OutputDiff" />
             }
 
             <h5>Judging system output (info/debug/errors)</h5>
-            <base64 value="@detail.OutputSystem" />
+            <snippet base64="@detail.OutputSystem" />
         </div>
     }
     for (i++; i <= Model.TestcaseNumber; i++)

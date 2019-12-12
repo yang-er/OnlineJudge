@@ -34,11 +34,11 @@
                 <tr asp-action="Detail" asp-route-sid="@sub.SubmissionId" data-toggle="gotoUrl">
                     <td use-a>s@(sub.SubmissionId)</td>
                     <td use-a>@Html.CstTime(sub.Time)</td>
-                    <td use-a><verdict value="sub.Expected" target="DomJudge" /></td>
+                    <td use-a><verdict3 value="@(sub.Expected ?? Verdict.Unknown)" too-late="@(!sub.Expected.HasValue)" /></td>
                     <td use-a>@sub.UserName</td>
                     <td use-a class="langid">@sub.Language</td>
                     <td use-a>@(sub.ExecutionTime)ms</td>
-                    <td use-a><verdict value="sub.Result" target="DomJudge" /></td>
+                    <td use-a><verdict3 value="@sub.Result" /></td>
                     <td class="testcase-results">
                         @{
                             int t = 0;
@@ -47,9 +47,9 @@
                             {
                                 t++;
                                 if (sub.Details.TryGetValue(item.TestcaseId, out var de))
-                                {<verdict target="BadgeSmall" value="de.Result" tooltip="#@item.Rank, desc: @item.Description, runtime: @(de.ExecutionTime)ms." />}
+                                {<verdict6 value="@de.Result" tooltip="#@item.Rank, desc: @item.Description, runtime: @(de.ExecutionTime)ms." />}
                                 else
-                                {<verdict target="BadgeSmall" value="Verdict.Pending" judging-pending="jp" tooltip="#@item.Rank, desc: @item.Description, not used." />}
+                                {<verdict6 value="Pending" judging-pending="jp" tooltip="#@item.Rank, desc: @item.Description, not used." />}
                             }
                         }
                     </td>

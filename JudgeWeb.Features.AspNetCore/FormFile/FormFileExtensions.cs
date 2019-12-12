@@ -1,4 +1,8 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using System;
 using System.Threading.Tasks;
 
 namespace Microsoft.AspNetCore.Http
@@ -16,6 +20,14 @@ namespace Microsoft.AspNetCore.Http
                 var inputHash = input.ToMD5().ToHexDigest(true);
                 return (input, inputHash);
             }
+        }
+
+        public static IMvcBuilder EnableContentFileResult(this IMvcBuilder builder)
+        {
+            builder.Services.TryAddSingleton<
+                IActionResultExecutor<ContentFileResult>,
+                ContentFileResultExecutor>();
+            return builder;
         }
     }
 }

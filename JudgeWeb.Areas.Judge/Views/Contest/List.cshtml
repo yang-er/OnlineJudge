@@ -38,7 +38,7 @@
                     <td>@Html.CstTime(contest.StartTime)</td>
                     <td align="center">@(contest.EndTime - contest.StartTime)</td>
                     <td class="bowtie" align="center"><i class="bowtie-user"></i> &times; @contest.TeamCount</td>
-                    <td align="center"><verdict rule="contest.RankingStrategy" /></td>
+                    <td align="center"><verdict0 type="ContestRule" value="@contest.RankingStrategy" /></td>
                 </tr>
             }
         </tbody>

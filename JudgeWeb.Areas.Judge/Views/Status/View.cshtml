@@ -39,7 +39,7 @@
                         <td>@(judging.ExecuteTime)ms</td>
                         <td>@(judging.ExecuteMemory)kb</td>
                         <td>@serverName</td>
-                        <td><verdict target="StatusText" value="@judging.Status" /></td>
+                        <td><verdict3 value="@judging.Status" /></td>
                         <td><a asp-action="Activate" asp-route-gid="@judging.JudgingId" class="bowtie mr-0 text-dark"><i class="bowtie-approve"></i></a></td>
                     </tr>
                 }
@@ -57,7 +57,7 @@
     else
     {
         <h4>Verdict</h4>
-        <p><verdict target="StatusText" value="@Model.Status" /></p>
+        <p><verdict3 value="@Model.Status" /></p>
     }
 
     @if (Model.LanguageExternalId.StartsWith("python")) { Model.LanguageExternalId = "python"; }
@@ -67,19 +67,19 @@
     @if (!string.IsNullOrEmpty(Model.CompileError))
     {
         <h4>Compiler Output</h4>
-        <base64 class="mb-3" value="@Model.CompileError" />
+        <snippet class="mb-3" base64="@Model.CompileError" />
     }
 
     <h4>Running Details</h4>
     <p style="font-size:0">
         @for (int i = 0; i < Model.Details.Count; i++)
         {
-            <a title="Test @(i+1): @(Model.Details[i].Status), @(Model.Details[i].ExecuteTime)ms, @(Model.Details[i].ExecuteMemory)K." style="font-size:1rem"><verdict target="BadgeSmall" value="@Model.Details[i].Status" /></a>
+            <a title="Test @(i+1): @(Model.Details[i].Status), @(Model.Details[i].ExecuteTime)ms, @(Model.Details[i].ExecuteMemory)K." style="font-size:1rem"><verdict6 value="@Model.Details[i].Status" /></a>
         }
 
         @for (int i = Model.Details.Count; i < Model.TestcaseNumber; i++)
         {
-            <a title="Test @(i+1): Pending Or Not Execute" style="font-size:1rem"><verdict target="BadgeSmall" val="8" /></a>
+            <a title="Test @(i+1): Pending Or Not Execute" style="font-size:1rem"><verdict6 value="Pending" /></a>
         }
     </p>
 
@@ -107,14 +107,14 @@
                             </tr>
                             <tr>
                                 <th>Verdict</th>
-                                <td><verdict target="Badge" value="@run.Status" /></td>
+                                <td><verdict3 value="@run.Status" /></td>
                             </tr>
                         </tbody>
                     </table>
                     <h6>Diff output</h6>
-                    <base64 class="mb-3 mt-1" value="@run.OutputDiff" />
+                    <snippet class="mb-3 mt-1" base64="@run.OutputDiff" />
                     <h6>Judging system output</h6>
-                    <base64 class="mb-3 mt-1" value="@run.OutputSystem" />
+                    <snippet class="mb-3 mt-1" base64="@run.OutputSystem" />
                 </div>
             }
         </div>

@@ -75,12 +75,13 @@ namespace JudgeWeb.Areas.Api.Controllers
         /// <response code="200">General status information for the currently active contests</response>
         [HttpGet]
         [Authorize(Roles = "Judgehost,Administrator")]
-        public async Task<ActionResult<List<ServerStatus>>> Status()
+        public async Task<ActionResult<List<ServerStatus>>> Status(
+            [FromServices] SubmissionManager subManager)
         {
-            var judgingStatus = await DbContext.Judgings
+            var judgingStatus = await subManager.Judgings
                 .Where(j => j.Active)
                 .Join(
-                    inner: DbContext.Submissions,
+                    inner: subManager.Submissions,
                     outerKeySelector: j => j.SubmissionId,
                     innerKeySelector: s => s.SubmissionId,
                     resultSelector: (j, s) => new { j.Status, s.ContestId })

@@ -4,10 +4,10 @@ using System.Text;
 
 namespace JudgeWeb.Features.Razor
 {
-    [HtmlTargetElement("base64")]
-    public class Base64TagHelper : TagHelper
+    [HtmlTargetElement("snippet")]
+    public class SnippetTagHelper : TagHelper
     {
-        [HtmlAttributeName("value")]
+        [HtmlAttributeName("base64")]
         public string Base64Source { get; set; }
 
         private static string ConvertBase64(string b64)

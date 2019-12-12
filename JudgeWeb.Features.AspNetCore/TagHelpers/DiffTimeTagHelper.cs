@@ -1,13 +1,10 @@
 ﻿using Microsoft.AspNetCore.Razor.TagHelpers;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace JudgeWeb.Features.Razor
 {
-    [HtmlTargetElement(Attributes = "show-time")]
-    public class ShowTimeTagHelper : TagHelper
+    [HtmlTargetElement("difftime")]
+    public class DiffTimeTagHelper : TagHelper
     {
         static readonly DateTimeOffset TwoKilo = new DateTime(2000, 1, 1);
 
@@ -20,6 +17,8 @@ namespace JudgeWeb.Features.Razor
         public override void Process(TagHelperContext context, TagHelperOutput output)
         {
             base.Process(context, output);
+            output.TagName = "span";
+            output.TagMode = TagMode.StartTagAndEndTag;
 
             if (!ShowTime.HasValue)
                 output.Content.Append(NullValue);

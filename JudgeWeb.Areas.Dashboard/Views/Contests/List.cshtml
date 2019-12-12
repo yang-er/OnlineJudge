@@ -47,7 +47,7 @@
                     <td use-a>@(cts.EndTime - cts.StartTime)</td>
                     <td use-a>@teams.GetValueOrDefault(cts.ContestId)</td>
                     <td use-a>@probs.GetValueOrDefault(cts.ContestId)</td>
-                    <td use-a class="rks"><verdict rule="cts.RankingStrategy" /></td>
+                    <td use-a class="rks"><verdict0 type="ContestRule" value="cts.RankingStrategy" /></td>
                     <td><a asp-area="Contest" asp-controller="Jury" asp-action="Edit" asp-route-cid="@cts.ContestId" title="edit this contest"><i class="fas fa-edit"></i></a></td>
                 </tr>
             }

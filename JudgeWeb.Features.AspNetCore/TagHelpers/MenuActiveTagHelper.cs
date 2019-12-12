@@ -11,7 +11,7 @@ namespace JudgeWeb.Features.Razor
     [HtmlTargetElement("a", Attributes = ActiveActName)]
     [HtmlTargetElement("a", Attributes = ActiveAreaName)]
     [HtmlTargetElement("a", Attributes = ActiveViewDataName)]
-    public class ActiveTagHelper : TagHelper
+    public class MenuActiveTagHelper : TagHelper
     {
         private const string ActiveViewDataName = "active-vd";
         private const string ActiveCtrlName = "active-ctrl";

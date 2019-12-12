@@ -57,7 +57,7 @@
                     <td use-a title="t@(t.TeamId) - @t.TeamName"><span class="forceWidth" style="max-width:20em">t@(t.TeamId) - @t.TeamName</span></td>
                     <td use-a class="text-variant" title="@a.FormalName">@a.ExternalId</td>
                     <td use-a>@o.Name</td>
-                    <td use-a><verdict team-status="@t.Status" /></td>
+                    <td use-a><verdict0 type="TeamStatus" value="@t.Status" /></td>
                 </tr>
             }
         </tbody>
@@ -107,7 +107,7 @@
                 <td use-a>s@(sub.SubmissionId)</td>
                 <td use-a>p@(sub.ProblemId)</td>
                 <td use-a>@Html.CstTime(sub.Time)</td>
-                <td use-a><verdict target="DomJudge" value="@grade.Status" /></td>
+                <td use-a><verdict3 value="@grade.Status" /></td>
                 <td use-a>@(sub.CodeLength)B</td>
                 <td use-a>@(grade.ExecuteTime)ms, @(grade.ExecuteMemory)kb</td>
                 <td use-a>@sub.Ip</td>

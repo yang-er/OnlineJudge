@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace JudgeWeb.Features.Razor
 {
     [HtmlTargetElement("ace")]
-    public class AceTagHelper : TagHelper
+    public class AceEditorTagHelper : TagHelper
     {
         private IHtmlHelper HtmlHelper { get; set; }
 
@@ -24,7 +24,7 @@ namespace JudgeWeb.Features.Razor
         [ViewContext]
         public ViewContext ViewContext { get; set; }
 
-        public AceTagHelper(IHtmlHelper htmlHelper)
+        public AceEditorTagHelper(IHtmlHelper htmlHelper)
         {
             HtmlHelper = htmlHelper;
         }

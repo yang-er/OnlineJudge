@@ -66,7 +66,7 @@
                 <td use-a>p@(sub.ProblemId)</td>
                 <td use-a>@Html.CstTime(sub.Time)</td>
                 <td use-a>@((sub.ContestId == 0 ? "u" : "t") + sub.Author)</td>
-                <td use-a><verdict target="DomJudge" value="@grade.Status" /></td>
+                <td use-a><verdict3 value="@grade.Status" /></td>
             </tr>
         }
         @if (subs.Count() == 0)
