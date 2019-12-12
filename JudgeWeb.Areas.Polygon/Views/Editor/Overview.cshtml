@@ -18,6 +18,10 @@
                 <td>@Model.Title</td>
             </tr>
             <tr>
+                <th>Source</th>
+                <td>@Model.Source</td>
+            </tr>
+            <tr>
                 <th>Testcases</th>
                 <td>
                     @ViewData["TestcaseCount"]
@@ -32,14 +36,16 @@
                 <th>Memory limit</th>
                 <td>
                     @(Model.MemoryLimit) kB
-                    @if (Model.MemoryLimit == 524288) {@("(default)")}
+                    @if (Model.MemoryLimit == 524288)
+                    {@("(default)")}
                 </td>
             </tr>
             <tr>
                 <th>Output limit</th>
                 <td>
                     @(Model.OutputLimit) kB
-                    @if (Model.OutputLimit == 4096) {@("(default)")}
+                    @if (Model.OutputLimit == 4096)
+                    {@("(default)")}
                 </td>
             </tr>
             <tr>
@@ -49,6 +55,26 @@
                         <i title="view problem description"
                            class="fas fa-file-pdf"></i>
                     </a>
+                </td>
+            </tr>
+            <tr>
+                <th>Allow submit</th>
+                <td>
+                    @(Model.AllowSubmit ? "Yes" : "No")
+                    <form asp-action="ToggleSubmit" method="post" class="d-inline">
+                        <input type="hidden" name="allow_submit" value="" />
+                        <input type="submit" class="btn btn-sm btn-outline-secondary" value="toggle" />
+                    </form>
+                </td>
+            </tr>
+            <tr>
+                <th>Allow judge</th>
+                <td>
+                    @(Model.AllowJudge ? "Yes" : "No")
+                    <form asp-action="ToggleJudge" method="post" class="d-inline">
+                        <input type="hidden" name="allow_judge" value="" />
+                        <input type="submit" class="btn btn-sm btn-outline-secondary" value="toggle" />
+                    </form>
                 </td>
             </tr>
             @if (Model.CombinedRunCompare)
@@ -64,14 +90,16 @@
                     <th>Run script</th>
                     <td class="filename">
                         <a asp-action="Executables" asp-route-execid="@Model.RunScript">@Model.RunScript</a>
-                        @if (Model.RunScript == "run") {@("(default)")}
+                        @if (Model.RunScript == "run")
+                        {@("(default)")}
                     </td>
                 </tr>
                 <tr>
                     <th>Compare script</th>
                     <td class="filename">
                         <a asp-action="Executables" asp-route-execid="@Model.CompareScript">@Model.CompareScript</a>
-                        @if (Model.CompareScript == "compare") {@("(default)")}
+                        @if (Model.CompareScript == "compare")
+                        {@("(default)")}
                     </td>
                 </tr>
                 if (!string.IsNullOrEmpty(Model.ComapreArguments))
@@ -86,11 +114,11 @@
     </div>
 </div>
 
-<p>
-    <a asp-action="Edit" class="btn btn-primary" title="Edit"><i class="fas fa-edit"></i>&nbsp;Edit</a>
-    @if (User.IsInRoles("Administrator,Problem"))
-    {
+@if (User.IsInRoles("Administrator,Problem"))
+{
+    <p>
+        <a asp-action="Edit" class="btn btn-primary" title="Edit"><i class="fas fa-edit"></i>&nbsp;Edit</a>
         <a asp-action="Delete" class="btn btn-danger" title="Delete" data-toggle="ajaxWindow" data-target="deleteProb"><i class="fas fa-trash-alt"></i>&nbsp;Delete</a>
-    }
-    <a asp-action="Rejudge" class="btn btn-secondary" title="Rejudge" data-toggle="ajaxWindow" data-target="rejudgeProb"><i class="fas fa-sync"></i>&nbsp;Rejudge</a>
-</p>
+        <a asp-action="Rejudge" asp-controller="Submissions" class="btn btn-secondary" title="Rejudge" data-toggle="ajaxWindow" data-target="rejudgeProb"><i class="fas fa-sync"></i>&nbsp;Rejudge</a>
+    </p>
+}

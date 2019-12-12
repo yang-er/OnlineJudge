@@ -1,0 +1,106 @@
+﻿@model ProblemEditModel
+@{
+    ViewData["Title"] = "Edit problem " + Model.ProblemId;
+    ViewData["DisableAjaxRefresh"] = true;
+}
+
+<h2 class="mt-2">@ViewData["Title"]</h2>
+
+<div class="row">
+    <div class="col-lg-4">
+        <form asp-action="Edit" method="post" enctype="multipart/form-data">
+            <div class="form-group">
+                <label asp-for="Title" class="required"></label>
+                <input asp-for="Title" required class="form-control" />
+            </div>
+            <div class="form-group">
+                <label asp-for="TimeLimit" class="required"></label>
+                <div class="input-group">
+                    <input type="number" asp-for="TimeLimit" required class="form-control" />
+                    <div class="input-group-append">
+                        <div class="input-group-text">ms</div>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label asp-for="MemoryLimit"></label>
+                <div class="input-group">
+                    <input type="number" asp-for="MemoryLimit" class="form-control" />
+                    <div class="input-group-append">
+                        <div class="input-group-text">kB</div>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label asp-for="OutputLimit"></label>
+                <div class="input-group">
+                    <input type="number" asp-for="OutputLimit" class="form-control" />
+                    <div class="input-group-append">
+                        <div class="input-group-text">kB</div>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label asp-for="Source"></label>
+                <input asp-for="Source" class="form-control" />
+            </div>
+            <div class="form-group">
+                <label asp-for="CompareScript"></label>
+                <div class="custom-control custom-radio">
+                    <input type="radio" id="defaultCompare" value="compare" asp-for="CompareScript" class="custom-control-input">
+                    <label class="custom-control-label" for="defaultCompare">default compare script</label>
+                </div>
+                @if (Model.CompareScript != "compare" && Model.CompareScript != "upload")
+                {
+                    <div class="custom-control custom-radio">
+                        <input type="radio" id="currentCompare" value="@Model.CompareScript" asp-for="CompareScript" class="custom-control-input">
+                        <label class="custom-control-label" for="currentCompare">current custom comparer</label>
+                    </div>
+                }
+                <div class="custom-control custom-radio">
+                    <input type="radio" id="uploadCompare" value="upload" asp-for="CompareScript" class="custom-control-input">
+                    <label class="custom-control-label" for="uploadCompare">upload new comparer</label>
+                </div>
+                <div class="custom-file mt-2" id="uploadCompareBox">
+                    <input asp-for="UploadedCompare" class="custom-file-input" id="inputFile">
+                    <label class="custom-file-label" for="customFile">Choose new comparer</label>
+                </div>
+            </div>
+            <div class="form-group">
+                <label asp-for="RunScript"></label>
+                <div class="custom-control custom-radio">
+                    <input type="radio" id="defaultRun" value="run" asp-for="RunScript" class="custom-control-input">
+                    <label class="custom-control-label" for="defaultRun">default run script</label>
+                </div>
+                @if (Model.RunScript != "run" && Model.RunScript != "upload")
+                {
+                    <div class="custom-control custom-radio">
+                        <input type="radio" id="currentRun" value="@Model.RunScript" asp-for="RunScript" class="custom-control-input">
+                        <label class="custom-control-label" for="currentRun">current custom runner</label>
+                    </div>
+                }
+                <div class="custom-control custom-radio">
+                    <input type="radio" id="uploadRun" value="upload" asp-for="RunScript" class="custom-control-input">
+                    <label class="custom-control-label" for="uploadRun">upload new runner</label>
+                </div>
+                <div class="custom-file mt-2" id="uploadRunBox">
+                    <input asp-for="UploadedRun" class="custom-file-input" id="inputFile">
+                    <label class="custom-file-label" for="customFile">Choose new runner</label>
+                </div>
+            </div>
+            <div class="form-group">
+                <label asp-for="CompareArgument"></label>
+                <input asp-for="CompareArgument" class="form-control" />
+            </div>
+            <div class="form-group">
+                <div class="custom-control custom-checkbox">
+                    <input type="checkbox" asp-for="RunAsCompare" class="custom-control-input" />
+                    <label class="custom-control-label" asp-for="RunAsCompare"></label>
+                </div>
+            </div>
+            <div class="form-group">
+                <button type="submit" class="btn-primary btn">Save</button>
+            </div>
+        </form>
+    </div>
+</div>

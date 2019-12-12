@@ -66,5 +66,29 @@ namespace JudgeWeb.Areas.Polygon.Controllers
 
             return View(model.Select(a => (a.p, a.id, a.tag)));
         }
+
+
+        [HttpGet("[action]")]
+        public async Task<IActionResult> Create()
+        {
+            var p = DbContext.Problems.Add(new Problem
+            {
+                AllowJudge = true,
+                AllowSubmit = true,
+                CompareScript = "compare",
+                RunScript = "compare",
+                Title = "UNTITLED",
+                MemoryLimit = 524288,
+                OutputLimit = 4096,
+                Source = "",
+                TimeLimit = 10000,
+            });
+
+            await DbContext.SaveChangesAsync();
+            return RedirectToAction(
+                actionName: "Overview",
+                controllerName: "Editor",
+                routeValues: new { pid = p.Entity.ProblemId });
+        }
     }
 }

@@ -12,7 +12,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -94,7 +93,7 @@ namespace JudgeWeb
                 {
                     options.Realm = "JudgeWeb";
                     options.AllowInsecureProtocol = true;
-                    options.Events = new BasicAuthenticationValidator<User>();
+                    options.Events = new BasicAuthenticationValidator();
                 });
 
             services.AddSingleton(
@@ -129,6 +128,7 @@ namespace JudgeWeb
             if (Environment.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
+                app.UseMiddleware<AjaxExceptionMiddleware>();
                 app.UseDatabaseErrorPage();
                 app.UseApiExplorer();
             }
@@ -140,6 +140,7 @@ namespace JudgeWeb
                 });
 
                 app.UseDeveloperExceptionPage();
+                app.UseMiddleware<AjaxExceptionMiddleware>();
                 app.UseDatabaseErrorPage();
             }
             else

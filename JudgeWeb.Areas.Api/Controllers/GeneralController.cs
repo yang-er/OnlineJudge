@@ -50,7 +50,6 @@ namespace JudgeWeb.Areas.Api.Controllers
         /// </summary>
         /// <response code="200">Information about the logged in user</response>
         [HttpGet]
-        [Authorize]
         [ActionName("User")]
         public async Task<ActionResult<UserInfo>> Users(
             [FromServices] UserManager userManager)

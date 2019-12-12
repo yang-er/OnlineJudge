@@ -10,6 +10,7 @@ namespace JudgeWeb.Areas.Polygon.Models
 
         public int SubmissionId { get; set; }
         public Verdict Status { get; set; }
+        public Verdict? Expected { get; set; }
         public int ExecuteTime { get; set; }
         public int ExecuteMemory { get; set; }
         public int ServerId { get; set; }

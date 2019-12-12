@@ -18,8 +18,8 @@
             <tr><th>Type</th><td>@Model.Type</td></tr>
             <tr><th>Size</th><td>@Model.ZipSize bytes</td></tr>
             <tr><th>Content</th><td><a asp-action="Content" asp-route-execid="@Model.ExecId">View file contents</a></td></tr>
-            @if (cmps.Any()){<tr><th>Used as compare script</th><td>@foreach (var pid in cmps){ <a asp-area="Judge" asp-controller="Problem" asp-action="Edit" asp-route-pid="@pid">p@(pid)</a>}</td></tr>}
-            @if (runs.Any()){<tr><th>Used as run script</th><td>@foreach (var pid in runs){ <a asp-area="Judge" asp-controller="Problem" asp-action="Edit" asp-route-pid="@pid">p@(pid)</a>}</td></tr>}
+            @if (cmps.Any()){<tr><th>Used as compare script</th><td>@foreach (var pid in cmps){ <a asp-area="Polygon" asp-controller="Editor" asp-action="Overview" asp-route-pid="@pid">p@(pid)</a>}</td></tr>}
+            @if (runs.Any()){<tr><th>Used as run script</th><td>@foreach (var pid in runs){ <a asp-area="Polygon" asp-controller="Editor" asp-action="Overview" asp-route-pid="@pid">p@(pid)</a>}</td></tr>}
             @if (langs.Any()){<tr><th>Used as compile script</th><td>@foreach (var pid in langs){ <a asp-controller="Languages" asp-action="Detail" asp-route-langid="@pid">@(pid)</a>}</td></tr>}
         </table>
     </div>

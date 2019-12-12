@@ -18,7 +18,11 @@
     }
 </style>
 
-<h2 class="mt-2">Submission @Model.SubmissionId</h2>
+<div class="mt-2 mb-2">
+    <h2 class="mt-0 d-inline mb-0 mr-2">Submission @Model.SubmissionId</h2>
+    <a asp-action="ChangeExpected" data-toggle="ajaxWindow" data-target="changeExpected" class="btn btn-outline-success btn-sm"><i class="fas fa-compass"></i> Expected verdict</a>
+    <a asp-action="RejudgeOne" class="btn btn-outline-primary btn-sm"><i class="fas fa-sync"></i> Rejudge</a>
+</div>
 
 <div class="submission-summary mb-2">
     <span>
@@ -160,10 +164,10 @@
                             <tr>
                                 <th>Reference</th>
                                 <td>
-                                    <a asp-area="Judge" asp-controller="Problem" asp-action="Testcase" asp-route-tid="@detail.TestcaseId" asp-route-filetype="input">data.in</a>
-                                    <a asp-area="Judge" asp-controller="Problem" asp-action="Testcase" asp-route-tid="@detail.TestcaseId" asp-route-filetype="output">data.out</a>
-                                    <a asp-area="Judge" asp-controller="Status" asp-action="RunDetails" asp-route-jid="@detail.JudgingId" asp-route-rid="@detail.TestId" asp-route-type="out">user.out</a>
-                                    <a asp-area="Judge" asp-controller="Status" asp-action="RunDetails" asp-route-jid="@detail.JudgingId" asp-route-rid="@detail.TestId" asp-route-type="err">user.err</a>
+                                    <a asp-controller="Testcases" asp-action="Fetch" asp-route-tid="@detail.TestcaseId" asp-route-filetype="input">data.in</a>
+                                    <a asp-controller="Testcases" asp-action="Fetch" asp-route-tid="@detail.TestcaseId" asp-route-filetype="output">data.out</a>
+                                    <a asp-action="RunDetails" asp-route-jid="@detail.JudgingId" asp-route-rid="@detail.TestId" asp-route-type="out">user.out</a>
+                                    <a asp-action="RunDetails" asp-route-jid="@detail.JudgingId" asp-route-rid="@detail.TestId" asp-route-type="err">user.err</a>
                                 </td>
                             </tr>
                             <tr>

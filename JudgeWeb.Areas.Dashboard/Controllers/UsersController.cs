@@ -150,7 +150,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
             hasRole = roles.Keys.Intersect(hasRole).ToArray();
             model.Roles = roles.Keys.Intersect(model.Roles ?? Enumerable.Empty<int>()).ToArray();
             if (userManager.GetUserName(User) == user.UserName)
-                model.Roles = model.Roles.Append(1).Distinct().ToArray();
+                model.Roles = model.Roles.Append(-1).Distinct().ToArray();
             var r1 = await userManager.AddToRolesAsync(user,
                 model.Roles.Except(hasRole).Select(i => roles[i].Name));
             var r2 = await userManager.RemoveFromRolesAsync(user,

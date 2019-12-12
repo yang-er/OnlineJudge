@@ -11,24 +11,13 @@
     <meta charset="utf-8">
     <title>@ViewData["Title"] - Dashboard</title>
     <meta name="viewport" content="initial-scale=1, user-scalable=no">
-    <environment include="Development">
-        <link rel="stylesheet" href="~/static/css/bootstrap.css" />
-        <link rel="stylesheet" href="~/static/site/domjudge.css" />
-        <link rel="stylesheet" href="~/static/css/fontawesome.min.css" />
-        <script src="~/static/js/jquery.js"></script>
-        <script src="~/static/js/bootstrap.bundle.js"></script>
-        <script src="~/static/site/xylab.js"></script>
-        <script src="~/static/site/domjudge.js"></script>
-    </environment>
-    <environment exclude="Development">
-        <link rel="stylesheet" href="~/static/css/bootstrap.min.css" />
-        <link rel="stylesheet" href="~/static/site/domjudge.css" />
-        <link rel="stylesheet" href="~/static/css/fontawesome.min.css" />
-        <script src="~/static/js/jquery.min.js"></script>
-        <script src="~/static/js/bootstrap.bundle.min.js"></script>
-        <script src="~/static/site/xylab.js"></script>
-        <script src="~/static/site/domjudge.js"></script>
-    </environment>
+    <link rel="stylesheet" href="~/static/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/static/site/domjudge.css" />
+    <link rel="stylesheet" href="~/static/css/fontawesome.min.css" />
+    <script src="~/static/js/jquery.min.js"></script>
+    <script src="~/static/js/bootstrap.bundle.min.js"></script>
+    <script src="~/static/site/xylab.js"></script>
+    <script src="~/static/site/domjudge.js"></script>
     
     <link rel="stylesheet" href="~/static/css/dataTables.bootstrap4.min.css">
     <script src="~/static/js/jquery.dataTables.min.js"></script>
@@ -171,5 +160,10 @@
     }
 
     @RenderSection("Scripts", required: false)
+    @if (ViewData.ContainsKey("AceEditor"))
+    {
+        <script src="~/static/ace/ace.js"></script>
+        <script src="~/static/ace/ext-modelist.js"></script>
+    }
 </body>
 </html>

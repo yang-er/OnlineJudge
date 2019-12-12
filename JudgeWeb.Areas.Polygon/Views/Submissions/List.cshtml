@@ -3,9 +3,16 @@
     ViewData["Title"] = "Submissions";
     ViewData["DisableAjaxRefresh"] = true;
     List<Testcase> tc = ViewBag.Testcase;
+    int curPage = ViewBag.Page;
+    int totPage = ViewBag.TotalPage;
+    bool showAll = ViewBag.AllSub;
 }
 
-<h2 class="mt-2 mb-0">Submissions</h2>
+<h2 class="mt-2">Submissions</h2>
+
+<div class="d-none" id="paging">
+    <partial name="_Pagination" model="(curPage, totPage)" />
+</div>
 
 <div class="table-wrapper">
     <table class="data-table table table-sm table-striped" style="width:auto">
@@ -62,7 +69,7 @@
             "paging": false,
             "searching": true,
             "ordering": true,
-            "order": [[0, 'asc']],
+            "order": [[2, 'asc']],
             "info": false,
             "autoWidth": true,
             "language": {
@@ -76,6 +83,8 @@
             ],
         });
 
-        $('[data-toggle="tooltip"]').tooltip()
+        $('[data-toggle="tooltip"]').tooltip();
+        $('.dataTables_wrapper .row:first-child .col-md-6:first-child').html($('#paging').html());
+        $('.dataTables_wrapper .pagination-sm').addClass('mb-0');
     });
 </script>

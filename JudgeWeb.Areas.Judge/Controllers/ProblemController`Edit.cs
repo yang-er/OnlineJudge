@@ -62,7 +62,7 @@ namespace JudgeWeb.Areas.Judge.Controllers
             {
                 var prob = await ProblemManager.EditAsync(pid, model);
                 if (prob == null) return NotFound();
-                await ProblemManager.GenerateViewAsync(prob, viewGenerator);
+                //await ProblemManager.GenerateViewAsync(prob, viewGenerator);
 
                 ViewData["MsgType"] = "success";
                 ViewData["Message"] = "Problem modified successfully.";

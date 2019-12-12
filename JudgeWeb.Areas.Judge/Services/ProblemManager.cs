@@ -283,50 +283,6 @@ namespace JudgeWeb.Areas.Judge.Services
             return p.Entity;
         }
 
-        public async Task GenerateViewAsync(Problem problem, IProblemViewProvider generator)
-        {
-            int pid = problem.ProblemId;
-
-            var description = await IoContext
-                .ReadPartAsync($"p{pid}", "description.md");
-            description = description ?? await IoContext
-                .ReadPartAsync($"p{pid}", "compact.html");
-            description = description ?? "";
-            var inputdesc = await IoContext
-                .ReadPartAsync($"p{pid}", "inputdesc.md") ?? "";
-            var outputdesc = await IoContext
-                .ReadPartAsync($"p{pid}", "outputdesc.md") ?? "";
-            var hint = await IoContext
-                .ReadPartAsync($"p{pid}", "hint.md") ?? "";
-
-            var testcases = await DbContext.Testcases
-                .Where(t => t.ProblemId == pid && !t.IsSecret)
-                .OrderBy(t => t.Rank)
-                .ToListAsync();
-            var samples = new List<TestCase>();
-
-            foreach (var item in testcases)
-            {
-                var input = await IoContext.ReadPartAsync($"p{pid}", $"t{item.TestcaseId}.in");
-                var output = await IoContext.ReadPartAsync($"p{pid}", $"t{item.TestcaseId}.out");
-                samples.Add(new TestCase(item.Description, input, output, item.Point));
-            }
-
-            var content = generator.Build(
-                description, inputdesc, outputdesc, hint, problem, samples);
-            await IoContext.WritePartAsync($"p{pid}", "view.html", content.ToString());
-        }
-
-        public Task SaveMarkdownAsync(string backstore, string target, string content)
-        {
-            return IoContext.WritePartAsync(backstore, $"{target}.md", content);
-        }
-
-        public Task<string> ReadMarkdownAsync(string backstore, string target)
-        {
-            return IoContext.ReadPartAsync(backstore, $"{target}.md");
-        }
-
         public async Task<ProblemEditModel> GetEditModelAsync(int pid)
         {
             var prob = await DbContext.Problems

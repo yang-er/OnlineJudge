@@ -60,11 +60,7 @@ body {
 
 .probid, .langid { font-variant: small-caps; }
 
-.verdict-sm {
-    margin-right: 1px;
-}
-
-.badge-testcase {
+.verdict-sm, .badge-testcase {
     width: 20px;
     margin-right: 1px;
 }

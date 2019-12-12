@@ -43,17 +43,17 @@ namespace JudgeWeb.Features.Razor
 
         static readonly (string, string, string, string, string)[] st = new[]
         {
-            ("Unknown", "secondary", "?", "unkown", "queued"), // 0
-            ("Time Limit Exceeded", "warning", "T", "time-limit", "incorrect"),
-            ("Memory Limit Exceeded", "warning", "M", "memory-limit", "incorrect"),
-            ("Runtime Error", "warning", "R", "run-error", "incorrect"),
-            ("Output Limit Exceeded", "warning", "O", "output-limit", "incorrect"),
-            ("Wrong Answer", "danger", "&times;", "wrong-answer", "incorrect"), // 5
-            ("Compile Error", "primary", "C", "compiler-error", "incorrect"),
-            ("Presentation Error", "danger", "P", "wrong-answer", "incorrect"),
+            ("Unknown", "secondary", "?", "unknown", "queued"), // 0
+            ("Time Limit Exceeded", "danger", "t", "time-limit", "incorrect"),
+            ("Memory Limit Exceeded", "danger", "m", "memory-limit", "incorrect"),
+            ("Runtime Error", "danger", "r", "run-error", "incorrect"),
+            ("Output Limit Exceeded", "danger", "o", "output-limit", "incorrect"),
+            ("Wrong Answer", "danger", "w", "wrong-answer", "incorrect"), // 5
+            ("Compile Error", "secondary", "c", "compiler-error", "incorrect"),
+            ("Presentation Error", "danger", "w", "wrong-answer", "incorrect"),
             ("Pending", "secondary", "?", "queued", "queued"),
-            ("Running", "info", "...", "running", "queued"),
-            ("Undefined Error", "warning", "??", "undefined", "incorrect"), // 10
+            ("Running", "info", "?", "running", "queued"),
+            ("Undefined Error", "warning", "?", "undefined", "incorrect"), // 10
             ("Accepted", "success", "✓", "correct", "correct"),
         };
 
@@ -80,6 +80,8 @@ namespace JudgeWeb.Features.Razor
 
         private (string, string) SolveAsVerdict()
         {
+            if (!ValueInt.HasValue && !ValueVerdict.HasValue)
+                return ("sol sol_queued", "nothing");
             if (ValueInt.HasValue == ValueVerdict.HasValue
                 && (int)ValueVerdict.Value != ValueInt.Value)
                 throw new InvalidOperationException();

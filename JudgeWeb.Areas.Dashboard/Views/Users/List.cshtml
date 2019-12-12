@@ -8,6 +8,10 @@
 
 <h2 class="mt-2">@ViewData["Title"]</h2>
 
+<div class="d-none" id="paging">
+    <partial name="_Pagination" model="(currentPage, totalPage)" />
+</div>
+
 <style>
     .data-table td {
         padding-top: 3px;
@@ -67,22 +71,8 @@
                 { aTargets: ['_all'], bSortable: false, bSearchable: false }
             ],
         });
+
+        $('.dataTables_wrapper .row:first-child .col-md-6:first-child').html($('#paging').html());
+        $('.dataTables_wrapper .pagination-sm').addClass('mb-0');
     });
 </script>
-
-<ul class="pagination pagination-sm">
-    <li class="page-item @(1 == currentPage ? "disabled" : "")">
-        <a class="page-link" asp-action="List" asp-route-page="@(currentPage-1)">«</a>
-    </li>
-
-    @for (int i = 1; i <= totalPage; i++)
-    {
-        <li class="page-item @(i == currentPage ? "active" : "")">
-            <a class="page-link" asp-action="List" asp-route-page="@i">@i</a>
-        </li>
-    }
-
-    <li class="page-item @(currentPage == totalPage ? "disabled" : "")">
-        <a class="page-link" asp-action="List" asp-route-page="@(currentPage+1)">»</a>
-    </li>
-</ul>

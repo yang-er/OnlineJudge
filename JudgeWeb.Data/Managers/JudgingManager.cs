@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 
 namespace JudgeWeb.Data
 {
+    [Obsolete]
     public class JudgingManager
     {
         protected AppDbContext DbContext { get; }

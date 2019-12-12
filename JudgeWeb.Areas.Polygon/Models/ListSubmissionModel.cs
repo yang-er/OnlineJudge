@@ -22,7 +22,7 @@ namespace JudgeWeb.Areas.Polygon.Models
 
         public int ExecutionTime { get; set; }
 
-        public Verdict Expected { get; set; }
+        public Verdict? Expected { get; set; }
 
         public Verdict Result { get; set; }
 

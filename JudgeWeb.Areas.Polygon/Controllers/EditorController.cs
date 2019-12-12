@@ -1,8 +1,11 @@
-﻿using JudgeWeb.Areas.Polygon.Models;
+﻿using EFCore.BulkExtensions;
+using JudgeWeb.Areas.Polygon.Models;
 using JudgeWeb.Areas.Polygon.Services;
 using JudgeWeb.Data;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -68,6 +71,111 @@ namespace JudgeWeb.Areas.Polygon.Controllers
             }
 
             return View(items);
+        }
+
+
+        [HttpGet]
+        [Authorize(Roles = "Administrator,Problem")]
+        public IActionResult Edit()
+        {
+            return View(new ProblemEditModel
+            {
+                ProblemId = Problem.ProblemId,
+                CompareScript = Problem.CompareScript,
+                RunScript = Problem.RunScript,
+                RunAsCompare = Problem.CombinedRunCompare,
+                CompareArgument = Problem.ComapreArguments,
+                Source = Problem.Source,
+                MemoryLimit = Problem.MemoryLimit,
+                TimeLimit = Problem.TimeLimit,
+                OutputLimit = Problem.OutputLimit,
+                Title = Problem.Title,
+            });
+        }
+
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Administrator,Problem")]
+        public async Task<IActionResult> Edit(int pid, ProblemEditModel model)
+        {
+            if (model.RunScript == "upload" && model.UploadedRun == null)
+                ModelState.AddModelError("XYS::RunScript", "No run script was selected.");
+            if (model.CompareScript == "upload" && model.UploadedCompare == null)
+                ModelState.AddModelError("XYS::CmpScript", "No compare script was selected.");
+            if (!new[] { "compare", Problem.CompareScript, "upload" }.Contains(model.CompareScript))
+                ModelState.AddModelError("XYS::CmpScript", "Error compare script defined.");
+            if (!new[] { "run", Problem.RunScript, "upload" }.Contains(model.RunScript))
+                ModelState.AddModelError("XYS::RunScript", "Error run script defined.");
+
+            if (!ModelState.IsValid)
+            {
+                TempData["StatusMessage"] = "Error validating problem.\n" +
+                    string.Join('\n', ModelState.Values
+                        .SelectMany(m => m.Errors)
+                        .Select(e => e.ErrorMessage));
+                return View(model);
+            }
+
+            if (model.RunScript == "upload")
+            {
+                var cont = await model.UploadedRun.ReadAsync();
+                var execid = $"p{pid}run";
+
+                var exec = await DbContext.Executable
+                    .Where(e => e.ExecId == execid)
+                    .FirstOrDefaultAsync();
+                bool newone = exec == null;
+                exec = exec ?? new Executable();
+                exec.ExecId = execid;
+                exec.Description = $"run pipe for p{pid}";
+                exec.Md5sum = cont.Item2;
+                exec.ZipFile = cont.Item1;
+                exec.Type = "run";
+                exec.ZipSize = cont.Item1.Length;
+
+                if (newone) DbContext.Executable.Add(exec);
+                else DbContext.Executable.Update(exec);
+                await DbContext.SaveChangesAsync();
+                model.RunScript = execid;
+            }
+
+            if (model.CompareScript == "upload")
+            {
+                var cont = await model.UploadedCompare.ReadAsync();
+                var execid = $"p{pid}cmp";
+
+                var exec = await DbContext.Executable
+                    .Where(e => e.ExecId == execid)
+                    .FirstOrDefaultAsync();
+                bool newone = exec == null;
+                exec = exec ?? new Executable();
+                exec.ExecId = execid;
+                exec.Description = $"output validator for p{pid}";
+                exec.Md5sum = cont.Item2;
+                exec.ZipFile = cont.Item1;
+                exec.Type = "compare";
+                exec.ZipSize = cont.Item1.Length;
+
+                if (newone) DbContext.Executable.Add(exec);
+                else DbContext.Executable.Update(exec);
+                await DbContext.SaveChangesAsync();
+                model.CompareScript = execid;
+            }
+
+            Problem.RunScript = model.RunScript;
+            Problem.CompareScript = model.CompareScript;
+            Problem.ComapreArguments = model.CompareArgument;
+            Problem.MemoryLimit = model.MemoryLimit;
+            Problem.OutputLimit = model.OutputLimit;
+            Problem.TimeLimit = model.TimeLimit;
+            Problem.Title = model.Title;
+            Problem.Source = model.Source ?? "";
+            Problem.CombinedRunCompare = model.RunAsCompare;
+            DbContext.Problems.Update(Problem);
+            await DbContext.SaveChangesAsync();
+
+            return RedirectToAction(nameof(Overview));
         }
 
 
@@ -210,6 +318,32 @@ namespace JudgeWeb.Areas.Polygon.Controllers
                 act: "Delete",
                 routeValues: new Dictionary<string, string> { ["pid"] = $"{Problem.ProblemId}" },
                 type: MessageType.Danger);
+        }
+
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ToggleSubmit(int pid)
+        {
+            await DbContext.Problems
+                .Where(p => p.ProblemId == pid)
+                .BatchUpdateAsync(p =>
+                    new Problem { AllowSubmit = !p.AllowSubmit });
+
+            return RedirectToAction(nameof(Overview));
+        }
+
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ToggleJudge(int pid)
+        {
+            await DbContext.Problems
+                .Where(p => p.ProblemId == pid)
+                .BatchUpdateAsync(p =>
+                    new Problem { AllowJudge = !p.AllowJudge });
+
+            return RedirectToAction(nameof(Overview));
         }
 
 

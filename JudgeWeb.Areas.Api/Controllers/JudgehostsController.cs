@@ -118,7 +118,8 @@ namespace JudgeWeb.Areas.Api.Controllers
         /// <response code="200">The returned unfinished judgings</response>
         [HttpPost]
         public async Task<ActionResult<List<UnfinishedJudging>>> OnPost(
-            [Required] string hostname)
+            [Required] string hostname,
+            [FromServices] SubmissionManager submissionManager)
         {
             var item = await DbContext.JudgeHosts
                 .Where(h => h.ServerName == hostname)
@@ -162,46 +163,35 @@ namespace JudgeWeb.Areas.Api.Controllers
                 item.PollTime = DateTimeOffset.Now;
                 DbContext.JudgeHosts.Update(item);
 
-                var items = await (
-                    from g in DbContext.Judgings
-                    where g.Status == Verdict.Running && g.ServerId == item.ServerId
-                    join s in DbContext.Submissions on g.SubmissionId equals s.SubmissionId
-                    select new { g, s.ContestId }
-                ).ToListAsync();
+                var oldJudgings = await submissionManager.Judgings
+                    .Where(j => j.ServerId == item.ServerId)
+                    .Where(j => j.Status == Verdict.Running)
+                    .Join(
+                        inner: submissionManager.Submissions,
+                        outerKeySelector: j => j.SubmissionId,
+                        innerKeySelector: s => s.SubmissionId,
+                        resultSelector: (j, s) => new { j, cid = s.ContestId })
+                    .ToListAsync();
 
-                foreach (var sg in items)
+                foreach (var sg in oldJudgings)
                 {
-                    var s = sg.g;
-                    bool oldActive = s.Active;
-                    s.Status = Verdict.UndefinedError;
-                    s.StopTime = DateTimeOffset.Now;
-                    s.Active = false;
+                    await submissionManager.RejudgeForErrorAsync(sg.j);
 
                     Telemetry.TrackDependency(
                         dependencyTypeName: "JudgeHost",
                         dependencyName: item.ServerName,
-                        data: $"j{s.JudgingId} of s{s.SubmissionId} returned to queue",
-                        startTime: s.StartTime ?? DateTimeOffset.Now,
-                        duration: (s.StopTime - s.StartTime) ?? TimeSpan.Zero,
+                        data: $"j{sg.j.JudgingId} of s{sg.j.SubmissionId} returned to queue",
+                        startTime: sg.j.StartTime ?? DateTimeOffset.Now,
+                        duration: (sg.j.StopTime - sg.j.StartTime) ?? TimeSpan.Zero,
                         success: false);
-
-                    DbContext.Judgings.Update(s);
-                    DbContext.Judgings.Add(new Judging
-                    {
-                        SubmissionId = s.SubmissionId,
-                        Status = Verdict.Pending,
-                        Active = oldActive,
-                        FullTest = s.FullTest,
-                    });
                 }
 
-                await DbContext.SaveChangesAsync();
-                return items.Select(s =>
-                    new UnfinishedJudging
+                return oldJudgings
+                    .Select(s => new UnfinishedJudging
                     {
-                        judgingid = s.g.JudgingId,
-                        submitid = s.g.SubmissionId,
-                        cid = s.ContestId
+                        judgingid = s.j.JudgingId,
+                        submitid = s.j.SubmissionId,
+                        cid = s.cid
                     })
                     .ToList();
             }
@@ -291,7 +281,9 @@ namespace JudgeWeb.Areas.Api.Controllers
                     join s in DbContext.Submissions on g.SubmissionId equals s.SubmissionId
                     join l in DbContext.Languages on s.Language equals l.LangId
                     join p in DbContext.Problems on s.ProblemId equals p.ProblemId
-                    where l.AllowJudge
+                    //join cp in DbContext.ContestProblem on new { s.ContestId, s.ProblemId } equals new { cp.ContestId, cp.ProblemId } into cps
+                    //from cp in cps.DefaultIfEmpty()
+                    where l.AllowJudge && p.AllowJudge //&& (cp == null || cp.AllowJudge)
                     select new { g, l, p, s.ContestId, s.Author, s.RejudgeId }
                 ).FirstOrDefaultAsync();
 
@@ -568,7 +560,9 @@ namespace JudgeWeb.Areas.Api.Controllers
         /// <response code="200">The ID of the created internal error</response>
         [HttpPost("[action]")]
         [RequestSizeLimit(1 << 26)]
-        public async Task<ActionResult<int>> InternalError(InternalErrorModel model)
+        public async Task<ActionResult<int>> InternalError(
+            InternalErrorModel model,
+            [FromServices] SubmissionManager submissionManager)
         {
             if (!ModelState.IsValid)
                 return BadRequest();
@@ -671,27 +665,7 @@ namespace JudgeWeb.Areas.Api.Controllers
             };
 
             if (model.judgingid.HasValue)
-            {
-                var grade = await DbContext.Judgings
-                    .Where(s => s.JudgingId == model.judgingid)
-                    .FirstOrDefaultAsync();
-
-                if (grade != null)
-                {
-                    grade.Status = Verdict.UndefinedError;
-                    bool oldActive = grade.Active;
-                    grade.Active = false;
-                    DbContext.Judgings.Update(grade);
-
-                    DbContext.Judgings.Add(new Judging
-                    {
-                        Status = Verdict.Pending,
-                        FullTest = grade.FullTest,
-                        SubmissionId = grade.SubmissionId,
-                        Active = oldActive,
-                    });
-                }
-            }
+                await submissionManager.RejudgeForErrorAsync(model.judgingid.Value);
 
             DbContext.InternalErrors.Add(ie);
             await DbContext.SaveChangesAsync();

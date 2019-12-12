@@ -68,5 +68,12 @@ namespace JudgeWeb.Data
         /// </summary>
         [NonUnicode(MaxLength = 131072)]
         public string CompileError { get; set; }
+
+        /// <summary>
+        /// 重测请求编号
+        /// </summary>
+        [Index]
+        [HasOneWithMany(typeof(Rejudge), DeleteBehavior.SetNull)]
+        public int? RejudgeId { get; set; }
     }
 }

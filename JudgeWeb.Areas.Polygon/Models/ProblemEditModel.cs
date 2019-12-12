@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using Microsoft.AspNetCore.Http;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
 namespace JudgeWeb.Areas.Polygon.Models
@@ -8,35 +9,39 @@ namespace JudgeWeb.Areas.Polygon.Models
         [DisplayName("Problem ID")]
         public int ProblemId { get; set; }
 
-        [DisplayName("Problem Title")]
+        [DisplayName("Name")]
+        [Required]
         public string Title { get; set; }
 
-        [DisplayName("Time Limitation")]
+        [DisplayName("Timelimit")]
         [Range(500, 15000)]
         public int TimeLimit { get; set; }
 
-        [DisplayName("Memory Limitation")]
+        [DisplayName("Memlimit")]
         [Range(32768, 1048576)]
         public int MemoryLimit { get; set; }
 
-        [DisplayName("Original Source")]
+        [DisplayName("Outputlimit")]
+        [Range(4096, 40960)]
+        public int OutputLimit { get; set; }
+
+        [DisplayName("Source")]
         public string Source { get; set; }
 
-        [DisplayName("Run Script")]
+        [DisplayName("Run script")]
         public string RunScript { get; set; }
 
-        [DisplayName("Compare Script")]
+        [DisplayName("Compare script")]
         public string CompareScript { get; set; }
 
-        [DisplayName("Compare Argument")]
+        [DisplayName("Compare script arguments")]
         public string CompareArgument { get; set; }
 
         [DisplayName("Use run script as compare script")]
         public bool RunAsCompare { get; set; }
 
-        [DisplayName("Is this problem active?")]
-        public bool IsActive { get; set; }
+        public IFormFile UploadedCompare { get; set; }
 
-        public int Flag { get; set; }
+        public IFormFile UploadedRun { get; set; }
     }
 }
