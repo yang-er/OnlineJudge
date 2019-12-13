@@ -1,0 +1,66 @@
+﻿@inject UserManager UserManager
+
+<ul class="navbar-nav mr-auto">
+    <li class="nav-item">
+        <a class="nav-link" active-ctrl="Description" asp-controller="Description" asp-action="Preview">
+            <i class="fas fa-lightbulb"></i> Description
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" active-ctrl="Testcases" asp-controller="Testcases" asp-action="Testcases">
+            <i class="fas fa-compass"></i> Testcases
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" active-ctrl="Submissions" asp-controller="Submissions" asp-action="List">
+            <i class="fas fa-file-code"></i> Submissions
+        </a>
+    </li>
+    @if (User.IsInRoles("Administrator,Problem"))
+    {
+        <li class="nav-item">
+            <a class="nav-link" asp-controller="Root" asp-action="List">
+                <i class="fas fa-arrow-right"></i> Catalog
+            </a>
+        </li>
+    }
+</ul>
+
+<ul class="navbar-nav">
+    <li class="ajax-loader-container">
+        <div class="spinner-border spinner-border-sm ajax-loader" style="display: none;" role="status">
+            <span class="sr-only">Loading...</span>
+        </div>
+    </li>
+    <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <i class="fas fa-user"></i> @UserManager.GetUserName(User)
+        </a>
+        <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown">
+            <a class="dropdown-item disabled" href="#">@(UserManager.GetNickName(User) ?? UserManager.GetUserName(User))</a>
+
+            <a class="dropdown-item d-none" href="#" id="notify_disable">
+                <i class="fas fa-bell-slash fa-fw"></i> Disable Notifications
+            </a>
+
+            <a class="dropdown-item d-none" href="#" id="notify_enable">
+                <i class="fas fa-bell fa-fw"></i> Enable Notifications
+            </a>
+
+            @if (!ViewData.ContainsKey("DisableAjaxRefresh"))
+            {
+                <a class="dropdown-item" href="#" id="refresh-navitem">
+                    <i class="fas fa-sync-alt fa-fw"></i>
+                    <span id="refresh-toggle">
+                        Disable Refresh
+                    </span>
+                    <span class="small text-muted">(@ViewData["RefreshSpan"]s)</span>
+                </a>
+            }
+
+            <a class="dropdown-item" asp-area="Misc" asp-controller="Home" asp-action="Index">
+                <i class="fas fa-sign-out-alt fa-fw"></i> Back to main site
+            </a>
+        </div>
+    </li>
+</ul>

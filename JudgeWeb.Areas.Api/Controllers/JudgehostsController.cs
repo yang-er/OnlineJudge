@@ -1,4 +1,5 @@
-﻿using JudgeWeb.Areas.Api.Models;
+﻿using JudgeWeb.Areas.Api.Designs;
+using JudgeWeb.Areas.Api.Models;
 using JudgeWeb.Data;
 using JudgeWeb.Features.Storage;
 using Microsoft.ApplicationInsights;
@@ -365,10 +366,11 @@ namespace JudgeWeb.Areas.Api.Controllers
         [HttpPut("[action]/{hostname}/{judgingId}")]
         [RequestSizeLimit(1 << 30)]
         [RequestFormLimits2(1 << 30)]
+        [Consumes("application/x-www-form-urlencoded")]
         public async Task<IActionResult> UpdateJudging(
             [FromRoute] string hostname,
             [FromRoute] int judgingId,
-            UpdateJudgingModel model)
+            [FromForm] UpdateJudgingModel model)
         {
             int jid = judgingId;
             var host = await DbContext.JudgeHosts
@@ -431,19 +433,19 @@ namespace JudgeWeb.Areas.Api.Controllers
         /// </summary>
         /// <param name="hostname">The hostname of the judgehost that wants to add the judging run</param>
         /// <param name="judgingId">The ID of the judging to add a run to</param>
-        /// <param name="model">Model</param>
+        /// <param name="batch">Model</param>
         /// <response code="200">When the judging run has been added</response>
         [HttpPost("[action]/{hostname}/{judgingId}")]
         [RequestSizeLimit(1 << 30)]
         [RequestFormLimits2(1 << 30)]
+        [Consumes("application/x-www-form-urlencoded")]
         public async Task<IActionResult> AddJudgingRun(
             [FromRoute] string hostname,
             [FromRoute] int judgingId,
-            AddJudgingRunModel model)
+            [FromForm, ModelBinder(typeof(JudgingRunBinder))] List<JudgingRunModel> batch)
         {
             int jid = judgingId;
-            var batches = model.Parse();
-            if (batches is null) return BadRequest();
+            if (batch is null) return BadRequest();
 
             var host = await DbContext.JudgeHosts
                 .Where(h => h.ServerName == hostname)
@@ -454,7 +456,7 @@ namespace JudgeWeb.Areas.Api.Controllers
             host.PollTime = DateTimeOffset.Now;
             DbContext.JudgeHosts.Update(host);
 
-            var runEntities = batches
+            var runEntities = batch
                 .Select(b => (b, DbContext.Details.Add(b.ParseInfo(jid))))
                 .ToList();
 
@@ -489,7 +491,7 @@ namespace JudgeWeb.Areas.Api.Controllers
 
             if (judging is null)
             {
-                Logger.LogError("Unknown judging result: " + model.batch);
+                Logger.LogError("Unknown judging result.");
                 return BadRequest();
             }
 
@@ -554,8 +556,9 @@ namespace JudgeWeb.Areas.Api.Controllers
         /// <response code="200">The ID of the created internal error</response>
         [HttpPost("[action]")]
         [RequestSizeLimit(1 << 26)]
+        [Consumes("application/x-www-form-urlencoded")]
         public async Task<ActionResult<int>> InternalError(
-            InternalErrorModel model,
+            [FromForm] InternalErrorModel model,
             [FromServices] SubmissionManager submissionManager)
         {
             if (!ModelState.IsValid)
@@ -569,17 +572,10 @@ namespace JudgeWeb.Areas.Api.Controllers
                 var langid = toDisable["langid"].Value<string>();
                 var lang = await DbContext.Languages
                     .Where(l => l.ExternalId == langid)
-                    .FirstOrDefaultAsync();
+                    .SingleAsync();
 
-                if (lang != null)
-                {
-                    lang.AllowJudge = false;
-                    DbContext.Languages.Update(lang);
-                }
-                else
-                {
-                    Logger.LogWarning("Unknown language id from judgehost: {langid}", langid);
-                }
+                lang.AllowJudge = false;
+                DbContext.Languages.Update(lang);
 
                 DbContext.AuditLogs.Add(new AuditLog
                 {
@@ -605,17 +601,10 @@ namespace JudgeWeb.Areas.Api.Controllers
                 var hostname = toDisable["hostname"].Value<string>();
                 var host = await DbContext.JudgeHosts
                     .Where(h => h.ServerName == hostname)
-                    .FirstOrDefaultAsync();
+                    .SingleAsync();
 
-                if (host != null)
-                {
-                    host.Active = false;
-                    DbContext.JudgeHosts.Update(host);
-                }
-                else
-                {
-                    Logger.LogWarning("Unknown judgehost: {hostname}", hostname);
-                }
+                host.Active = false;
+                DbContext.JudgeHosts.Update(host);
 
                 DbContext.AuditLogs.Add(new AuditLog
                 {
@@ -631,6 +620,35 @@ namespace JudgeWeb.Areas.Api.Controllers
                 Telemetry.TrackDependency(
                     dependencyTypeName: "JudgeHost",
                     dependencyName: host.ServerName,
+                    data: model.description,
+                    startTime: DateTimeOffset.Now,
+                    duration: TimeSpan.Zero,
+                    success: false);
+            }
+            else if (kind == "problem")
+            {
+                var probid = toDisable["probid"].Value<int>();
+                var prob = await DbContext.Problems
+                    .Where(p => p.ProblemId == probid)
+                    .SingleAsync();
+
+                prob.AllowJudge = false;
+                DbContext.Problems.Update(prob);
+
+                DbContext.AuditLogs.Add(new AuditLog
+                {
+                    ContestId = model.cid ?? 0,
+                    EntityId = probid,
+                    Comment = "internal error created",
+                    Resolved = true,
+                    Time = DateTimeOffset.Now,
+                    Type = AuditLog.TargetType.Problem,
+                    UserName = "judgehost",
+                });
+
+                Telemetry.TrackDependency(
+                    dependencyTypeName: "Problem",
+                    dependencyName: $"p{probid} - {prob.Title}",
                     data: model.description,
                     startTime: DateTimeOffset.Now,
                     duration: TimeSpan.Zero,

@@ -15,7 +15,7 @@
 </div>
 
 <div class="table-wrapper">
-    <table class="data-table table table-sm table-striped" style="width:auto">
+    <table class="data-table table table-sm table-striped">
         <thead class="thead-light">
             <tr>
                 <th scope="col" class="sortable searchable">ID</th>
@@ -32,7 +32,7 @@
             @foreach (var sub in Model)
             {
                 <tr asp-action="Detail" asp-route-sid="@sub.SubmissionId" data-toggle="gotoUrl">
-                    <td use-a>s@(sub.SubmissionId)</td>
+                    <td data-sort="@(sub.SubmissionId)" use-a>s@(sub.SubmissionId)</td>
                     <td use-a>@Html.CstTime(sub.Time)</td>
                     <td use-a><verdict3 value="@(sub.Expected ?? Verdict.Unknown)" too-late="@(!sub.Expected.HasValue)" /></td>
                     <td use-a>@sub.UserName</td>
@@ -69,9 +69,9 @@
             "paging": false,
             "searching": true,
             "ordering": true,
-            "order": [[2, 'asc']],
+            "order": [[0, 'asc']],
             "info": false,
-            "autoWidth": true,
+            "autoWidth": false,
             "language": {
                 "searchPlaceholder": "filter table",
                 "search": "_INPUT_",

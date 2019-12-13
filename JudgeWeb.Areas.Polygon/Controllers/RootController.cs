@@ -1,7 +1,10 @@
-﻿using JudgeWeb.Data;
+﻿using JudgeWeb.Areas.Polygon.Services;
+using JudgeWeb.Data;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -16,6 +19,9 @@ namespace JudgeWeb.Areas.Polygon.Controllers
         private UserManager UserManager { get; }
 
         private AppDbContext DbContext { get; }
+
+        [TempData]
+        public string StatusMessage { get; set; }
 
         public RootController(UserManager um, AppDbContext db)
         {
@@ -89,6 +95,44 @@ namespace JudgeWeb.Areas.Polygon.Controllers
                 actionName: "Overview",
                 controllerName: "Editor",
                 routeValues: new { pid = p.Entity.ProblemId });
+        }
+
+
+        [HttpGet("[action]")]
+        [ValidateInAjax]
+        public IActionResult Import()
+        {
+            return Window();
+        }
+
+
+        [HttpPost("[action]")]
+        [ValidateInAjax]
+        [ValidateAntiForgeryToken]
+        [RequestSizeLimit(1 << 30)]
+        [RequestFormLimits2(1 << 30)]
+        public async Task<IActionResult> Import(IFormFile file,
+            [FromServices] ProblemImportService importer)
+        {
+            try
+            {
+                var prob = await importer.ImportAsync(
+                    zipFile: file,
+                    username: UserManager.GetUserName(User));
+
+                StatusMessage = importer.LogBuffer.ToString();
+
+                return RedirectToAction(
+                    actionName: "Overview",
+                    controllerName: "Editor",
+                    routeValues: new { pid = prob.ProblemId });
+            }
+            catch (Exception ex)
+            {
+                return Message("Problem Import",
+                    "Import failed. Please contact XiaoYang immediately. " + ex,
+                    MessageType.Danger);
+            }
         }
     }
 }

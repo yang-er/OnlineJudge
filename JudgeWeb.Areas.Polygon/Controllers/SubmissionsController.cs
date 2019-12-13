@@ -209,7 +209,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
             var sub = await SubmissionManager.FindAsync(sid, pid: pid);
             if (sub == null) return NotFound();
             await SubmissionManager.RejudgeAsync(sub, fullTest: true);
-            return RedirectToAction(nameof(List));
+            return RedirectToAction(nameof(Detail));
         }
 
 

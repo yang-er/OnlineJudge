@@ -1,5 +1,7 @@
-﻿using System.IO.Compression;
+﻿using System.IO;
+using System.IO.Compression;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace JudgeWeb.Areas.Polygon.Services
 {
@@ -16,6 +18,14 @@ namespace JudgeWeb.Areas.Polygon.Services
         public static ZipArchiveEntry CreateEntryFromString(this ZipArchive zip, string content, string entry)
         {
             return CreateEntryFromByteArray(zip, Encoding.UTF8.GetBytes(content), entry);
+        }
+
+        public static async Task<ZipArchiveEntry> CreateEntryFromStream(this ZipArchive zip, Stream source, string entry)
+        {
+            var f = zip.CreateEntry(entry);
+            using (var fs = f.Open())
+                await source.CopyToAsync(fs);
+            return f;
         }
     }
 }
