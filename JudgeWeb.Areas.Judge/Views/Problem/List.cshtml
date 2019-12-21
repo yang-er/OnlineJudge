@@ -1,18 +1,13 @@
-﻿@model IEnumerable<Problem>
+﻿@model IEnumerable<ProblemArchive>
 @{
     ViewData["Title"] = "Problem List";
-    Dictionary<int, (int Ac, int Total, int MeTot, int MeAc)> stats = ViewBag.Statistics;
 }
 
 <div class="container-fluid mt-4 mb-4 pl-4 pr-4">
+    @TempData["StatusMessage"]
     <h2>Problem Archive</h2>
     <h5 class="mb-3">
         List of problem archive
-        @if (User.IsInRoles("Administrator,Problem"))
-        {
-            @("or")
-            <a asp-action="Edit" asp-route-ppid="add">add</a>
-        }
     </h5>
 
     <table class="table table-responsive-lg">
@@ -26,34 +21,27 @@
         <tbody>
             @foreach (var item in Model)
             {
-                if (item.Flag != 0 && !User.IsInRoles("Administrator,AuthorOfProblem" + item.ProblemId)) { continue; }
-                var stat = stats.ContainsKey(item.ProblemId) ? stats[item.ProblemId] : default((int Ac, int Total, int MeTot, int MeAc));
-
                 <tr>
                     <td>
-                        @Html.DisplayFor(modelItem => item.ProblemId)
-
-                        @if (stat.MeAc > 0)
+                        @item.PublicId
+                        <!--
+                        if (stat.MeAc > 0)
                         {
                             <span class="bowtie text-success"><i class="bowtie-status-success"></i></span>
                         }
                         else if (stat.MeTot > 0)
                         {
                             <span class="bowtie text-warning"><i class="bowtie-status-waiting-fill"></i></span>
-                        }
+                        }-->
                     </td>
                     <td>
-                        <a asp-action="View" asp-route-pid="@item.ProblemId">@Html.DisplayFor(modelItem => item.Title)</a>
+                        <a asp-action="View" asp-route-pid="@item.PublicId">@item.Title</a>
                         @foreach (var src in item.Source.Split(',').Where(s => !string.IsNullOrWhiteSpace(s)))
                         {
                             <span class="badge badge-info" style="font-size:0.7em">@src.Trim()</span>
                         }
-                        @if (item.Flag != 0)
-                        {
-                            <span class="badge badge-warning" style="font-size:0.7em">Invisible</span>
-                        }
                     </td>
-                    <td>@Html.RatioOf(stat.Ac, stat.Total)</td>
+                    <td>@Html.RatioOf(0, 0)</td>
                 </tr>
             }
         </tbody>

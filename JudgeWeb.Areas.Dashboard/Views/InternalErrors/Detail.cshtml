@@ -1,6 +1,7 @@
 ﻿@model InternalError
 @{
     ViewData["Title"] = "Internal error e" + Model.ErrorId;
+    ViewData["RefreshSpan"] = 15;
 }
 
 @section Header {
@@ -33,6 +34,6 @@
 
 @if (Model.Status == InternalError.ErrorStatus.Open)
 {
-    <a asp-action="Mark" asp-route-todo="resolve" class="btn btn-success"><i class="bowtie-icon bowtie-heart-fill"></i> Mark as resolved</a>
-    <a asp-action="Mark" asp-route-todo="ignore" class="btn btn-danger"><i class="bowtie-icon bowtie-heartbeat-fill"></i> Mark as ignored</a>
+    <a asp-action="Mark" asp-route-todo="resolve" class="btn btn-success"><i class="fas fa-check"></i> Mark as resolved and re-enable</a>
+    <a asp-action="Mark" asp-route-todo="ignore" class="btn btn-danger"><i class="fas fa-times"></i> Mark as ignored</a>
 }

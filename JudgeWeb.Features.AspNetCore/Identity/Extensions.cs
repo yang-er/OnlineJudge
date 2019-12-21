@@ -22,6 +22,13 @@ namespace Microsoft.AspNetCore.Mvc
             return builder;
         }
 
+        public static IdentityBuilder UseClaimsPrincipalFactory<TFactory, TUser>(this IdentityBuilder builder)
+            where TFactory : class, IUserClaimsPrincipalFactory<TUser> where TUser : class
+        {
+            builder.Services.Replace(ServiceDescriptor.Scoped<IUserClaimsPrincipalFactory<TUser>, TFactory>());
+            return builder;
+        }
+
         public static string GetErrorStrings(this ModelStateDictionary modelState)
         {
             var sb = new StringBuilder();

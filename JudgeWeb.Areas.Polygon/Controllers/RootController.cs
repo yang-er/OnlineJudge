@@ -1,7 +1,9 @@
-﻿using JudgeWeb.Areas.Polygon.Services;
+﻿using EntityFrameworkCore.Cacheable;
+using JudgeWeb.Areas.Polygon.Services;
 using JudgeWeb.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -70,19 +72,29 @@ namespace JudgeWeb.Areas.Polygon.Controllers
                 .Take(50)
                 .ToListAsync();
 
+            ViewBag.JudgehostCriticalCount = DbContext.JudgeHosts
+                .Where(jh => jh.PollTime < DateTimeOffset.Now.AddSeconds(-120) && jh.Active)
+                .Cacheable(TimeSpan.FromSeconds(15))
+                .Count();
+            ViewBag.InternalErrorCount = DbContext.InternalErrors
+                .Where(ie => ie.Status == InternalError.ErrorStatus.Open)
+                .Cacheable(TimeSpan.FromSeconds(15))
+                .Count();
             return View(model.Select(a => (a.p, a.id, a.tag)));
         }
 
 
         [HttpGet("[action]")]
-        public async Task<IActionResult> Create()
+        public async Task<IActionResult> Create(
+            [FromServices] RoleManager<Role> roleManager,
+            [FromServices] SignInManager<User> signInManager)
         {
             var p = DbContext.Problems.Add(new Problem
             {
                 AllowJudge = true,
                 AllowSubmit = true,
                 CompareScript = "compare",
-                RunScript = "compare",
+                RunScript = "run",
                 Title = "UNTITLED",
                 MemoryLimit = 524288,
                 OutputLimit = 4096,
@@ -91,6 +103,29 @@ namespace JudgeWeb.Areas.Polygon.Controllers
             });
 
             await DbContext.SaveChangesAsync();
+
+            var i1 = await roleManager.CreateAsync(new Role
+            {
+                ProblemId = p.Entity.ProblemId,
+                Name = "AuthorOfProblem" + p.Entity.ProblemId
+            });
+
+            if (!i1.Succeeded)
+            {
+                StatusMessage = "Error creating roles. Please contact XiaoYang.";
+                return RedirectToAction(nameof(List));
+            }
+
+            var u = await UserManager.GetUserAsync(User);
+            var i2 = await UserManager.AddToRoleAsync(u, "AuthorOfProblem" + p.Entity.ProblemId);
+
+            if (!i2.Succeeded)
+            {
+                StatusMessage = "Error assigning roles. Please contact XiaoYang.";
+                return RedirectToAction(nameof(List));
+            }
+
+            await signInManager.RefreshSignInAsync(u);
             return RedirectToAction(
                 actionName: "Overview",
                 controllerName: "Editor",
@@ -112,7 +147,9 @@ namespace JudgeWeb.Areas.Polygon.Controllers
         [RequestSizeLimit(1 << 30)]
         [RequestFormLimits2(1 << 30)]
         public async Task<IActionResult> Import(IFormFile file,
-            [FromServices] ProblemImportService importer)
+            [FromServices] ProblemImportService importer,
+            [FromServices] RoleManager<Role> roleManager,
+            [FromServices] SignInManager<User> signInManager)
         {
             try
             {
@@ -121,6 +158,16 @@ namespace JudgeWeb.Areas.Polygon.Controllers
                     username: UserManager.GetUserName(User));
 
                 StatusMessage = importer.LogBuffer.ToString();
+
+                await roleManager.CreateAsync(new Role
+                {
+                    ProblemId = prob.ProblemId,
+                    Name = "AuthorOfProblem" + prob.ProblemId
+                });
+
+                var u = await UserManager.GetUserAsync(User);
+                await UserManager.AddToRoleAsync(u, "AuthorOfProblem" + prob.ProblemId);
+                await signInManager.RefreshSignInAsync(u);
 
                 return RedirectToAction(
                     actionName: "Overview",

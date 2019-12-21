@@ -1,19 +1,8 @@
-﻿@using System.Linq
-@using Microsoft.AspNetCore.Identity
+﻿@using Microsoft.AspNetCore.Identity
 @using JudgeWeb.Data
 @model LoginModel
 @inject SignInManager<User> SignInManager
-
-@{
-    Layout = null;
-}
-
-<script>
-    function loginWith(provider) {
-        $("#external-login-provider").val(provider);
-        $("#external-login").submit();
-    }
-</script>
+@{ Layout = null; }
 
 <form asp-route-returnurl="@ViewData["ReturnUrl"]" method="post">
     <div class="modal fade" id="modal-@ViewData["HandleKey"]" tabindex="-1" role="dialog" aria-labelledby="modal-@ViewData["HandleKey"]-label" aria-hidden="true">
@@ -37,27 +26,17 @@
                     <div class="form-group">
                         <div class="custom-control custom-checkbox">
                             <input class="custom-control-input" asp-for="RememberMe" />
-                            <label class="custom-control-label" asp-for="RememberMe">@Html.DisplayNameFor(m => m.RememberMe)</label>
+                            <label class="custom-control-label" asp-for="RememberMe"></label>
                         </div>
                     </div>
+                    <a asp-action="ForgotPassword">Forgot your password?</a>
                 </div>
                 <div class="modal-footer">
                     <a asp-action="Register" asp-route-returnurl="@ViewData["ReturnUrl"]" class="btn btn-link">Register &gt;</a>
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                    @{
-                        var loginProviders = (await SignInManager.GetExternalAuthenticationSchemesAsync()).ToList();
-                        @foreach (var provider in loginProviders)
-                        {
-                            <button type="button" class="btn btn-info" onclick="loginWith('@provider.Name')" title="Log in using your @provider.DisplayName account">@provider.Name</button>
-                        }
-                    }
                     <button type="submit" class="btn btn-primary">Login</button>
                 </div>
             </div>
         </div>
     </div>
-</form>
-
-<form asp-action="ExternalLogin" asp-route-returnurl="@ViewData["ReturnUrl"]" id="external-login" method="post">
-    <input type="hidden" name="provider" id="external-login-provider" />
 </form>

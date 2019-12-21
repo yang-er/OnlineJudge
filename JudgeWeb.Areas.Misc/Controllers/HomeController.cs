@@ -15,7 +15,7 @@ namespace JudgeWeb.Areas.Misc.Controllers
     {
         private AppDbContext DbContext { get; }
 
-        private static string[] PhotoList { get; } = new[] { "2018qingdao", "2018xian" };
+        private static string[] PhotoList { get; } = new[] { "2018qingdao", "2018xian", "2018final" };
 
         public HomeController(AppDbContext adbc)
         {

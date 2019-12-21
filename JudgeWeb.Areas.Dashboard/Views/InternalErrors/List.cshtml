@@ -1,6 +1,7 @@
 ﻿@model IEnumerable<InternalError>
 @{
     ViewData["Title"] = "Internal errors";
+    ViewData["RefreshSpan"] = 15;
 }
 
 @section Header {
@@ -25,12 +26,6 @@
                     <td use-a>@ie.Description</td>
                     <td use-a>@Html.CstTime(ie.Time)</td>
                     <td use-a>@ie.Status</td>
-                </tr>
-            }
-            @if (!Model.Any())
-            {
-                <tr role="row" class="disabled">
-                    <td colspan="5">No data available</td>
                 </tr>
             }
         </tbody>

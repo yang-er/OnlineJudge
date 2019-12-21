@@ -1,7 +1,6 @@
 ﻿@model IEnumerable<(User, IEnumerable<string>)>
 @{
     ViewData["Title"] = "Users";
-    ViewData["DisableAjaxRefresh"] = true;
     int currentPage = ViewBag.CurrentPage;
     int totalPage = ViewBag.TotalPage;
 }

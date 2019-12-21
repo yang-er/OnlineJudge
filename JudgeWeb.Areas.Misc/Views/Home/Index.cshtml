@@ -4,10 +4,10 @@
     ViewData["HasFooter"] = true;
 }
 
-<style>
+<style type="text/css">
     #super_banner {
         background-attachment: fixed;
-        height: calc(-120px + 100vh);
+        height: calc(-7.5rem + 100vh);
         background-size: cover;
         background-image: url(/images/@(ViewData["Photo"]).filtered.jpg);
         background-repeat: no-repeat;
@@ -33,39 +33,52 @@
     }
 
     #about_jlucpc {
-        min-height: calc(-16.25em + 100vh);
+        min-height: calc(-10.75em + 100vh);
     }
 
     @@media screen and (min-width:768px) {
         #about_jlucpc {
-            min-height: calc(-17.75em + 100vh);
+            min-height: calc(-14.75em + 100vh);
         }
+    }
+    .bd-footer { font-size: 85%; text-align: center; background-color: #f7f7f7; }
+    .bd-footer a { font-weight: 500; color: #495057; }
+    .bd-footer a:hover, .bd-footer a:focus { color: #007bff; }
+    .bd-footer p { margin-bottom: 0; }
+    .bd-footer-links { padding-left: 0; margin-bottom: 1rem; }
+    .bd-footer-links li { display: inline-block; }
+    .bd-footer-links li+li { margin-left: 1rem; }
+
+    @@media all and (min-width:768px) {
+	    .bd-footer { text-align: left; }
     }
 </style>
 
-<div class="container-fluid" id="super_banner">
-    <ul id="spirit">
-        <li style="color:#6ba2e3">Think</li>
-        <li style="color:#ffd51e">Create</li>
-        <li style="color:#c13b2a">Solve</li>
-    </ul>
-</div>
+@section Banner {
+    <div class="container-fluid" id="super_banner">
+        <ul id="spirit">
+            <li style="color:#6ba2e3">Think</li>
+            <li style="color:#ffd51e">Create</li>
+            <li style="color:#c13b2a">Solve</li>
+        </ul>
+    </div>
+}
 
-<div class="container d-md-flex mt-4 mb-4 pl-4 pr-4" id="about_jlucpc">
+<div class="d-md-flex container pl-0 pr-0" id="about_jlucpc">
     <div class="row align-self-md-center">
         <div class="col-12 col-md-6">
-            <h1>About JLUCPC</h1>
+            <h1 class="mt-4 mt-md-0">About JLUCPC</h1>
             <p style="font-size:1.1em">
                 The Jilin University Collegiate Programming Contest Team is the team of contestants for algorithmic programming contests like ICPC and CCPC.
                 Teams of three, work to solve the most real-world problems, fostering collaboration, creativity, innovation, and the ability to perform under pressure.
                 Through training and competition, teams challenge each other to raise the bar on the possible.
             </p>
-            <a asp-controller="Team" asp-action="Index" class="btn btn-primary">MORE ABOUT JLUCPC</a>
+            <a asp-controller="Team" asp-action="Ranklist" asp-route-name="HDOJ" class="btn btn-primary">MORE ABOUT JLUCPC</a>
         </div>
         <div class="col-12 col-md-1">
         </div>
         <div class="col-12 col-md-4">
-            <h3 class="mt-3 mt-md-0">News center</h3>
+            <h3 class="mt-4 mt-md-0">News center</h3>
             <ul style="list-style:none;padding-left:0">
                 @foreach (var item in Model)
                 {
@@ -75,3 +88,19 @@
         </div>
     </div>
 </div>
+
+@section BannerFooter {
+    <!-- #footer start -->
+    <footer class="bd-footer text-muted">
+        <div class="container-fluid p-3 p-md-5">
+            <ul class="bd-footer-links">
+                <li><a asp-area="Misc" asp-controller="Home" asp-action="About">About</a></li>
+                <li><a href="https://github.com/yang-er" rel="nofollow">Open Source</a></li>
+                <li><a href="https://www.xylab.fun" rel="nofollow">Laboratory</a></li>
+            </ul>
+            <p>&copy; Yang-er 2019. Built with <a href="//dotnet.microsoft.com/" rel="nofollow">.NET Core 2.2</a>.</p>
+            <p>Hosted on <a href="//www.azure.cn/" rel="nofollow">Microsoft Azure App Service</a>.</p>
+        </div>
+    </footer>
+    <!-- #footer end -->
+}

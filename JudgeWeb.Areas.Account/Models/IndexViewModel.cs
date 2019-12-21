@@ -19,11 +19,5 @@ namespace JudgeWeb.Areas.Account.Models
         [Required]
         [EmailAddress]
         public string Email { get; set; }
-
-        [Phone]
-        [Display(Name = "Phone number")]
-        public string PhoneNumber { get; set; }
-
-        public string StatusMessage { get; set; }
     }
 }

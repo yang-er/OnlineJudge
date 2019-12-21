@@ -1,7 +1,7 @@
 ﻿@model Problem
 @{
     ViewData["Title"] = "Problem " + Model.ProblemId;
-    ViewData["DisableAjaxRefresh"] = true;
+    ProblemArchive arch = ViewBag.Archive;
 }
 
 <h2 class="mt-2">Problem @(Model.Title)</h2>
@@ -14,12 +14,20 @@
                 <td>p@(Model.ProblemId)</td>
             </tr>
             <tr>
+                <th>Archive ID</th>
+                <td>@arch?.PublicId</td>
+            </tr>
+            <tr>
                 <th>Name</th>
                 <td>@Model.Title</td>
             </tr>
             <tr>
                 <th>Source</th>
                 <td>@Model.Source</td>
+            </tr>
+            <tr>
+                <th>Archive Tag</th>
+                <td>@arch?.TagName</td>
             </tr>
             <tr>
                 <th>Testcases</th>
@@ -119,6 +127,6 @@
     <p>
         <a asp-action="Edit" class="btn btn-primary" title="Edit"><i class="fas fa-edit"></i>&nbsp;Edit</a>
         <a asp-action="Delete" class="btn btn-danger" title="Delete" data-toggle="ajaxWindow" data-target="deleteProb"><i class="fas fa-trash-alt"></i>&nbsp;Delete</a>
-        <a asp-action="Rejudge" asp-controller="Submissions" class="btn btn-secondary" title="Rejudge" data-toggle="ajaxWindow" data-target="rejudgeProb"><i class="fas fa-sync"></i>&nbsp;Rejudge</a>
+        <a asp-action="Archive" class="btn btn-success" title="Archive" data-toggle="ajaxWindow" data-target="archProb"><i class="fas fa-book-open"></i>&nbsp;Archive</a>
     </p>
 }

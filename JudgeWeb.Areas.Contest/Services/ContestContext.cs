@@ -309,7 +309,7 @@ namespace JudgeWeb.Areas.Contest.Services
             });
 
             DbContext.SaveChanges();
-            Features.Scoreboard.RefreshService.Notify();
+            //Features.Scoreboard.RefreshService.Notify();
             return s.Entity.SubmissionId;
         }
 

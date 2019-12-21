@@ -118,6 +118,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
                 from j in judging
                 join s in DbContext.Submissions on new { j.SubmissionId, ProblemId = pid } equals new { s.SubmissionId, s.ProblemId }
                 join l in DbContext.Languages on s.Language equals l.LangId
+                join p in DbContext.Problems on s.ProblemId equals p.ProblemId
                 join h in DbContext.JudgeHosts on j.ServerId equals h.ServerId into hh
                 from h in hh.DefaultIfEmpty()
                 select new ViewSubmissionModel
@@ -134,6 +135,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
                     Time = s.Time,
                     SourceCode = s.SourceCode,
                     CompileError = j.CompileError,
+                    CombinedRunCompare = p.CombinedRunCompare,
                     Author = s.Author,
                     ServerName = h.ServerName ?? "UNKNOWN",
                     LanguageName = l.Name,

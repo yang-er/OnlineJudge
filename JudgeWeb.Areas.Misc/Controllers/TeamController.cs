@@ -13,7 +13,7 @@ namespace JudgeWeb.Areas.Misc.Controllers
     /// </summary>
     [Area("Misc")]
     [Authorize(Roles = "Student,Administrator")]
-    [Route("[controller]/[action]")]
+    [Route("[]")]
     public class TeamController : Controller2
     {
         private AppDbContext DbContext { get; }
@@ -24,14 +24,7 @@ namespace JudgeWeb.Areas.Misc.Controllers
         }
 
 
-        [HttpGet("{year?}")]
-        public IActionResult Index(int year = -1)
-        {
-            return RedirectToAction(nameof(Ranklist), new { name = "HDOJ" });
-        }
-
-
-        [HttpGet("{name}/{year?}")]
+        [HttpGet("/ranklist/{name}/{year?}")]
         public async Task<IActionResult> Ranklist(string name, int year = -1)
         {
             if (!OjUpdateService.OjList.ContainsKey(name))
@@ -59,7 +52,7 @@ namespace JudgeWeb.Areas.Misc.Controllers
         }
 
 
-        [HttpGet("{oj}")]
+        [HttpGet("/ranklist/{oj}/[action]")]
         [ValidateInAjax]
         public IActionResult Refresh(string oj)
         {

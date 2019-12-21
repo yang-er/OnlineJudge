@@ -2,7 +2,6 @@
     JudgeHost host = ViewBag.Host;
     ViewData["Title"] = "Judgehost " + host.ServerName;
     IEnumerable<Judging> judgings = ViewBag.Judgings;
-    ViewData["DisableAjaxRefresh"] = true;
 }
 
 <h2 class="mt-2">Judgehost s@(host.ServerId)</h2>

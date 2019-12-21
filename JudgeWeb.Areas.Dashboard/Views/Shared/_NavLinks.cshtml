@@ -1,0 +1,81 @@
+﻿@inject UserManager UserManager
+@{
+    int jcc = ViewBag.JudgehostCriticalCount;
+    int iec = ViewBag.InternalErrorCount;
+}
+
+<ul class="navbar-nav mr-auto">
+    <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" active-ctrl="Judgehosts,InternalErrors" href="#" id="navbarDropdownJudgehosts" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <i class="fas fa-gavel"></i> Judgings
+            <span class="badge badge-warning" id="num-alerts-judgehosts">@(iec == 0 && jcc > 0 ? $"{jcc}" : "")</span>
+            <span class="badge badge-danger" id="num-alerts-internalerrors">@(iec > 0 ? $"{iec}" : "")</span>
+        </a>
+        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+            <a class="dropdown-item" asp-action="List" asp-controller="Judgehosts" id="menu_judgehosts">
+                <i class="fas fa-server fa-fw"></i> judgehosts <span class="badge badge-warning" id="num-alerts-judgehosts-sub">@(jcc > 0 ? $"{jcc} down" : "")</span>
+            </a>
+            <a class="dropdown-item @(iec == 0 ? "disabled" : "")" asp-action="List" asp-controller="InternalErrors" id="menu_internal_error">
+                <i class="fas fa-bolt fa-fw"></i> internal error <span class="badge badge-danger" id="num-alerts-internalerrors-sub">@(iec > 0 ? $"{iec} new" : "")</span>
+            </a>
+        </div>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" active-ctrl="Contests" asp-controller="Contests" asp-action="List">
+            <i class="fas fa-trophy"></i> Contests
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" asp-area="Polygon" asp-controller="Root" asp-action="List">
+            <i class="fas fa-book-open"></i> Problems
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" active-ctrl="Users" asp-controller="Users" asp-action="List">
+            <i class="fas fa-address-card"></i> Users
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" active-ctrl="News" asp-controller="News" asp-action="List">
+            <i class="fab fa-markdown"></i> News
+        </a>
+    </li>
+</ul>
+
+<ul class="navbar-nav">
+    <li class="ajax-loader-container">
+        <div class="spinner-border spinner-border-sm ajax-loader" style="display: none;" role="status">
+            <span class="sr-only">Loading...</span>
+        </div>
+    </li>
+    <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <i class="fas fa-user"></i> @UserManager.GetUserName(User)
+        </a>
+        <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown">
+            <a class="dropdown-item disabled" href="#">@(UserManager.GetNickName(User) ?? UserManager.GetUserName(User))</a>
+
+            <a class="dropdown-item d-none" href="#" id="notify_disable">
+                <i class="fas fa-bell-slash fa-fw"></i> Disable Notifications
+            </a>
+
+            <a class="dropdown-item d-none" href="#" id="notify_enable">
+                <i class="fas fa-bell fa-fw"></i> Enable Notifications
+            </a>
+
+            <viewmodule key="RefreshSpan">
+                <a class="dropdown-item" href="#" id="refresh-navitem">
+                    <i class="fas fa-sync-alt fa-fw"></i>
+                    <span id="refresh-toggle">
+                        Disable Refresh
+                    </span>
+                    <span class="small text-muted">(@ViewData["RefreshSpan"]s)</span>
+                </a>
+            </viewmodule>
+
+            <a class="dropdown-item" asp-area="Misc" asp-controller="Home" asp-action="Index">
+                <i class="fas fa-sign-out-alt fa-fw"></i> Back to main site
+            </a>
+        </div>
+    </li>
+</ul>

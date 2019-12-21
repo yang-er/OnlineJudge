@@ -88,24 +88,5 @@ namespace JudgeWeb.Areas.Judge.Controllers
                 .FetchListAsync(page, pid, status, uid, lang);
             return View(model);
         }
-
-        [HttpGet("{jid}/{rid}/{type}")]
-        public async Task<IActionResult> RunDetails(int jid, int rid, string type,
-            [FromServices] IFileRepository io,
-            [FromServices] JudgingManager judgingManager)
-        {
-            io.SetContext("Runs");
-
-            if (!io.ExistPart($"j{jid}", $"r{rid}.{type}"))
-                return NotFound();
-
-            if (!await judgingManager.WithUser(User).CheckAvaliabilityForAdminByJudgingAsync(jid))
-                return Forbid();
-
-            return ContentFile(
-                $"Runs/j{jid}/r{rid}.{type}",
-                "application/octet-stream",
-                $"j{jid}_r{rid}.{type}");
-        }
     }
 }

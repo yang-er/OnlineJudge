@@ -22,7 +22,6 @@
     }
 
     ViewData["Title"] = "Submission s" + Model.SubmissionId;
-    ViewData["DisableAjaxRefresh"] = true;
     double timeLimit = Model.TimeLimit * Model.TimeFactor / 1000;
 }
 
@@ -87,16 +86,18 @@
             {
                 var subTime = judging.StartTime;
                 <tr asp-route-jid="@judging.JudgingId" data-toggle="gotoUrl" class="@(judging.Active ? "" : "disabled")">
-                    <td use-a>@if (judging.JudgingId == Model.JudgingId)
-                    {<i class="fas fa-long-arrow-alt-right"></i>}</td>
-                    <td use-a>j@(judging.JudgingId)</td>
-                    <td use-a>@subTime?.ToString("HH:mm")</td>
-                    <td use-a>@(judging.ExecuteTime)ms</td>
-                    <td use-a>@(judging.ExecuteMemory)K</td>
-                    <td use-a><span class="hostname">@serverName</span></td>
-                    <td use-a><verdict3 value="@judging.Status" class="@(judging.Active ? "" : "disabled")" /></td>
-                </tr>
-            }
+                    <td use-a>
+                        @if (judging.JudgingId == Model.JudgingId)
+                        {<i class="fas fa-long-arrow-alt-right"></i>}
+                </td>
+                <td use-a>j@(judging.JudgingId)</td>
+                <td use-a>@subTime?.ToString("HH:mm")</td>
+                <td use-a>@(judging.ExecuteTime)ms</td>
+                <td use-a>@(judging.ExecuteMemory)K</td>
+                <td use-a><span class="hostname">@serverName</span></td>
+                <td use-a><verdict3 value="@judging.Status" class="@(judging.Active ? "" : "disabled")" /></td>
+            </tr>
+        }
         </tbody>
     </table>
 
@@ -115,7 +116,7 @@
           baseline="@timeLimit"
           max-value="@(Model.Details.Max(d => d.Item1?.ExecuteTime).GetValueOrDefault() / 1000.0)"
           data="@Model.Details.Select(r => new { label = $"r{r.Item2.Rank}", value = (r.Item1?.ExecuteTime ?? 0) / 1000.0, color = ColorNvd3(r.Item1?.Status ?? Verdict.Pending) })"
-          x-axis="Testcase Rank" y-axis="Runtime (in s)"/>
+          x-axis="Testcase Rank" y-axis="Runtime (in s)" />
 </div>
 
 <h2 class="mb-2">Judging j@(Model.JudgingId)</h2>
@@ -125,22 +126,21 @@
         Result: <verdict3 value="@Model.Status" class="@(Model.Judging.Active ? "" : "disabled")" />,
         Judgehost: <span class="hostname">@Model.ServerName</span>,
         <span class="judgetime">
-            @if (Model.Judging.StartTime.HasValue)
-            {
-                @("Judging started: " + Model.Judging.StartTime?.ToString("HH:mm:ss") + ", ")
-                if (Model.Judging.StopTime.HasValue)
-                {
-                    @("finished in " + (Model.Judging.StopTime - Model.Judging.StartTime)?.ToString("mm\\:ss") + "s")
-                }
-                else
-                {
-                    @("not finished yet")
-                }
-            }
-            else
-            {
-                @("Judging not started yet")
-            }
+            <if cond="Model.Judging.StartTime.HasValue">
+                Judging started: @Model.Judging.StartTime?.ToString("HH:mm:ss"),
+                <if cond="@(Model.Judging.StopTime.HasValue && Model.Judging.Status != Verdict.UndefinedError)">
+                    finished in @((Model.Judging.StopTime - Model.Judging.StartTime)?.ToString("mm\\:ss"))s
+                </if>
+                <if cond="@(!Model.Judging.StopTime.HasValue && Model.Judging.Status != Verdict.UndefinedError)">
+                    [still judging - busy @((DateTimeOffset.Now - Model.Judging.StartTime.Value).ToString("mm\\:ss"))s]
+                </if>
+                <if cond="@(Model.Judging.Status == Verdict.UndefinedError)">
+                    [aborted]
+                </if>
+            </if>
+            <if cond="!Model.Judging.StartTime.HasValue">
+                Judging not started yet
+            </if>
         </span>
     </div>
     @if (Model.Status != Verdict.CompileError)
@@ -148,7 +148,7 @@
         <table>
             <tr>
                 <td>testcase runs: </td>
-                <td>@foreach (var (d, t) in Model.Details) {<a title="#@t.Rank, @(d == null ? "unknown" : $"runtime: {d.ExecuteTime}ms, result: {d.Status}")" href="#run-@t.Rank"><verdict6 value="@(d?.Status ?? Verdict.Pending)" /></a>}</td>
+                <td>@foreach (var (d, t) in Model.Details) {<a title="#@t.Rank, @(d == null ? "unknown" : $"runtime: {d.ExecuteTime}ms, result: {d.Status}")" href="#run-@t.Rank" onclick="@if (d?.Status == Verdict.Accepted) {@("display_correctruns(true);")}"><verdict6 value="@(d?.Status ?? Verdict.Pending)" /></a>}</td>
             </tr>
         </table>
     }
@@ -167,58 +167,14 @@
 
 @if (Model.Status != Verdict.CompileError)
 {
-    foreach (var (detail, testcase) in Model.Details)
+    foreach (var dt in Model.Details)
     {
-        <div class="run">
-            <h4 id="run-@testcase.Rank">Run @testcase.Rank</h4>
-            @if  (detail == null)
-            {
-                <p class="nodata">Testcase not used.</p>
-            }
-            else
-            {
-            <table>
-                <tr>
-                    <td>
-                        <table class="table table-sm table-striped table-bordered table-hover">
-                            <tr>
-                                <th>Reference</th>
-                                <td>
-                                    <a asp-controller="Testcases" asp-action="Fetch" asp-route-tid="@detail.TestcaseId" asp-route-filetype="input">data.in</a>
-                                    <a asp-controller="Testcases" asp-action="Fetch" asp-route-tid="@detail.TestcaseId" asp-route-filetype="output">data.out</a>
-                                    <a asp-action="RunDetails" asp-route-jid="@detail.JudgingId" asp-route-rid="@detail.TestId" asp-route-type="out">user.out</a>
-                                    <a asp-action="RunDetails" asp-route-jid="@detail.JudgingId" asp-route-rid="@detail.TestId" asp-route-type="err">user.err</a>
-                                </td>
-                            </tr>
-                            <tr>
-                                <th>Status</th>
-                                <td>@(detail.ExecuteTime)ms, @(detail.ExecuteMemory)kb.</td>
-                            </tr>
-                            <tr>
-                                <th>Result</th>
-                                <td><verdict3 value="@detail.Status" /></td>
-                            </tr>
-                        </table>
-                    </td>
-                    <td></td>
-                </tr>
-            </table>
-
-            <h5>Diff output</h5>
-            @if (string.IsNullOrEmpty(detail.OutputDiff))
-            {
-                <p class="nodata">There was no diff output.</p>
-            }
-            else
-            {
-                <snippet base64="@detail.OutputDiff" />
-            }
-
-            <h5>Judging system output (info/debug/errors)</h5>
-            <snippet base64="@detail.OutputSystem" />
-
-            }
-        </div>
+        var type = dt.Item1 == null
+            ? "_SubmissionDetailNull"
+            : Model.CombinedRunCompare
+            ? "_SubmissionDetailInteractive"
+            : "_SubmissionDetailOutput";
+        <partial name="@type" model="dt" />
     }
 }
 
@@ -235,3 +191,14 @@
 
 <h2 class="mt-3" id="src-0">Source code</h2>
 <ace file="Main.@Model.LanguageExternalId" value="@Model.SourceCode.UnBase64()" />
+
+<script type="text/javascript">
+    function display_correctruns(show) {
+        elements = document.getElementsByClassName('run_correct');
+        for (var i = 0; i < elements.length; i++) {
+            elements[i].style.display = show ? 'block' : 'none';
+        }
+    }
+
+    display_correctruns(false);
+</script>

@@ -5,7 +5,6 @@ using JudgeWeb.Features;
 using JudgeWeb.Features.Mailing;
 using JudgeWeb.Features.OjUpdate;
 using JudgeWeb.Features.Storage;
-using Microsoft.AspNetCore.Authentication.QQ;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -16,6 +15,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using System;
 using System.Text.Encodings.Web;
 using System.Text.Unicode;
@@ -28,11 +28,17 @@ namespace JudgeWeb
         {
             Configuration = configuration;
             Environment = env;
+            AssemblyPrefix = "JudgeWeb.Areas.";
+            EnabledAreas = new[] { "Misc", "Account", "Judge", "Contest", "Dashboard", "Polygon" };
         }
 
         public IConfiguration Configuration { get; }
 
         public IHostingEnvironment Environment { get; }
+
+        public string[] EnabledAreas { get; }
+
+        public string AssemblyPrefix { get; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
@@ -67,34 +73,36 @@ namespace JudgeWeb
 
                     options.SignIn.RequireConfirmedEmail = false;
                     options.SignIn.RequireConfirmedPhoneNumber = false;
-
-                    options.Tokens.ProviderMap.Add("Email2", Email2TokenProvider.Descriptor);
                 })
                 .AddEntityFrameworkStores<AppDbContext>()
                 .AddUserManager<UserManager>()
-                .AddDefaultTokenProviders();
+                .AddDefaultTokenProviders()
+                .UseClaimsPrincipalFactory<UserWithNickNameClaimsPrincipalFactory, User>()
+                .AddTokenProvider<Email2TokenProvider>("Email2");
 
             services.AddAuthentication()
                 .AddCookie(options =>
                 {
                     options.Cookie.HttpOnly = true;
                     options.Cookie.Expiration = TimeSpan.FromDays(30);
-                    options.LoginPath = "/account/sign/login";
-                    options.LogoutPath = "/account/sign/logout";
-                    options.AccessDeniedPath = "/account/sign/access-denied";
+                    options.LoginPath = "/account/login";
+                    options.LogoutPath = "/account/logout";
+                    options.AccessDeniedPath = "/account/access-denied";
                     options.SlidingExpiration = true;
-                })
-                .AddQQ(options =>
-                {
-                    options.AppId = Configuration["Authentication:QQ:AppId"];
-                    options.AppKey = Configuration["Authentication:QQ:AppKey"];
                 })
                 .AddBasic(options =>
                 {
                     options.Realm = "JudgeWeb";
                     options.AllowInsecureProtocol = true;
-                    options.Events = new BasicAuthenticationValidator();
+                    options.Events = new BasicAuthenticationValidator<User, Role, int, AppDbContext>();
                 });
+
+            services.ConfigureApplicationCookie(options =>
+            {
+                options.LoginPath = "/account/login";
+                options.LogoutPath = "/account/logout";
+                options.AccessDeniedPath = "/account/access-denied";
+            });
 
             services.AddSingleton(
                 HtmlEncoder.Create(
@@ -114,12 +122,21 @@ namespace JudgeWeb
                 .SetTokenTransform<SlugifyParameterTransformer>()
                 .EnableContentFileResult()
                 .SetCompatibilityVersion(CompatibilityVersion.Version_2_1)
-                .UseAreaParts("JudgeWeb.Areas.",
-                    new[] { "Misc", "Account", "Api", "Judge", "Contest", "Dashboard", "Polygon" });
+                .UseAreaParts(AssemblyPrefix, EnabledAreas);
 
             services.AddDefaultManagers();
             //services.AddScoreboardService();
-            services.AddSwagger();
+
+            services.AddSwagger(options =>
+            {
+                foreach (var item in EnabledAreas)
+                {
+                    var xmlFile = $"{AssemblyPrefix}{item}.xml";
+                    var xmlPath = System.IO.Path.Combine(AppContext.BaseDirectory, xmlFile);
+                    if (System.IO.File.Exists(xmlPath))
+                        options.IncludeXmlComments(xmlPath);
+                }
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

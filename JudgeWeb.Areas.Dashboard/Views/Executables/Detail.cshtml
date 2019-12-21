@@ -1,7 +1,6 @@
 ﻿@model Executable
 @{
     ViewData["Title"] = "Executable " + Model.ExecId;
-    ViewData["DisableAjaxRefresh"] = true;
     IEnumerable<string> langs = ViewBag.AsCompile;
     IEnumerable<int> cmps = ViewBag.AsCompare;
     IEnumerable<int> runs = ViewBag.AsRun;

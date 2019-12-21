@@ -2,94 +2,100 @@
     ViewData["Title"] = "About";
 }
 
-<div class="container-fluid mt-4 mb-4 pl-4 pr-4">
-    <h2>@ViewData["Title"]</h2>
-    <h5 class="mb-3">Something about this Online Judge.</h5>
+<h2 class="mt-4">@ViewData["Title"]</h2>
+<h5 class="mb-3">Something about this Online Judge.</h5>
 
-    <div class="row">
-        <div class="col-lg-4">
-            <h3>Architecture of Service</h3>
-            <ul class="pl-4 pr-4">
-                <li>
-                    <h5>JudgeW32</h5>
-                    <p>
-                        Encapsulation of Windows APIs for Process Info, Job Object and Error Reporting.
-                        <br />
-                        <a href="//github.com/yang-er/joj-old/tree/master/JudgeW32" rel="nofollow">Archived version</a> and <a href="//github.com/yang-er/joj-win32">new version</a> are both on GitHub.
-                    </p>
-                </li>
-                <li>
-                    <h5>JudgeL64</h5>
-                    <p>
-                        Applying setuid, rlimit, ptrace, chroot before fork &amp; exec.
-                        <br />
-                        Inspired by <a href="//github.com/zhblue/hustoj" rel="nofollow">HUSTOJ</a>.
-                        <br />
-                        Archived versions is on <a href="//github.com/yang-er/joj-old/tree/master/JudgeL64" rel="nofollow">GitHub</a>.
-                    </p>
-                </li>
-                <li>
-                    <h5>JudgeWeb</h5>
-                    <p>
-                        Websites for OJ by ASP.NET Core MVC.
-                        <br />
-                        Front-end by BootStrap and jQuery, markdown rendering by Markdig and KaTeX.
-                        <br />
-                        Database by Microsoft SQL Server.
-                        <br />
-                        Current versions is on <a href="//github.com/yang-er/OnlineJudge" rel="nofollow">GitHub</a>.
-                    </p>
-                </li>
-            </ul>
-        </div>
+<div class="row mb-5">
+    <div class="col-lg-4">
+        <h4 class="mb-3">Architecture of Service</h4>
+        <ul class="pl-4 pr-4">
+            <li>
+                <h5>JudgeW32</h5>
+                <p>
+                    Encapsulation of Windows APIs for Process Info, Job Object and Error Reporting.
+                    <br />
+                    <a href="//github.com/yang-er/joj-old/tree/master/JudgeW32" rel="nofollow">Archived version</a> and <a href="//github.com/yang-er/joj-win32">new version</a> are both on GitHub.
+                </p>
+            </li>
+            <li>
+                <h5>JudgeL64</h5>
+                <p>
+                    Applying setuid, rlimit, ptrace, chroot before fork &amp; exec.
+                    <br />
+                    Inspired by <a href="//github.com/zhblue/hustoj" rel="nofollow">HUSTOJ</a>.
+                    <br />
+                    Archived versions is on <a href="//github.com/yang-er/joj-old/tree/master/JudgeL64" rel="nofollow">GitHub</a>.
+                </p>
+            </li>
+            <li>
+                <h5>JudgeWeb</h5>
+                <p>
+                    Websites for OJ by ASP.NET Core MVC.
+                    <br />
+                    Front-end by BootStrap and jQuery, markdown rendering by Markdig and KaTeX.
+                    <br />
+                    Database by Microsoft SQL Server.
+                    <br />
+                    Current versions is on <a href="//github.com/yang-er/OnlineJudge" rel="nofollow">GitHub</a>.
+                </p>
+            </li>
+        </ul>
+    </div>
 
-        <div class="col-lg-4">
-            <h3>Development and History</h3>
-            <ul class="pl-4 pr-4">
-                <li>
-                    <h5>Team</h5>
-                    <ul class="pl-4">
-                        <li>GitHub @@yang-er</li>
-                    </ul>
-                    <p>Welcome to join!</p>
-                </li>
-                <li>
-                    <h5>History</h5>
-                    <ul class="pl-4 mb-3">
-                        <li>2018/05/11 Project started</li>
-                        <li>2018/06/01 First use in class</li>
-                        <li>2018/06/10 Finish Windows module</li>
-                        <li>2018/06/22 Finish Linux module</li>
-                        <li>2018/06/27 Paused developing</li>
-                        <li>2019/03/04 Restarted developing</li>
-                        <li>2019/06/06 Use DOMjudge as JudgeCore</li>
-                        <li>2019/07/04 Started developing contest feature</li>
-                        <li>2019/07/24 Cleanup code and fully open source</li>
-                    </ul>
-                </li>
-            </ul>
-        </div>
+    <div class="col-lg-4">
+        <h4 class="mb-3">Development and History</h4>
+        <ul class="pl-4 pr-4">
+            <li>
+                <h5>Team</h5>
+                <ul class="pl-4">
+                    <li>GitHub @@yang-er</li>
+                </ul>
+                <p>Welcome to join!</p>
+            </li>
+            <li>
+                <h5>History</h5>
+                <ul class="pl-4 mb-3">
+                    <li>2018/05/11 Project started</li>
+                    <li>2018/06/01 First use in class</li>
+                    <li>2018/06/10 Finish Windows module</li>
+                    <li>2018/06/22 Finish Linux module</li>
+                    <li>2018/06/27 Paused developing</li>
+                    <li>2019/03/04 Restarted developing</li>
+                    <li>2019/06/06 Use DOMjudge as JudgeCore</li>
+                    <li>2019/07/04 Started developing contest feature</li>
+                    <li>2019/07/24 Cleanup and fully open source</li>
+                    <li>2019/12/15 Added polygon and dashboard</li>
+                </ul>
+            </li>
+        </ul>
+    </div>
 
-        <div class="col-lg-4">
-            <h3>Repositories</h3>
-            <ul class="pl-4 mb-3">
-                <li>
-                    <a href="//github.com/yang-er/joj-old">Archived Version</a>
-                    <br />
-                    First version that used in our data-structure class. JudgeW32 was hosted on a tiny Windows Nano Server and provider judging functions. JudgeWeb was any where that can hold a PHP-website with MySQL.
-                </li>
-                <li>
-                    <a href="//github.com/yang-er/OnlineJudge">Current Version</a>
-                    <br />
-                    The currently running version of this online judge. Most functions are adopted from DOMjudge to adapt to training.
-                </li>
-                <li>
-                    <a href="//github.com/yang-er/dj_helper">DOMjudge Helpers</a>
-                    <br />
-                    Toolset for holding contests with DOMjudge, such as public-board, printing-server, fixed icpc-resolver.
-                </li>
-            </ul>
-        </div>
+    <div class="col-lg-4">
+        <h4 class="mb-3">Repositories</h4>
+        <ul class="pl-4 mb-3">
+            <li>
+                <h5><a href="//github.com/yang-er/joj-old">Archived Version</a></h5>
+                <p>
+                    First version that used in our data-structure class.
+                    JudgeW32 was hosted on a tiny Windows Nano Server and provider judging functions.
+                    JudgeWeb was any where that can hold a PHP-website with MySQL.
+                </p>
+            </li>
+            <li>
+                <h5><a href="//github.com/yang-er/OnlineJudge">Current Version</a></h5>
+                <p>
+                    The currently running version of this online judge.
+                    Most functions are adopted from DOMjudge to adapt to training.
+                    Provide contest management, polygon and so on.
+                </p>
+            </li>
+            <li>
+                <h5><a href="//github.com/cn-xcpc-tools">CN XCPC Tools</a></h5>
+                <p>
+                    Toolset for holding contests, such as localized ICPC Live, printing persistent, documents about DOMjudge.
+                </p>
+            </li>
+        </ul>
     </div>
 </div>
 

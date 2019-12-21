@@ -4,39 +4,41 @@
     ViewData["NoFooter"] = true;
 }
 
-<div class="container-fluid">
-    <div class="row flex-xl-nowrap">
-        <div class="col-12 col-md-3 col-xl-2 bd-sidebar">
-            <form class="bd-search d-flex align-items-center">
-                <input type="search" class="form-control" id="search-input" placeholder="Search..." aria-label="Search for..." autocomplete="off" />
-                <button class="btn btn-link bd-search-docs-toggle d-md-none p-0 ml-3" type="button" data-toggle="collapse" data-target="#bd-docs-nav" aria-controls="bd-docs-nav" aria-expanded="false" aria-label="Toggle docs navigation"><svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 30 30" role="img" focusable="false"><title>Menu</title><path stroke="currentColor" stroke-linecap="round" stroke-miterlimit="10" stroke-width="2" d="M4 7h22M4 15h22M4 23h22" /></svg></button>
-            </form>
+<div class="row text-orig">
+    <div class="container-fluid">
+        <div class="row flex-xl-nowrap">
+            <div class="col-12 col-md-3 col-xl-2 bd-sidebar">
+                <form class="bd-search d-flex align-items-center">
+                    <input type="search" class="form-control" id="search-input" placeholder="Search..." aria-label="Search for..." autocomplete="off" />
+                    <button class="btn btn-link bd-search-docs-toggle d-md-none p-0 ml-3" type="button" data-toggle="collapse" data-target="#bd-docs-nav" aria-controls="bd-docs-nav" aria-expanded="false" aria-label="Toggle docs navigation"><svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 30 30" role="img" focusable="false"><title>Menu</title><path stroke="currentColor" stroke-linecap="round" stroke-miterlimit="10" stroke-width="2" d="M4 7h22M4 15h22M4 23h22" /></svg></button>
+                </form>
 
-            <nav class="collapse bd-links" id="bd-docs-nav">
-                <div class="bd-toc-item active">
-                    <a class="bd-toc-link">News Center</a>
-                    <ul class="nav bd-sidenav">
-                        @foreach (var news in Model.NewsList)
-                        {
-                            <li class="@(news.NewsId == Model.NewsId ? "active bd-sidenav-active" : "")">
-                                <a asp-route-nid="@news.NewsId">@news.Title</a>
-                            </li>
-                        }
-                    </ul>
-                </div>
-            </nav>
+                <nav class="collapse bd-links" id="bd-docs-nav">
+                    <div class="bd-toc-item active">
+                        <a class="bd-toc-link">News Center</a>
+                        <ul class="nav bd-sidenav">
+                            @foreach (var news in Model.NewsList)
+                            {
+                                <li class="@(news.NewsId == Model.NewsId ? "active bd-sidenav-active" : "")">
+                                    <a asp-route-nid="@news.NewsId">@news.Title</a>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                </nav>
+            </div>
+
+            <div class="d-none d-xl-block col-xl-2 bd-toc">
+                @Html.Raw(Model.Tree)
+            </div>
+
+            <main class="col-12 col-md-9 col-xl-8 py-md-3 pl-md-5 bd-content" role="main">
+                <h1 class="bd-title" id="content">@Model.Title</h1>
+                <p class="bd-lead">Last update: @Html.CstTime(Model.LastUpdate)</p>
+
+                @Html.Raw(Model.HtmlContent)
+            </main>
         </div>
-
-        <div class="d-none d-xl-block col-xl-2 bd-toc">
-            @Html.Raw(Model.Tree)
-        </div>
-
-        <main class="col-12 col-md-9 col-xl-8 py-md-3 pl-md-5 bd-content" role="main">
-            <h1 class="bd-title" id="content">@Model.Title</h1>
-            <p class="bd-lead">Last update: @Html.CstTime(Model.LastUpdate)</p>
-
-            @Html.Raw(Model.HtmlContent)
-        </main>
     </div>
 </div>
 
@@ -45,4 +47,5 @@
     <link rel="stylesheet" href="~/static/css/docsearch.css" />
     <script src="~/static/js/docs.min.js"></script>
     <script src="~/static/js/docsearch.min.js"></script>
+    <style>.text-orig { font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji"; }</style>
 }

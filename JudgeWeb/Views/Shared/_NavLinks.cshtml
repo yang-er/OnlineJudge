@@ -1,0 +1,85 @@
+@using Microsoft.AspNetCore.Identity
+@using JudgeWeb.Data
+
+@inject SignInManager<User> SignInManager
+@inject UserManager UserManager
+
+<ul class="navbar-nav mr-auto">
+    <li class="nav-item">
+        <a class="nav-link" active-ctrl="Home" asp-area="Misc" asp-controller="Home" asp-action="Index">
+            <i class="fas fa-home d-md-none"></i> Home
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" active-ctrl="Problem" asp-area="Judge" asp-controller="Problem" asp-action="List" asp-route-pg="">
+            <i class="fas fa-book-open d-md-none"></i> Problems
+        </a>
+    </li>
+</ul>
+
+<ul class="navbar-nav">
+    <li class="ajax-loader-container">
+        <div class="spinner-border spinner-border-sm ajax-loader" style="display: none;" role="status">
+            <span class="sr-only">Loading...</span>
+        </div>
+    </li>
+    @if (SignInManager.IsSignedIn(User))
+    {
+        <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" active-area="Account" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <i class="fas fa-user d-md-none"></i> @UserManager.GetUserName(User)
+            </a>
+            <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown">
+                <a class="dropdown-item disabled" href="#">@(UserManager.GetNickName(User) ?? UserManager.GetUserName(User))</a>
+
+                <a class="dropdown-item d-none" href="#" id="notify_disable">
+                    <i class="fas fa-bell-slash fa-fw"></i> Disable Notifications
+                </a>
+
+                <a class="dropdown-item d-none" href="#" id="notify_enable">
+                    <i class="fas fa-bell fa-fw"></i> Enable Notifications
+                </a>
+
+                <a class="dropdown-item" asp-area="Account" asp-controller="Profile" asp-action="Show" asp-route-username="@UserManager.GetUserName(User)">
+                    <i class="fas fa-address-card fa-fw"></i> Profile
+                </a>
+
+                <viewmodule key="RefreshSpan">
+                    <a class="dropdown-item" href="#" id="refresh-navitem">
+                        <i class="fas fa-sync-alt fa-fw"></i>
+                        <span id="refresh-toggle">
+                            Disable Refresh
+                        </span>
+                        <span class="small text-muted">(@ViewData["RefreshSpan"]s)</span>
+                    </a>
+                </viewmodule>
+
+                <viewmodule roles="Administrator">
+                    <a class="dropdown-item" asp-area="Dashboard" asp-controller="Root" asp-action="Index">
+                        <i class="fas fa-compass fa-fw"></i> Dashboard
+                    </a>
+                </viewmodule>
+
+                <viewmodule roles="Problem">
+                    <a class="dropdown-item" asp-area="Polygon" asp-controller="Root" asp-action="List">
+                        <i class="fas fa-compass fa-fw"></i> Polygon
+                    </a>
+                </viewmodule>
+
+                <form asp-area="Account" asp-controller="Sign" asp-action="Logout" method="post" id="logoutForm">
+                    <button type="submit" class="dropdown-item">
+                        <i class="fas fa-sign-out-alt fa-fw"></i> Logout
+                    </button>
+                </form>
+            </div>
+        </li>
+    }
+    else
+    {
+        <li class="nav-item">
+            <a class="nav-link" role="button" data-toggle="ajaxWindow" data-target="login" asp-area="Account" asp-controller="Sign" asp-action="Login">
+                <i class="fas fa-sign-in-alt fa-fw d-md-none"></i> Login
+            </a>
+        </li>
+    }
+</ul>

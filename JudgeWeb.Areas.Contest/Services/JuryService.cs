@@ -158,7 +158,7 @@ namespace JudgeWeb.Areas.Contest.Services
             });
 
             DbContext.SaveChanges();
-            Features.Scoreboard.RefreshService.Notify();
+            //Features.Scoreboard.RefreshService.Notify();
         }
 
         public void DeleteTeam(Team team)

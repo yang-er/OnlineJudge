@@ -2,7 +2,6 @@
     Language lang = ViewBag.Language;
     IEnumerable<(Submission s, Judging g)> subs = ViewBag.Submissions;
     ViewData["Title"] = "Language " + lang.Name;
-    ViewData["DisableAjaxRefresh"] = true;
 }
 
 <h2 class="mt-2">Language @lang.Name</h2>

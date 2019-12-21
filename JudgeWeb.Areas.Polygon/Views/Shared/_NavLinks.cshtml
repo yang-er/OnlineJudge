@@ -16,14 +16,13 @@
             <i class="fas fa-file-code"></i> Submissions
         </a>
     </li>
-    @if (User.IsInRoles("Administrator,Problem"))
-    {
+    <viewmodule roles="Administrator,Problem">
         <li class="nav-item">
             <a class="nav-link" asp-controller="Root" asp-action="List">
                 <i class="fas fa-arrow-right"></i> Catalog
             </a>
         </li>
-    }
+    </viewmodule>
 </ul>
 
 <ul class="navbar-nav">
@@ -47,8 +46,7 @@
                 <i class="fas fa-bell fa-fw"></i> Enable Notifications
             </a>
 
-            @if (!ViewData.ContainsKey("DisableAjaxRefresh"))
-            {
+            <viewmodule key="RefreshSpan">
                 <a class="dropdown-item" href="#" id="refresh-navitem">
                     <i class="fas fa-sync-alt fa-fw"></i>
                     <span id="refresh-toggle">
@@ -56,7 +54,7 @@
                     </span>
                     <span class="small text-muted">(@ViewData["RefreshSpan"]s)</span>
                 </a>
-            }
+            </viewmodule>
 
             <a class="dropdown-item" asp-area="Misc" asp-controller="Home" asp-action="Index">
                 <i class="fas fa-sign-out-alt fa-fw"></i> Back to main site

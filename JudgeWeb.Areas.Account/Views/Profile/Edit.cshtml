@@ -1,0 +1,43 @@
+﻿@model IndexViewModel
+@{
+    ViewData["Title"] = "Profile";
+}
+
+<h4>@ViewData["Title"]</h4>
+<partial name="_StatusMessage" model="@TempData["StatusMessage"]" />
+@{ TempData["StatusMessage"] = null; }
+
+<form method="post">
+    <div asp-validation-summary="All" class="text-danger"></div>
+    <div class="form-group">
+        <label asp-for="Username"></label>
+        <input asp-for="Username" class="form-control" disabled />
+    </div>
+    <div class="form-group">
+        <label asp-for="NickName"></label>
+        <input asp-for="NickName" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label asp-for="Plan"></label>
+        <input asp-for="Plan" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label asp-for="Email"></label>
+        <if cond="Model.IsEmailConfirmed">
+            <div class="input-group">
+                <input asp-for="Email" class="form-control" />
+                <span class="input-group-addon" aria-hidden="true"><span class="glyphicon glyphicon-ok text-success"></span></span>
+            </div>
+        </if>
+        <if cond="!Model.IsEmailConfirmed">
+            <input asp-for="Email" class="form-control" />
+            <button asp-action="SendVerificationEmail" class="btn btn-link">Send verification email</button>
+        </if>
+        <span asp-validation-for="Email" class="text-danger"></span>
+    </div>
+    <button type="submit" class="btn btn-primary">Save</button>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,40 @@
+﻿@model StudentVerifyModel
+@{
+    ViewData["Title"] = "Student Verify";
+}
+
+<h4>@ViewData["Title"]</h4>
+<partial name="_StatusMessage" model="@TempData["StatusMessage"]" />
+@{ TempData["StatusMessage"] = null; }
+<if cond="Model.IsEmailConfirmed">
+    <div class="alert alert-primary" role="alert">
+        You are now verified student.
+    </div>
+</if>
+
+<form method="post">
+    <div asp-validation-summary="All" class="text-danger"></div>
+    <div class="form-group">
+        <label asp-for="StudentName"></label>
+        <input asp-for="StudentName" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label asp-for="StudentId"></label>
+        <input asp-for="StudentId" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label asp-for="Email"></label>
+        <input asp-for="Email" class="form-control" />
+        <if cond="Model.Email != null && !Model.IsEmailConfirmed">
+            <button asp-action="SendStudentEmail" class="btn btn-link">Send verification email</button>
+        </if>
+        <span asp-validation-for="Email" class="text-danger"></span>
+    </div>
+    <if cond="!Model.IsEmailConfirmed">
+        <button type="submit" class="btn btn-primary">Save</button>
+    </if>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

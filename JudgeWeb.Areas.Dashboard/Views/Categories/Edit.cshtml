@@ -4,7 +4,6 @@
     ViewData["Title"] = Model.CategoryId == 0
         ? "Add category"
         : "Edit category " + Model.CategoryId;
-    ViewData["DisableAjaxRefresh"] = true;
 }
 
 <h2 class="mt-2">@ViewData["Title"]</h2>

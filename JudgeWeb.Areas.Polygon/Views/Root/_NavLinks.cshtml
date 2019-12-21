@@ -1,39 +1,49 @@
 ﻿@inject UserManager UserManager
+@{
+    int jcc = ViewBag.JudgehostCriticalCount;
+    int iec = ViewBag.InternalErrorCount;
+}
 
 <ul class="navbar-nav mr-auto">
-    <li class="nav-item dropdown">
-        <a class="nav-link dropdown-toggle" asp-area="Dashboard" id="navbarDropdownJudgehosts" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-            <i class="fas fa-gavel"></i> Judgings
-        </a>
-        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-            <a class="dropdown-item" asp-area="Dashboard" asp-action="List" asp-controller="Judgehosts" id="menu_judgehosts">
-                <i class="fas fa-server fa-fw"></i> judgehosts
+    <viewmodule roles="Administrator">
+        <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownJudgehosts" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <i class="fas fa-gavel"></i> Judgings
+                <span class="badge badge-warning" id="num-alerts-judgehosts">@(iec == 0 && jcc > 0 ? $"{jcc}" : "")</span>
+                <span class="badge badge-danger" id="num-alerts-internalerrors">@(iec > 0 ? $"{iec}" : "")</span>
             </a>
-            <a class="dropdown-item" asp-area="Dashboard" asp-action="List" asp-controller="InternalErrors" id="menu_internal_error">
-                <i class="fas fa-bolt fa-fw"></i> internal error
+            <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <a class="dropdown-item" asp-area="Dashboard" asp-action="List" asp-controller="Judgehosts" id="menu_judgehosts">
+                    <i class="fas fa-server fa-fw"></i> judgehosts <span class="badge badge-warning" id="num-alerts-judgehosts-sub">@(jcc > 0 ? $"{jcc} down" : "")</span>
+                </a>
+                <a class="dropdown-item @(iec == 0 ? "disabled" : "")" asp-area="Dashboard" asp-action="List" asp-controller="InternalErrors" id="menu_internal_error">
+                    <i class="fas fa-bolt fa-fw"></i> internal error <span class="badge badge-danger" id="num-alerts-internalerrors-sub">@(iec > 0 ? $"{iec} new" : "")</span>
+                </a>
+            </div>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" asp-area="Dashboard" asp-controller="Contests" asp-action="List">
+                <i class="fas fa-trophy"></i> Contests
             </a>
-        </div>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link" asp-area="Dashboard" asp-controller="Contests" asp-action="List">
-            <i class="fas fa-trophy"></i> Contests
-        </a>
-    </li>
+        </li>
+    </viewmodule>
     <li class="nav-item">
         <a class="nav-link active" asp-controller="Root" asp-action="List">
             <i class="fas fa-book-open"></i> Problems
         </a>
     </li>
-    <li class="nav-item">
-        <a class="nav-link" asp-area="Dashboard" asp-controller="Users" asp-action="List">
-            <i class="fas fa-address-card"></i> Users
-        </a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link" asp-area="Dashboard" asp-controller="News" asp-action="List">
-            <i class="fab fa-markdown"></i> News
-        </a>
-    </li>
+    <viewmodule roles="Administrator">
+        <li class="nav-item">
+            <a class="nav-link" asp-area="Dashboard" asp-controller="Users" asp-action="List">
+                <i class="fas fa-address-card"></i> Users
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" asp-area="Dashboard" asp-controller="News" asp-action="List">
+                <i class="fab fa-markdown"></i> News
+            </a>
+        </li>
+    </viewmodule>
 </ul>
 
 <ul class="navbar-nav">
@@ -57,8 +67,7 @@
                 <i class="fas fa-bell fa-fw"></i> Enable Notifications
             </a>
 
-            @if (!ViewData.ContainsKey("DisableAjaxRefresh"))
-            {
+            <viewmodule key="RefreshSpan">
                 <a class="dropdown-item" href="#" id="refresh-navitem">
                     <i class="fas fa-sync-alt fa-fw"></i>
                     <span id="refresh-toggle">
@@ -66,7 +75,7 @@
                     </span>
                     <span class="small text-muted">(@ViewData["RefreshSpan"]s)</span>
                 </a>
-            }
+            </viewmodule>
 
             <a class="dropdown-item" asp-area="Misc" asp-controller="Home" asp-action="Index">
                 <i class="fas fa-sign-out-alt fa-fw"></i> Back to main site

@@ -25,5 +25,27 @@ namespace JudgeWeb.Data
         /// </summary>
         [IsRequired]
         public string TagName { get; set; }
+
+        /// <summary>
+        /// 题目名称
+        /// </summary>
+        [Ignore]
+        public string Title { get; set; }
+
+        /// <summary>
+        /// 题目来源
+        /// </summary>
+        [Ignore]
+        public string Source { get; set; }
+
+        public ProblemArchive() { }
+
+        public ProblemArchive(int pubid, string title, string source, string tag)
+        {
+            Title = title;
+            Source = source;
+            TagName = tag;
+            PublicId = pubid;
+        }
     }
 }

@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 
 namespace JudgeWeb.Features.Scoreboard
 {
+    [Obsolete("This feature should not be used any more.", true)]
     public sealed class RefreshService : BackgroundService
     {
         private static CancellationTokenSource _global_cts;

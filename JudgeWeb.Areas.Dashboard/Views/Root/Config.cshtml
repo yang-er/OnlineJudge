@@ -1,8 +1,6 @@
 ﻿@model IEnumerable<Configure>
 @{
     ViewData["Title"] = "Configuration";
-    ViewData["DisableAjaxRefresh"] = true;
-
     var groups = Model.GroupBy(c => c.Category);
 }
 

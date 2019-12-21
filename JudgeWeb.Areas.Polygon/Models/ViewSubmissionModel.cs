@@ -8,6 +8,7 @@ namespace JudgeWeb.Areas.Polygon.Models
     {
         public ViewSubmissionModel() { }
 
+        public bool CombinedRunCompare { get; set; }
         public int SubmissionId { get; set; }
         public Verdict Status { get; set; }
         public Verdict? Expected { get; set; }

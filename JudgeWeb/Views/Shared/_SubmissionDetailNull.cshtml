@@ -1,0 +1,8 @@
+@using JudgeWeb.Data
+@model (Detail, Testcase)
+@{ var (detail, testcase) = Model; }
+
+<div class="run">
+    <h4 id="run-@testcase.Rank">Run @testcase.Rank</h4>
+    <p class="nodata">Testcase not used.</p>
+</div>

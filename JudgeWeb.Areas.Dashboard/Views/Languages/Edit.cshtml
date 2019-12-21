@@ -2,7 +2,6 @@
 @{
     string op = ViewBag.Operator;
     ViewData["Title"] = $"{op} language {Model.ExternalId}";
-    ViewData["DisableAjaxRefresh"] = true;
     IEnumerable<string> execs = ViewBag.Executables;
     var sli = execs.Select(s => new SelectListItem(s, s));
 }

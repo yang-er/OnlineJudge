@@ -1,6 +1,8 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using EntityFrameworkCore.Cacheable;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
+using System.Data.SqlClient;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Net;
@@ -20,6 +22,24 @@ namespace JudgeWeb.Data
         public IQueryable<Submission> Submissions => DbContext.Submissions;
 
         public IQueryable<Judging> Judgings => DbContext.Judgings;
+
+
+        public async Task<IEnumerable<SubmissionStatistics>> StatisticsByUserAsync(int uid)
+        {
+            return await DbContext
+                .Query<SubmissionStatistics>()
+                .FromSql(
+                    "SELECT COUNT(*) AS [TotalSubmission], [a].[PublicId] AS [ProblemId], " +
+                        "SUM(CASE WHEN [j].[Status] = 11 THEN 1 ELSE 0 END) AS [AcceptedSubmission], " +
+                        "@__uid AS [Author], 0 AS [ContestId] " +
+                    "FROM [Submissions] AS [s] " +
+                    "INNER JOIN [Archives] AS [a] ON [s].[ProblemId] = [a].[ProblemId] " +
+                    "INNER JOIN [Judgings] AS [j] ON ([s].[SubmissionId] = [j].[SubmissionId]) AND ([j].[Active] = 1) " +
+                    "WHERE ([s].[ContestId] = 0) AND ([s].[Author] = @__uid)" +
+                    "GROUP BY [a].[PublicId]", new SqlParameter("__uid", uid))
+                .Cacheable(TimeSpan.FromMinutes(10))
+                .ToListAsync();
+        }
 
 
         public async Task<IEnumerable<(Submission, Judging)>> EnumerateAsync(

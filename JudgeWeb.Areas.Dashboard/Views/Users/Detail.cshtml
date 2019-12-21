@@ -1,7 +1,6 @@
 ﻿@model User
 @{
     ViewData["Title"] = "User u" + Model.Id;
-    ViewData["DisableAjaxRefresh"] = true;
     IEnumerable<Role> roles = ViewBag.Roles;
     IEnumerable<(Contest, Team, TeamAffiliation, TeamCategory)> teams = ViewBag.Teams;
     IEnumerable<(Submission, Judging)> subs = ViewBag.Submissions;

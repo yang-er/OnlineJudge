@@ -3,7 +3,6 @@
     ViewData["Title"] = Model.NewsId == 0
         ? "Add news"
         : $"Edit news {Model.NewsId}";
-    ViewData["DisableAjaxRefresh"] = true;
 }
 
 <h2 class="mt-2">@ViewData["Title"]</h2>

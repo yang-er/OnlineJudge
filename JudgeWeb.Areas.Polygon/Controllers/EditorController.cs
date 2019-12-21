@@ -31,6 +31,10 @@ namespace JudgeWeb.Areas.Polygon.Controllers
                 await DbContext.Testcases
                     .Where(t => t.ProblemId == pid)
                     .CountAsync();
+            var arch = await DbContext.Archives
+                .Where(a => a.ProblemId == pid)
+                .SingleOrDefaultAsync();
+            ViewBag.Archive = arch;
             return View(Problem);
         }
 
@@ -71,6 +75,66 @@ namespace JudgeWeb.Areas.Polygon.Controllers
             }
 
             return View(items);
+        }
+
+
+        [HttpGet]
+        [ValidateInAjax]
+        [Authorize(Roles = "Administrator,Problem")]
+        public async Task<IActionResult> Archive(int pid)
+        {
+            var arch = await DbContext.Archives
+                .Where(a => a.ProblemId == pid)
+                .SingleOrDefaultAsync();
+            return Window(arch ?? new ProblemArchive { ProblemId = pid });
+        }
+
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Administrator,Problem")]
+        public async Task<IActionResult> Archive(int pid, ProblemArchive model)
+        {
+            if (!await DbContext.Archives.AnyAsync(a => a.ProblemId == pid))
+            {
+                if (model.PublicId == 0)
+                {
+                    model.PublicId = await DbContext.Archives
+                        .MaxAsync(p => p.PublicId);
+                    if (model.PublicId == 0) model.PublicId = 1001;
+                    else model.PublicId++;
+                }
+
+                model.ProblemId = pid;
+                var existed = await DbContext.Archives
+                    .Where(a => a.PublicId == model.PublicId)
+                    .AnyAsync();
+
+                if (existed)
+                {
+                    StatusMessage = "Error public id was set.";
+                }
+                else
+                {
+                    model.TagName = model.TagName ?? "";
+                    DbContext.Archives.Add(model);
+                    await DbContext.SaveChangesAsync();
+                    StatusMessage = $"Problem published as {model.PublicId}.";
+                }
+            }
+            else
+            {
+                var item = await DbContext.Archives
+                    .Where(a => a.ProblemId == pid)
+                    .FirstOrDefaultAsync();
+                if (item == null) return BadRequest();
+                item.TagName = model.TagName;
+                DbContext.Archives.Update(item);
+                await DbContext.SaveChangesAsync();
+                StatusMessage = "Problem tag updated.";
+            }
+
+            return RedirectToAction(nameof(Overview));
         }
 
 

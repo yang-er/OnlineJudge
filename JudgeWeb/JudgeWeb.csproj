@@ -3,6 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netcoreapp2.2</TargetFramework>
     <AspNetCoreHostingModel>InProcess</AspNetCoreHostingModel>
+    <UserSecretsId>945021cc-5429-4c42-9510-1ff6d4ee52ec</UserSecretsId>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -38,7 +39,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\JudgeWeb.Areas.Account\JudgeWeb.Areas.Account.csproj" />
-    <ProjectReference Include="..\JudgeWeb.Areas.Api\JudgeWeb.Areas.Api.csproj" />
     <ProjectReference Include="..\JudgeWeb.Areas.Contest\JudgeWeb.Areas.Contest.csproj" />
     <ProjectReference Include="..\JudgeWeb.Areas.Dashboard\JudgeWeb.Areas.Dashboard.csproj" />
     <ProjectReference Include="..\JudgeWeb.Areas.Judge\JudgeWeb.Areas.Judge.csproj" />

@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
@@ -12,6 +13,7 @@ namespace JudgeWeb.Data
     {
         public UserManager(
             IUserStore<User> store,
+            AppDbContext db,
             IOptions<IdentityOptions> optionsAccessor,
             IPasswordHasher<User> passwordHasher,
             IEnumerable<IUserValidator<User>> userValidators,
@@ -30,11 +32,18 @@ namespace JudgeWeb.Data
                   services,
                   logger)
         {
+            _dbContext = db;
         }
-        
+
+        readonly AppDbContext _dbContext;
         const string ClaimOfNickName = "XYS.NickName";
         const string Email2TokenProvider = "Email2";
         const string Email2TokenPurpose = "Email2Confirmation";
+
+        public override bool SupportsUserTwoFactor => false;
+        public override bool SupportsUserTwoFactorRecoveryCodes => false;
+
+        public IQueryable<Student> Students => _dbContext.Students;
 
         public string GetNickName(ClaimsPrincipal claim)
         {
@@ -57,7 +66,9 @@ namespace JudgeWeb.Data
             if (!await VerifyUserTokenAsync(user, Email2TokenProvider, Email2TokenPurpose, token))
                 return IdentityResult.Failed(ErrorDescriber.InvalidToken());
             user.StudentVerified = true;
-            return await UpdateUserAsync(user);
+            var result = await UpdateUserAsync(user);
+            if (result.Succeeded) await AddToRoleAsync(user, "Student");
+            return result;
         }
     }
 }
