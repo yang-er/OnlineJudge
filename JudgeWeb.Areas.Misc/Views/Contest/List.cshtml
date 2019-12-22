@@ -1,0 +1,42 @@
+﻿@model IEnumerable<ContestListModel>
+@{
+    ViewData["Title"] = "Contests";
+
+    string ContestState(ContestListModel c)
+    {
+        if (!c.StartTime.HasValue) return "table-primary";
+        if (DateTime.Now < c.EndTime) return "table-warning";
+        return "";
+    }
+}
+
+<table class="table table-responsive-lg mt-md-3">
+    <thead>
+        <tr>
+            <th style="min-width:24em">Contest</th>
+            <th style="min-width:12em">Begin Time</th>
+            <th style="min-width:7.5em;text-align:center">Length</th>
+            <th style="min-width:6.5em;text-align:center">Teams</th>
+            <th style="min-width:7.5em;text-align:center">Rule</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var contest in Model)
+        {
+        <if cond="@(contest.IsPublic || contest.IsRegistered || User.IsInRoles("Administrator,JuryOfContest"+contest.ContestId))">
+            <tr class="@ContestState(contest)">
+                <td class="bowtie">
+                    <if cond="!contest.IsPublic">
+                        <i class="fas fa-eye-slash"></i>
+                    </if>
+                    <a asp-action="Info" asp-controller="Public" asp-area="Contest" asp-route-cid="@contest.ContestId">@(string.IsNullOrEmpty(contest.Name) ? "(unnamed)" : contest.Name)</a>
+                </td>
+                <td>@Html.CstTime(contest.StartTime)</td>
+                <td align="center">@(contest.EndTime - contest.StartTime)</td>
+                <td class="bowtie" align="center"><i class="fas fa-user"></i>&times;@contest.TeamCount</td>
+                <td align="center"><verdict0 type="ContestRule" value="@contest.RankingStrategy" /></td>
+            </tr>
+        </if>
+        }
+    </tbody>
+</table>

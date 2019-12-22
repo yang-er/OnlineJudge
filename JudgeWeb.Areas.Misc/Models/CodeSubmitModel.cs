@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel;
 
-namespace JudgeWeb.Areas.Judge.Models
+namespace JudgeWeb.Areas.Misc.Models
 {
     public class CodeSubmitModel
     {

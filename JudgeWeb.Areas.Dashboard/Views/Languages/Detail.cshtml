@@ -59,7 +59,7 @@
     <tbody>
         @foreach (var (sub, grade) in subs)
         {
-            <tr asp-area="Judge" asp-controller="Status" asp-action="View" asp-route-id="@sub.SubmissionId" role="row">
+            <tr asp-area="Polygon" asp-controller="Submissions" asp-action="Detail" asp-route-pid="@sub.ProblemId" asp-route-sid="@sub.SubmissionId" role="row">
                 <td use-a>s@(sub.SubmissionId)</td>
                 <td use-a>@(sub.ContestId == 0 ? "-" : "c" + sub.ContestId)</td>
                 <td use-a>p@(sub.ProblemId)</td>

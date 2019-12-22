@@ -1,0 +1,74 @@
+﻿@model CodeSubmitModel
+@{
+    IEnumerable<SelectListItem> langs = ViewBag.Language;
+    Layout = null;
+}
+
+<form asp-action="Submit" method="post" name="submit_problem">
+    <input type="hidden" asp-for="ProblemId" />
+    <div class="modal fade" data-backdrop="static" id="modal-@ViewData["HandleKey"]" tabindex="-1" role="dialog" aria-labelledby="modal-@ViewData["HandleKey"]-label" aria-hidden="true">
+        <div class="modal-dialog" style="max-width:800px" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modal-@ViewData["HandleKey"]-label">
+                        Submit Problem @Model.ProblemId
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="required" asp-for="Language">Language</label>
+                        <select asp-for="Language" asp-items="langs" id="submit-lang" required class="form-control custom-select form-control">
+                            <option value="" selected>Select a language</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <script src="~/static/ace/ace.js"></script>
+                        <label class="required" asp-for="Code"></label>
+                        <textarea id="codearea" asp-for="Code" hidden="hidden" required></textarea>
+                        <div id="editor0" class="form-control"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn-success btn">
+                        <i class="fas fa-cloud-upload-alt"></i> Submit
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<script>
+    $(function () {
+        $('form[name="submit_problem"]').on('submit', function () {
+            var question =
+                'Language: ' + $('#submit-lang').find('option:selected').text() + '\n' +
+                '\nMake submission?';
+            return confirm(question);
+        });
+    });
+
+    var editor0 = ace.edit("editor0");
+    editor0.setOptions({ maxLines: 13, minLines: 13 });
+    editor0.setTheme("ace/theme/eclipse");
+    editor0.session.on('change', function () {
+        $('#codearea').val(editor0.session.getValue());
+    });
+
+    function setEditorMode(lang) {
+        editor0.session.setMode({ path: lang, v: Date.now() });
+    }
+
+    var langlist = ["", "c_cpp", "c_cpp", "java", "python", "python",
+        "pascal", "csharp", "kotlin", "haskell", "perl", "fortran"];
+
+    $('#submit-lang').on('change', function () {
+        setEditorMode("ace/mode/" + langlist[$(this).val()]);
+    });
+</script>

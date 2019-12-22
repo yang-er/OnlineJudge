@@ -1,0 +1,88 @@
+﻿@{ 
+    ViewData["Title"] = $"Problem {ViewData["Id"]}";
+    var srcs = (string)ViewData["Source"];
+    var tag = (string)ViewData["Tag"];
+    IEnumerable<(Submission, Judging)> subs = ViewBag.Subs;
+}
+<link rel="stylesheet" href="~/static/katex.min.css" />
+<script defer src="~/static/katex.min.js"></script>
+
+<div class="container-fluid mt-4 mb-5 pl-0 pr-0">
+    <div class="row">
+        <div class="col-12 col-lg-8 col-xl-6">
+            @Html.Raw((string)ViewData["Content"])
+        </div>
+        <div class="col-12 col-lg-4 col-xl-6">
+            <h4 class="mt-lg-5">Tags</h4>
+            <p>
+                @foreach (var src in tag.Split(',').Where(s => !string.IsNullOrWhiteSpace(s)))
+                {
+                    <span class="badge badge-secondary">@src.Trim()</span>
+                }
+            </p>
+            <if cond="!string.IsNullOrWhiteSpace(srcs)">
+                <h4>Source</h4>
+                <p>
+                    @foreach (var src in srcs.Split(',').Where(s => !string.IsNullOrWhiteSpace(s)))
+                    {
+                        <span class="badge badge-info">@src.Trim()</span>
+                    }
+                </p>
+            </if>
+            <h4>Operations</h4>
+            <p>
+                <a asp-action="Submit" data-toggle="ajaxWindow" data-target="submit" class="btn btn-success btn-sm">
+                    <i class="fas fa-cloud-upload-alt"></i> Submit
+                </a>
+                <viewmodule roles="Administrator,AuthorOfProblem@(ViewData["ReadId"])">
+                    <a asp-action="Overview" asp-controller="Editor" asp-area="Polygon" asp-route-pid="@ViewData["ReadId"]" class="btn btn-sm btn-primary">
+                        <i class="fas fa-book"></i> Polygon
+                    </a>
+                </viewmodule>
+            </p>
+            <h4>My submissions</h4>
+            <table class="data-table table table-hover table-striped table-sm submissions-table table-responsive" role="grid">
+                <thead class="thead-light">
+                    <tr>
+                        <th scope="col">ID</th>
+                        <th scope="col">time</th>
+                        <th scope="col">verdict</th>
+                    </tr>
+                </thead>
+                <tbody id="my-submissions">
+                    @foreach (var (sub, grade) in subs)
+                    {
+                        <tr asp-action="Submission" asp-route-sid="@sub.SubmissionId" data-toggle="ajaxWindow" data-target="view" role="row">
+                            <td use-a>s@(sub.SubmissionId)</td>
+                            <td use-a>@sub.Time.ToString("yyyy/M/d HH:mm")</td>
+                            <td use-a><verdict3 value="@grade.Status" /></td>
+                        </tr>
+                    }
+
+                    <if cond="subs.Count() == 0">
+                        <tr role="row">
+                            <td colspan="3" class="text-center">No submissions were found.</td>
+                        </tr>
+                    </if>
+
+                    <if cond="subs.Count() >= 9">
+                        <tr>
+                            <td colspan="3" class="text-center">
+                                <a class="text-reset" asp-action="submissions" data-toggle="ajaxWindow" data-target="mysub">
+                                    <i class="fas fa-ellipsis-h"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    </if>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<style>
+    .samp .input, .samp .output { border: 1px solid #888888; }
+    .samp .output { margin-bottom: 1em; position: relative; top: -1px; }
+    .samp .output pre, .samp .input pre { background-color: #EFEFEF; line-height: 1.25em; margin: 0; padding: 0.25em; }
+    .samp .title { background-color: #FFFFFF; border-bottom: 1px solid #888888; font-family: arial; font-weight: bold; padding: 0.25em; }
+</style>

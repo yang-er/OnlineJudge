@@ -27,6 +27,16 @@ namespace JudgeWeb.Data
         public string TagName { get; set; }
 
         /// <summary>
+        /// AC提交数
+        /// </summary>
+        public int Accepted { get; set; }
+
+        /// <summary>
+        /// 总提交数
+        /// </summary>
+        public int Total { get; set; }
+
+        /// <summary>
         /// 题目名称
         /// </summary>
         [Ignore]
@@ -40,12 +50,15 @@ namespace JudgeWeb.Data
 
         public ProblemArchive() { }
 
-        public ProblemArchive(int pubid, string title, string source, string tag)
+        public ProblemArchive(ProblemArchive src, string title, string source)
         {
             Title = title;
             Source = source;
-            TagName = tag;
-            PublicId = pubid;
+            TagName = src.TagName;
+            PublicId = src.PublicId;
+            Accepted = src.Accepted;
+            Total = src.Total;
+            ProblemId = src.ProblemId;
         }
     }
 }

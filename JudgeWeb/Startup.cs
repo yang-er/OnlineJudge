@@ -29,7 +29,7 @@ namespace JudgeWeb
             Configuration = configuration;
             Environment = env;
             AssemblyPrefix = "JudgeWeb.Areas.";
-            EnabledAreas = new[] { "Misc", "Account", "Judge", "Contest", "Dashboard", "Polygon" };
+            EnabledAreas = new[] { "Misc", "Account", "Contest", "Dashboard", "Polygon" };
         }
 
         public IConfiguration Configuration { get; }
@@ -114,6 +114,7 @@ namespace JudgeWeb
 
             services.AddOjUpdateService(
                 Environment.IsDevelopment() ? 24 * 7 * 60 : 3 * 24 * 60);
+            services.AddHostedService<ArchiveCacheService>();
 
             services.AddProblemRepository();
             services.AddMarkdown();

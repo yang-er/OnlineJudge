@@ -1,0 +1,53 @@
+﻿@model IEnumerable<ProblemArchive>
+@{
+    ViewData["Title"] = "Problem List";
+    IEnumerable<SubmissionStatistics> stats = ViewBag.Stat;
+}
+
+<table class="mt-3 table table-responsive-md">
+    <thead>
+        <tr>
+            <th style="min-width:6em"><span class="d-none d-lg-inline"> Prob.</span>ID</th>
+            <th style="min-width:20em">Title</th>
+            <th style="min-width:10em">Ratio<span class="d-none d-lg-inline"> (AC/Total)</span></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            var stat = stats.FirstOrDefault(a => a.ProblemId == item.PublicId);
+            <tr>
+                <td>
+                    @item.PublicId
+                    <if cond="stat != null">
+                        <if cond="stat.AcceptedSubmission > 0">
+                            <i class="fas fa-check-circle text-success"></i>
+                        </if>
+                        <if cond="stat.AcceptedSubmission == 0">
+                            <i class="fas fa-exclamation-circle text-warning"></i>
+                        </if>
+                    </if>
+                </td>
+                <td>
+                    <a asp-action="View" asp-route-pid="@item.PublicId">@item.Title</a>
+                    @foreach (var src in item.Source.Split(',').Where(s => !string.IsNullOrWhiteSpace(s)))
+                    {
+                        <span class="badge badge-info" style="font-size:0.7em">@src.Trim()</span>
+                    }
+                    @foreach (var src in item.TagName.Split(',').Where(s => !string.IsNullOrWhiteSpace(s)))
+                    {
+                        <span class="badge badge-secondary" style="font-size:0.7em">@src.Trim()</span>
+                    }
+                </td>
+                <td>@Html.RatioOf(item.Accepted, item.Total)</td>
+            </tr>
+        }
+    </tbody>
+    <tfoot>
+        <tr>
+            <td colspan="3">
+                <partial name="_Pagination" model="((int)ViewBag.Page, (int)ViewBag.TotalPage)" />
+            </td>
+        </tr>
+    </tfoot>
+</table>

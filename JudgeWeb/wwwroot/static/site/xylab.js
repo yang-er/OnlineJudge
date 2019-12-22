@@ -5,7 +5,7 @@
 function ajaxget(geturl, dom) {
     return $.ajax({
         type: "GET",
-        url: geturl + "&inajax=1",
+        url: geturl + "?inajax=1",
         dataType: "html",
         complete: function (jqXHR) {
             if (jqXHR.status == 200) {
@@ -141,6 +141,12 @@ function initXylabFunctions() {
 		showWindow($(this).data("target"), $(this).data("url"));
 		return false;
 	});
+
+    // ajaxUpdate
+    $body.on('click', 'a[data-toggle="ajaxUpdate"]', function () {
+        ajaxget($(this).prop("href"), $(this).data("target"));
+        return false;
+    });
 
 	// gotoUrl
 	$body.on('click', 'tr[data-toggle="gotoUrl"]', function () {

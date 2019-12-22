@@ -29,7 +29,7 @@
 @foreach (var prob in stat.Where(p => p.AcceptedSubmission > 0))
 {
     <div class="mr-1 d-inline-block">
-        <a asp-area="Judge" asp-controller="Problem" asp-action="View" asp-route-pid="@prob.ProblemId">@prob.ProblemId</a>
+        <a asp-area="Misc" asp-controller="Problem" asp-action="View" asp-route-pid="@prob.ProblemId">@prob.ProblemId</a>
         <small class="text-danger">@prob.AcceptedSubmission/@prob.TotalSubmission</small>
     </div>
 }
@@ -38,7 +38,7 @@
 @foreach (var prob in stat.Where(p => p.AcceptedSubmission == 0))
 {
     <div class="mr-1 d-inline-block">
-        <a asp-area="Judge" asp-controller="Problem" asp-action="View" asp-route-pid="@prob.ProblemId">@prob.ProblemId</a>
+        <a asp-area="Misc" asp-controller="Problem" asp-action="View" asp-route-pid="@prob.ProblemId">@prob.ProblemId</a>
         <small class="text-danger mr-1">@prob.AcceptedSubmission/@prob.TotalSubmission</small>
     </div>
 }

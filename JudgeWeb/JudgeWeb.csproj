@@ -41,7 +41,6 @@
     <ProjectReference Include="..\JudgeWeb.Areas.Account\JudgeWeb.Areas.Account.csproj" />
     <ProjectReference Include="..\JudgeWeb.Areas.Contest\JudgeWeb.Areas.Contest.csproj" />
     <ProjectReference Include="..\JudgeWeb.Areas.Dashboard\JudgeWeb.Areas.Dashboard.csproj" />
-    <ProjectReference Include="..\JudgeWeb.Areas.Judge\JudgeWeb.Areas.Judge.csproj" />
     <ProjectReference Include="..\JudgeWeb.Areas.Misc\JudgeWeb.Areas.Misc.csproj" />
     <ProjectReference Include="..\JudgeWeb.Areas.Polygon\JudgeWeb.Areas.Polygon.csproj" />
     <ProjectReference Include="..\JudgeWeb.Data\JudgeWeb.Data.csproj" />

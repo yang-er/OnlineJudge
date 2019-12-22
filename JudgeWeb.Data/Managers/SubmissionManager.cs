@@ -1,5 +1,7 @@
 ﻿using EntityFrameworkCore.Cacheable;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Internal;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
@@ -12,6 +14,8 @@ namespace JudgeWeb.Data
 {
     public class SubmissionManager
     {
+        private static IMemoryCache Cache { get; } = new MemoryCache(new MemoryCacheOptions { Clock = new SystemClock() });
+
         protected AppDbContext DbContext { get; }
 
         public SubmissionManager(AppDbContext adbc)
@@ -24,21 +28,26 @@ namespace JudgeWeb.Data
         public IQueryable<Judging> Judgings => DbContext.Judgings;
 
 
-        public async Task<IEnumerable<SubmissionStatistics>> StatisticsByUserAsync(int uid)
+        public Task<IEnumerable<SubmissionStatistics>> StatisticsByUserAsync(int uid)
         {
-            return await DbContext
-                .Query<SubmissionStatistics>()
-                .FromSql(
-                    "SELECT COUNT(*) AS [TotalSubmission], [a].[PublicId] AS [ProblemId], " +
-                        "SUM(CASE WHEN [j].[Status] = 11 THEN 1 ELSE 0 END) AS [AcceptedSubmission], " +
-                        "@__uid AS [Author], 0 AS [ContestId] " +
-                    "FROM [Submissions] AS [s] " +
-                    "INNER JOIN [Archives] AS [a] ON [s].[ProblemId] = [a].[ProblemId] " +
-                    "INNER JOIN [Judgings] AS [j] ON ([s].[SubmissionId] = [j].[SubmissionId]) AND ([j].[Active] = 1) " +
-                    "WHERE ([s].[ContestId] = 0) AND ([s].[Author] = @__uid)" +
-                    "GROUP BY [a].[PublicId]", new SqlParameter("__uid", uid))
-                .Cacheable(TimeSpan.FromMinutes(10))
-                .ToListAsync();
+            return Cache.GetOrCreateAsync<IEnumerable<SubmissionStatistics>>($"SubStatU{uid}", async (t) =>
+            {
+                var item = await DbContext
+                    .Query<SubmissionStatistics>()
+                    .FromSql(
+                        "SELECT COUNT(*) AS [TotalSubmission], [a].[PublicId] AS [ProblemId], " +
+                            "SUM(CASE WHEN [j].[Status] = 11 THEN 1 ELSE 0 END) AS [AcceptedSubmission], " +
+                            "@__uid AS [Author], 0 AS [ContestId] " +
+                        "FROM [Submissions] AS [s] " +
+                        "INNER JOIN [Archives] AS [a] ON [s].[ProblemId] = [a].[ProblemId] " +
+                        "INNER JOIN [Judgings] AS [j] ON ([s].[SubmissionId] = [j].[SubmissionId]) AND ([j].[Active] = 1) " +
+                        "WHERE ([s].[ContestId] = 0) AND ([s].[Author] = @__uid)" +
+                        "GROUP BY [a].[PublicId]", new SqlParameter("__uid", uid))
+                    .ToListAsync();
+                item.Sort((a, b) => a.ProblemId.CompareTo(b.ProblemId));
+                t.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10);
+                return item;
+            });
         }
 
 

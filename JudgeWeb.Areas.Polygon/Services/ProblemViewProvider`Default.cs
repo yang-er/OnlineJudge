@@ -27,8 +27,8 @@ namespace JudgeWeb.Areas.Polygon.Services
             htmlBuilder.AppendLine($"<h1>{model.Title}</h1>");
 
             htmlBuilder.AppendLine("<ul class=\"list-unstyled\">");
-            htmlBuilder.AppendLine("  <li>Input file: <em>standard input</em></li>");
-            htmlBuilder.AppendLine("  <li>Output file: <em>standard output</em></li>");
+            //htmlBuilder.AppendLine("  <li>Input file: <em>standard input</em></li>");
+            //htmlBuilder.AppendLine("  <li>Output file: <em>standard output</em></li>");
             htmlBuilder.AppendLine($"  <li>Time limit: {model.TimeLimit}ms</li>");
             htmlBuilder.AppendLine($"  <li>Memory limit: {model.MemoryLimit}k</li>");
             //htmlBuilder.AppendLine("  <li>Submissions: {SubmissionDetails}</li>");
