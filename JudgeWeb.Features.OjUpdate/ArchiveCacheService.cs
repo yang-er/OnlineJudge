@@ -27,12 +27,16 @@ namespace JudgeWeb.Features.OjUpdate
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             Logger.LogDebug("Fetch service started.");
+            bool firstRun = ServiceProvider
+                .GetRequiredService<IHostingEnvironment>()
+                .IsDevelopment();
 
             while (!stoppingToken.IsCancellationRequested)
             {
                 try
                 {
-                    await UpdateAsync(stoppingToken);
+                    if (!firstRun) await UpdateAsync(stoppingToken);
+                    firstRun = false;
                     await Task.Delay(1000 * 60 * 60 * 6, stoppingToken);
                 }
                 catch (TaskCanceledException)

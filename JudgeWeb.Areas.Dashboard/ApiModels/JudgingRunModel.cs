@@ -65,6 +65,7 @@ namespace JudgeWeb.Areas.Api.Models
                 OutputDiff = output_diff,
                 OutputSystem = output_system,
                 JudgingId = jid,
+                CompleteTime = DateTimeOffset.Now,
             };
         }
     }

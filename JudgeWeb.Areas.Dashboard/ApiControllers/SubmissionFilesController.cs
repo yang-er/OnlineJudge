@@ -18,7 +18,7 @@ namespace JudgeWeb.Areas.Api.Controllers
     [Area("Api")]
     [Route("[area]/contests/{cid}/submissions")]
     [Authorize(AuthenticationSchemes = "Basic")]
-    [Authorize(Roles = "Administrator,Judgehost")]
+    [Authorize(Roles = "Administrator,Judgehost,CDS")]
     [Produces("application/json")]
     public class SubmissionFilesController : ControllerBase
     {
@@ -40,8 +40,8 @@ namespace JudgeWeb.Areas.Api.Controllers
         /// <summary>
         /// Get the files for the given submission as a ZIP archive
         /// </summary>
-        /// <param name="cid">The ID of the entity to get</param>
-        /// <param name="sid">The contest ID</param>
+        /// <param name="sid">The ID of the entity to get</param>
+        /// <param name="cid">The contest ID</param>
         /// <response code="200">The files for the submission as a ZIP archive</response>
         /// <response code="500">An error occurred while creating the ZIP file</response>
         [HttpGet("{sid}/[action]")]

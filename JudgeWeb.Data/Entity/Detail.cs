@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using System;
 
 namespace JudgeWeb.Data
 {
@@ -42,32 +43,16 @@ namespace JudgeWeb.Data
         /// </summary>
         public int ExecuteTime { get; set; }
 
-        /*
         /// <summary>
-        /// 交互输入大小
+        /// 完成此测试点时间
         /// </summary>
-        public int StdinBytes { get; set; }
+        public DateTimeOffset CompleteTime { get; set; }
 
         /// <summary>
-        /// 标准输出大小
+        /// 其他评测信息
         /// </summary>
-        public int StdoutBytes { get; set; }
-
-        /// <summary>
-        /// 标准错误输出大小
-        /// </summary>
-        public int StderrBytes { get; set; }
-
-        /// <summary>
-        /// 退出代码
-        /// </summary>
-        public int ExitCode { get; set; }
-
-        /// <summary>
-        /// 是否爆了WallTime
-        /// </summary>
-        public bool BreakingWallTime { get; set; }
-        */
+        [NonUnicode(MaxLength = 131072)]
+        public string MetaData { get; set; }
 
         /// <summary>
         /// 系统输出，以BASE64编码
