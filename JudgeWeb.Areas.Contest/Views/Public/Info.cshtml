@@ -4,8 +4,9 @@
     Team team = ViewBag.Team;
     Dictionary<int, TeamCategory> cats = ViewBag.Categories;
     Dictionary<int, TeamAffiliation> affs = ViewBag.Affiliations;
-    string msg = ViewBag.DisplayMessage;
 }
+
+
 
 <hgroup class="mb-3">
     <h1 class="mt-3">
@@ -16,8 +17,6 @@
     </h1>
     <h4 class="text-left">@ctx.Name</h4>
 </hgroup>
-
-<partial name="_StatusMessage" model="msg" />
 
 <div class="row">
     <div class="col-lg-7">

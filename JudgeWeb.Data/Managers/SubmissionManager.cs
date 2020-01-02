@@ -1,5 +1,4 @@
-﻿using EntityFrameworkCore.Cacheable;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Internal;
 using System;
@@ -26,6 +25,28 @@ namespace JudgeWeb.Data
         public IQueryable<Submission> Submissions => DbContext.Submissions;
 
         public IQueryable<Judging> Judgings => DbContext.Judgings;
+
+        public IQueryable<JudgeHost> Judgehosts => DbContext.JudgeHosts;
+
+        public IQueryable<Language> Languages => DbContext.Languages;
+
+
+        public async Task<IEnumerable<(Detail, Testcase)>> GetDetailsAsync(int jid, int pid)
+        {
+            var query =
+                from t in DbContext.Testcases
+                where t.ProblemId == pid
+                orderby t.Rank ascending
+                join d in DbContext.Details
+                    on new { t.TestcaseId, JudgingId = jid }
+                    equals new { d.TestcaseId, d.JudgingId }
+                    into dd
+                from d in dd.DefaultIfEmpty()
+                select new { d, t };
+
+            var result = await query.ToListAsync();
+            return result.Select(a => (a.d, a.t));
+        }
 
 
         public Task<IEnumerable<SubmissionStatistics>> StatisticsByUserAsync(int uid)

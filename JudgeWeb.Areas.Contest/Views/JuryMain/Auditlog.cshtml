@@ -1,0 +1,38 @@
+﻿@model IEnumerable<AuditLog>
+@{
+    ViewData["Title"] = "Auditlog";
+    int currentPage = ViewBag.Page;
+    int totalPage = ViewBag.TotalPage;
+}
+
+<h2 class="mt-2">Auditlog</h2>
+
+<partial name="_Pagination" model="(currentPage, totalPage)" />
+
+<div class="table-wrapper">
+    <table class="data-table table table-sm table-striped" style="width:auto">
+        <thead>
+            <tr>
+                <th scope="col" class="searchable">ID</th>
+                <th scope="col" class="searchable">time</th>
+                <th scope="col" class="searchable">user</th>
+                <th scope="col" class="searchable">contest</th>
+                <th scope="col" class="searchable">type</th>
+                <th scope="col" class="searchable">comment</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.LogId</td>
+                    <td title="@item.Time">@item.Time.ToString("HH:mm")</td>
+                    <td>@item.UserName</td>
+                    <td>c@(item.ContestId)</td>
+                    <td>@item.Type</td>
+                    <td>@item.Comment</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

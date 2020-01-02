@@ -1,0 +1,89 @@
+﻿@model IEnumerable<SubmissionViewModel>
+@{
+    ViewData["Title"] = "Submission";
+    ViewData["RefreshSpan"] = 30;
+    if (ViewData.ContainsKey("InAjax")) { Layout = null; }
+    Contest ctx = ViewBag.Contest;
+    int correct = 0, total = 0;
+    Dictionary<int, string> tn = ViewBag.TeamNames;
+}
+
+@section Header {
+    <h2 class="mt-2">Submissions</h2>
+    <p style="font-size:1.1em">
+        Show submissions:
+        <a asp-action="List" asp-route-all="false">newest</a>
+        |
+        <a asp-action="List" asp-route-all="true">all</a>
+    </p>
+}
+
+<table class="data-table table table-hover table-striped table-sm submissions-table">
+    <thead class="thead-light">
+        <tr>
+            <th scope="col">ID</th>
+            <th scope="col">time</th>
+            <th scope="col">team</th>
+            <th scope="col">problem</th>
+            <th scope="col">lang</th>
+            <th scope="col">result</th>
+            <th scope="col" class="not-sortable not-searchable">test results</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var sub in Model)
+        {
+            var tooLate = (ctx.EndTime ?? DateTimeOffset.MaxValue) < sub.Time;
+            if (sub.Verdict == Verdict.Accepted) { correct++; }
+            total++;
+            <tr asp-controller="JurySubmission" asp-action="Detail" asp-route-sid="@sub.SubmissionId"
+                data-toggle="gotoUrl"
+                data-problem-id="@sub.Problem?.ProblemId"
+                data-team-id="@sub.TeamId"
+                data-language-id="@sub.Language"
+                data-submission-id="@sub.SubmissionId">
+                <td use-a>s@(sub.SubmissionId)</td>
+                <td use-a>@sub.Time.ToString("HH:mm")</td>
+                <td use-a>@tn.GetValueOrDefault(sub.TeamId) (t@(sub.TeamId))</td>
+                <td use-a class="probid">@sub.Problem?.ShortName</td>
+                <td use-a class="langid">@sub.Language.ExternalId</td>
+                <td use-a>
+                    <verdict3 value="@sub.Verdict" too-late="tooLate" />
+                    <if cond="tooLate"> (<verdict3 value="@sub.Verdict" />)</if>
+                </td>
+                <td class="testcase-results">
+                    @{ int t = 0; foreach (var item in sub.Details) { t++;<verdict6 value="@item" />}@for (; t < (sub.Problem?.TestcaseCount ?? 1); t++) {<verdict6 value="Pending" judging-pending="@(sub.Verdict == Verdict.Pending || sub.Verdict == Verdict.Running)" />}}
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<p>
+    Total correct: @correct, submitted: @total.
+</p>
+
+<style>
+
+    .data-table td a, .data-table td a:hover {
+        display: block;
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .data-table th {
+        white-space: nowrap;
+    }
+
+    .data-table td {
+        white-space: nowrap;
+    }
+
+    .dataTables_filter {
+        text-align: inherit;
+    }
+
+    .table-wrapper {
+        display: inline-block;
+    }
+</style>

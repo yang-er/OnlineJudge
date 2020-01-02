@@ -40,7 +40,9 @@ namespace System
 
         public static string ToDeltaString(this TimeSpan timeSpan)
         {
-            return $"+{Math.Floor(timeSpan.TotalHours)}:{timeSpan.Minutes:d2}:{timeSpan.Seconds:d2}";
+            char abs = timeSpan.TotalMilliseconds < 0 ? '-' : '+';
+            timeSpan = timeSpan.Duration();
+            return $"{abs}{Math.Floor(timeSpan.TotalHours)}:{timeSpan.Minutes:d2}:{timeSpan.Seconds:d2}";
         }
     }
 }

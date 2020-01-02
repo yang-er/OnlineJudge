@@ -16,17 +16,6 @@ namespace JudgeWeb.Data
 
     public static class EntityQueryExtensions
     {
-        public static IQueryable<Executable> WithoutBlob(this IQueryable<Executable> query)
-        {
-            return query.Select(e => new Executable
-            {
-                ExecId = e.ExecId,
-                Description = e.Description,
-                Md5sum = e.Md5sum,
-                Type = e.Type,
-                ZipSize = e.ZipSize,
-            });
-        }
 
         public static bool CheckPermission(this Clarification clar, int teamid)
         {

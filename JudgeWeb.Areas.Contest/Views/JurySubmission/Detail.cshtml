@@ -1,0 +1,213 @@
+﻿@model JuryViewSubmissionModel
+@{
+    var verdictColor = new[]
+    {
+        "grey", // 0
+        "orange",
+        "purple",
+        "#ff3399",
+        "black",
+        "#dc3545", // 5
+        "grey",
+        "#dc3545",
+        "grey",
+        "grey",
+        "grey", // 10
+        "#28a745",
+    };
+
+    string ColorNvd3(Verdict result)
+    {
+        return verdictColor[(int)result];
+    }
+
+    var submit = Model.Submission;
+    var judging = Model.Judging;
+    var prob = Model.Problem;
+    var lang = Model.Language;
+    var team = Model.Team;
+    Contest ctx = ViewBag.Contest;
+
+    ViewData["Title"] = "Submission s" + submit.SubmissionId;
+    double timeLimit = prob.TimeLimit * lang.TimeFactor / 1000;
+}
+
+<style>
+    .judging-table td a, .judging-table td a:hover {
+        display: block;
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .judging-table tr.disabled td a {
+        color: silver
+    }
+</style>
+
+<div class="mt-2 mb-2">
+    <h2 class="mt-0 d-inline mb-0 mr-2">Submission @submit.SubmissionId</h2>
+    <a asp-action="RejudgeOne" class="btn btn-outline-primary btn-sm"><i class="fas fa-sync"></i> Rejudge</a>
+</div>
+
+<div class="submission-summary mb-2">
+    <span>
+        <i class="fas fa-users" title="Team:"></i>
+        <a asp-controller="JuryTeam" asp-action="Detail" asp-route-teamid="@team.TeamId">@team.TeamName (t@(team.TeamId))</a>
+    </span>
+    <span>
+        <i class="fas fa-book-open" title="Problem:"></i>
+        <a asp-area="Polygon" asp-controller="Editor" asp-action="Overview" asp-route-pid="@prob.ProblemId">@prob.ShortName: @prob.Title</a>
+    </span>
+    <span>
+        <i class="fas fa-comments" title="Language:"></i>
+        <a asp-area="Dashboard" asp-controller="Languages" asp-action="Detail" asp-route-langid="@lang.ExternalId">@lang.Name</a>
+    </span>
+    <span>
+        <i class="fas fa-clock" title="Submittime:"></i>
+        <span title="@submit.Time">
+            @((submit.Time - ctx.StartTime).GetValueOrDefault().ToDeltaString())
+        </span>
+    </span>
+    <span>
+        <i class="fas fa-stopwatch" title="Allowed runtime:"></i>
+        @(timeLimit)s
+    </span>
+    <span>
+        <i class="fas fa-code" title="Source code:"></i>
+        <a href="#src-0">View source code</a>
+    </span>
+</div>
+
+<if cond="@(Model.AllJudgings.Count() > 1)">
+    <table class="judging-table table table-striped table-hover table-sm" style="width: auto;">
+        <caption>Judgings</caption>
+        <thead>
+            <tr>
+                <td></td>
+                <th scope="col">ID</th>
+                <th scope="col">start</th>
+                <th scope="col">time</th>
+                <th scope="col">memory</th>
+                <th scope="col">judgehost</th>
+                <th scope="col">result</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var (j, serverName) in Model.AllJudgings)
+            {
+                <tr asp-route-jid="@j.JudgingId" data-toggle="gotoUrl" class="@(j.Active ? "" : "disabled")">
+                    <td use-a><if cond="@(j.JudgingId == judging.JudgingId)"><i class="fas fa-long-arrow-alt-right"></i></if></td>
+                    <td use-a>j@(j.JudgingId)</td>
+                    <td use-a>@j.StartTime?.ToString("HH:mm")</td>
+                    <td use-a>@(j.ExecuteTime)ms</td>
+                    <td use-a>@(j.ExecuteMemory)K</td>
+                    <td use-a><span class="hostname">@serverName</span></td>
+                    <td use-a><verdict3 value="@j.Status" class="@(j.Active ? "" : "disabled")" /></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</if>
+
+<div>
+    <if cond="@(Model.AllJudgings.Count() > 1)">
+        <nvd3 id="maxruntime" title="Max Runtimes" key="Max Runtime"
+              baseline="@timeLimit"
+              max-value="@(Model.AllJudgings.Max(j => j.j.ExecuteTime) / 1000.0)"
+              data="@Model.AllJudgings.Select(j => new { label = $"j{j.j.JudgingId}", value = j.j.ExecuteTime / 1000.0, color = ColorNvd3(j.j.Status) })"
+              x-axis="Judging" y-axis="Runtime (in s)" />
+    </if>
+    <nvd3 id="testcaseruntime" title="Testcase Runtimes" key="Runtime"
+          baseline="@timeLimit"
+          max-value="@(Model.Details.Max(d => d.Item1?.ExecuteTime).GetValueOrDefault() / 1000.0)"
+          data="@Model.Details.Select(r => new { label = $"r{r.Item2.Rank}", value = (r.Item1?.ExecuteTime ?? 0) / 1000.0, color = ColorNvd3(r.Item1?.Status ?? Verdict.Pending) })"
+          x-axis="Testcase Rank" y-axis="Runtime (in s)" />
+</div>
+
+<h2 class="mb-2">Judging j@(judging.JudgingId)</h2>
+
+<div class="mb-2">
+    <div>
+        Result: <verdict3 value="@judging.Status" class="@(judging.Active ? "" : "disabled")" />,
+        Judgehost: <span class="hostname">@(Model.AllJudgings.FirstOrDefault(j => j.j.JudgingId == judging.JudgingId).n)</span>,
+        <span class="judgetime">
+            <if cond="judging.StartTime.HasValue">
+                Judging started: @judging.StartTime?.ToString("HH:mm:ss"),
+                <if cond="@(judging.StopTime.HasValue && judging.Status != Verdict.UndefinedError)">
+                    finished in @((judging.StopTime - judging.StartTime)?.ToString("mm\\:ss"))s
+                </if>
+                <if cond="@(!judging.StopTime.HasValue && judging.Status != Verdict.UndefinedError)">
+                    [still judging - busy @((DateTimeOffset.Now - judging.StartTime.Value).ToString("mm\\:ss"))s]
+                </if>
+                <if cond="@(judging.Status == Verdict.UndefinedError)">
+                    [aborted]
+                </if>
+            </if>
+            <if cond="!judging.StartTime.HasValue">
+                Judging not started yet
+            </if>
+        </span>
+        <if cond="@(judging.StartTime.HasValue && judging.StopTime.HasValue && judging.Status != Verdict.CompileError)">
+            , max / sum runtime: @(judging.ExecuteTime / 1000.0)s / @(Model.Details.Sum(s => s.r?.ExecuteTime ?? 0) / 1000.0)s
+        </if>
+    </div>
+    <if cond="@(judging.Status != Verdict.CompileError)">
+        <table>
+            <tr>
+                <td>testcase runs: </td>
+                <td>
+                    @foreach (var (d, t) in Model.Details)
+                    {<a title="#@t.Rank, @(d == null ? "unknown" : $"runtime: {d.ExecuteTime}ms, result: {d.Status}")" href="#run-@t.Rank" onclick="@if (d?.Status == Verdict.Accepted) {@("display_correctruns(true);")}"><verdict6 value="@(d?.Status ?? Verdict.Pending)" /></a>}
+            </td>
+        </tr>
+    </table>
+</if>
+</div>
+
+<h3>
+    <a class="collapse-link" href="javascript:collapse('#detailcompile')">
+        Compilation
+        <span style="color: @(judging.Status == Verdict.CompileError ? "red" : judging.Status == Verdict.Pending ? "gray" : "#1daa1d");">
+            @(judging.Status == Verdict.CompileError ? "unsuccessful" : judging.Status == Verdict.Pending ? "waiting" : "successful")
+        </span>
+    </a>
+</h3>
+
+<snippet class="@(judging.Status == Verdict.CompileError ? "" : "d-none")" id="detailcompile" base64="@judging.CompileError" />
+
+@if (judging.Status != Verdict.CompileError)
+{
+    foreach (var dt in Model.Details)
+    {
+        var type = dt.Item1 == null
+            ? "_SubmissionDetailNull"
+            : prob.Interactive
+            ? "_SubmissionDetailInteractive"
+            : "_SubmissionDetailOutput";
+        <partial name="@type" model="dt" />
+    }
+}
+
+<style>
+    div.submission-summary > span {
+        margin-right: 10px;
+    }
+
+    .run > h4, .run > h5 {
+        text-align: left;
+    }
+</style>
+
+<h2 class="mt-3" id="src-0">Source code</h2>
+<ace file="Main.@lang.FileExtension" value="@submit.SourceCode.UnBase64()" />
+
+<script type="text/javascript">
+    function display_correctruns(show) {
+        elements = document.getElementsByClassName('run_correct');
+        for (var i = 0; i < elements.length; i++) {
+            elements[i].style.display = show ? 'block' : 'none';
+        }
+    }
+
+    display_correctruns(false);
+</script>

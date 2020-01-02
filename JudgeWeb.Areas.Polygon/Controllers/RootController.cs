@@ -1,5 +1,4 @@
-﻿using EntityFrameworkCore.Cacheable;
-using JudgeWeb.Areas.Polygon.Services;
+﻿using JudgeWeb.Areas.Polygon.Services;
 using JudgeWeb.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -74,11 +73,9 @@ namespace JudgeWeb.Areas.Polygon.Controllers
 
             ViewBag.JudgehostCriticalCount = DbContext.JudgeHosts
                 .Where(jh => jh.PollTime < DateTimeOffset.Now.AddSeconds(-120) && jh.Active)
-                .Cacheable(TimeSpan.FromSeconds(15))
                 .Count();
             ViewBag.InternalErrorCount = DbContext.InternalErrors
                 .Where(ie => ie.Status == InternalError.ErrorStatus.Open)
-                .Cacheable(TimeSpan.FromSeconds(15))
                 .Count();
             return View(model.Select(a => (a.p, a.id, a.tag)));
         }

@@ -31,14 +31,14 @@ namespace JudgeWeb.Areas.Api.Controllers
         public async Task<ActionResult<ContestTeam[]>> GetAll(
             int cid, int[] ids, int? category, string affiliation, bool @public)
         {
-            var teams = DbContext.Teams
+            var teams = Service.Teams
                 .Where(t => t.ContestId == cid);
             if (category.HasValue)
                 teams = teams.Where(t => t.CategoryId == category);
             if (ids != null && ids.Length > 0)
                 teams = teams.Where(t => ids.Contains(t.TeamId));
             var query2 = teams.Join(
-                inner: DbContext.TeamAffiliations,
+                inner: Service.TeamAffiliations,
                 outerKeySelector: t => t.AffiliationId,
                 innerKeySelector: a => a.AffiliationId,
                 resultSelector: (t, a) => new { t, a });
@@ -47,7 +47,7 @@ namespace JudgeWeb.Areas.Api.Controllers
             if (@public)
                 query2 = query2
                     .Join(
-                        inner: DbContext.TeamCategories,
+                        inner: Service.TeamCategories,
                         outerKeySelector: t => t.t.CategoryId,
                         innerKeySelector: c => c.CategoryId,
                         resultSelector: (a, c) => new { a.t, a.a, c })
@@ -77,10 +77,10 @@ namespace JudgeWeb.Areas.Api.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<ContestTeam>> GetOne(int cid, int id)
         {
-            return await DbContext.Teams
+            return await Service.Teams
                 .Where(t => t.ContestId == cid && t.TeamId == id)
                 .Join(
-                    inner: DbContext.TeamAffiliations,
+                    inner: Service.TeamAffiliations,
                     outerKeySelector: t => t.AffiliationId,
                     innerKeySelector: a => a.AffiliationId,
                     resultSelector: (t, a) => new ContestTeam

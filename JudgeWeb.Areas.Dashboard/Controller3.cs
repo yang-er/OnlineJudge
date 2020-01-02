@@ -1,5 +1,4 @@
-﻿using EntityFrameworkCore.Cacheable;
-using JudgeWeb.Data;
+﻿using JudgeWeb.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using System;
@@ -24,11 +23,9 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
             {
                 ViewBag.JudgehostCriticalCount = DbContext.JudgeHosts
                     .Where(jh => jh.PollTime < DateTimeOffset.Now.AddSeconds(-120) && jh.Active)
-                    .Cacheable(TimeSpan.FromSeconds(5))
                     .Count();
                 ViewBag.InternalErrorCount = DbContext.InternalErrors
                     .Where(ie => ie.Status == InternalError.ErrorStatus.Open)
-                    .Cacheable(TimeSpan.FromSeconds(5))
                     .Count();
             }
         }

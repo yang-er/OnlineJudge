@@ -1,11 +1,12 @@
-﻿using EntityFrameworkCore.Cacheable;
-using JudgeWeb.Areas.Misc.Models;
+﻿using JudgeWeb.Areas.Misc.Models;
 using JudgeWeb.Data;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace JudgeWeb.Areas.Misc.Controllers
 {
@@ -23,15 +24,14 @@ namespace JudgeWeb.Areas.Misc.Controllers
         }
 
         [Route("/")]
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            var news = DbContext.News
+            var news = await DbContext.News
                 .Where(n => n.Active)
                 .OrderByDescending(n => n.NewsId)
                 .Select(n => new { n.Title, n.NewsId })
                 .Take(10)
-                .Cacheable(TimeSpan.FromMinutes(50))
-                .ToList();
+                .ToListAsync();
 
             ViewData["Photo"] = PhotoList[DateTimeOffset.Now.Millisecond % PhotoList.Length];
             return View(news.Select(a => (a.NewsId, a.Title)));
@@ -43,20 +43,18 @@ namespace JudgeWeb.Areas.Misc.Controllers
         }
 
         [HttpGet("{nid}")]
-        public IActionResult News(int nid)
+        public async Task<IActionResult> News(int nid)
         {
-            var news = DbContext.News
+            var news = await DbContext.News
                 .Where(n => n.NewsId == nid)
-                .Cacheable(TimeSpan.FromMinutes(10))
-                .FirstOrDefault();
+                .FirstOrDefaultAsync();
 
-            var list = DbContext.News
+            var list = await DbContext.News
                 .Where(n => n.Active)
                 .Select(n => new { n.NewsId, n.Title })
                 .OrderByDescending(n => n.NewsId)
                 .Take(100)
-                .Cacheable(TimeSpan.FromMinutes(10))
-                .ToList();
+                .ToListAsync();
 
             var newsList = list.Select(a => (a.NewsId, a.Title));
 

@@ -18,6 +18,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="EFCore.BulkExtensions" Version="2.5.2" />
     <PackageReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Microsoft.AspNetCore.Razor.Design" Version="2.2.0" PrivateAssets="All" />
   </ItemGroup>
@@ -29,6 +30,15 @@
     <ProjectReference Include="..\JudgeWeb.Features.Markdown\JudgeWeb.Features.Markdown.csproj" />
     <ProjectReference Include="..\JudgeWeb.Features.Scoreboard\JudgeWeb.Features.Scoreboard.csproj" />
     <ProjectReference Include="..\JudgeWeb.Features.Storage\JudgeWeb.Features.Storage.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Update="Views\Shared\Scoreboard.cshtml">
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Update="Views\Shared\_NavLogo.cshtml">
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
   </ItemGroup>
 
 </Project>

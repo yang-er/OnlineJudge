@@ -27,7 +27,6 @@
 
 
   <ItemGroup>
-    <PackageReference Include="EntityFrameworkCore.Cacheable" Version="2.0.1.1" />
     <PackageReference Include="idunno.Authentication.Basic" Version="2.1.1" />
     <PackageReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.QQ" Version="2.0.1" />
@@ -49,8 +48,6 @@
     <ProjectReference Include="..\JudgeWeb.Features.Mailing\JudgeWeb.Features.Mailing.csproj" />
     <ProjectReference Include="..\JudgeWeb.Features.Markdown\JudgeWeb.Features.Markdown.csproj" />
     <ProjectReference Include="..\JudgeWeb.Features.OjUpdate\JudgeWeb.Features.OjUpdate.csproj" />
-    <ProjectReference Include="..\JudgeWeb.Features.Problem\JudgeWeb.Features.Problem.csproj" />
-    <ProjectReference Include="..\JudgeWeb.Features.Scoreboard\JudgeWeb.Features.Scoreboard.csproj" />
     <ProjectReference Include="..\JudgeWeb.Features.Storage\JudgeWeb.Features.Storage.csproj" />
   </ItemGroup>
 

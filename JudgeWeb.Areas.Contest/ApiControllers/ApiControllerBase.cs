@@ -1,4 +1,5 @@
-﻿using JudgeWeb.Data;
+﻿using JudgeWeb.Areas.Contest.Services;
+using JudgeWeb.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.EntityFrameworkCore;
@@ -14,19 +15,19 @@ namespace JudgeWeb.Areas.Api.Controllers
 
         public Data.Contest Contest { get; private set; }
 
+        protected ContestManager Service { get; private set; }
+
         [NonAction]
         public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
         {
-            DbContext = context.HttpContext.RequestServices
-                .GetRequiredService<AppDbContext>();
+            Service = context.HttpContext.RequestServices
+                .GetRequiredService<ContestManager>();
 
             context.Result = NotFound();
             if (context.RouteData.Values.TryGetValue("cid", out object __cid)
                 && int.TryParse((string)__cid, out int cid))
             {
-                Contest = await DbContext.Contests
-                    .Where(c => c.ContestId == cid)
-                    .FirstOrDefaultAsync();
+                Contest = await Service.GetContestAsync(cid);
 
                 if (Contest != null)
                 {

@@ -1,117 +1,58 @@
-﻿@{ 
+﻿@{
+    Layout = "/Views/Shared/_Layout.cshtml";
     Contest cont = ViewBag.Contest;
+    ViewData["BigTitle"] = cont.ShortName;
     var initial = DateTimeOffset.Now.ToUnixTimeMilliseconds();
     var now = initial / 1000;
     var startTime = cont.StartTime is null ? -1 : cont.StartTime.Value.ToUnixTimeSeconds();
     var endTime = cont.EndTime is null ? -1 : cont.EndTime.Value.ToUnixTimeSeconds();
     var prog = startTime == -1 || initial / 1000 < startTime ? 0
         : now >= endTime ? 100 : (now - startTime) * 100 / (endTime - startTime);
-    if (!ViewData.ContainsKey("RefreshSpan")) { ViewData["RefreshSpan"] = 30; }
 }
 
-<!doctype html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <title>@ViewData["Title"] - @cont.Name</title>
-    <meta name="viewport" content="initial-scale=1, user-scalable=no">
-    <environment include="Development">
-        <link rel="stylesheet" href="~/static/css/bootstrap.css" />
-        <link rel="stylesheet" href="~/static/site/domjudge.css" />
-        <link rel="stylesheet" href="~/static/css/fontawesome.min.css" />
-        <script src="~/static/js/jquery.js"></script>
-        <script src="~/static/js/bootstrap.bundle.js"></script>
-        <script src="~/static/site/xylab.js"></script>
-        <script src="~/static/site/domjudge.js"></script>
-    </environment>
-    <environment exclude="Development">
-        <link rel="stylesheet" href="~/static/css/bootstrap.min.css" />
-        <link rel="stylesheet" href="~/static/site/domjudge.css" />
-        <link rel="stylesheet" href="~/static/css/fontawesome.min.css" />
-        <script src="~/static/js/jquery.min.js"></script>
-        <script src="~/static/js/bootstrap.bundle.min.js"></script>
-        <script src="~/static/site/xylab.js"></script>
-        <script src="~/static/site/domjudge.js"></script>
-    </environment>
-</head>
-
-<body>
-    <div id="append-parent"></div>
-    <!-- #header start -->
-    <nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
-        <a class="navbar-brand hidden-sm-down" aria-label="AcmXylabFun" asp-action="Home">
-            <span style="font-variant:small-caps;">@cont.ShortName</span>
-        </a>
-
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#menuDefault"
-                aria-controls="menuDefault" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-
-        <div class="collapse navbar-collapse" id="menuDefault">
-            <partial name="_Navigation" />
-
-            <div class="navbar-text" style="white-space:nowrap;">
-                <i style="padding-left: 10px;" class="fas fa-clock"></i>
-                <span id="timeleft"></span>
-            </div>
-
-            <script>
-                var initial = @now;
-                var activatetime = 1500000000;
-                var starttime = @startTime;
-                var endtime = @endTime;
-                var offset = 0;
-                var date = new Date(@initial);
-                var timeleftelt = document.getElementById("timeleft");
-
-                setInterval(function () {
-                    updateClock();
-                }, 1000);
-                updateClock();
-            </script>
-        </div>
-    </nav>
-    <partial name="_ProgressBar" model="prog" />
-    <!-- #content start -->
-    <div class="container-fluid">
-        <div class="row">
-            <div class="col-12">
-                @RenderSection("Header", required: false)
-                @if (ViewData.ContainsKey("DisableAjaxRefresh"))
-                {
-                    @RenderBody()
-                }
-                else
-                {
-                    <div data-ajax-refresh-target data-ajax-refresh-after="@ViewData["RefreshAfter"]" data-ajax-refresh-before="@ViewData["RefreshBefore"]" class="@ViewData["DataAjaxClass"]">
-                        @RenderBody()
-                    </div>
-                }
-            </div>
-        </div>
+@section Clocking {
+    <div class="navbar-text" style="white-space:nowrap;">
+        <i style="padding-left: 10px;" class="fas fa-clock"></i>
+        <span id="timeleft"></span>
     </div>
-    <!-- #content end -->
-    <div id="ajax_append"></div>
 
-    <aside class="col-md-4 col-xl-3 pb-3" id="notification-box"></aside>
-    <script>var domjudge_base_url = "/contest/@ViewData["ContestId"]";</script>
+    <script type="text/javascript">
+        var initial = @now;
+        var activatetime = 1500000000;
+        var starttime = @startTime;
+        var endtime = @endTime;
+        var offset = 0;
+        var date = new Date(@initial);
+        var timeleftelt = document.getElementById("timeleft");
 
-    @if (!ViewData.ContainsKey("DisableAjaxRefresh"))
-    {
-        <script>
-            $(function () {
-                /* toggle refresh if set */
-                $('#refresh-navitem').on('click', function() {
-                    toggleRefresh('@Html.Raw(ViewData["RefreshUrl"])', @ViewData["RefreshSpan"], 1);
-                });
+        setInterval(function () { updateClock(); }, 1000);
+        updateClock();
+    </script>
+}
 
-                /* Enable page refresh if set if wanted by the page, and wanted by the user */
-                enableRefresh('@Html.Raw(ViewData["RefreshUrl"])', @ViewData["RefreshSpan"], 1);
-            });
-        </script>
-    }
+@section Banner {
+    <if cond="@(prog > 0 && prog < 100)">
+        <div class="progress" style="margin-top:-9px; height: 10px;" data-progress-bar>
+            <div class="progress-bar" role="progressbar" style="width: @prog%;"
+                 aria-valuenow="@prog" aria-valuemin="0" aria-valuemax="100"></div>
+        </div>
+    </if>
+}
 
+@section Header {
+    @RenderSection("Header", required: false)
+}
+
+@section Footer {
+    @RenderSection("Footer", required: false)
+}
+
+@section BannerFooter {
+    @RenderSection("BannerFooter", required: false)
+}
+
+@section Scripts {
     @RenderSection("Scripts", required: false)
-</body>
-</html>
+}
+
+@RenderBody()

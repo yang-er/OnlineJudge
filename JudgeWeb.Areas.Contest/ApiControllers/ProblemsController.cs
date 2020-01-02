@@ -1,7 +1,6 @@
 ﻿using JudgeWeb.Areas.Api.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -28,39 +27,13 @@ namespace JudgeWeb.Areas.Api.Controllers
         [HttpGet]
         public async Task<ActionResult<ContestProblem[]>> GetAll(int cid, int[] ids)
         {
-            var src = DbContext.ContestProblem
-                .Where(cp => cp.ContestId == cid);
+            IEnumerable<Data.ContestProblem> probs = await Service.GetProblemsAsync(cid);
             if (ids != null && ids.Length > 0)
-                src = src.Where(cp => ids.Contains(cp.ProblemId));
+                probs = probs.Where(cp => ids.Contains(cp.ProblemId));
 
-            var result = await src
-                .Join(
-                    inner: DbContext.Problems,
-                    outerKeySelector: cp => cp.ProblemId,
-                    innerKeySelector: p => p.ProblemId,
-                    resultSelector: (cp, p) => new ContestProblem
-                    {
-                        ordinal = cp.Rank - 1,
-                        label = cp.ShortName,
-                        short_name = cp.ShortName,
-                        internalid = cp.ProblemId,
-                        id = $"{cp.ProblemId}",
-                        time_limit = p.TimeLimit / 1000.0,
-                        name = p.Title,
-                        rgb = cp.Color,
-                    })
-                .ToArrayAsync();
-
-            ids = result.Select(r => r.internalid).ToArray();
-            var tcc = await DbContext.Testcases
-                .Where(t => ids.Contains(t.ProblemId))
-                .GroupBy(t => t.ProblemId)
-                .Select(g => new { g.Key, Count = g.Count() })
-                .ToListAsync();
-
-            foreach (var item in tcc)
-                result.First(p => p.internalid == item.Key).test_data_count = item.Count;
-            return result;
+            return probs
+                .Select(cp => new ContestProblem(cp))
+                .ToArray();
         }
 
         /// <summary>
@@ -72,30 +45,9 @@ namespace JudgeWeb.Areas.Api.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<ContestProblem>> GetOne(int cid, int id)
         {
-            var result = await DbContext.ContestProblem
-                .Where(cp => cp.ContestId == cid && cp.ProblemId == id)
-                .Join(
-                    inner: DbContext.Problems,
-                    outerKeySelector: cp => cp.ProblemId,
-                    innerKeySelector: p => p.ProblemId,
-                    resultSelector: (cp, p) => new ContestProblem
-                    {
-                        ordinal = cp.Rank - 1,
-                        label = cp.ShortName,
-                        short_name = cp.ShortName,
-                        internalid = cp.ProblemId,
-                        id = $"{cp.ProblemId}",
-                        time_limit = p.TimeLimit / 1000.0,
-                        name = p.Title,
-                        rgb = cp.Color,
-                    })
-                .SingleOrDefaultAsync();
-
-            if (result != null)
-                result.test_data_count = await DbContext.Testcases
-                    .Where(t => t.ProblemId == id)
-                    .CountAsync();
-            return result;
+            var probs = await Service.GetProblemsAsync(cid);
+            var prob = probs.FirstOrDefault(cp => cp.ProblemId == id);
+            return new ContestProblem(prob);
         }
     }
 }

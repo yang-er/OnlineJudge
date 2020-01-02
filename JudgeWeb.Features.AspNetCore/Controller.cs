@@ -27,6 +27,11 @@ namespace Microsoft.AspNetCore.Mvc
             {
                 ViewData["InAjax"] = true;
             }
+            else
+            {
+                ViewData["RefreshUrl"] = HttpContext.Request.Path.Value +
+                    HttpContext.Request.QueryString.Value.Replace("&amp;", "&");
+            }
 
             if (IsWindowAjax)
             {

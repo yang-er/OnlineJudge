@@ -1,7 +1,6 @@
 ﻿using JudgeWeb.Areas.Polygon.Models;
 using JudgeWeb.Areas.Polygon.Services;
 using JudgeWeb.Data;
-using JudgeWeb.Features.Problem;
 using JudgeWeb.Features.Storage;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;

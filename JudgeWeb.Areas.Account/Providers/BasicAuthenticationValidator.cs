@@ -1,5 +1,4 @@
-﻿using EntityFrameworkCore.Cacheable;
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
@@ -38,11 +37,15 @@ namespace idunno.Authentication.Basic
                 .GetRequiredService<TContext>();
             var normusername = context.Username.ToUpper();
 
-            var user = await dbContext.Users
-                .Where(u => u.NormalizedUserName == normusername)
-                .Select(u => new { u.Id, u.UserName, u.PasswordHash, u.SecurityStamp })
-                .Cacheable(TimeSpan.FromMinutes(5))
-                .FirstOrDefaultAsync();
+            var user = await _cache.GetOrCreateAsync("`" + normusername.ToLower(), async entry =>
+            {
+                var value = await dbContext.Users
+                    .Where(u => u.NormalizedUserName == normusername)
+                    .Select(u => new { u.Id, u.UserName, u.PasswordHash, u.SecurityStamp })
+                    .FirstOrDefaultAsync();
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5);
+                return value;
+            });
 
             if (user == null)
             {

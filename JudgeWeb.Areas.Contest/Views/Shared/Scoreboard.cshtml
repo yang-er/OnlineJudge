@@ -1,4 +1,4 @@
-﻿@model ScoreboardFullViewModel
+﻿@model FullBoardViewModel
 @{
     ViewData["Title"] = "Scoreboard";
     ViewData["RefreshAfter"] = "initializeScoreboard";
@@ -17,45 +17,37 @@
     <div class="card-header" style="font-family: Roboto, sans-serif; display: flex;">
         <span style="font-weight: bold;">@Model.Contest.Name</span>
         <span style="color: DimGray; margin-left: auto;">
-            @if (state == ContestState.NotScheduled)
-            {
-                @($"scheduling")
-            }
-            else if (state == ContestState.ScheduledToStart)
-            {
-                if (Model.Contest.StartTime.Value.Date > DateTimeOffset.Now)
-                {
-                    @($"scheduled to start on {Model.Contest.StartTime}")
-                }
-                else
-                {
-                    @($"scheduled to start on {Model.Contest.StartTime:HH:mm}")
-                }
-            }
-            else if (state == ContestState.Started || state == ContestState.Frozen)
-            {
-                @($"starts: {Model.Contest.StartTime:HH:mm} - ends: {Model.Contest.EndTime:HH:mm}")
-            }
-            else if (state == ContestState.Ended)
-            {
-                @("contest over, waiting for results")
-            }
-            else
-            {
-                @("final standings")
-            }
+            <if cond="@(state == ContestState.NotScheduled)">
+                scheduling
+            </if>
+            <if cond="@(state == ContestState.ScheduledToStart)">
+                <if cond="@(Model.Contest.StartTime.Value.Date > DateTimeOffset.Now)">
+                    scheduled to start on @Model.Contest.StartTime
+                </if>
+                <if cond="@(Model.Contest.StartTime.Value.Date < DateTimeOffset.Now)">
+                    scheduled to start on @Model.Contest.StartTime?.ToString("HH:mm")
+                </if>
+            </if>
+            <if cond="@(state == ContestState.Started || state == ContestState.Frozen)">
+                starts: @Model.Contest.StartTime?.ToString("HH:mm") - ends: @Model.Contest.EndTime?.ToString("HH:mm")
+            </if>
+            <if cond="@(state == ContestState.Ended)">
+                contest over, waiting for results
+            </if>
+            <if cond="@(state == ContestState.Finalized)">
+                final standings
+            </if>
         </span>
     </div>
 </div>
 
-@if (state == ContestState.Frozen || state == ContestState.Ended)
-{
-    var freezeLength = (int)(Model.Contest.EndTime - Model.Contest.FreezeTime).Value.TotalMinutes;
+<if cond="@(state == ContestState.Frozen || state == ContestState.Ended)">
+    @{ var freezeLength = (int)(Model.Contest.EndTime - Model.Contest.FreezeTime).Value.TotalMinutes; }
     <div class="alert alert-warning" role="alert" style="font-size: 80%;">
         The @(inJury ? "public" : "") scoreboard was frozen with @freezeLength minutes remaining - solutions
         submitted in the last @freezeLength minutes of the contest are still shown as pending.
     </div>
-}
+</if>
 
 @if ((state == ContestState.NotScheduled || state == ContestState.ScheduledToStart) && !inJury)
 {
@@ -68,7 +60,7 @@
                 <div class="card-header">@grp.Name</div>
                 <div class="card-body">
                     <ul class="list-group list-group-flush">
-                        @foreach (var aff in Model.RankCache.Where(g => g.Team.CategoryId == grp.CategoryId).Select(g => g.Affil).Distinct())
+                        @foreach (var aff in Model.RankCache.Where(g => g.Team.CategoryId == grp.CategoryId).Select(g => g.Affiliation).Distinct())
                         {
                             <li class="list-group-item">@aff.FormalName</li>
                         }
@@ -77,11 +69,9 @@
             </div>
         }
     </div>
-
 }
 else
 {
-
     <div class="dropdown">
         <button class="btn btn-outline-secondary btn-sm m-2 dropdown-toggle" data-toggle="dropdown"
                 aria-haspopup="true" aria-expanded="false" id="filter-toggle">
@@ -113,61 +103,11 @@ else
         </div>
     </div>
 
-    <partial name="_ScoreBoard" model="Model" />
-    <p><br /><br /></p>
-
-    @if (Model.ShowCategory.Count > 1)
-    {
-        <table id="categ_legend" class="scoreboard scorelegend ">
-            <thead>
-                <tr>
-                    <th scope="col">
-                        <a>Categories</a>
-                    </th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var grp in Model.ShowCategory)
-                {
-                    <tr style="background: @grp.Item1;">
-                        <td>
-                            <a>@grp.Item2</a>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    }
-
-    <table id="cell_legend" class="scoreboard scorelegend ">
-        <thead>
-            <tr>
-                <th scope="col">Cell colours</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr class="score_first">
-                <td>Solved first</td>
-            </tr>
-            <tr class="score_correct">
-                <td>Solved</td>
-            </tr>
-            <tr class="score_incorrect">
-                <td>Tried, incorrect</td>
-            </tr>
-            <tr class="score_pending">
-                <td>Tried, pending</td>
-            </tr>
-            <tr class="score_neutral">
-                <td>Untried</td>
-            </tr>
-        </tbody>
-    </table>
-
+    <scoreboard model="Model" use-footer="true" />
 }
 
 <p id="lastmod">
-    Last Update: @string.Format("{0:R}", DateTimeOffset.Now).Replace("GMT", "CST")<br />
+    Last Update: @string.Format("{0:R}", Model.UpdateTime).Replace("GMT", "CST")<br />
     using <a href="https://www.domjudge.org/" rel="nofollow" target="_top">DOMjudge</a> judgehost and theme
 </p>
 

@@ -1,9 +1,6 @@
-﻿using EntityFrameworkCore.Cacheable;
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Linq;
 
@@ -45,14 +42,6 @@ namespace JudgeWeb.Data
         public virtual DbSet<Language> Languages { get; set; }
         public virtual DbSet<JudgeHost> JudgeHosts { get; set; }
         public virtual DbSet<Testcase> Testcases { get; set; }
-
-
-        public IEnumerable<SubmissionStatistics> SubmissionStatistics =>
-            Query<SubmissionStatistics>()
-                .FromSql(Data.SubmissionStatistics.QueryString)
-                .AsNoTracking()
-                .Cacheable(TimeSpan.FromMinutes(10))
-                .ToList();
 
 
         public IQueryable<ContestTestcase> ContestTestcase(int _cid) =>

@@ -16,11 +16,11 @@
                     <tr>
                         <th>Download</th>
                         <td>
-                            <a asp-controller="Testcases" asp-action="Fetch" asp-route-tid="@detail.TestcaseId" asp-route-filetype="input">Input</a>
+                            <a asp-area="Polygon" asp-route-pid="@testcase.ProblemId" asp-controller="Testcases" asp-action="Fetch" asp-route-tid="@detail.TestcaseId" asp-route-filetype="input">Input</a>
                             /
-                            <a asp-controller="Testcases" asp-action="Fetch" asp-route-tid="@detail.TestcaseId" asp-route-filetype="output">Reference Output</a>
+                            <a asp-area="Polygon" asp-route-pid="@testcase.ProblemId" asp-controller="Testcases" asp-action="Fetch" asp-route-tid="@detail.TestcaseId" asp-route-filetype="output">Reference Output</a>
                             /
-                            <a asp-action="RunDetails" asp-route-jid="@detail.JudgingId" asp-route-rid="@detail.TestId" asp-route-type="out">Team Output</a>
+                            <a asp-area="Polygon" asp-route-pid="@testcase.ProblemId" asp-controller="Submissions" asp-action="RunDetails" asp-route-jid="@detail.JudgingId" asp-route-rid="@detail.TestId" asp-route-type="out">Team Output</a>
                         </td>
                     </tr>
                     <tr>

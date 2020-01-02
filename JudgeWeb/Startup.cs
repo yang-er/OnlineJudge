@@ -1,5 +1,4 @@
-﻿using EntityFrameworkCore.Cacheable;
-using idunno.Authentication.Basic;
+﻿using idunno.Authentication.Basic;
 using JudgeWeb.Data;
 using JudgeWeb.Features;
 using JudgeWeb.Features.Mailing;
@@ -15,7 +14,6 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using System;
 using System.Text.Encodings.Web;
 using System.Text.Unicode;
@@ -51,8 +49,7 @@ namespace JudgeWeb
             });
 
             services.AddDbContext<AppDbContext>(options =>
-                options.UseSqlServer(Configuration.GetConnectionString("UserDbConnection"))
-                       .UseSecondLevelCache());
+                options.UseSqlServer(Configuration.GetConnectionString("UserDbConnection")));
 
             services.AddIdentity<User, Role>(
                 options =>

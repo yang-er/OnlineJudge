@@ -1,9 +1,15 @@
-﻿@model ScoreboardSingleViewModel
+﻿@model SingleBoardViewModel
 @{
     ViewData["Title"] = "Team";
     ViewData["RefreshAfter"] = "setFlashAndProgress";
     ViewData["RefreshBefore"] = "saveFlash";
     bool inajax = ViewData.ContainsKey("InAjax");
+
+    IEnumerable<SubmissionViewModel> submits = ViewBag.Submissions;
+    IEnumerable<Clarification> claris = ViewBag.Clarifications;
+    Team team = ViewBag.Team;
+    var received = claris.Where(c => !c.Sender.HasValue);
+    var sent = claris.Where(c => c.Sender.HasValue);
 
     if (inajax)
     {
@@ -21,23 +27,24 @@
 
 @if ((Model.Contest.StartTime ?? DateTimeOffset.MaxValue) > DateTimeOffset.Now)
 {
-    <h1 id="teamwelcome" class="text-center">Welcome team <span id="teamwelcometeam">@Model.Team.TeamName</span>!</h1>
+    <h1 id="teamwelcome" class="text-center">Welcome team <span id="teamwelcometeam">@team.TeamName</span>!</h1>
     <h2 id="contestnotstarted" class="text-center">@(Model.Contest.StartTime.HasValue ? string.Format("Contest scheduled to start on {0:R}", Model.Contest.StartTime.Value).Replace("GMT", "CST") : "Contest has been delayed")</h2>
 }
 else
 {
     <div id="teamscoresummary">
-        <partial name="_ScoreBoard" model="Model" />
+        <scoreboard model="Model" />
     </div>
 
     <div class="mt-4" data-flash-messages>
-        <partial name="_StatusMessage" model="Model.MessageInfo" />
+        <partial name="_StatusMessage" model="@TempData["DisplayMessage"]" />
+        @{ TempData.Remove("DisplayMessage"); }
     </div>
 
     <div class="row">
-        <div class="col-md col-12">
+        <div class="col-md-6 col-12">
             <h3 class="teamoverview">Submissions</h3>
-            @if (Model.Submissions.Count == 0)
+            @if (submits.Count() == 0)
             {
                 <div class="alert alert-warning">No submissions</div>
             }
@@ -53,14 +60,14 @@ else
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var submit in Model.Submissions)
+                        @foreach (var submit in submits)
                         {
                             var t = submit.Time.ToLocalTime();
                             var b = !Model.Contest.EndTime.HasValue || t.DateTime < Model.Contest.EndTime;
                             <tr asp-action="Submission" asp-route-sid="@submit.SubmissionId" data-toggle="ajaxWindow" data-target="submission" class="unseen" id="submit_@submit.SubmissionId">
                                 <td use-a>@t.ToString("HH:mm")</td>
-                                <td use-a class="probid" title="@submit.ProblemName">@submit.ProblemShortName</td>
-                                <td use-a class="langid">@submit.Language</td>
+                                <td use-a class="probid" title="@submit.Problem.TimeLimit">@submit.Problem.ShortName</td>
+                                <td use-a class="langid">@submit.Language.ExternalId</td>
                                 <td use-a><verdict3 value="@submit.Verdict" too-late="!b" /></td>
                             </tr>
                         }
@@ -68,16 +75,16 @@ else
                 </table>
             }
         </div>
-        <div class="col-md col-12">
+        <div class="col-md-6 col-12">
             <h3 class="teamoverview">Clarifications</h3>
-            @if (Model.ReceivedClarifications.Count() == 0)
+            @if (received.Count() == 0)
             {
                 <p class="nodata">No clarifications.</p>
             }
             else
             {
-                <div class="table-wrapper">
-                    <table class="data-table table table-striped table-hover table-sm" style="width:100%;">
+                <div class="table-wrapper d-block">
+                    <table class="data-table table table-striped table-hover clar_table table-sm" style="width:100%;">
                         <thead class="thead-light">
                             <tr>
                                 <th scope="col">time</th>
@@ -88,16 +95,15 @@ else
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (var clar in Model.ReceivedClarifications)
+                            @foreach (var clar in received)
                             {
                                 var prob = Model.Problems.FirstOrDefault(c => c.ProblemId == clar.ProblemId);
                                 <tr asp-action="Clarification" asp-route-op="@clar.ClarificationId" data-toggle="ajaxWindow" data-target="recv-clar" class="unseen" id="clar_@clar.ClarificationId">
                                     <td use-a>@clar.SubmitTime.ToString("HH:mm")</td>
                                     <td use-a>Jury</td>
-                                    <td use-a>@(clar.Recipient.HasValue ? Model.Team.TeamName : "All")</td>
+                                    <td use-a>@(clar.Recipient.HasValue ? team.TeamName : "All")</td>
                                     <td use-a>@clar.Category @prob?.ShortName issue</td>
-                                    <td use-a>@foreach (var line in clar.Body.Split('\n').Where(s => !string.IsNullOrWhiteSpace(s) && !s.StartsWith('>')))
-                                    {@line}</td>
+                                    <td use-a>@string.Join('\n', clar.Body.Split('\n').Where(s => !string.IsNullOrWhiteSpace(s) && !s.StartsWith('>')))</td>
                                 </tr>
                             }
                         </tbody>
@@ -106,14 +112,14 @@ else
             }
 
             <h3 class="teamoverview">Clarification Requests</h3>
-            @if (Model.RequestedClarifications.Count() == 0)
+            @if (sent.Count() == 0)
             {
                 <p class="nodata">No clarification request.</p>
             }
             else
             {
-                <div class="table-wrapper">
-                    <table class="data-table table table-striped table-hover table-sm" style="width:100%;">
+                <div class="table-wrapper d-block">
+                    <table class="data-table table table-striped table-hover clar_table table-sm" style="width:100%;">
                         <thead class="thead-light">
                             <tr>
                                 <th scope="col">time</th>
@@ -124,21 +130,24 @@ else
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (var clar in Model.RequestedClarifications)
+                            @foreach (var clar in sent)
                             {
                                 var prob = Model.Problems.FirstOrDefault(c => c.ProblemId == clar.ProblemId);
                                 <tr asp-action="Clarification" asp-route-op="@clar.ClarificationId" data-toggle="ajaxWindow" data-target="sent-clar">
                                     <td use-a>@clar.SubmitTime.ToString("HH:mm")</td>
-                                    <td use-a>@Model.Team.TeamName</td>
+                                    <td use-a>@team.TeamName</td>
                                     <td use-a>Jury</td>
                                     <td use-a>@clar.Category @prob?.ShortName issue</td>
-                                    <td use-a>@foreach (var line in clar.Body.Split('\n').Where(s => !string.IsNullOrWhiteSpace(s) && !s.StartsWith('>')))
-                                    {@line}</td>
+                                    <td use-a>@string.Join('\n', clar.Body.Split('\n').Where(s => !string.IsNullOrWhiteSpace(s) && !s.StartsWith('>')))</td>
                                 </tr>
                             }
                         </tbody>
                     </table>
                 </div>
+
+                <style>
+                    .clar_table td { white-space: normal; }
+                </style>
             }
 
             <div class="m-1">

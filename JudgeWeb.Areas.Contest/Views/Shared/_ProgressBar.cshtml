@@ -1,8 +1,0 @@
-﻿@model long
-@if (Model != 0 && Model != 100)
-{
-    <div class="progress" style="margin-top:-9px; height: 10px;" data-progress-bar>
-        <div class="progress-bar" role="progressbar" style="width: @Model%;"
-             aria-valuenow="@Model" aria-valuemin="0" aria-valuemax="100"></div>
-    </div>
-}

@@ -67,5 +67,41 @@ namespace JudgeWeb.Data
         /// </summary>
         [Ignore]
         public int MemoryLimit { get; set; }
+
+        /// <summary>
+        /// [Ignore] 测试样例组数
+        /// </summary>
+        [Ignore]
+        public int TestcaseCount { get; set; }
+
+        /// <summary>
+        /// [Ignore] 是否为交互题
+        /// </summary>
+        [Ignore]
+        public bool Interactive { get; set; }
+
+        /// <summary>
+        /// 默认构造函数
+        /// </summary>
+        public ContestProblem() { }
+
+        /// <summary>
+        /// 拷贝构造函数
+        /// </summary>
+        /// <param name="cp">拷贝源</param>
+        public ContestProblem(ContestProblem cp, string tit, int time, int mem, bool ia)
+        {
+            AllowJudge = cp.AllowJudge;
+            AllowSubmit = cp.AllowSubmit;
+            Color = cp.Color;
+            ContestId = cp.ContestId;
+            ProblemId = cp.ProblemId;
+            Rank = cp.Rank;
+            ShortName = cp.ShortName;
+            Title = tit;
+            TimeLimit = time;
+            MemoryLimit = mem;
+            Interactive = ia;
+        }
     }
 }

@@ -1,12 +1,12 @@
-﻿@model ScoreboardSingleViewModel
+﻿@model ContestProblem[]
 @{
+    Contest cts = ViewBag.Contest;
     ViewData["Title"] = "Team";
-    ViewData["DisableAjaxRefresh"] = true;
 }
 
 <h1 class="mt-4 text-center">Contest problems</h1>
 
-@if ((Model.Contest.StartTime ?? DateTimeOffset.MaxValue) > DateTimeOffset.Now)
+@if ((cts.StartTime ?? DateTimeOffset.MaxValue) > DateTimeOffset.Now)
 {
     <div class="alert alert-secondary mt-4">No problem texts available at this point.</div>
 }
@@ -14,13 +14,13 @@ else
 {
     <div class="container">
         <div class="row problem-list">
-            @for (int i = 0; i < Model.Problems.Length; i += 3)
+            @for (int i = 0; i < Model.Length; i += 3)
             {
                 <div class="col-md-12">
                     <div class="card-deck my-md-3">
                         @for (int j = 0; j < 3; j++)
                         {
-                            if (i + j >= Model.Problems.Length)
+                            if (i + j >= Model.Length)
                             {
                                 <div class="card" style="border:none;">
 
@@ -28,7 +28,7 @@ else
                             }
                             else
                             {
-                                var prob = Model.Problems[i + j];
+                                var prob = Model[i + j];
                                 <div class="card">
                                     <div class="card-body">
                                         <h3 class="card-title">

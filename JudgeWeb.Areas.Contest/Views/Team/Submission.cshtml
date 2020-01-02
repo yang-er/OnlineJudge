@@ -1,4 +1,4 @@
-﻿@model TeamViewSubmissionModel
+﻿@model SubmissionViewModel
 @{
     Layout = null;
     var time = Model.Time;
@@ -20,9 +20,9 @@
             <div class="modal-body">
                 <div class="container">
                     <div class="d-flex flex-row">
-                        <div class="p-2">Problem: <b><span class="probid">@Model.ProblemShortName</span> - @Model.ProblemName</b></div>
+                        <div class="p-2">Problem: <b><span class="probid">@Model.Problem.ShortName</span> - @Model.Problem.Title</b></div>
                         <div class="p-2">Submitted: <b>@time.ToString("HH:mm")</b></div>
-                        <div class="p-2">Language: <b>@Model.Language</b></div>
+                        <div class="p-2">Language: <b>@Model.Language.Name</b></div>
                         <div class="p-2">Compilation: <span class="badge badge-@compile_badge">@compile_result</span></div>
                     </div>
 

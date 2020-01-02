@@ -1,7 +1,6 @@
 ﻿@model AddClarificationModel
 @{
     ViewData["Title"] = "Send clarification";
-    ViewData["DisableAjaxRefresh"] = true;
     var teams = ((IEnumerable<KeyValuePair<int, string>>)ViewBag.Teams)
         .Select(kvp => new SelectListItem($"{kvp.Value} (t{kvp.Key})", kvp.Key.ToString()));
     var types = ((ContestProblem[])ViewBag.Problems)
