@@ -1,4 +1,4 @@
-﻿using JudgeWeb.Areas.Api.Models;
+﻿using JudgeWeb.Data.Api;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -54,23 +54,7 @@ namespace JudgeWeb.Areas.Api.Controllers
             var contestTime = Contest.StartTime ?? DateTimeOffset.Now;
 
             return submissions
-                .Select(submission => new ContestSubmission
-                {
-                    contest_time = submission.Time - contestTime,
-                    id = $"{submission.SubmissionId}",
-                    problem_id = $"{submission.ProblemId}",
-                    team_id = $"{submission.Author}",
-                    language_id = submission.LangId,
-                    time = submission.Time,
-                    files = new[]
-                    {
-                        new ContestSubmission.FileMeta
-                        {
-                            href = $"contests/{cid}/submissions/{submission.SubmissionId}/files",
-                            mime = "application/zip"
-                        }
-                    }
-                })
+                .Select(s => new ContestSubmission(cid, s.LangId, s.SubmissionId, s.ProblemId, s.Author, s.Time, s.Time - contestTime))
                 .ToArray();
         }
 
@@ -89,27 +73,11 @@ namespace JudgeWeb.Areas.Api.Controllers
                 join l in DbContext.Languages on s.Language equals l.LangId
                 select new { LangId = l.ExternalId, s.SubmissionId, s.ProblemId, s.Author, s.Time };
 
-            var submission = await sQuery.SingleOrDefaultAsync();
-            if (submission == null) return null;
+            var ss = await sQuery.SingleOrDefaultAsync();
+            if (ss == null) return null;
             var contestTime = Contest.StartTime ?? DateTimeOffset.Now;
 
-            return new ContestSubmission
-            {
-                contest_time = submission.Time - contestTime,
-                id = $"{submission.SubmissionId}",
-                problem_id = $"{submission.ProblemId}",
-                team_id = $"{submission.Author}",
-                language_id = submission.LangId,
-                time = submission.Time,
-                files = new[]
-                {
-                    new ContestSubmission.FileMeta
-                    {
-                        href = $"contests/{cid}/submissions/{id}/files",
-                        mime = "application/zip"
-                    }
-                }
-            };
+            return new ContestSubmission(cid, ss.LangId, ss.SubmissionId, ss.ProblemId, ss.Author, ss.Time, ss.Time - contestTime);
         }
     }
 }

@@ -1,6 +1,6 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using JudgeWeb.Data;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Filters;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -11,35 +11,13 @@ namespace JudgeWeb.Areas.Contest.Controllers
     public class PublicController : Controller3
     {
         [HttpGet]
-        public async Task<IActionResult> Scoreboard(int cid,
+        public Task<IActionResult> Scoreboard(int cid,
             [FromQuery(Name = "affiliations[]")] int[] affiliations,
             [FromQuery(Name = "categories[]")] int[] categories,
-            [FromQuery(Name = "clear")] string clear = "")
-        {
-            var board = await Service.FindScoreboardAsync(cid, true, false);
-
-            if (clear == "clear")
-            {
-                affiliations = System.Array.Empty<int>();
-                categories = System.Array.Empty<int>();
-            }
-
-            if (affiliations.Length > 0)
-            {
-                board.RankCache = board.RankCache
-                    .Where(t => affiliations.Contains(t.Team.AffiliationId));
-                ViewData["Filter_affiliations"] = affiliations.ToHashSet();
-            }
-
-            if (categories.Length > 0)
-            {
-                board.RankCache = board.RankCache
-                    .Where(t => categories.Contains(t.Team.CategoryId));
-                ViewData["Filter_categories"] = categories.ToHashSet();
-            }
-
-            return View(board);
-        }
+            [FromQuery(Name = "clear")] string clear = "") =>
+            ScoreboardView(
+                isPublic: Contest.GetState() < ContestState.Finalized,
+                isJury: false, clear == "clear", affiliations, categories);
 
 
         [HttpGet]
@@ -47,9 +25,9 @@ namespace JudgeWeb.Areas.Contest.Controllers
         public async Task<IActionResult> Info(int cid,
             [FromServices] Features.Storage.IFileRepository io)
         {
-            var affs = await Service.ListTeamAffiliationAsync(cid);
+            var affs = await DbContext.ListTeamAffiliationAsync(cid);
             ViewBag.Affiliations = affs.ToDictionary(a => a.AffiliationId);
-            var cats = await Service.ListTeamCategoryAsync(cid);
+            var cats = await DbContext.ListTeamCategoryAsync(cid);
             ViewBag.Categories = cats.ToDictionary(a => a.CategoryId);
 
             io.SetContext("Problems");
@@ -65,24 +43,24 @@ namespace JudgeWeb.Areas.Contest.Controllers
         {
             if (ViewData.ContainsKey("HasTeam"))
             {
-                DisplayMessage = "Already registered";
+                StatusMessage = "Already registered";
                 return RedirectToAction(nameof(Info));
             }
 
             if (Contest.RegisterDefaultCategory == 0 || User.IsInRole("Blocked"))
             {
-                DisplayMessage = "Error registration closed.";
+                StatusMessage = "Error registration closed.";
                 return RedirectToAction(nameof(Info));
             }
 
             string defaultAff = User.IsInRole("Student") ? "jlu" : "null";
-            var affs = await Service.ListTeamAffiliationAsync(cid, false);
-            var aff = affs.FirstOrDefault(a => a.ExternalId == defaultAff)?.AffiliationId;
-            if (!aff.HasValue) throw new System.ApplicationException("No default affiliation.");
+            var affs = await DbContext.ListTeamAffiliationAsync(cid, false);
+            var aff = affs.FirstOrDefault(a => a.ExternalId == defaultAff);
+            if (aff == null) throw new System.ApplicationException("No default affiliation.");
 
-            await Service.CreateTeamAsync(new Data.Team
+            await CreateTeamAsync(aff: aff, team: new Team
             {
-                AffiliationId = aff.Value,
+                AffiliationId = aff.AffiliationId,
                 ContestId = Contest.ContestId,
                 CategoryId = Contest.RegisterDefaultCategory,
                 RegisterTime = System.DateTimeOffset.Now,
@@ -91,7 +69,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 UserId = int.Parse(UserManager.GetUserId(User)),
             });
 
-            DisplayMessage = "Registration succeeded.";
+            StatusMessage = "Registration succeeded.";
             return RedirectToAction(nameof(Info));
         }
     }

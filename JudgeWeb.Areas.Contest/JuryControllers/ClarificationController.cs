@@ -2,12 +2,12 @@
 using JudgeWeb.Areas.Contest.Models;
 using JudgeWeb.Data;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using ClarificationCategory = JudgeWeb.Data.Clarification.TargetCategory;
 
 namespace JudgeWeb.Areas.Contest.Controllers
 {
@@ -16,26 +16,34 @@ namespace JudgeWeb.Areas.Contest.Controllers
     public class JuryClarificationController : JuryControllerBase
     {
         private IQueryable<Clarification> QueryOf(int cid, int clarid) =>
-            Service.Clarifications
+            DbContext.Clarifications
                 .Where(c => c.ContestId == cid && c.ClarificationId == clarid);
+
+        [ViewData]
+        public Dictionary<int, string> Teams { get; set; }
+
+
+        public override async Task OnActionExecutingAsync(ActionExecutingContext context)
+        {
+            await base.OnActionExecutingAsync(context);
+            Teams = await DbContext.GetTeamNameAsync(Contest.ContestId);
+        }
 
 
         [HttpGet]
         public async Task<IActionResult> List(int cid)
         {
-            var query = await Service.Clarifications
+            var query = await DbContext.Clarifications
                 .Where(c => c.ContestId == cid && c.Recipient == null)
                 .ToListAsync();
             
-            var teamName = await Service.GetTeamNameAsync(cid);
             foreach (var item in query)
-                item.TeamName = teamName.GetValueOrDefault(item.Sender ?? -1);
-            var problems = await Service.GetProblemsAsync(cid);
+                item.TeamName = Teams.GetValueOrDefault(item.Sender ?? -1);
             
             return View(new JuryListClarificationModel
             {
                 AllClarifications = query,
-                Problems = problems,
+                Problems = Problems,
                 JuryName = UserManager.GetUserName(User),
             });
         }
@@ -60,56 +68,34 @@ namespace JudgeWeb.Areas.Contest.Controllers
             }
 
             // determine category
-            var probs = await Service.GetProblemsAsync(cid);
-            var avaliableCategories = probs
-                .Select(cp => ($"prob-{cp.ShortName}", (ClarificationCategory.Problem), (int?)cp.ProblemId))
-                .Prepend(("tech", ClarificationCategory.Technical, null))
-                .Prepend(("general", ClarificationCategory.General, null));
-            var usage = avaliableCategories.SingleOrDefault(cp => model.Type == cp.Item1);
+            var usage = ClarCategories.SingleOrDefault(cp => model.Type == cp.Item1);
             if (usage.Item1 == null)
                 ModelState.AddModelError("xys::error_cate", "The category specified is wrong.");
 
-            if (!ModelState.IsValid)
+            if (!ModelState.IsValid) return View(model);
+            var clarId = await SendClarificationAsync(replyTo: replyTo, clar: new Clarification
             {
-                ViewBag.Teams = await Service.GetTeamNameAsync(cid);
-                ViewBag.Problems = probs;
-                return View(model);
-            }
-            else
-            {
-                var clarId = await Service.SendClarificationAsync(
-                    clar: new Clarification
-                    {
-                        Body = model.Body,
-                        SubmitTime = DateTimeOffset.Now,
-                        ContestId = cid,
-                        JuryMember = UserManager.GetUserName(User),
-                        Sender = null,
-                        ResponseToId = model.ReplyTo,
-                        Recipient = model.TeamTo == 0 ? default(int?) : model.TeamTo,
-                        ProblemId = usage.Item3,
-                        Answered = true,
-                        Category = usage.Item2,
-                    },
-                    replyTo: replyTo);
+                Body = model.Body,
+                SubmitTime = DateTimeOffset.Now,
+                ContestId = cid,
+                JuryMember = UserManager.GetUserName(User),
+                Sender = null,
+                ResponseToId = model.ReplyTo,
+                Recipient = model.TeamTo == 0 ? default(int?) : model.TeamTo,
+                ProblemId = usage.Item3,
+                Answered = true,
+                Category = usage.Item2,
+            });
 
-                DisplayMessage = $"Clarification {clarId} has been sent.";
-                return RedirectToAction(nameof(Detail), new { clarid = clarId });
-            }
+            StatusMessage = $"Clarification {clarId} has been sent.";
+            return RedirectToAction(nameof(Detail), new { clarid = clarId });
         }
 
 
         [HttpGet("[action]/{teamto}")]
-        public async Task<IActionResult> Send(int cid, int teamto)
+        public IActionResult Send(int teamto)
         {
-            ViewBag.Teams = await Service.GetTeamNameAsync(cid);
-            ViewBag.Problems = await Service.GetProblemsAsync(cid);
-
-            return View(new AddClarificationModel
-            {
-                TeamTo = teamto,
-                Body = "",
-            });
+            return View(new AddClarificationModel { TeamTo = teamto, Body = "" });
         }
 
 
@@ -148,33 +134,26 @@ namespace JudgeWeb.Areas.Contest.Controllers
             }
             else if (clar.Sender.HasValue)
             {
-                var otherClars = await Service.Clarifications
+                var otherClars = await DbContext.Clarifications
                     .Where(c => c.ContestId == cid)
                     .Where(c => c.ResponseToId == clarid && c.Sender == null)
                     .ToListAsync();
                 query = query.Concat(otherClars);
             }
 
-            var teamName = await Service.GetTeamNameAsync(cid);
-            var probs = await Service.GetProblemsAsync(cid);
-            ViewBag.Teams = teamName;
-            ViewBag.Problems = probs;
-
             foreach (var item in query)
-            {
                 item.TeamName = item.Sender.HasValue
-                    ? teamName.GetValueOrDefault(item.Sender.Value)
+                    ? Teams.GetValueOrDefault(item.Sender.Value)
                     : item.Recipient.HasValue
-                    ? teamName.GetValueOrDefault(item.Recipient.Value)
+                    ? Teams.GetValueOrDefault(item.Recipient.Value)
                     : null;
-            }
 
             return View(new JuryViewClarificationModel
             {
                 Associated = query,
                 Main = query.First(),
-                Problems = probs,
-                Teams = teamName,
+                Problems = Problems,
+                Teams = Teams,
                 UserName = UserManager.GetUserName(User),
             });
         }

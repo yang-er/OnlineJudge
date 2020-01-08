@@ -39,7 +39,7 @@ namespace JudgeWeb.Features.Scoreboard
                 writer.Write("</span><br/>");
                 writer.Write("<i class=\"fas fa-question-circle fa-fw\"></i>");
                 writer.Write("<span style=\"font-size:90%;\" title=\"number of pending submissions\">");
-                writer.Write(item.Rejected);
+                writer.Write(item.Pending);
                 writer.Write("</span><br/>");
                 writer.Write("<i class=\"fas fa-clock fa-fw\"></i>");
                 writer.Write("<span style=\"font-size:90%;\" title=\"first solved\">");

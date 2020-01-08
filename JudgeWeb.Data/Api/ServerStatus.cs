@@ -1,4 +1,4 @@
-﻿namespace JudgeWeb.Areas.Api.Models
+﻿namespace JudgeWeb.Data.Api
 {
     public class ServerStatus
     {

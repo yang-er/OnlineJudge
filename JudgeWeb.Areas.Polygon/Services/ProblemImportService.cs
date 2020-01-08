@@ -40,7 +40,7 @@ namespace JudgeWeb.Areas.Polygon.Services
 
             iniParser.Add("timelimit", (token, node) =>
             {
-                if (double.TryParse(token, out var time))
+                if (double.TryParse(token.Trim('"', '\''), out var time))
                 {
                     int time2 = (int)Math.Round(time * 1000);
                     if (time2 > 15000 || time2 < 500)
@@ -338,9 +338,9 @@ namespace JudgeWeb.Areas.Polygon.Services
                         var content = await reader.ReadToEndAsync();
                         var sub = await submissionManager.CreateAsync(
                             code: content,
-                            langid: lang.LangId,
+                            langid: lang,
                             probid: Problem.ProblemId,
-                            cid: 0,
+                            cid: null,
                             uid: 0,
                             ipAddr: System.Net.IPAddress.Parse("127.0.0.1"),
                             via: "polygon-upload",
@@ -360,7 +360,7 @@ namespace JudgeWeb.Areas.Polygon.Services
             {
                 var p = dbContext.Problems.Add(new Problem
                 {
-                    AllowJudge = true,
+                    AllowJudge = false,
                     AllowSubmit = false,
                     Title = TryGetName(zipFile.FileName),
                     CompareScript = "compare",
@@ -423,6 +423,10 @@ namespace JudgeWeb.Areas.Polygon.Services
 
                 await LoadSubmissionsAsync(zipArchive);
                 Log("All jury solutions has been added.");
+
+                Problem.AllowJudge = true;
+                dbContext.Problems.Update(Problem);
+                await dbContext.SaveChangesAsync();
                 return Problem;
             }
         }

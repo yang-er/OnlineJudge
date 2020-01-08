@@ -12,6 +12,7 @@
                 <th scope="col" class="sortable searchable">ID</th>
                 <th scope="col" class="sortable searchable">shortname</th>
                 <th scope="col" class="sortable searchable">name</th>
+                <th scope="col" class="sortable searchable">country</th>
                 <th></th>
                 <th></th>
             </tr>
@@ -23,6 +24,7 @@
                     <td use-a>@aff.AffiliationId</td>
                     <td use-a>@aff.ExternalId</td>
                     <td use-a>@aff.FormalName</td>
+                    <td use-a>@(aff.CountryCode ?? "(none)")</td>
                     <td><a asp-action="Edit" asp-route-affid="@aff.AffiliationId" title="edit this affiliation"><i class="fas fa-edit"></i></a></td>
                     <td><a asp-action="Delete" asp-route-affid="@aff.AffiliationId" data-toggle="ajaxWindow" title="delete this affiliation"><i class="fas fa-trash-alt"></i></a></td>
                 </tr>

@@ -1,4 +1,4 @@
-﻿using JudgeWeb.Areas.Api.Models;
+﻿using JudgeWeb.Data.Api;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -47,15 +47,7 @@ namespace JudgeWeb.Areas.Api.Controllers
             }
 
             return await query
-                .Select(c => new ContestGroup
-                {
-                    hidden = !c.IsPublic,
-                    color = c.Color,
-                    icpc_id = "cat" + c.CategoryId,
-                    id = c.CategoryId.ToString(),
-                    name = c.Name,
-                    sortorder = c.SortOrder,
-                })
+                .Select(c => new ContestGroup(c))
                 .ToArrayAsync();
         }
 
@@ -70,15 +62,7 @@ namespace JudgeWeb.Areas.Api.Controllers
         {
             return await DbContext.TeamCategories
                 .Where(c => c.CategoryId == id)
-                .Select(c => new ContestGroup
-                {
-                    hidden = !c.IsPublic,
-                    color = c.Color,
-                    icpc_id = "cat" + c.CategoryId,
-                    id = c.CategoryId.ToString(),
-                    name = c.Name,
-                    sortorder = c.SortOrder,
-                })
+                .Select(c => new ContestGroup(c))
                 .FirstOrDefaultAsync();
         }
     }

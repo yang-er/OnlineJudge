@@ -321,9 +321,9 @@ namespace JudgeWeb.Areas.Misc.Controllers
             {
                 var sub = await subMgr.CreateAsync(
                     code: model.Code,
-                    langid: model.Language,
+                    langid: lang,
                     probid: prob.ProblemId,
-                    cid: 0,
+                    cid: null,
                     uid: int.Parse(UserManager.GetUserId(User)),
                     ipAddr: HttpContext.Connection.RemoteIpAddress,
                     via: "problem-list",

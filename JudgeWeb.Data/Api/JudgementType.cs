@@ -1,6 +1,7 @@
-﻿namespace JudgeWeb.Areas.Api.Models
+﻿namespace JudgeWeb.Data.Api
 {
-    public class JudgementType
+    [EntityType("judgement-types")]
+    public class JudgementType : ContestEventEntity
     {
         public JudgementType(string i, string n, bool p, bool s)
         {
@@ -10,7 +11,6 @@
             solved = s;
         }
 
-        public string id { get; set; }
         public string name { get; set; }
         public bool penalty { get; set; }
         public bool solved { get; set; }

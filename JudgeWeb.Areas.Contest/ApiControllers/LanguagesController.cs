@@ -1,4 +1,5 @@
-﻿using JudgeWeb.Areas.Api.Models;
+﻿using JudgeWeb.Data;
+using JudgeWeb.Data.Api;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -27,23 +28,11 @@ namespace JudgeWeb.Areas.Api.Controllers
         [HttpGet]
         public async Task<ActionResult<ContestLanguage[]>> GetAll(int cid, string[] ids)
         {
-            var query = DbContext.Languages
-                .Where(l => l.AllowSubmit);
+            var langs = await DbContext.GetLanguagesAsync(cid);
+            var query = langs.Values.Where(l => l.AllowSubmit);
             if (ids != null && ids.Length > 0)
                 query = query.Where(l => ids.Contains(l.ExternalId));
-
-            return await query
-                .Select(l => new ContestLanguage
-                {
-                    allow_judge = l.AllowJudge,
-                    entry_point_description = null,
-                    require_entry_point = false,
-                    time_factor = l.TimeFactor,
-                    extensions = new[] { l.FileExtension },
-                    id = l.ExternalId,
-                    name = l.Name,
-                })
-                .ToArrayAsync();
+            return query.Select(l => new ContestLanguage(l)).ToArray();
         }
 
         /// <summary>
@@ -55,19 +44,11 @@ namespace JudgeWeb.Areas.Api.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<ContestLanguage>> GetOne(int cid, string id)
         {
-            return await DbContext.Languages
+            var langs = await DbContext.GetLanguagesAsync(cid);
+            var ll = langs.Values
                 .Where(l => l.ExternalId == id && l.AllowSubmit)
-                .Select(l => new ContestLanguage
-                {
-                    allow_judge = l.AllowJudge,
-                    entry_point_description = null,
-                    require_entry_point = false,
-                    time_factor = l.TimeFactor,
-                    extensions = new[] { l.FileExtension },
-                    id = l.ExternalId,
-                    name = l.Name,
-                })
-                .SingleOrDefaultAsync();
+                .SingleOrDefault();
+            return new ContestLanguage(ll);
         }
     }
 }

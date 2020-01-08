@@ -50,10 +50,10 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
                           : InternalErrorStatus.Open;
                 if (ie.Status == InternalErrorStatus.Open)
                     return NotFound();
+                DbContext.InternalErrors.Update(ie);
 
-                if (ie.Status != InternalErrorStatus.Open)
+                if (ie.Status == InternalErrorStatus.Resolved)
                 {
-                    DbContext.InternalErrors.Update(ie);
                     var toDisable = JObject.Parse(ie.Disabled);
                     var kind = toDisable["kind"].Value<string>();
 
@@ -83,9 +83,22 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
                             DbContext.JudgeHosts.Update(host);
                         }
                     }
+                    else if (kind == "problem")
+                    {
+                        var probid = toDisable["probid"].Value<int>();
+                        var prob = await DbContext.Problems
+                            .Where(p => p.ProblemId == probid)
+                            .SingleAsync();
 
-                    await DbContext.SaveChangesAsync();
+                        if (prob != null)
+                        {
+                            prob.AllowJudge = true;
+                            DbContext.Problems.Update(prob);
+                        }
+                    }
                 }
+
+                await DbContext.SaveChangesAsync();
             }
 
             return RedirectToAction(nameof(Detail), new { eid });

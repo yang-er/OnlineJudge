@@ -49,7 +49,7 @@ namespace JudgeWeb.Features.Scoreboard
             writer.Write("><span class=\"forceWidth\">");
             writer.Write(teamName);
             writer.Write("</span><span class=\"univ forceWidth\">");
-            if (model.AffiliationId != null)
+            if (model.AffiliationId != "null")
                 writer.Write(encoder.Encode(model.Affiliation));
             writer.Write("</span></a></td>");
 

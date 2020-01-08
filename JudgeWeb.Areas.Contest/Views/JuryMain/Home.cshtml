@@ -37,15 +37,13 @@
                                 <td><b>Start time:</b></td>
                                 <td><difftime show-time="ctx.StartTime" null-value="not scheduled" /></td>
                                 <td>
-                                    @if (state == ContestState.ScheduledToStart && User.IsInRole("Administrator"))
-                                    {
+                                    <if cond="@(state == ContestState.ScheduledToStart)">
                                         <button asp-action="ChangeState" asp-route-target="startnow" class="btn btn-sm btn-primary">start now</button>
                                         <button asp-action="ChangeState" asp-route-target="delay" class="mt-1 mt-md-0 btn btn-sm btn-primary">delay</button>
-                                    }
-                                    else if (state == ContestState.NotScheduled && User.IsInRole("Administrator"))
-                                    {
+                                    </if>
+                                    <if cond="@(state == ContestState.NotScheduled)">
                                         <button asp-action="ChangeState" asp-route-target="startnow" class="btn btn-sm btn-primary">start now</button>
-                                    }
+                                    </if>
                                 </td>
                             </tr>
                             <tr>
@@ -53,10 +51,9 @@
                                 <td><b>Freeze time:</b></td>
                                 <td><difftime show-time="ctx.FreezeTime" /></td>
                                 <td>
-                                    @if (state == ContestState.Started && User.IsInRole("Administrator"))
-                                    {
+                                    <if cond="@(state == ContestState.Started)">
                                         <button asp-action="ChangeState" asp-route-target="freeze" class="btn btn-sm btn-primary">freeze now</button>
-                                    }
+                                    </if>
                                 </td>
                             </tr>
                             <tr>
@@ -64,10 +61,9 @@
                                 <td class=""><b>End time:</b></td>
                                 <td><difftime show-time="ctx.EndTime" /></td>
                                 <td>
-                                    @if ((state == ContestState.Started || state == ContestState.Frozen) && User.IsInRole("Administrator"))
-                                    {
+                                    <if cond="@(state == ContestState.Started || state == ContestState.Frozen)">
                                         <button asp-action="ChangeState" asp-route-target="endnow" class="btn btn-sm btn-primary">end now</button>
-                                    }
+                                    </if>
                                 </td>
                             </tr>
                             <tr>
@@ -75,10 +71,9 @@
                                 <td><b>Unfreeze time:</b></td>
                                 <td><difftime show-time="ctx.UnfreezeTime" /></td>
                                 <td>
-                                    @if (state == ContestState.Ended && User.IsInRole("Administrator"))
-                                    {
+                                    <if cond="@(state == ContestState.Ended)">
                                         <button asp-action="ChangeState" asp-route-target="unfreeze" class="btn btn-sm btn-primary">unfreeze now</button>
-                                    }
+                                    </if>
                                 </td>
                             </tr>
                         </tbody>
@@ -91,15 +86,15 @@
                 Problems
             </div>
             <div class="card-body">
-                <table class="table table-responsive data-table table-sm table-striped table-hover mb-0 d-lg-table other-table">
+                <table class="table data-table table-sm table-striped table-hover mb-0 d-lg-table other-table">
                     <thead>
                         <tr>
                             <th scope="col">ID</th>
                             <th scope="col">name</th>
                             <th scope="col">submit?</th>
                             <th scope="col">judge?</th>
-                            <th scope="col">color</th>
-                            <th><a class="text-reset" asp-action="AddProblem" data-toggle="ajaxWindow" data-target="unassign"><i class="fas fa-plus"></i></a></th>
+                            <th></th>
+                            <th><a class="text-reset" asp-controller="JuryProblem" asp-action="Add" data-toggle="ajaxWindow" data-target="addProb"><i class="fas fa-plus"></i></a></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -107,13 +102,11 @@
                         {
                             <tr asp-area="Polygon" asp-controller="Editor" asp-action="Overview" asp-route-pid="@prob.ProblemId" data-toggle="gotoUrl">
                                 <td use-a>p@(prob.ProblemId)</td>
-                                <td use-a>@prob.ShortName - @prob.Title</td>
+                                <td use-a><div class="circle" style="background-color: @prob.Color"></div> <span class="text-monospace">@prob.ShortName</span> - @prob.Title</td>
                                 <td use-a>@(prob.AllowSubmit ? "Yes" : "No")</td>
                                 <td use-a>@(prob.AllowJudge ? "Yes" : "No")</td>
-                                <td use-a title="@prob.Color">
-                                    <div class="circle" style="background-color: @prob.Color"></div>
-                                </td>
-                                <td><a asp-action="DeleteProblem" data-toggle="ajaxWindow" data-target="deleteProb"><i class="fas fa-trash-alt"></i></a></td>
+                                <td><a asp-controller="JuryProblem" asp-action="Edit" asp-route-pid="@prob.ProblemId" data-toggle="ajaxWindow" data-target="editProb"><i class="fas fa-edit"></i></a></td>
+                                <td><a asp-controller="JuryProblem" asp-action="Delete" asp-route-pid="@prob.ProblemId" data-toggle="ajaxWindow" data-target="deleteProb"><i class="fas fa-trash-alt"></i></a></td>
                             </tr>
                         }
                     </tbody>
@@ -125,10 +118,6 @@
         <div class="card mb-3">
             <div class="card-header">
                 Jury members
-                @if (User.IsInRole("Administrator"))
-                {
-                    <a class="float-right text-reset" asp-action="Assign" data-toggle="ajaxWindow" data-target="assign"><i class="fas fa-plus"></i></a>
-                }
             </div>
             <div class="card-body">
                 <table class="table data-table table-sm table-striped table-hover mb-0">
@@ -137,21 +126,24 @@
                             <th scope="col">ID</th>
                             <th scope="col">User Name</th>
                             <th scope="col">Nick Name</th>
-                            <th></th>
+                            <th>
+                                <viewmodule roles="Administrator">
+                                    <a class="text-reset" asp-action="Assign" data-toggle="ajaxWindow" data-target="assign"><i class="fas fa-plus"></i></a>
+                                </viewmodule>
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach (var u in users)
                         {
-                            <tr asp-area="Account" asp-controller="Profile" asp-action="View" asp-route-uid="@u.Id" data-toggle="gotoUrl">
+                            <tr asp-area="Account" asp-controller="Profile" asp-action="Show" asp-route-username="@u.UserName" data-toggle="gotoUrl">
                                 <td use-a>u@(u.Id)</td>
                                 <td use-a>@u.UserName</td>
                                 <td use-a>@u.NickName</td>
                                 <td>
-                                    @if (User.IsInRole("Administrator"))
-                                    {
+                                    <viewmodule roles="Administrator">
                                         <a asp-action="Unassign" asp-route-uid="@u.Id" data-toggle="ajaxWindow" data-target="unassign"><i class="fas fa-trash-alt"></i></a>
-                                    }
+                                    </viewmodule>
                                 </td>
                             </tr>
                         }
@@ -168,18 +160,22 @@
                     <div class="col-lg-6">
                         <h5 class="ml-2 text-left">Infrastructures</h5>
                         <ul>
-                            <li><a asp-area="Judge" asp-controller="Dashboard" asp-action="InternalError">Internal Errors</a></li>
-                            <li><a asp-area="Judge" asp-controller="Dashboard" asp-action="JudgeHost">Judgehosts</a></li>
-                            <li><a asp-area="Judge" asp-controller="Dashboard" asp-action="Executable">Executables</a></li>
-                            <li><a asp-area="Judge" asp-controller="Dashboard" asp-action="Language">Languages</a></li>
-                            <li><a asp-area="Account" asp-controller="Administration" asp-action="List">Users</a></li>
+                            <li><a asp-area="Dashboard" asp-controller="InternalErrors" asp-action="List">Internal Errors</a></li>
+                            <li><a asp-area="Dashboard" asp-controller="Judgehosts" asp-action="List">Judgehosts</a></li>
+                            <li><a asp-area="Dashboard" asp-controller="Executables" asp-action="List">Executables</a></li>
+                            <li><a asp-area="Dashboard" asp-controller="Languages" asp-action="List">Languages</a></li>
+                            <li><a asp-area="Dashboard" asp-controller="Categories" asp-action="List">Team Categories</a></li>
+                            <li><a asp-area="Dashboard" asp-controller="Affiliations" asp-action="List">Team Affiliations</a></li>
+                            <li><a asp-area="Dashboard" asp-controller="Users" asp-action="List">Users</a></li>
+                            <li><a asp-controller="JuryTeam" asp-action="List">Teams</a></li>
                         </ul>
                     </div>
                     <div class="col-lg-6">
                         <h5 class="ml-2 text-left">During contest</h5>
                         <ul>
                             <li><a asp-action="Auditlog">Audit log</a></li>
-                            <li><a asp-action="Statistics">Statistics / Analysis</a></li>
+                            <li><a asp-action="ResetEventFeed" data-target="refresh" data-toggle="ajaxWindow">Reset event feed</a></li>
+                            <li><a asp-action="Statistics">Statistics/Analysis</a></li>
                             <li><a asp-action="RefreshCache" data-target="refresh" data-toggle="ajaxWindow">Refresh scoreboard cache</a></li>
                             <li><a asp-action="Rejudging">Rejudgings</a></li>
                         </ul>

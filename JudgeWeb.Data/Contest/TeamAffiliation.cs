@@ -21,5 +21,11 @@
         /// </summary>
         [Index]
         public string ExternalId { get; set; }
+
+        /// <summary>
+        /// 国家编号
+        /// </summary>
+        [NonUnicode(MaxLength = 4)]
+        public string CountryCode { get; set; } = "CHN";
     }
 }

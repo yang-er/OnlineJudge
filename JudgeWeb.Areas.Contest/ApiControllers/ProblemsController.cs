@@ -1,4 +1,5 @@
-﻿using JudgeWeb.Areas.Api.Models;
+﻿using JudgeWeb.Data;
+using JudgeWeb.Data.Api;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -25,14 +26,14 @@ namespace JudgeWeb.Areas.Api.Controllers
         /// <param name="ids">Filter the objects to get on this list of ID's</param>
         /// <response code="200">Returns all the problems for this contest</response>
         [HttpGet]
-        public async Task<ActionResult<ContestProblem[]>> GetAll(int cid, int[] ids)
+        public async Task<ActionResult<ContestProblem2[]>> GetAll(int cid, int[] ids)
         {
-            IEnumerable<Data.ContestProblem> probs = await Service.GetProblemsAsync(cid);
+            IEnumerable<ContestProblem> probs = await DbContext.GetProblemsAsync(cid);
             if (ids != null && ids.Length > 0)
                 probs = probs.Where(cp => ids.Contains(cp.ProblemId));
 
             return probs
-                .Select(cp => new ContestProblem(cp))
+                .Select(cp => new ContestProblem2(cp))
                 .ToArray();
         }
 
@@ -43,11 +44,11 @@ namespace JudgeWeb.Areas.Api.Controllers
         /// <param name="id">The ID of the entity to get</param>
         /// <response code="200">Returns the given problem for this contest</response>
         [HttpGet("{id}")]
-        public async Task<ActionResult<ContestProblem>> GetOne(int cid, int id)
+        public async Task<ActionResult<ContestProblem2>> GetOne(int cid, int id)
         {
-            var probs = await Service.GetProblemsAsync(cid);
+            var probs = await DbContext.GetProblemsAsync(cid);
             var prob = probs.FirstOrDefault(cp => cp.ProblemId == id);
-            return new ContestProblem(prob);
+            return new ContestProblem2(prob);
         }
     }
 }

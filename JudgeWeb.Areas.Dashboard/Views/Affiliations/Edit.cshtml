@@ -20,6 +20,10 @@
                 <input asp-for="FormalName" required maxlength="20" class="form-control" />
             </div>
             <div class="form-group">
+                <label asp-for="CountryCode">Country Code</label>
+                <input asp-for="CountryCode" maxlength="4" class="form-control" />
+            </div>
+            <div class="form-group">
                 <label for="logo" class="required">School Logo</label>
                 <div class="custom-file">
                     <input name="logo" type="file" id="logo" accept="image/png" class="custom-file-input" />

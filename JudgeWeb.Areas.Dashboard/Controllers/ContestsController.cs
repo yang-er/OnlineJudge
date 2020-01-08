@@ -74,7 +74,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
             var firstUser = await userManager.GetUserAsync(User);
             var roleAttach = await userManager.AddToRoleAsync(firstUser, roleName);
             if (!roleAttach.Succeeded) return Json(roleAttach);
-            return RedirectToAction("Home", "Jury", new { area = "Contest", cid });
+            return RedirectToAction("Home", "JuryMain", new { area = "Contest", cid });
         }
     }
 }

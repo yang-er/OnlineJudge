@@ -1,5 +1,6 @@
 ﻿using JudgeWeb.Areas.Api.Models;
 using JudgeWeb.Data;
+using JudgeWeb.Data.Api;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;

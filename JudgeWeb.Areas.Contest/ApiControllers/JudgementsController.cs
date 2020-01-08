@@ -1,4 +1,4 @@
-﻿using JudgeWeb.Areas.Api.Models;
+﻿using JudgeWeb.Data.Api;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -52,29 +52,7 @@ namespace JudgeWeb.Areas.Api.Controllers
             var contestTime = Contest.StartTime ?? DateTimeOffset.Now;
 
             return js
-                .Select(judging =>
-                {
-                    var cj = new ContestJudgement
-                    {
-                        id = $"{judging.j.JudgingId}",
-                        submission_id = $"{judging.j.SubmissionId}",
-                        judgehost = judging.ServerName,
-                        judgement_type_id = JudgementType.For(judging.j.Status),
-                        valid = judging.j.Active,
-                        start_contest_time = judging.j.StartTime.Value - contestTime,
-                        start_time = judging.j.StartTime.Value,
-                    };
-
-                    if (cj.judgement_type_id != null)
-                    {
-                        cj.end_contest_time = judging.j.StopTime.Value - contestTime;
-                        cj.end_time = judging.j.StopTime.Value;
-                        if (cj.judgement_type_id != "CE" && cj.judgement_type_id != "JE")
-                            cj.max_run_time = judging.j.ExecuteTime / 1000.0;
-                    }
-
-                    return cj;
-                })
+                .Select(judging => new ContestJudgement(judging.j, contestTime, judging.ServerName))
                 .ToArray();
         }
 
@@ -98,27 +76,7 @@ namespace JudgeWeb.Areas.Api.Controllers
             var judging = await jQuery.SingleOrDefaultAsync();
             if (judging == null) return NotFound();
             var contestTime = Contest.StartTime ?? DateTimeOffset.Now;
-
-            var cj = new ContestJudgement
-            {
-                id = $"{judging.j.JudgingId}",
-                submission_id = $"{judging.j.SubmissionId}",
-                judgehost = judging.ServerName,
-                judgement_type_id = JudgementType.For(judging.j.Status),
-                valid = judging.j.Active,
-                start_contest_time = judging.j.StartTime.Value - contestTime,
-                start_time = judging.j.StartTime.Value,
-            };
-
-            if (cj.judgement_type_id != null)
-            {
-                cj.end_contest_time = judging.j.StopTime.Value - contestTime;
-                cj.end_time = judging.j.StopTime.Value;
-                if (cj.judgement_type_id != "CE" && cj.judgement_type_id != "JE")
-                    cj.max_run_time = judging.j.ExecuteTime / 1000.0;
-            }
-
-            return cj;
+            return new ContestJudgement(judging.j, contestTime, judging.ServerName);
         }
     }
 }

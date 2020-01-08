@@ -7,9 +7,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using ClarificationCategory = JudgeWeb.Data.Clarification.TargetCategory;
 
 namespace JudgeWeb.Areas.Contest.Controllers
 {
@@ -18,29 +18,17 @@ namespace JudgeWeb.Areas.Contest.Controllers
     [Route("[area]/{cid}/[controller]")]
     public partial class TeamController : Controller3
     {
-        private Team Team { get; set; }
-
-        private SubmissionManager SubmissionManager { get; }
-
-        public TeamController(SubmissionManager sm) => SubmissionManager = sm;
-
-        public bool TooEarly => (Contest.StartTime ?? DateTimeOffset.MaxValue) > DateTimeOffset.Now;
+        public bool TooEarly => Contest.GetState() < ContestState.Started;
 
         public override async Task OnActionExecutingAsync(ActionExecutingContext context)
         {
-            bool isOk = ViewData.ContainsKey("HasTeam");
-
-            if (isOk)
-            {
-                Team = ViewBag.Team;
-                if (Team.Status != 1) isOk = false;
-            }
-
-            if (!isOk)
+            if (Team == null || Team.Status == 1)
             {
                 context.Result = IsWindowAjax
-                     ? Message("401 Unauthorized", "This contest is not active for you (yet).", MessageType.Danger)
-                     : View("AccessDenied");
+                    ? Message("401 Unauthorized",
+                        "This contest is not active for you (yet).",
+                        MessageType.Danger)
+                    : View("AccessDenied");
             }
 
             await base.OnActionExecutingAsync(context);
@@ -48,46 +36,23 @@ namespace JudgeWeb.Areas.Contest.Controllers
 
 
         [HttpGet("[action]")]
-        public async Task<IActionResult> Scoreboard(int cid,
+        public Task<IActionResult> Scoreboard(int cid,
             [FromQuery(Name = "affiliations[]")] int[] affiliations,
             [FromQuery(Name = "categories[]")] int[] categories,
-            [FromQuery(Name = "clear")] string clear = "")
-        {
-            var board = await Service.FindScoreboardAsync(cid, true, false);
-
-            if (clear == "clear")
-            {
-                affiliations = Array.Empty<int>();
-                categories = Array.Empty<int>();
-            }
-
-            if (affiliations.Length > 0)
-            {
-                board.RankCache = board.RankCache
-                    .Where(t => affiliations.Contains(t.Team.AffiliationId));
-                ViewData["Filter_affiliations"] = affiliations.ToHashSet();
-            }
-
-            if (categories.Length > 0)
-            {
-                board.RankCache = board.RankCache
-                    .Where(t => categories.Contains(t.Team.CategoryId));
-                ViewData["Filter_categories"] = categories.ToHashSet();
-            }
-
-            return View(board);
-        }
+            [FromQuery(Name = "clear")] string clear = "") =>
+            ScoreboardView(
+                isPublic: Contest.GetState() < ContestState.Finalized,
+                isJury: false, clear == "clear", affiliations, categories);
 
 
         [HttpGet]
         public async Task<IActionResult> Home(int cid)
         {
             int teamid = Team.TeamId;
-            var board = await Service.FindScoreboardAsync(cid, teamid);
+            var board = await FindScoreboardAsync(teamid);
             var probs = board.Problems;
-            var langs = await Service.GetLanguagesAsync(cid);
 
-            var clars = await Service.Clarifications
+            var clars = await DbContext.Clarifications
                 .Where(c => c.ContestId == cid)
                 .Where(c => (c.Sender == null && c.Recipient == null)
                     || c.Recipient == teamid || c.Sender == teamid)
@@ -95,21 +60,21 @@ namespace JudgeWeb.Areas.Contest.Controllers
             
             ViewBag.Clarifications = clars;
 
-            var subQuery = await SubmissionManager.Submissions
+            var subQuery = await DbContext.Submissions
                 .Where(s => s.ContestId == cid && s.Author == teamid)
                 .Join(
-                    inner: SubmissionManager.Judgings,
+                    inner: DbContext.Judgings,
                     outerKeySelector: s => new { s.SubmissionId, Active = true },
                     innerKeySelector: g => new { g.SubmissionId, g.Active },
                     resultSelector: (s, g) => new { s.SubmissionId, g.Status, s.Time, s.ProblemId, s.Language })
-                .OrderBy(a => a.SubmissionId)
+                .OrderByDescending(a => a.SubmissionId)
                 .ToListAsync();
 
             ViewBag.Submissions = subQuery
                 .Select(a => new SubmissionViewModel
                 {
                     Grade = 0,
-                    Language = langs[a.Language],
+                    Language = Languages[a.Language],
                     SubmissionId = a.SubmissionId,
                     Time = a.Time,
                     Verdict = a.Status,
@@ -121,9 +86,9 @@ namespace JudgeWeb.Areas.Contest.Controllers
 
 
         [HttpGet("[action]")]
-        public async Task<IActionResult> Problemset(int cid)
+        public IActionResult Problemset()
         {
-            return View(await Service.GetProblemsAsync(cid));
+            return View(Problems);
         }
 
 
@@ -132,38 +97,35 @@ namespace JudgeWeb.Areas.Contest.Controllers
         public async Task<IActionResult> Submission(int cid, int sid)
         {
             int teamid = Team.TeamId;
-            var langs = await Service.GetLanguagesAsync(cid);
-            var probs = await Service.GetProblemsAsync(cid);
 
-            var model = await SubmissionManager.Submissions
+            var model = await DbContext.Submissions
                 .Where(s => s.SubmissionId == sid && s.ContestId == cid && s.Author == teamid)
                 .Join(
-                    inner: SubmissionManager.Judgings,
+                    inner: DbContext.Judgings,
                     outerKeySelector: s => new { s.SubmissionId, Active = true },
                     innerKeySelector: g => new { g.SubmissionId, g.Active },
-                    resultSelector: (s, g) => new { s.SubmissionId, g.Status, s.Time, s.ProblemId, g.CompileError, s.Language })
+                    resultSelector: (s, g) => new { s.SubmissionId, g.Status, s.Time, s.ProblemId, g.CompileError, s.Language, s.SourceCode })
                 .SingleOrDefaultAsync();
 
             return Window(new SubmissionViewModel
             {
                 SubmissionId = model.SubmissionId,
                 Grade = 0,
-                Language = langs[model.Language],
+                Language = Languages[model.Language],
                 Time = model.Time,
                 Verdict = model.Status,
-                Problem = probs.FirstOrDefault(cp => cp.ProblemId == model.ProblemId),
+                Problem = Problems.Find(model.ProblemId),
                 CompilerOutput = model.CompileError,
+                SourceCode = model.SourceCode,
             });
         }
 
 
         [HttpGet("problems/{prob}")]
-        public async Task<IActionResult> Problemset(
-            int cid, string prob, [FromServices] IFileRepository pe)
+        public async Task<IActionResult> Problemset(string prob, [FromServices] IFileRepository pe)
         {
             if (TooEarly) return NotFound();
-            var probs = await Service.GetProblemsAsync(cid);
-            var problem = probs.FirstOrDefault(a => a.ShortName == prob);
+            var problem = Problems.Find(prob);
             if (problem == null) return NotFound();
 
             pe.SetContext("Problems");
@@ -177,19 +139,36 @@ namespace JudgeWeb.Areas.Contest.Controllers
 
         [HttpGet("clarifications/add")]
         [ValidateInAjax]
-        public async Task<IActionResult> AddClarification(int cid)
+        public IActionResult AddClarification()
         {
             if (TooEarly) return Message("Clarification", "Contest has not started.");
-            ViewBag.Problems = await Service.GetProblemsAsync(cid);
             return Window(new AddClarificationModel());
         }
 
 
         [HttpGet("clarifications/{clarid}")]
         [ValidateInAjax]
-        public async Task<IActionResult> Clarification(int cid, int clarid)
+        public async Task<IActionResult> Clarification(int cid, int clarid, bool needMore = true)
         {
-            var clars = await Service.ClarFindByIdAsync(cid, Team.TeamId, clarid, true);
+            var toSee = await DbContext.Clarifications
+                .Where(c => c.ContestId == cid && c.ClarificationId == clarid)
+                .SingleOrDefaultAsync();
+            var clars = Enumerable.Empty<Clarification>();
+
+            if (toSee?.CheckPermission(Team.TeamId) ?? true)
+            {
+                clars = clars.Append(toSee);
+
+                if (needMore && toSee.ResponseToId.HasValue)
+                {
+                    int respid = toSee.ResponseToId.Value;
+                    var toSee2 = await DbContext.Clarifications
+                        .Where(c => c.ContestId == cid && c.ClarificationId == respid)
+                        .SingleOrDefaultAsync();
+                    if (toSee2 != null) clars = clars.Prepend(toSee2);
+                }
+            }
+
             if (!clars.Any()) return NotFound();
             ViewData["TeamName"] = Team.TeamName;
             return Window(clars);
@@ -201,33 +180,31 @@ namespace JudgeWeb.Areas.Contest.Controllers
         public async Task<IActionResult> Clarification(string op, AddClarificationModel model)
         {
             var (cid, teamid) = (Contest.ContestId, Team.TeamId);
-            var probs = await Service.GetProblemsAsync(cid);
             int repl = 0;
             if (op != "add" && !int.TryParse(op, out repl)) return BadRequest();
 
-            if (repl != 0 && await Service.ClarFindByIdAsync(cid, repl) == null)
+            var replit = await DbContext.Clarifications
+                .Where(c => c.ContestId == cid && c.ClarificationId == repl)
+                .SingleOrDefaultAsync();
+            if (repl != 0 && replit == null)
                 ModelState.AddModelError("xys::replyto", "The clarification replied to is not found.");
 
             if (string.IsNullOrWhiteSpace(model.Body))
                 ModelState.AddModelError("xys::empty", "No empty clarification");
 
-            var avaliableCategories = probs
-                .Select(cp => ($"prob-{cp.ShortName}", (ClarificationCategory.Problem), (int?)cp.ProblemId))
-                .Prepend(("tech", ClarificationCategory.Technical, null))
-                .Prepend(("general", ClarificationCategory.General, null));
-            var usage = avaliableCategories.SingleOrDefault(cp => model.Type == cp.Item1);
+            var usage = ClarCategories.SingleOrDefault(cp => model.Type == cp.Item1);
             if (usage.Item1 == null)
                 ModelState.AddModelError("xys::error_cate", "The category specified is wrong.");
 
             if (!ModelState.IsValid)
             {
-                DisplayMessage = string.Join('\n', ModelState.Values
+                StatusMessage = string.Join('\n', ModelState.Values
                     .SelectMany(m => m.Errors)
                     .Select(e => e.ErrorMessage));
             }
             else
             {
-                await Service.SendClarificationAsync(new Clarification
+                await SendClarificationAsync(new Clarification
                 {
                     Body = model.Body,
                     SubmitTime = DateTimeOffset.Now,
@@ -238,7 +215,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
                     Category = usage.Item2,
                 });
 
-                DisplayMessage = "Clarification sent to the jury.";
+                StatusMessage = "Clarification sent to the jury.";
             }
 
             return RedirectToAction(nameof(Home));
@@ -247,51 +224,64 @@ namespace JudgeWeb.Areas.Contest.Controllers
 
         [HttpGet("[action]")]
         [ValidateInAjax]
-        public async Task<IActionResult> Submit(int cid)
+        public IActionResult Submit()
         {
             if (TooEarly && !ViewData.ContainsKey("IsJury"))
                 return Message("Submit", "Contest not started.", MessageType.Danger);
-            ViewBag.Problems = await Service.GetProblemsAsync(cid);
-            ViewBag.Languages = await Service.GetLanguagesAsync(cid);
             return Window(new TeamCodeSubmitModel());
         }
 
 
         [HttpPost("[action]")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Submit(int cid, TeamCodeSubmitModel model)
+        public async Task<IActionResult> Submit(
+            int cid, TeamCodeSubmitModel model,
+            [FromServices] SubmissionManager submgr)
         {
             if (TooEarly && !ViewData.ContainsKey("IsJury"))
             {
-                DisplayMessage = "Contest not started.";
+                StatusMessage = "Contest not started.";
                 return RedirectToAction(nameof(Home));
             }
 
-            var probs = await Service.GetProblemsAsync(cid);
-            var prob = probs.FirstOrDefault(cp => cp.ShortName == model.Problem);
+            var prob = Problems.Find(model.Problem);
             if (prob is null || !prob.AllowSubmit)
             {
-                DisplayMessage = "Error problem not found.";
+                StatusMessage = "Error problem not found.";
                 return RedirectToAction(nameof(Home));
             }
 
-            var langs = await Service.GetLanguagesAsync(cid);
-            if (!langs.ContainsKey(model.Language))
+            var lang = Languages.GetValueOrDefault(model.Language);
+            if (lang == null)
             {
-                DisplayMessage = "Error language not found.";
+                StatusMessage = "Error language not found.";
                 return RedirectToAction(nameof(Home));
             }
 
-            var s = await SubmissionManager.CreateAsync(
+            var s = await submgr.CreateAsync(
                 code: model.Code,
-                langid: model.Language,
+                langid: lang,
                 probid: prob.ProblemId,
-                cid: cid, uid: Team.TeamId,
+                cid: Contest, uid: Team.TeamId,
                 ipAddr: HttpContext.Connection.RemoteIpAddress,
                 via: "team-page",
                 username: UserManager.GetUserName(User));
 
-            DisplayMessage = "Submission done! Watch for the verdict in the list below.";
+            DbContext.UpdateScoreboard(new ScoreboardState
+            {
+                ContestId = Contest.ContestId,
+                EndTime = Contest.EndTime,
+                FreezeTime = Contest.FreezeTime,
+                ProblemId = prob.ProblemId,
+                RankStrategy = Contest.RankingStrategy,
+                StartTime = Contest.StartTime,
+                SubmissionId = s.SubmissionId,
+                TeamId = s.Author,
+                Time = s.Time,
+                UnfreezeTime = Contest.UnfreezeTime,
+            });
+
+            StatusMessage = "Submission done! Watch for the verdict in the list below.";
             return RedirectToAction(nameof(Home));
         }
     }

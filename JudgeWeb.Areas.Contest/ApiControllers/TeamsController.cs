@@ -1,4 +1,4 @@
-﻿using JudgeWeb.Areas.Api.Models;
+﻿using JudgeWeb.Data.Api;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -31,14 +31,14 @@ namespace JudgeWeb.Areas.Api.Controllers
         public async Task<ActionResult<ContestTeam[]>> GetAll(
             int cid, int[] ids, int? category, string affiliation, bool @public)
         {
-            var teams = Service.Teams
+            var teams = DbContext.Teams
                 .Where(t => t.ContestId == cid);
             if (category.HasValue)
                 teams = teams.Where(t => t.CategoryId == category);
             if (ids != null && ids.Length > 0)
                 teams = teams.Where(t => ids.Contains(t.TeamId));
             var query2 = teams.Join(
-                inner: Service.TeamAffiliations,
+                inner: DbContext.TeamAffiliations,
                 outerKeySelector: t => t.AffiliationId,
                 innerKeySelector: a => a.AffiliationId,
                 resultSelector: (t, a) => new { t, a });
@@ -47,24 +47,15 @@ namespace JudgeWeb.Areas.Api.Controllers
             if (@public)
                 query2 = query2
                     .Join(
-                        inner: Service.TeamCategories,
+                        inner: DbContext.TeamCategories,
                         outerKeySelector: t => t.t.CategoryId,
                         innerKeySelector: c => c.CategoryId,
                         resultSelector: (a, c) => new { a.t, a.a, c })
                     .Where(a => a.c.IsPublic)
                     .Select(a => new { a.t, a.a });
+
             return await query2
-                .Select(a => new ContestTeam
-                {
-                    group_ids = new[] { a.t.CategoryId.ToString() },
-                    organization_id = a.a.ExternalId,
-                    id = a.t.TeamId.ToString(),
-                    members = null,
-                    name = a.t.TeamName,
-                    externalid = "team" + a.t.TeamId,
-                    icpc_id = "team" + a.t.TeamId,
-                    affiliation = a.a.FormalName,
-                })
+                .Select(a => new ContestTeam(a.t, a.a))
                 .ToArrayAsync();
         }
 
@@ -77,23 +68,13 @@ namespace JudgeWeb.Areas.Api.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<ContestTeam>> GetOne(int cid, int id)
         {
-            return await Service.Teams
+            return await DbContext.Teams
                 .Where(t => t.ContestId == cid && t.TeamId == id)
                 .Join(
-                    inner: Service.TeamAffiliations,
+                    inner: DbContext.TeamAffiliations,
                     outerKeySelector: t => t.AffiliationId,
                     innerKeySelector: a => a.AffiliationId,
-                    resultSelector: (t, a) => new ContestTeam
-                    {
-                        group_ids = new[] { t.CategoryId.ToString() },
-                        organization_id = a.ExternalId,
-                        id = t.TeamId.ToString(),
-                        members = null,
-                        name = t.TeamName,
-                        externalid = "team" + t.TeamId,
-                        icpc_id = "team" + t.TeamId,
-                        affiliation = a.FormalName,
-                    })
+                    resultSelector: (t, a) => new ContestTeam(t, a))
                 .FirstOrDefaultAsync();
         }
     }

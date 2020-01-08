@@ -16,6 +16,7 @@ namespace JudgeWeb.Areas.Polygon.Models
         public int ExecuteMemory { get; set; }
         public int ServerId { get; set; }
         public int JudgingId { get; set; }
+        public int ContestId { get; set; }
         public string CompileError { get; set; }
         public int LanguageId { get; set; }
         public int Author { get; set; }

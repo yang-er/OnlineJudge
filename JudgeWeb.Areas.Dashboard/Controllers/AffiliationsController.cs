@@ -78,6 +78,15 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
             var e = DbContext.TeamAffiliations.Add(model);
             await DbContext.SaveChangesAsync();
             await SolveLogo(logo, model.ExternalId);
+
+            var now = System.DateTimeOffset.Now;
+            var cts = await DbContext.Contests
+                .Where(c => c.EndTime == null || c.EndTime > now)
+                .Select(c => c.ContestId)
+                .ToArrayAsync();
+            DbContext.Events.AddRange(cts.Select(t =>
+                new Data.Api.ContestOrganization(e.Entity).ToEvent("create", t)));
+
             return RedirectToAction(nameof(Detail), new { affid = e.Entity.AffiliationId });
         }
 
@@ -94,6 +103,15 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
                 return BadRequest();
             aff.FormalName = model.FormalName;
             aff.ExternalId = model.ExternalId;
+            aff.CountryCode = model.CountryCode;
+
+            var now = System.DateTimeOffset.Now;
+            var cts = await DbContext.Contests
+                .Where(c => c.EndTime == null || c.EndTime > now)
+                .Select(c => c.ContestId)
+                .ToArrayAsync();
+            DbContext.Events.AddRange(cts.Select(t =>
+                new Data.Api.ContestOrganization(aff).ToEvent("update", t)));
 
             DbContext.TeamAffiliations.Update(aff);
             await DbContext.SaveChangesAsync();
@@ -131,6 +149,14 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
             if (desc == null) return NotFound();
 
             DbContext.TeamAffiliations.Remove(desc);
+
+            var now = System.DateTimeOffset.Now;
+            var cts = await DbContext.Contests
+                .Where(c => c.EndTime == null || c.EndTime > now)
+                .Select(c => c.ContestId)
+                .ToArrayAsync();
+            DbContext.Events.AddRange(cts.Select(t =>
+                new Data.Api.ContestOrganization(desc).ToEvent("delete", t)));
 
             try
             {

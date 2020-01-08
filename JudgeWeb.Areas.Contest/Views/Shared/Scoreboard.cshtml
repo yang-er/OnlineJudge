@@ -3,6 +3,7 @@
     ViewData["Title"] = "Scoreboard";
     ViewData["RefreshAfter"] = "initializeScoreboard";
     ViewData["DataAjaxClass"] = "mt-3";
+    ViewData["RefreshSpan"] = 30;
     bool inajax = ViewData.ContainsKey("InAjax");
     if (inajax) { Layout = null; }
     var fil_aff = (HashSet<int>)ViewData["Filter_affiliations"];

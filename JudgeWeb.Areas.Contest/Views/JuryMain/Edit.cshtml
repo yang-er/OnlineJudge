@@ -1,19 +1,15 @@
 ﻿@model JuryEditModel
 @{
     ViewData["Title"] = "Edit contest";
-    ViewData["DisableAjaxRefresh"] = true;
     List<TeamCategory> cats = ViewBag.Categories;
-    Dictionary<int, string> repos = ViewBag.Repository;
     var catSel = cats.Select(c => new SelectListItem(c.Name, c.CategoryId.ToString()));
-    var probSel = repos.Select(p => new SelectListItem($"p{p.Key} - {p.Value}", p.Key.ToString()));
 }
 
-<h1 class="mt-3">Edit contest @Model.ContestId</h1>
-
-<partial name="_StatusMessage" model="ViewBag.Message" />
+<h2 class="mt-2">Edit contest @Model.ContestId</h2>
 
 <form asp-action="Edit" method="post">
     <input type="hidden" asp-for="ContestId" />
+    <div asp-validation-summary="All" class="text-danger"></div>
     <div class="row">
         <div class="col-lg-4">
             <div class="form-group">
@@ -101,127 +97,16 @@
         </div>
     </div>
 
-    <table class="mt-4 table table-sm table-striped">
-        <thead>
-            <tr>
-                <th><label class="required">Problem</label></th>
-                <th><label class="required">Short name</label></th>
-                <th><label class="required">Allow submit</label></th>
-                <th><label class="required">Allow judge</label></th>
-                <th><label>Color</label></th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody data-collection-holder data-after-add="bindColor">
-        </tbody>
-        <tfoot>
-            <tr>
-                <td colspan="5"></td>
-                <td>
-                    <button type="button" data-add class="btn btn-success"><i class="fas fa-plus"></i></button>
-                </td>
-            </tr>
-        </tfoot>
-    </table>
     <div class="form-group">
         <button type="submit" class="btn-primary btn">Save</button>
     </div>
 </form>
 
-<div class="modal fade" id="chooseProblem" tabindex="-1" role="dialog" aria-labelledby="chooseProblemLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="chooseProblemLabel">Choose problem</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <select id="problem-selector" asp-items="probSel" class="form-control"></select>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                <button id="chooseFinish" type="button" class="btn btn-primary">Save changes</button>
-            </div>
-        </div>
-    </div>
-</div>
-
 <script src="~/static/js/jscolor.min.js"></script>
 <script>jscolor.dir = "/static/js/";</script>
-
-<script type="text/html" data-prototype>
-    <tr>
-        <td>
-            <input type="hidden" name="Problems[__name__].ProblemId" value="1001" />
-            <input type="text" data-name="Problems[__name__].ProblemId" value="p1001 - A+B Problem" class="form-control custom-select form-control prob-sel" />
-        </td>
-        <td><input type="text" name="Problems[__name__].ShortName" required class="form-control" /></td>
-        <td><select name="Problems[__name__].AllowSubmit" class="form-control custom-select form-control"><option value="True">Yes</option><option value="False">No</option></select></td>
-        <td><select name="Problems[__name__].AllowJudge" class="form-control custom-select form-control"><option value="True">Yes</option><option value="False">No</option></select></td>
-        <td><input type="text" name="Problems[__name__].Color" class="color form-control" value="#FFFFFF" /></td>
-        <td><button type="button" data-delete class="btn btn-danger"><i class="fas fa-trash-alt"></i></button></td>
-    </tr>
-</script>
-
-<script>
-    var target = "";
-
-    $('body').on('click', '.prob-sel', function () {
-        target = $(this).data('name');
-        $('#problem-selector').val($('input[name="' + target + '"]').val());
-        $('#chooseProblem').modal('show');
-    });
-
-    $('#chooseFinish').on('click', function () {
-        var value = $('#problem-selector').val();
-        $('input[data-name="' + target + '"]').val($('#problem-selector option:selected').text());
-        $('input[name="' + target + '"]').val(value);
-        $('#chooseProblem').modal('hide');
-    });
-</script>
-
 
 <script>
     function bindColor() {
         jscolor.bind();
     }
 </script>
-
-<script>
-    var $collectionHolder;
-
-    $(function () {
-        $collectionHolder = $('[data-collection-holder]');
-        $collectionHolder.data('index', $collectionHolder.find('tr').length);
-        $('[data-add]').on('click', function () {
-            addCollectionItem($collectionHolder);
-        });
-
-        $('[data-delete]').on('click', function () {
-            $(this).closest('tr').remove();
-        });
-
-        function addCollectionItem($collectionHolder) {
-            var prototype = $('[data-prototype]').text();
-            var index = $collectionHolder.data('index');
-            prototype = prototype.replace(/__name__/g, index);
-            $collectionHolder.data('index', index + 1);
-            var $prototype = $(prototype);
-            $prototype.find('[data-delete]').on('click', function () {
-                $(this).closest('tr').remove();
-            });
-
-            $collectionHolder.append($prototype);
-
-            if ($collectionHolder.data('after-add')) {
-                window[$collectionHolder.data('after-add')]();
-            }
-        }
-    });
-</script>
-
-

@@ -1,4 +1,4 @@
-﻿using JudgeWeb.Areas.Api.Models;
+﻿using JudgeWeb.Data.Api;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -57,16 +57,7 @@ namespace JudgeWeb.Areas.Api.Controllers
             var contestTime = Contest.StartTime ?? DateTimeOffset.Now;
 
             return runs
-                .Select(run => new ContestRun
-                {
-                    time = contestTime,
-                    contest_time = run.CompleteTime - contestTime,
-                    id = $"{run.TestId}",
-                    judgement_id = $"{run.JudgingId}",
-                    judgement_type_id = JudgementType.For(run.Status),
-                    ordinal = run.Rank,
-                    run_time = run.ExecuteTime / 1000.0,
-                })
+                .Select(run => new ContestRun(run.CompleteTime, run.CompleteTime - contestTime, run.TestId, run.JudgingId, run.Status, run.Rank, run.ExecuteTime))
                 .ToArray();
         }
 
@@ -92,16 +83,7 @@ namespace JudgeWeb.Areas.Api.Controllers
             if (run == null) return NotFound();
             var contestTime = Contest.StartTime ?? DateTimeOffset.Now;
 
-            return new ContestRun
-            {
-                time = contestTime,
-                contest_time = run.CompleteTime - contestTime,
-                id = $"{run.TestId}",
-                judgement_id = $"{run.JudgingId}",
-                judgement_type_id = JudgementType.For(run.Status),
-                ordinal =  run.Rank,
-                run_time = run.ExecuteTime / 1000.0,
-            };
+            return new ContestRun(run.CompleteTime, run.CompleteTime - contestTime, run.TestId, run.JudgingId, run.Status, run.Rank, run.ExecuteTime);
         }
     }
 }

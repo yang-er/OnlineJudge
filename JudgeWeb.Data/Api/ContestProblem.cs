@@ -1,10 +1,10 @@
-﻿namespace JudgeWeb.Areas.Api.Models
+﻿namespace JudgeWeb.Data.Api
 {
-    public class ContestProblem
+    [EntityType("problems")]
+    public class ContestProblem2 : ContestEventEntity
     {
         public int ordinal { get; set; }
         public string short_name { get; set; }
-        public string id { get; set; }
         public int internalid { get; set; }
         public string label { get; set; }
         public double time_limit { get; set; }
@@ -14,9 +14,9 @@
         //public string color { get; set; }
         public int test_data_count { get; set; }
 
-        public ContestProblem() { }
+        public ContestProblem2() { }
 
-        public ContestProblem(Data.ContestProblem cp)
+        public ContestProblem2(ContestProblem cp)
         {
             ordinal = cp.Rank - 1;
             label = cp.ShortName;

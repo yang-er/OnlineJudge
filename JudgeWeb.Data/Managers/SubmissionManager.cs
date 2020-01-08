@@ -181,48 +181,17 @@ namespace JudgeWeb.Data
         }
 
 
-        public async Task RejudgeForErrorAsync(Judging judging)
-        {
-            DbContext.Judgings.Add(new Judging
-            {
-                Active = judging.Active,
-                Status = Verdict.Pending,
-                FullTest = judging.FullTest,
-                RejudgeId = judging.RejudgeId,
-                SubmissionId = judging.SubmissionId,
-            });
-
-            judging.Active = false;
-            judging.Status = Verdict.UndefinedError;
-            judging.RejudgeId = null;
-            if (!judging.StopTime.HasValue)
-                judging.StopTime = DateTimeOffset.Now;
-
-            DbContext.Judgings.Update(judging);
-            await DbContext.SaveChangesAsync();
-        }
-
-
-        public async Task RejudgeForErrorAsync(int jid)
-        {
-            var judging = await Judgings
-                .Where(j => j.JudgingId == jid)
-                .SingleAsync();
-            await RejudgeForErrorAsync(judging);
-        }
-
-
         public async Task<Submission> CreateAsync(
-            string code, int langid, int probid, int cid, int uid,
+            string code, Language langid, int probid, Contest cid, int uid,
             IPAddress ipAddr, string via, string username, Verdict? expected = null)
         {
             var s = DbContext.Submissions.Add(new Submission
             {
                 Author = uid,
                 CodeLength = code.Length,
-                ContestId = cid,
+                ContestId = cid?.ContestId ?? 0,
                 Ip = ipAddr.ToString(),
-                Language = langid,
+                Language = langid.LangId,
                 ProblemId = probid,
                 Time = DateTimeOffset.Now,
                 SourceCode = code.ToBase64(),
@@ -233,7 +202,7 @@ namespace JudgeWeb.Data
 
             DbContext.AuditLogs.Add(new AuditLog
             {
-                ContestId = cid,
+                ContestId = s.Entity.ContestId,
                 EntityId = s.Entity.SubmissionId,
                 Time = s.Entity.Time.DateTime,
                 Resolved = true,
@@ -249,6 +218,20 @@ namespace JudgeWeb.Data
                 Active = true,
                 Status = Verdict.Pending,
             });
+
+            if (cid != null)
+            {
+                var cs = new Api.ContestSubmission(
+                    cid: cid.ContestId,
+                    langid: langid.ExternalId,
+                    submitid: s.Entity.SubmissionId,
+                    probid: probid,
+                    teamid: uid,
+                    time: s.Entity.Time,
+                    diff: (s.Entity.Time - cid.StartTime) ?? TimeSpan.Zero);
+
+                DbContext.Events.Add(cs.ToEvent("create", cid.ContestId));
+            }
 
             await DbContext.SaveChangesAsync();
             return s.Entity;

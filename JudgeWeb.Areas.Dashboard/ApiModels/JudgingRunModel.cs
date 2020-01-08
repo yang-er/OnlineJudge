@@ -33,7 +33,7 @@ namespace JudgeWeb.Areas.Api.Models
             };
         }
 
-        public Detail ParseInfo(int jid)
+        public Detail ParseInfo(int jid, DateTimeOffset time2)
         {
             int time, mem, exitcode, tcid;
             if (!double.TryParse(runtime, out var dtime)) dtime = 0;
@@ -65,7 +65,7 @@ namespace JudgeWeb.Areas.Api.Models
                 OutputDiff = output_diff,
                 OutputSystem = output_system,
                 JudgingId = jid,
-                CompleteTime = DateTimeOffset.Now,
+                CompleteTime = time2,
             };
         }
     }

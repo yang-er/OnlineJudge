@@ -1,6 +1,7 @@
 ﻿@model SubmissionViewModel
 @{
     Layout = null;
+    Contest ctx = ViewBag.Contest;
     var time = Model.Time;
     var compile_badge = Model.CompilerOutput is null ? "secondary"
                       : Model.Verdict == Verdict.CompileError ? "danger" : "success";
@@ -26,25 +27,23 @@
                         <div class="p-2">Compilation: <span class="badge badge-@compile_badge">@compile_result</span></div>
                     </div>
 
-                    @if (compile_badge == "success")
-                    {
+                    <if cond="@(compile_badge == "success")">
                         <div class="d-flex flex-row">
                             <div class="p-2">
                                 Run result: <verdict3 value="@Model.Verdict" />
                             </div>
                         </div>
-                    }
+                    </if>
 
                     <hr />
                     <h4 class="text-center">Compilation output</h4>
-                    @if (string.IsNullOrWhiteSpace(Model.CompilerOutput))
-                    {
-                        <p class="nodata">There were no compiler errors or warnings.</p>
-                    }
-                    else
-                    {
-                        <pre class="output_text pre-scrollable">@Model.CompilerOutput.UnBase64()</pre>
-                    }
+                    <snippet class="pre-scrollable" base64="@Model.CompilerOutput" nodata="There were no compiler errors or warnings." />
+                    
+                    <if cond="@(ctx.GetState() == ContestState.Finalized)">
+                        <hr />
+                        <h4 class="text-center">Source code</h4>
+                        <ace value="@Model.SourceCode.UnBase64()" file="Main.@Model.Language.FileExtension" />
+                    </if>
                 </div>
             </div>
             <div class="modal-footer">

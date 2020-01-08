@@ -24,5 +24,7 @@ namespace JudgeWeb.Areas.Contest.Models
         public int Grade { get; set; }
 
         public string CompilerOutput { get; set; }
+
+        public string SourceCode { get; set; }
     }
 }

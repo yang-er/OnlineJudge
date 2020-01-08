@@ -3,9 +3,11 @@
     ViewData["Title"] = "Team";
     ViewData["RefreshAfter"] = "setFlashAndProgress";
     ViewData["RefreshBefore"] = "saveFlash";
+    ViewData["RefreshSpan"] = 30;
     bool inajax = ViewData.ContainsKey("InAjax");
 
     IEnumerable<SubmissionViewModel> submits = ViewBag.Submissions;
+    submits = submits.Where(s => s.Problem != null);
     IEnumerable<Clarification> claris = ViewBag.Clarifications;
     Team team = ViewBag.Team;
     var received = claris.Where(c => !c.Sender.HasValue);
@@ -21,14 +23,29 @@
         var endTime = cont.EndTime is null ? -1 : cont.EndTime.Value.ToUnixTimeSeconds();
         var prog = startTime == -1 || initial / 1000 < startTime ? 0
             : now >= endTime ? 100 : (now - startTime) * 100 / (endTime - startTime);
-        <partial name="_ProgressBar" model="prog" />
+        <if cond="@(prog > 0 && prog < 100)">
+            <div class="progress" style="margin-top:-9px; height: 10px; margin-bottom: 9px" data-progress-bar>
+                <div class="progress-bar" role="progressbar" style="width: @prog%;"
+                     aria-valuenow="@prog" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+        </if>
     }
 }
 
 @if ((Model.Contest.StartTime ?? DateTimeOffset.MaxValue) > DateTimeOffset.Now)
 {
-    <h1 id="teamwelcome" class="text-center">Welcome team <span id="teamwelcometeam">@team.TeamName</span>!</h1>
-    <h2 id="contestnotstarted" class="text-center">@(Model.Contest.StartTime.HasValue ? string.Format("Contest scheduled to start on {0:R}", Model.Contest.StartTime.Value).Replace("GMT", "CST") : "Contest has been delayed")</h2>
+    <h1 id="teamwelcome" class="text-center">
+        Welcome team 
+        <span id="teamwelcometeam">@team.TeamName</span>!
+    </h1>
+    <h2 id="contestnotstarted" class="text-center">
+        <if cond="Model.Contest.StartTime.HasValue">
+            Contest scheduled to start on @Model.Contest.StartTime.Value.ToString("ddd, dd MMM yyyy HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture) CST
+        </if>
+        <if cond="!Model.Contest.StartTime.HasValue">
+            Contest has been delayed
+        </if>
+    </h2>
 }
 else
 {
@@ -37,8 +54,8 @@ else
     </div>
 
     <div class="mt-4" data-flash-messages>
-        <partial name="_StatusMessage" model="@TempData["DisplayMessage"]" />
-        @{ TempData.Remove("DisplayMessage"); }
+        <partial name="_StatusMessage" model="@TempData["StatusMessage"]" />
+        @{ TempData.Remove("StatusMessage"); }
     </div>
 
     <div class="row">

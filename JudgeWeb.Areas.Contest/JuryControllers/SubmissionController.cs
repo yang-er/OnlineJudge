@@ -1,4 +1,5 @@
 ﻿using JudgeWeb.Areas.Contest.Models;
+using JudgeWeb.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
@@ -14,14 +15,14 @@ namespace JudgeWeb.Areas.Contest.Controllers
         [HttpGet]
         public async Task<IActionResult> List(int cid, bool all = false)
         {
-            ViewBag.TeamNames = await Service.GetTeamNameAsync(cid);
-            return View(await Service.ListSubmissionsByJuryAsync(cid, null, all));
+            ViewBag.TeamNames = await DbContext.GetTeamNameAsync(cid);
+            return View(await ListSubmissionsByJuryAsync(cid, null, all));
         }
 
 
         [HttpGet("{sid}/{jid?}")]
         public async Task<IActionResult> Detail(int cid, int sid, int? jid,
-            [FromServices] Data.SubmissionManager submitMgr)
+            [FromServices] SubmissionManager submitMgr)
         {
             var judging = submitMgr.Judgings
                 .Where(g => g.SubmissionId == sid);
@@ -53,10 +54,10 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 .ToListAsync();
 
             var details = await submitMgr.GetDetailsAsync(result.j.JudgingId, result.s.ProblemId);
-            var team = await Service.FindTeamByIdAsync(cid, result.s.Author);
-            var prob = (await Service.GetProblemsAsync(cid))
-                .FirstOrDefault(cp => cp.ProblemId == result.s.ProblemId);
-            var lang = (await Service.GetLanguagesAsync(cid))[result.s.Language];
+            var team = await FindTeamByIdAsync(result.s.Author);
+            var prob = Problems.Find(result.s.ProblemId);
+            if (prob == null) return NotFound(); // the problem is deleted later
+            var lang = Languages[result.s.Language];
 
             return View(new JuryViewSubmissionModel
             {

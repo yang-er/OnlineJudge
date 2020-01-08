@@ -33,6 +33,7 @@
     <tbody>
         @foreach (var sub in Model)
         {
+            if (sub.Problem == null) { continue; }
             var tooLate = (ctx.EndTime ?? DateTimeOffset.MaxValue) < sub.Time;
             if (sub.Verdict == Verdict.Accepted) { correct++; }
             total++;
@@ -43,9 +44,9 @@
                 data-language-id="@sub.Language"
                 data-submission-id="@sub.SubmissionId">
                 <td use-a>s@(sub.SubmissionId)</td>
-                <td use-a>@sub.Time.ToString("HH:mm")</td>
+                <td use-a title="@sub.Time">@((sub.Time - ctx.StartTime).GetValueOrDefault().ToDeltaString())</td>
                 <td use-a>@tn.GetValueOrDefault(sub.TeamId) (t@(sub.TeamId))</td>
-                <td use-a class="probid">@sub.Problem?.ShortName</td>
+                <td use-a class="probid">@sub.Problem.ShortName</td>
                 <td use-a class="langid">@sub.Language.ExternalId</td>
                 <td use-a>
                     <verdict3 value="@sub.Verdict" too-late="tooLate" />

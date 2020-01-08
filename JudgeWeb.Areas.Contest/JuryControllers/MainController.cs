@@ -1,4 +1,5 @@
-﻿using JudgeWeb.Areas.Contest.Models;
+﻿using EFCore.BulkExtensions;
+using JudgeWeb.Areas.Contest.Models;
 using JudgeWeb.Data;
 using JudgeWeb.Features;
 using JudgeWeb.Features.Storage;
@@ -16,44 +17,139 @@ namespace JudgeWeb.Areas.Contest.Controllers
     [Route("[area]/{cid}/jury")]
     public class JuryMainController : JuryControllerBase
     {
-        [HttpGet]
-        public async Task<IActionResult> Home(int cid)
+        private async Task UpdateContestAsync(Data.Contest template, params string[] contents)
         {
-            ViewBag.Problems = await Service.GetProblemsAsync(cid);
+            await DbContext.UpdateContestAsync(Contest.ContestId, template, contents);
+
+            InternalLog(new AuditLog
+            {
+                Comment = "updated",
+                ContestId = Contest.ContestId,
+                EntityId = Contest.ContestId,
+                Resolved = true,
+                Type = AuditLog.TargetType.Contest,
+            });
+
+            var newcont = await DbContext.GetContestAsync(Contest.ContestId);
+
+            DbContext.Events.Add(
+                new Data.Api.ContestInfo(newcont)
+                    .ToEvent("update", Contest.ContestId));
+
+            DbContext.Events.Add(
+                new Data.Api.ContestTime(newcont)
+                    .ToEvent("update", Contest.ContestId));
+
+            await DbContext.SaveChangesAsync();
+        }
+
+
+        protected void RefreshScoreboardCache(int cid)
+        {
+            DbContext.UpdateScoreboard(new ScoreboardState
+            {
+                ContestId = cid,
+                SubmissionId = -1,
+                Time = DateTimeOffset.Now,
+            });
+        }
+
+
+        private IActionResult GoBackHome(string str)
+        {
+            StatusMessage = str;
+            return RedirectToAction(nameof(Home));
+        }
+
+
+        [HttpGet]
+        public IActionResult Home()
+        {
             return View();
         }
 
 
+        [HttpPost("[action]")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ResetEventFeed(int cid)
+        {
+            await DbContext.Events
+                .Where(e => e.ContestId == cid)
+                .BatchDeleteAsync();
+
+            // contests
+            DbContext.Events.AddCreate(cid, new Data.Api.ContestInfo(Contest));
+            await DbContext.SaveChangesAsync();
+
+            // judgement-types
+            DbContext.Events.AddCreate(cid, Data.Api.JudgementType.Defaults);
+            await DbContext.SaveChangesAsync();
+
+            // languages
+            DbContext.Events.AddCreate(cid,
+                Languages.Values.Select(l => new Data.Api.ContestLanguage(l)));
+            await DbContext.SaveChangesAsync();
+
+            // groups
+            var groups = await DbContext.ListTeamCategoryAsync(cid, null);
+            DbContext.Events.AddCreate(cid,
+                groups.Select(c => new Data.Api.ContestGroup(c)));
+            await DbContext.SaveChangesAsync();
+
+            // organizations
+            var cts = await DbContext.ListTeamAffiliationAsync(cid, false);
+            DbContext.Events.AddCreate(cid,
+                cts.Select(a => new Data.Api.ContestOrganization(a)));
+            await DbContext.SaveChangesAsync();
+
+            // problems
+            DbContext.Events.AddCreate(cid,
+                Problems.Select(a => new Data.Api.ContestProblem2(a)));
+            await DbContext.SaveChangesAsync();
+
+            // teams
+            DbContext.Events.AddCreate(cid, await (
+                from t in DbContext.Teams
+                where t.ContestId == cid && t.Status == 1
+                join a in DbContext.TeamAffiliations on t.AffiliationId equals a.AffiliationId
+                select new Data.Api.ContestTeam(t, a))
+                .ToListAsync());
+            await DbContext.SaveChangesAsync();
+
+            // clarifications
+            DbContext.Events.AddCreate(cid,
+                await DbContext.Clarifications
+                    .Where(c => c.ContestId == cid)
+                    .Select(c => new Data.Api.ContestClarification(c, Contest.StartTime.Value))
+                    .ToListAsync());
+
+            StatusMessage = "Event feed reset.";
+            return RedirectToAction(nameof(Home));
+        }
+
+
         [HttpGet("[action]")]
-        public async Task<IActionResult> Scoreboard(int cid,
+        [ValidateInAjax]
+        [Authorize(Roles = "Administrator")]
+        public IActionResult ResetEventFeed()
+        {
+            return AskPost(
+                title: "Reset event feed",
+                message: "After reseting event feed, you can connect to CDS. " +
+                    "But you shouldn't change any settings more, and you should use it only before contest start. " +
+                    "Or it will lead to event missing. Are you sure?",
+                area: "Contest", ctrl: "JuryMain", act: "ResetEventFeed",
+                routeValues: new Dictionary<string, string> { ["cid"] = Contest.ContestId.ToString() },
+                type: MessageType.Warning);
+        }
+
+
+        [HttpGet("[action]")]
+        public Task<IActionResult> Scoreboard(int cid,
             [FromQuery(Name = "affiliations[]")] int[] affiliations,
             [FromQuery(Name = "categories[]")] int[] categories,
-            [FromQuery(Name = "clear")] string clear = "")
-        {
-            var board = await Service.FindScoreboardAsync(cid, false, true);
-
-            if (clear == "clear")
-            {
-                affiliations = System.Array.Empty<int>();
-                categories = System.Array.Empty<int>();
-            }
-
-            if (affiliations.Length > 0)
-            {
-                board.RankCache = board.RankCache
-                    .Where(t => affiliations.Contains(t.Team.AffiliationId));
-                ViewData["Filter_affiliations"] = affiliations.ToHashSet();
-            }
-
-            if (categories.Length > 0)
-            {
-                board.RankCache = board.RankCache
-                    .Where(t => categories.Contains(t.Team.CategoryId));
-                ViewData["Filter_categories"] = categories.ToHashSet();
-            }
-
-            return View(board);
-        }
+            [FromQuery(Name = "clear")] string clear = "") =>
+            ScoreboardView(false, true, clear == "clear", affiliations, categories);
 
 
         [HttpGet("[action]")]
@@ -78,13 +174,13 @@ namespace JudgeWeb.Areas.Contest.Controllers
         public async Task<IActionResult> Auditlog(int cid, int page = 1)
         {
             if (page <= 0) return NotFound();
-            var counts = await Service.Auditlogs
+            var counts = await DbContext.AuditLogs
                 .Where(l => l.ContestId == cid)
                 .CachedCountAsync($"`c{cid}`logcount", TimeSpan.FromSeconds(15));
             int totalPage = (counts + 999) / 1000;
             if (page > totalPage) return NotFound();
 
-            var model = await Service.Auditlogs
+            var model = await DbContext.AuditLogs
                 .Where(l => l.ContestId == cid)
                 .OrderByDescending(l => l.LogId)
                 .Skip((page - 1) * 1000).Take(1000)
@@ -101,19 +197,95 @@ namespace JudgeWeb.Areas.Contest.Controllers
         [Authorize(Roles = "Administrator")]
         public async Task<IActionResult> ChangeState(string target)
         {
-            var result = await Service.ChangeStateAsync(Contest, target, DateTimeOffset.Now);
-            DisplayMessage = (result.IsValid ? "" : "Error: ") + result.Message;
-            return RedirectToAction(nameof(Home));
+            var now = DateTimeOffset.Now;
+
+            var newcont = new Data.Contest
+            {
+                StartTime = Contest.StartTime,
+                EndTime = Contest.EndTime,
+                FreezeTime = Contest.FreezeTime,
+                UnfreezeTime = Contest.UnfreezeTime,
+            };
+
+            var state = newcont.GetState(now);
+
+            if (target == "startnow")
+            {
+                if (!newcont.EndTime.HasValue)
+                    return GoBackHome("Error no end time specified.");
+                now += TimeSpan.FromSeconds(30);
+                DateTimeOffset old;
+
+                if (newcont.StartTime.HasValue)
+                {
+                    // from scheduled to start
+                    if (newcont.StartTime.Value < now)
+                        return GoBackHome("Error starting contest for the remaining time is less than 30 secs.");
+                    old = newcont.StartTime.Value;
+                }
+                else
+                {
+                    // from delay to start
+                    old = DateTimeOffset.UnixEpoch;
+                }
+
+                newcont.StartTime = now;
+                newcont.EndTime = now + (newcont.EndTime.Value - old);
+                if (newcont.FreezeTime.HasValue)
+                    newcont.FreezeTime = now + (newcont.FreezeTime.Value - old);
+                if (newcont.UnfreezeTime.HasValue)
+                    newcont.UnfreezeTime = now + (newcont.UnfreezeTime.Value - old);
+            }
+            else if (target == "freeze")
+            {
+                if (state != ContestState.Started)
+                    return GoBackHome("Error contest is not started.");
+                newcont.FreezeTime = now;
+            }
+            else if (target == "endnow")
+            {
+                if (state != ContestState.Started && state != ContestState.Frozen)
+                    return GoBackHome("Error contest has not started or has ended.");
+                newcont.EndTime = now;
+
+                if (newcont.FreezeTime.HasValue && newcont.FreezeTime.Value > now)
+                    newcont.FreezeTime = now;
+            }
+            else if (target == "unfreeze")
+            {
+                if (state != ContestState.Ended)
+                    return GoBackHome("Error contest has not ended.");
+                newcont.UnfreezeTime = now;
+            }
+            else if (target == "delay")
+            {
+                if (state != ContestState.ScheduledToStart)
+                    return GoBackHome("Error contest has been started.");
+
+                var old = newcont.StartTime.Value;
+                newcont.StartTime = null;
+                if (newcont.EndTime.HasValue)
+                    newcont.EndTime = DateTimeOffset.UnixEpoch + (newcont.EndTime.Value - old);
+                if (newcont.FreezeTime.HasValue)
+                    newcont.FreezeTime = DateTimeOffset.UnixEpoch + (newcont.FreezeTime.Value - old);
+                if (newcont.UnfreezeTime.HasValue)
+                    newcont.UnfreezeTime = DateTimeOffset.UnixEpoch + (newcont.UnfreezeTime.Value - old);
+            }
+
+            await UpdateContestAsync(newcont,
+                nameof(Contest.StartTime),
+                nameof(Contest.EndTime),
+                nameof(Contest.FreezeTime),
+                nameof(Contest.UnfreezeTime));
+
+            return GoBackHome("Contest state changed.");
         }
 
 
         [HttpGet("[action]")]
         [ValidateInAjax]
         [Authorize(Roles = "Administrator")]
-        public IActionResult Assign()
-        {
-            return Window(new JuryAssignModel());
-        }
+        public IActionResult Assign() => Window(new JuryAssignModel());
 
 
         [HttpPost("[action]")]
@@ -125,7 +297,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
 
             if (user == null)
             {
-                DisplayMessage = "Error user not found.";
+                StatusMessage = "Error user not found.";
             }
             else
             {
@@ -133,9 +305,9 @@ namespace JudgeWeb.Areas.Contest.Controllers
                     .AddToRoleAsync(user, $"JuryOfContest{cid}");
 
                 if (result.Succeeded)
-                    DisplayMessage = $"Jury role of user {user.UserName} assigned.";
+                    StatusMessage = $"Jury role of user {user.UserName} assigned.";
                 else
-                    DisplayMessage = "Error " + string.Join('\n', result.Errors.Select(e => e.Description));
+                    StatusMessage = "Error " + string.Join('\n', result.Errors.Select(e => e.Description));
             }
 
             return RedirectToAction(nameof(Home));
@@ -170,9 +342,9 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 .RemoveFromRoleAsync(user, $"JuryOfContest{cid}");
 
             if (result.Succeeded)
-                DisplayMessage = $"Jury role of user {user.UserName} unassigned.";
+                StatusMessage = $"Jury role of user {user.UserName} unassigned.";
             else
-                DisplayMessage = "Error " + string.Join('\n', result.Errors.Select(e => e.Description));
+                StatusMessage = "Error " + string.Join('\n', result.Errors.Select(e => e.Description));
             return RedirectToAction(nameof(Home));
         }
 
@@ -180,7 +352,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
         [HttpGet("[action]")]
         public async Task<IActionResult> Edit(int cid)
         {
-            ViewBag.Categories = await Service.ListTeamCategoryAsync(cid);
+            ViewBag.Categories = await DbContext.ListTeamCategoryAsync(cid);
 
             var startTime = Contest.StartTime?.ToString("yyyy-MM-dd HH:mm:ss zzz") ?? "";
             var startDateTime = Contest.StartTime ?? DateTimeOffset.UnixEpoch;
@@ -212,8 +384,8 @@ namespace JudgeWeb.Areas.Contest.Controllers
         public async Task<IActionResult> Edit(int cid, JuryEditModel model)
         {
             // check the category id
-            var cates = await Service.ListTeamCategoryAsync(cid);
-            if (model.DefaultCategory != 0 && cates.Any(c => c.CategoryId == model.DefaultCategory))
+            var cates = await DbContext.ListTeamCategoryAsync(cid);
+            if (model.DefaultCategory != 0 && !cates.Any(c => c.CategoryId == model.DefaultCategory))
                 ModelState.AddModelError("xys::nocat", "No corresponding category found.");
 
             // check time sequence
@@ -282,7 +454,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 || unfreezeTime != cst.UnfreezeTime)
                 contestTimeChanged = true;
 
-            await Service.UpdateContestAsync(cid, c => new Data.Contest
+            var update = new Data.Contest
             {
                 ShortName = model.ShortName,
                 Name = model.Name,
@@ -296,11 +468,25 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 EndTime = endTime,
                 UnfreezeTime = unfreezeTime,
                 RegisterDefaultCategory = model.DefaultCategory
-            });
+            };
 
-            DisplayMessage = "Contest updated successfully.";
+            await UpdateContestAsync(update,
+                nameof(update.ShortName),
+                nameof(update.Name),
+                nameof(update.RankingStrategy),
+                nameof(update.IsPublic),
+                nameof(update.GoldMedal),
+                nameof(update.SilverMedal),
+                nameof(update.BronzeMedal),
+                nameof(update.StartTime),
+                nameof(update.FreezeTime),
+                nameof(update.EndTime),
+                nameof(update.UnfreezeTime),
+                nameof(update.RegisterDefaultCategory));
+
+            StatusMessage = "Contest updated successfully.";
             if (contestTimeChanged)
-                DisplayMessage += " Scoreboard cache will be refreshed later.";
+                StatusMessage += " Scoreboard cache will be refreshed later.";
             return RedirectToAction(nameof(Home));
         }
 
@@ -310,8 +496,8 @@ namespace JudgeWeb.Areas.Contest.Controllers
         [Authorize(Roles = "Administrator")]
         public IActionResult RefreshCache(int cid, bool post = true)
         {
-            Service.RefreshScoreboardCache(cid);
-            DisplayMessage = "Scoreboard cache will be refreshed in minutes...";
+            RefreshScoreboardCache(cid);
+            StatusMessage = "Scoreboard cache will be refreshed in minutes...";
             return RedirectToAction(nameof(Home));
         }
 

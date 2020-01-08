@@ -1,8 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using System.Data.SqlClient;
-using System.Linq;
 
 namespace JudgeWeb.Data
 {
@@ -12,6 +10,9 @@ namespace JudgeWeb.Data
             : base(options)
         {
         }
+
+
+        public static event System.Action<ScoreboardState> ScoreboardUpdate;
 
 
         public virtual DbSet<AuditLog> AuditLogs { get; set; }
@@ -34,6 +35,7 @@ namespace JudgeWeb.Data
         public virtual DbSet<TeamCategory> TeamCategories { get; set; }
         public virtual DbSet<RankCache> RankCache { get; set; }
         public virtual DbSet<ScoreCache> ScoreCache { get; set; }
+        public virtual DbSet<Event> Events { get; set; }
 
 
         public virtual DbSet<Configure> Configures { get; set; }
@@ -42,12 +44,6 @@ namespace JudgeWeb.Data
         public virtual DbSet<Language> Languages { get; set; }
         public virtual DbSet<JudgeHost> JudgeHosts { get; set; }
         public virtual DbSet<Testcase> Testcases { get; set; }
-
-
-        public IQueryable<ContestTestcase> ContestTestcase(int _cid) =>
-            Query<ContestTestcase>()
-                .FromSql(Data.ContestTestcase.QueryString, new SqlParameter("__cid", _cid))
-                .AsNoTracking();
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -95,6 +91,8 @@ namespace JudgeWeb.Data
             modelBuilder.Entity<ScoreCache>()
                 .UseAttributes(isMySql);
             modelBuilder.Entity<RankCache>()
+                .UseAttributes(isMySql);
+            modelBuilder.Entity<Event>()
                 .UseAttributes(isMySql);
 
             modelBuilder.Entity<Configure>()
@@ -165,7 +163,12 @@ namespace JudgeWeb.Data
                     new IdentityUserRole<int> { RoleId = -4, UserId = -1 });
 
             modelBuilder.Query<SubmissionStatistics>();
-            modelBuilder.Query<ContestTestcase>();
+        }
+
+
+        public void UpdateScoreboard(ScoreboardState stt)
+        {
+            ScoreboardUpdate?.Invoke(stt);
         }
     }
 }

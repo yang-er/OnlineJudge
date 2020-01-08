@@ -110,6 +110,15 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
             lang.Name = model.Name;
 
             DbContext.Languages.Update(lang);
+
+            var now = System.DateTimeOffset.Now;
+            var cts = await DbContext.Contests
+                .Where(c => c.EndTime == null || c.EndTime > now)
+                .Select(c => c.ContestId)
+                .ToArrayAsync();
+            DbContext.Events.AddRange(cts.Select(t =>
+                new Data.Api.ContestLanguage(lang).ToEvent("update", t)));
+
             await DbContext.SaveChangesAsync();
 
             return RedirectToAction(nameof(Detail), new { langid });
@@ -141,6 +150,16 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
                 Name = model.Name,
                 TimeFactor = model.TimeFactor,
             });
+
+            await DbContext.SaveChangesAsync();
+
+            var now = System.DateTimeOffset.Now;
+            var cts = await DbContext.Contests
+                .Where(c => c.EndTime == null || c.EndTime > now)
+                .Select(c => c.ContestId)
+                .ToArrayAsync();
+            DbContext.Events.AddRange(cts.Select(t =>
+                new Data.Api.ContestLanguage(entity.Entity).ToEvent("create", t)));
 
             await DbContext.SaveChangesAsync();
             return RedirectToAction(nameof(Detail), new { langid = entity.Entity.ExternalId });

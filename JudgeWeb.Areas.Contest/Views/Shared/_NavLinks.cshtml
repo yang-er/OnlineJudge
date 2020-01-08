@@ -6,13 +6,6 @@
 
 <ul class="navbar-nav mr-auto">
     <li class="nav-item">
-        <a class="nav-link" active-act="Home" asp-controller="JuryMain" asp-action="Home">
-            <i class="fas fa-home"></i>
-            Home
-        </a>
-    </li>
-
-    <li class="nav-item">
         <a class="nav-link" active-ctrl="JuryTeam" asp-controller="JuryTeam" asp-action="List" id="menu_teams">
             <i class="fas fa-address-book"></i>
             Teams
@@ -86,7 +79,7 @@
         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
             <i class="fas fa-user"></i> @UserManager.GetUserName(User)
         </a>
-        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+        <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown">
             <a class="dropdown-item disabled" href="#">@UserManager.GetNickName(User)</a>
 
             <a class="dropdown-item d-none" href="#" id="notify_disable">

@@ -12,6 +12,7 @@ namespace JudgeWeb.Features.Razor
         {
             base.Process(context, output);
             if (!Condition) output.SuppressOutput();
+            else output.TagName = null;
         }
     }
 }

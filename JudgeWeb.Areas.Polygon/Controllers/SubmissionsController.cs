@@ -124,6 +124,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
                 select new ViewSubmissionModel
                 {
                     SubmissionId = s.SubmissionId,
+                    ContestId = s.ContestId,
                     Status = j.Status,
                     ExecuteMemory = j.ExecuteMemory,
                     ExecuteTime = j.ExecuteTime,
@@ -190,11 +191,15 @@ namespace JudgeWeb.Areas.Polygon.Controllers
         public async Task<IActionResult> Submit(CodeSubmitModel model,
             [FromServices] UserManager userManager)
         {
+            var lang = await DbContext.Languages
+                .Where(l => l.LangId == model.Language)
+                .SingleOrDefaultAsync();
+
             var sub = await SubmissionManager.CreateAsync(
                 code: model.Code,
-                langid: model.Language,
+                langid: lang,
                 probid: Problem.ProblemId,
-                cid: 0,
+                cid: null,
                 uid: int.Parse(userManager.GetUserId(User)),
                 ipAddr: HttpContext.Connection.RemoteIpAddress,
                 via: "polygon-page",
@@ -210,7 +215,11 @@ namespace JudgeWeb.Areas.Polygon.Controllers
         {
             var sub = await SubmissionManager.FindAsync(sid, pid: pid);
             if (sub == null) return NotFound();
-            await SubmissionManager.RejudgeAsync(sub, fullTest: true);
+
+            if (sub.ContestId != 0)
+                StatusMessage = "Error : contest submissions should be rejudged by jury.";
+            else
+                await SubmissionManager.RejudgeAsync(sub, fullTest: true);
             return RedirectToAction(nameof(Detail));
         }
 
@@ -251,7 +260,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
         public async Task<IActionResult> Rejudge(int pid)
         {
             var subs = await SubmissionManager.Submissions
-                .Where(s => s.ExpectedResult != null && s.ProblemId == pid)
+                .Where(s => s.ExpectedResult != null && s.ProblemId == pid && s.ContestId == 0)
                 .ToListAsync();
             foreach (var sub in subs)
                 await SubmissionManager.RejudgeAsync(sub);

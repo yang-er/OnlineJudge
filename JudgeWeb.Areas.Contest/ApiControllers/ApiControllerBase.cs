@@ -1,10 +1,7 @@
-﻿using JudgeWeb.Areas.Contest.Services;
-using JudgeWeb.Data;
+﻿using JudgeWeb.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace JudgeWeb.Areas.Api.Controllers
@@ -15,29 +12,24 @@ namespace JudgeWeb.Areas.Api.Controllers
 
         public Data.Contest Contest { get; private set; }
 
-        protected ContestManager Service { get; private set; }
-
         [NonAction]
         public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
         {
-            Service = context.HttpContext.RequestServices
-                .GetRequiredService<ContestManager>();
-
             context.Result = NotFound();
             if (context.RouteData.Values.TryGetValue("cid", out object __cid)
                 && int.TryParse((string)__cid, out int cid))
             {
-                Contest = await Service.GetContestAsync(cid);
-
-                if (Contest != null)
+                DbContext = HttpContext.RequestServices
+                    .GetRequiredService<AppDbContext>();
+                Contest = await DbContext.GetContestAsync(cid);
+                if (Contest == null || !Contest.StartTime.HasValue) return;
+                
+                context.Result = null;
+                var executed = await next();
+                if (executed.Result is ObjectResult objres)
                 {
-                    context.Result = null;
-                    var executed = await next();
-                    if (executed.Result is ObjectResult objres)
-                    {
-                        if (objres.Value == null)
-                            objres.StatusCode = 404;
-                    }
+                    if (objres.Value == null)
+                        objres.StatusCode = 404;
                 }
             }
         }

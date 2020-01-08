@@ -46,7 +46,12 @@
 <div class="submission-summary mb-2">
     <span>
         <i class="fas fa-user" title="Author:"></i>
-        <a>@(Model.UserName ?? "SYSTEM") (u@(Model.Author))</a>
+        <if cond="@(Model.ContestId == 0)">
+            <a>@(Model.UserName ?? "SYSTEM") (u@(Model.Author))</a>
+        </if>
+        <if cond="@(Model.ContestId != 0)">
+            <a>Contest @Model.ContestId Team @Model.Author</a>
+        </if>
     </span>
     <span>
         <i class="fas fa-comments" title="Language:"></i>

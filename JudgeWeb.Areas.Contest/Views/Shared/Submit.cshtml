@@ -2,7 +2,9 @@
 @{
     Layout = null;
     var prv = (ContestProblem[])ViewData["Problems"];
-    var lang = (Dictionary<int,string>)ViewData["Languages"];
+    var prb_sel = prv.Select(cp => new SelectListItem($"{cp.ShortName} - {cp.Title}", cp.ShortName));
+    var lang = (Dictionary<int,Language>)ViewData["Languages"];
+    var lang_sel = lang.Where(l => l.Value.AllowSubmit).Select(l => new SelectListItem(l.Value.Name, $"{l.Key}"));
 }
 
 <form asp-action="Submit" method="post" name="submit_problem">
@@ -20,22 +22,14 @@
                 <div class="modal-body">
                     <div class="form-group">
                         <label class="required" asp-for="Problem"></label>
-                        <select asp-for="Problem" id="submit-prob" required class="form-control custom-select form-control">
+                        <select asp-for="Problem" asp-items="prb_sel" id="submit-prob" required class="form-control custom-select form-control">
                             <option value="" selected>Select a problem</option>
-                            @foreach (var prob in prv)
-                            {
-                                <option value="@prob.ShortName">@prob.ShortName - @prob.Title</option>
-                            }
                         </select>
                     </div>
                     <div class="form-group">
                         <label class="required" asp-for="Language">Language</label>
-                        <select asp-for="Language" id="submit-lang" required class="form-control custom-select form-control">
+                        <select asp-for="Language" asp-items="lang_sel" id="submit-lang" required class="form-control custom-select form-control">
                             <option value="" selected>Select a language</option>
-                            @foreach (var l in lang)
-                            {
-                                <option value="@l.Key">@l.Value</option>
-                            }
                         </select>
                     </div>
                     <div class="form-group">

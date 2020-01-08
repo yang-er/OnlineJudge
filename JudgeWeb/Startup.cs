@@ -112,6 +112,7 @@ namespace JudgeWeb
             services.AddOjUpdateService(
                 Environment.IsDevelopment() ? 24 * 7 * 60 : 3 * 24 * 60);
             services.AddHostedService<ArchiveCacheService>();
+            services.AddHostedService<Features.Scoreboard.ScoreboardUpdateService>();
 
             services.AddProblemRepository();
             services.AddMarkdown();

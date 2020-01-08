@@ -51,6 +51,15 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
             model.CategoryId = 0;
             var e = DbContext.TeamCategories.Add(model);
             await DbContext.SaveChangesAsync();
+
+            var now = System.DateTimeOffset.Now;
+            var cts = await DbContext.Contests
+                .Where(c => c.EndTime == null || c.EndTime > now)
+                .Select(c => c.ContestId)
+                .ToArrayAsync();
+            DbContext.Events.AddRange(cts.Select(t =>
+                new Data.Api.ContestGroup(e.Entity).ToEvent("create", t)));
+
             return RedirectToAction(nameof(Detail), new { catid = e.Entity.CategoryId });
         }
 
@@ -71,6 +80,15 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
             cat.SortOrder = model.SortOrder;
 
             DbContext.TeamCategories.Update(cat);
+
+            var now = System.DateTimeOffset.Now;
+            var cts = await DbContext.Contests
+                .Where(c => c.EndTime == null || c.EndTime > now)
+                .Select(c => c.ContestId)
+                .ToArrayAsync();
+            DbContext.Events.AddRange(cts.Select(t =>
+                new Data.Api.ContestGroup(cat).ToEvent("update", t)));
+
             await DbContext.SaveChangesAsync();
             return RedirectToAction(nameof(Detail), new { catid });
         }
@@ -105,6 +123,14 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
             if (desc == null) return NotFound();
 
             DbContext.TeamCategories.Remove(desc);
+
+            var now = System.DateTimeOffset.Now;
+            var cts = await DbContext.Contests
+                .Where(c => c.EndTime == null || c.EndTime > now)
+                .Select(c => c.ContestId)
+                .ToArrayAsync();
+            DbContext.Events.AddRange(cts.Select(t =>
+                new Data.Api.ContestGroup(desc).ToEvent("delete", t)));
 
             try
             {
