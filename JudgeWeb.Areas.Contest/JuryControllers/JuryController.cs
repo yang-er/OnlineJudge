@@ -14,8 +14,8 @@ using System.Threading.Tasks;
 namespace JudgeWeb.Areas.Contest.Controllers
 {
     [Area("Contest")]
-    [Route("[area]/{cid}/jury")]
-    public class JuryMainController : JuryControllerBase
+    [Route("[area]/{cid}/[controller]")]
+    public class JuryController : JuryControllerBase
     {
         private async Task UpdateContestAsync(Data.Contest template, params string[] contents)
         {
@@ -41,17 +41,6 @@ namespace JudgeWeb.Areas.Contest.Controllers
                     .ToEvent("update", Contest.ContestId));
 
             await DbContext.SaveChangesAsync();
-        }
-
-
-        protected void RefreshScoreboardCache(int cid)
-        {
-            DbContext.UpdateScoreboard(new ScoreboardState
-            {
-                ContestId = cid,
-                SubmissionId = -1,
-                Time = DateTimeOffset.Now,
-            });
         }
 
 
@@ -138,7 +127,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 message: "After reseting event feed, you can connect to CDS. " +
                     "But you shouldn't change any settings more, and you should use it only before contest start. " +
                     "Or it will lead to event missing. Are you sure?",
-                area: "Contest", ctrl: "JuryMain", act: "ResetEventFeed",
+                area: "Contest", ctrl: "Jury", act: "ResetEventFeed",
                 routeValues: new Dictionary<string, string> { ["cid"] = Contest.ContestId.ToString() },
                 type: MessageType.Warning);
         }
@@ -325,7 +314,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
             return AskPost(
                 title: "Unassign jury",
                 message: $"Do you want to unassign jury {user.UserName} (u{uid})?",
-                area: "Contest", ctrl: "JuryMain", act: "Unassign",
+                area: "Contest", ctrl: "Jury", act: "Unassign",
                 routeValues: new Dictionary<string, string> { ["uid"] = $"{uid}" },
                 type: MessageType.Danger);
         }
@@ -486,7 +475,11 @@ namespace JudgeWeb.Areas.Contest.Controllers
 
             StatusMessage = "Contest updated successfully.";
             if (contestTimeChanged)
+            {
                 StatusMessage += " Scoreboard cache will be refreshed later.";
+                RefreshScoreboardCache(cid);
+            }
+
             return RedirectToAction(nameof(Home));
         }
 
@@ -510,7 +503,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
             return AskPost(
                 title: "Refresh scoreboard cache",
                 message: "Do you want to refresh scoreboard cache? This will lead to a heavy database load in minutes.",
-                area: "Contest", ctrl: "JuryMain", act: "RefreshCache",
+                area: "Contest", ctrl: "Jury", act: "RefreshCache",
                 routeValues: new Dictionary<string, string> { ["cid"] = $"{cid}" },
                 type: MessageType.Warning);
         }

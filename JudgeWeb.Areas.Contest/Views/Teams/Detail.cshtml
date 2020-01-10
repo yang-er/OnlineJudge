@@ -47,7 +47,7 @@
 <p>
     <a asp-action="Edit" asp-route-teamid="@team.TeamId" data-toggle="ajaxWindow" data-target="editTeam" class="btn btn-primary" title="Edit"><i class="fas fa-edit"></i>&nbsp;Edit</a>
     <a asp-action="Delete" asp-route-teamid="@team.TeamId" data-toggle="ajaxWindow" data-target="deleteTeam" class="btn btn-danger" title="Delete"><i class="fas fa-trash-alt"></i>&nbsp;Delete</a>
-    <a asp-controller="JuryClarification" asp-action="Send" asp-route-teamto="@team.TeamId" class="btn btn-secondary" title="Send message"><i class="fas fa-envelope"></i>&nbsp;Send message</a>
+    <a asp-controller="Clarifications" asp-action="Send" asp-route-teamto="@team.TeamId" class="btn btn-secondary" title="Send message"><i class="fas fa-envelope"></i>&nbsp;Send message</a>
 </p>
 
 <h3>Score</h3>
@@ -72,7 +72,7 @@
             var tooLate = (ctx.EndTime ?? DateTimeOffset.MaxValue) < sub.Time;
             if (sub.Verdict == Verdict.Accepted) { correct++; }
             total++;
-            <tr asp-controller="JurySubmission" asp-action="Detail" asp-route-sid="@sub.SubmissionId"
+            <tr asp-controller="Submissions" asp-action="Detail" asp-route-sid="@sub.SubmissionId"
                 data-toggle="gotoUrl"
                 data-problem-id="@sub.Problem?.ProblemId"
                 data-team-id="@sub.TeamId"

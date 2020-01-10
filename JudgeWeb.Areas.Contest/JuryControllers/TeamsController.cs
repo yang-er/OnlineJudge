@@ -12,8 +12,8 @@ namespace JudgeWeb.Areas.Contest.Controllers
 {
     [Area("Contest")]
     [Authorize]
-    [Route("[area]/{cid}/jury/teams")]
-    public class JuryTeamController : JuryControllerBase
+    [Route("[area]/{cid}/jury/[controller]")]
+    public class TeamsController : JuryControllerBase
     {
         protected async Task UpdateTeamAsync(Team team, string comment, string action, int? oldUid = null)
         {
@@ -169,7 +169,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
             return AskPost(
                 title: $"Delete team t{team.TeamId}",
                 message: $"You are about to delete {team.TeamName} (t{team.TeamId}). Are you sure?",
-                area: "Contest", ctrl: "JuryTeam", act: "Delete", type: MessageType.Danger,
+                area: "Contest", ctrl: "Teams", act: "Delete", type: MessageType.Danger,
                 routeValues: new Dictionary<string, string> { ["cid"] = $"{cid}", ["teamid"] = $"{teamid}" });
         }
 

@@ -198,6 +198,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
 
             // check the existence
             Contest = await DbContext.GetContestAsync(cid);
+            ViewBag.Contest = Contest;
             if (Contest == null)
             {
                 context.Result = NotFound();
@@ -206,14 +207,24 @@ namespace JudgeWeb.Areas.Contest.Controllers
 
             Problems = await DbContext.GetProblemsAsync(cid);
             Languages = await DbContext.GetLanguagesAsync(cid);
+            ViewBag.Problems = Problems;
+            ViewBag.Languages = Languages;
+
+            if (!Cache.TryGetValue($"`c{cid}`internal_state", out ContestState state)
+                || state != Contest.GetState())
+            {
+                Cache.Set($"`c{cid}`internal_state", Contest.GetState(), TimeSpan.FromDays(365));
+                DbContext.Events.AddUpdate(cid, new Data.Api.ContestTime(Contest));
+                await DbContext.SaveChangesAsync();
+            }
 
             // check the permission
-            if (User.IsInRoles($"Administrator,JuryOfContest{Contest.ContestId}"))
+            if (User.IsInRoles($"Administrator,JuryOfContest{cid}"))
                 ViewData["IsJury"] = true;
 
             if (int.TryParse(UserManager?.GetUserId(User) ?? "-1", out int uid) && uid > 0)
             {
-                Team = await FindTeamByUserAsync(uid);
+                ViewBag.Team = Team = await FindTeamByUserAsync(uid);
                 if (Team != null) ViewData["HasTeam"] = true;
             }
 

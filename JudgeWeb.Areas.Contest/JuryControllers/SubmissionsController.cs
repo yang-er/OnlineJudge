@@ -9,8 +9,8 @@ using System.Threading.Tasks;
 namespace JudgeWeb.Areas.Contest.Controllers
 {
     [Area("Contest")]
-    [Route("[area]/{cid}/jury/submissions")]
-    public class JurySubmissionController : JuryControllerBase
+    [Route("[area]/{cid}/jury/[controller]")]
+    public class SubmissionsController : JuryControllerBase
     {
         [HttpGet]
         public async Task<IActionResult> List(int cid, bool all = false)
@@ -68,6 +68,26 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 Team = team,
                 Problem = prob,
                 Language = lang,
+            });
+        }
+
+
+        [HttpGet("{sid}/[action]")]
+        [ValidateInAjax]
+        public async Task<IActionResult> Rejudge(int cid, int sid)
+        {
+            var sub = await DbContext.Submissions
+                .Where(s => s.SubmissionId == sid && s.ContestId == cid)
+                .FirstOrDefaultAsync();
+            if (sub == null) return NotFound();
+
+            if (sub.RejudgeId.HasValue)
+                return RedirectToAction("Detail", "Rejudgings", new { rid = sub.RejudgeId });
+
+            return Window(new AddRejudgingModel
+            {
+                Submission = sid,
+                Reason = $"submission: {sid}",
             });
         }
     }

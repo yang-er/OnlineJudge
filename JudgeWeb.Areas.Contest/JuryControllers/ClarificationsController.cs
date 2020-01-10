@@ -12,8 +12,8 @@ using System.Threading.Tasks;
 namespace JudgeWeb.Areas.Contest.Controllers
 {
     [Area("Contest")]
-    [Route("[area]/{cid}/jury/clarifications")]
-    public class JuryClarificationController : JuryControllerBase
+    [Route("[area]/{cid}/jury/[controller]")]
+    public class ClarificationsController : JuryControllerBase
     {
         private IQueryable<Clarification> QueryOf(int cid, int clarid) =>
             DbContext.Clarifications

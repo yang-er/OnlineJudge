@@ -1,4 +1,5 @@
-﻿using JudgeWeb.Areas.Api.Models;
+﻿using EFCore.BulkExtensions;
+using JudgeWeb.Areas.Api.Models;
 using JudgeWeb.Data;
 using JudgeWeb.Features.Storage;
 using Microsoft.ApplicationInsights;
@@ -146,12 +147,14 @@ namespace JudgeWeb.Areas.Api.Controllers
                 Status = Verdict.Pending,
                 FullTest = j.FullTest,
                 RejudgeId = j.RejudgeId,
+                PreviousJudgingId = j.PreviousJudgingId,
                 SubmissionId = j.SubmissionId,
             });
 
             j.Active = false;
             j.Status = Verdict.UndefinedError;
             j.RejudgeId = null;
+            j.PreviousJudgingId = null;
             if (!j.StopTime.HasValue)
                 j.StopTime = DateTimeOffset.Now;
 

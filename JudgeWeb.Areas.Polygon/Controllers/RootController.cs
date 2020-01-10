@@ -130,6 +130,21 @@ namespace JudgeWeb.Areas.Polygon.Controllers
         }
 
 
+        [HttpGet("[action]/{jid}")]
+        public async Task<IActionResult> ByJudgingId(int jid)
+        {
+            var query =
+                from j in DbContext.Judgings
+                where j.JudgingId == jid
+                join s in DbContext.Submissions on j.SubmissionId equals s.SubmissionId
+                select new { sid = s.SubmissionId, pid = s.ProblemId, jid = j.JudgingId };
+
+            var item = await query.FirstOrDefaultAsync();
+            if (item == null) return NotFound();
+            return RedirectToAction("Detail", "Submissions", item);
+        }
+
+
         [HttpGet("[action]")]
         [ValidateInAjax]
         public IActionResult Import()

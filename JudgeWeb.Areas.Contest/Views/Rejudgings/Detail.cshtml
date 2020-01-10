@@ -1,0 +1,236 @@
+﻿@model Rejudge
+@{
+    ViewData["Title"] = $"Rejudging {Model.RejudgeId}";
+    ViewData["RefreshAfter"] = "updateMatrix";
+    ViewData["RefreshSpan"] = 15;
+    IEnumerable<(Judging @new, Judging old, int probid, int langid, DateTimeOffset time, int teamid)> js = ViewBag.Judgings;
+    Dictionary<int, string> teams = ViewBag.Teams;
+    Dictionary<int, Language> langs = ViewBag.Languages;
+    ContestProblem[] probs = ViewBag.Problems;
+    if (ViewData.ContainsKey("InAjax")) { Layout = null; }
+}
+
+@section Header {
+    <h2 class="mt-2">
+        @ViewData["Title"]
+        <if cond="@(Model.Applied.HasValue && !Model.Applied.Value)">
+            (cancelled)
+        </if>
+    </h2>
+
+    <div class="row">
+        <div class="col-lg-4">
+            <table class="table table-sm table-striped">
+                <tr>
+                    <th>Reason</th>
+                    <td>@Model.Reason</td>
+                </tr>
+                <tr>
+                    <th>Issued by</th>
+                    <td>
+                        <a asp-area="Account" asp-controller="Profile" asp-action="Show" asp-route-username="@Model.Issuer">
+                            @Model.Issuer
+                        </a>
+                    </td>
+                </tr>
+                <if cond="Model.OperatedBy.HasValue">
+                    <tr>
+                        <th>@(Model.Applied.Value ? "Accepted" : "Cancelled") by</th>
+                        <td>
+                            <a asp-area="Account" asp-controller="Profile" asp-action="Show" asp-route-username="@Model.Operator">
+                                @Model.Operator
+                            </a>
+                        </td>
+                    </tr>
+                </if>
+                <tr>
+                    <th>Start time</th>
+                    <td>
+                        <span title="@Model.StartTime">
+                            @Model.StartTime?.ToString("HH:mm")
+                        </span>
+                    </td>
+                </tr>
+                <tr>
+                    <th>Apply time</th>
+                    <td>
+                        <span title="@Model.EndTime">
+                            @(Model.EndTime?.ToString("HH:mm") ?? "-")
+                        </span>
+                    </td>
+                </tr>
+                <tr class="d-none">
+                    <th>Queued</th>
+                    <td><span data-todo>-1</span> unfinished judgings</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <div data-rejudging-buttons></div>
+    <div data-rejudging-matrix></div>
+
+    <h3 class="mt-4">Details</h3>
+}
+
+<span class="d-none" data-new-todo>
+    @{ var cntsss = js.Count(s => s.@new.Status == Verdict.Pending || s.@new.Status == Verdict.Running); }
+    @cntsss
+</span>
+
+<div class="d-none" data-new-rejudging-buttons>
+
+    <if cond="Model.OperatedBy.HasValue">
+        <p>
+            <a asp-action="Repeat" class="btn btn-primary" data-toggle="ajaxWindow" data-target="repeat">
+                <i class="fas fa-sync"></i> Repeat rejudging
+            </a>
+        </p>
+    </if>
+    <if cond="@(!Model.OperatedBy.HasValue && cntsss <= 0)">
+        <form method="post">
+            <button asp-action="Cancel" type="submit" class="btn btn-danger">
+                <i class="fas fa-times"></i> Cancel rejudging
+            </button>
+            <button asp-action="Apply" type="submit" class="btn btn-success">
+                <i class="fas fa-check"></i> Apply rejudging
+            </button>
+        </form>
+    </if>
+    <if cond="@(cntsss > 0)">
+        <form asp-action="Cancel" method="post">
+            <button type="submit" class="btn btn-danger">
+                <i class="fas fa-times"></i> Cancel rejudging
+            </button>
+        </form>
+    </if>
+</div>
+
+<div class="d-none" data-new-rejudging-matrix>
+
+    @{
+        var optts = js
+            .Where(s => s.@new.Status != Verdict.Pending && s.@new.Status != Verdict.Running);
+
+        var usedVerdicts = Enumerable.Concat(optts.Select(s => s.old.Status), optts.Select(s => s.@new.Status))
+            .Distinct()
+            .OrderBy(v => v)
+            .ToArray();
+
+        var its = new int[usedVerdicts.Length, usedVerdicts.Length];
+        var rev = new int[13];
+        for (int i = 0; i < usedVerdicts.Length; i++) { rev[(int)usedVerdicts[i]] = i; }
+        foreach (var s in js)
+        {
+            if (s.@new.Status != Verdict.Pending && s.@new.Status != Verdict.Running)
+            {
+                its[rev[(int)s.old.Status], rev[(int)s.@new.Status]]++;
+            }
+        }
+    }
+
+    <div class="mt-3">
+        <h3>Overview of changes</h3>
+
+        <table class="rejudgetable">
+            <tr>
+                <th title="old vs. new verdicts">-\+</th>
+                @foreach (var v in usedVerdicts)
+                {
+                    <th title="@v (new)">@JudgeWeb.Data.Api.JudgementType.For(v)</th>
+                }
+            </tr>
+            @for (int i = 0; i < usedVerdicts.Length; i++)
+            {
+                <tr>
+                    <th title="@usedVerdicts[i] (old)">@JudgeWeb.Data.Api.JudgementType.For(usedVerdicts[i])</th>
+                    @for (int j = 0; j < usedVerdicts.Length; j++)
+                    {
+                        <td class="@(i == j ? "identical" : its[i, j] == 0 ? "zero" : "changed")">@its[i, j]</td>
+                    }
+                </tr>
+            }
+        </table>
+    </div>
+</div>
+
+@if (js.Any())
+{
+    int total = 0, correct = 0;
+
+    <table class="data-table table table-hover table-striped table-sm submissions-table">
+        <thead class="thead-light">
+            <tr>
+                <th scope="col">ID</th>
+                <th scope="col">time</th>
+                <th scope="col">team</th>
+                <th scope="col">problem</th>
+                <th scope="col">lang</th>
+                <th scope="col">result</th>
+                <th scope="col">old result</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var s in js)
+            {
+                if (s.@new.Status == Verdict.Accepted) { correct++; }
+                total++;
+                <tr asp-controller="Submissions"
+                    asp-action="Detail"
+                    asp-route-sid="@s.old.SubmissionId"
+                    asp-route-jid="@(s.@new.JudgingId)"
+                    class=""
+                    data-problem-id="@s.probid"
+                    data-team-id="@s.teamid"
+                    data-language-id="@s.langid"
+                    data-submission-id="@s.old.SubmissionId">
+                    <td use-a>s@(s.old.SubmissionId)</td>
+                    <td use-a>@s.time</td>
+                    <td use-a>@teams.GetValueOrDefault(s.teamid)</td>
+                    <td use-a class="probid">@probs.FirstOrDefault(ss => ss.ProblemId == s.probid)?.ShortName</td>
+                    <td use-a class="langid">@langs[s.langid].ExternalId</td>
+                    <td use-a><verdict3 value="@(s.@new.Status)" /></td>
+                    <td use-a><verdict3 value="@s.old.Status" /></td>
+                </tr>
+            }
+
+        </tbody>
+    </table>
+
+    <p>
+        Total correct: @correct, submitted: @total
+    </p>
+}
+else
+{
+    <div class="alert alert-warning">
+        No submissions
+    </div>
+}
+
+@section Scripts {
+    <script>
+        $(function () {
+            window.updateMatrix = function () {
+                var $matrixData = $('[data-new-rejudging-matrix]');
+                var $matrix = $('[data-rejudging-matrix]');
+                $matrix.html($matrixData.children());
+
+                var $buttonData = $('[data-new-rejudging-buttons]');
+                var $button = $('[data-rejudging-buttons]');
+                $button.html($buttonData.children());
+
+                var todo = $('[data-new-todo]').text();
+                var $todo = $('[data-todo]');
+                $todo.text(todo);
+                if (parseInt(todo) <= 0) {
+                    $todo.closest('tr').addClass('d-none');
+                } else {
+                    $todo.closest('tr').removeClass('d-none');
+                }
+            };
+
+            updateMatrix();
+        });
+    </script>
+}

@@ -74,6 +74,7 @@ namespace JudgeWeb
                 .BatchUpdateAsync(template, contents.ToList());
 
             ContestCache._cache.Remove($"`c{cid}`info");
+            ContestCache._cache.Remove($"`c{cid}`internal_state");
         }
 
         public static Task<List<TeamCategory>> ListTeamCategoryAsync(this AppDbContext db, int cid, bool? requirePublic = null)

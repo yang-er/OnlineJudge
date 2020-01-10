@@ -16,19 +16,7 @@
     if (inajax)
     {
         Layout = null;
-        Contest cont = ViewBag.Contest;
-        var initial = DateTimeOffset.Now.ToUnixTimeMilliseconds();
-        var now = initial / 1000;
-        var startTime = cont.StartTime is null ? -1 : cont.StartTime.Value.ToUnixTimeSeconds();
-        var endTime = cont.EndTime is null ? -1 : cont.EndTime.Value.ToUnixTimeSeconds();
-        var prog = startTime == -1 || initial / 1000 < startTime ? 0
-            : now >= endTime ? 100 : (now - startTime) * 100 / (endTime - startTime);
-        <if cond="@(prog > 0 && prog < 100)">
-            <div class="progress" style="margin-top:-9px; height: 10px; margin-bottom: 9px" data-progress-bar>
-                <div class="progress-bar" role="progressbar" style="width: @prog%;"
-                     aria-valuenow="@prog" aria-valuemin="0" aria-valuemax="100"></div>
-            </div>
-        </if>
+        <partial name="_Progress" />
     }
 }
 

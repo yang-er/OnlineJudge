@@ -115,6 +115,11 @@ namespace JudgeWeb.Data
             modelBuilder.Entity<Student>()
                 .UseAttributes(isMySql);
 
+
+            modelBuilder.Entity<Ext.Balloon>().UseAttributes(isMySql);
+            modelBuilder.Entity<Ext.Printing>().UseAttributes(isMySql);
+
+
             if (isMySql)
             {
                 modelBuilder.Entity<IdentityUserLogin<int>>()

@@ -75,5 +75,15 @@ namespace JudgeWeb.Data
         [Index]
         [HasOneWithMany(typeof(Rejudge), DeleteBehavior.SetNull)]
         public int? RejudgeId { get; set; }
+
+        /// <summary>
+        /// 重测时前一个活跃评测编号
+        /// </summary>
+        public int? PreviousJudgingId { get; set; }
+
+        /// <summary>
+        /// 评测点分数总和
+        /// </summary>
+        public int TotalScore { get; set; }
     }
 }

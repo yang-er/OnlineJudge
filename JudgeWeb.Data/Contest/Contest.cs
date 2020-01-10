@@ -74,5 +74,10 @@ namespace JudgeWeb.Data
         /// 铜牌数量
         /// </summary>
         public int BronzeMedal { get; set; }
+
+        /// <summary>
+        /// 打印可用性
+        /// </summary>
+        public bool PrintingAvaliable { get; set; }
     }
 }

@@ -368,3 +368,6 @@ healthchecksdb
 /JudgeWeb/wwwroot/static/prism
 /JudgeWeb/wwwroot/static/js
 /JudgeWeb/wwwroot/static/css
+/JudgeWeb/wwwroot/static/select2/css/select2.min.css
+/JudgeWeb/wwwroot/static/select2/js/select2.min.js
+/JudgeWeb/wwwroot/static/select2/js/i18n/en.js

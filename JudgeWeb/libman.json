@@ -769,6 +769,15 @@
     {
       "library": "ace@1.4.6",
       "destination": "wwwroot/static/ace/"
+    },
+    {
+      "library": "select2@4.0.12",
+      "destination": "wwwroot/static/select2/",
+      "files": [
+        "js/select2.min.js",
+        "css/select2.min.css",
+        "js/i18n/en.js"
+      ]
     }
   ]
 }

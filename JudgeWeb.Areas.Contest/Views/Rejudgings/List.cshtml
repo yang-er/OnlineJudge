@@ -1,0 +1,76 @@
+﻿@model IEnumerable<Rejudge>
+@{
+    ViewData["Title"] = "Rejudgings";
+    ViewData["RefreshSpan"] = 15;
+    if (ViewData.ContainsKey("InAjax")) { Layout = null; }
+}
+
+<h2 class="mt-2">Rejudgings</h2>
+
+<div class="table-wrapper">
+    <table class="data-table table table-sm table-striped" style="width:auto">
+        <thead class="">
+            <tr>
+                <th scope="col" class="sortable searchable">ID</th>
+                <th scope="col" class="sortable searchable">reason</th>
+                <th scope="col" class="sortable searchable">startuser</th>
+                <th scope="col" class="sortable searchable">finishuser</th>
+                <th scope="col" class="sortable searchable">starttime</th>
+                <th scope="col" class="sortable searchable">finishtime</th>
+                <th scope="col" class="sortable searchable">status</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var rej in Model)
+            {
+                <tr asp-action="Detail" asp-route-rid="@rej.RejudgeId" class="@(rej.OperatedBy.HasValue ? "disabled" : "")">
+                    <td use-a>@rej.RejudgeId</td>
+                    <td use-a>@rej.Reason</td>
+                    <td use-a>@rej.Issuer</td>
+                    <td use-a>@(rej.Operator ?? "-")</td>
+                    <td use-a>@rej.StartTime?.ToString("HH:mm")</td>
+                    <td use-a>@(rej.EndTime?.ToString("HH:mm") ?? "-")</td>
+                    <td use-a>
+                        <if cond="rej.Applied.HasValue">
+                            @(rej.Applied.Value ? "applied" : "cancelled")
+                        </if>
+                        <if cond="!rej.Applied.HasValue">
+                            <if cond="@(rej.Ready.Item2 == 0)">
+                                <b>ready</b>
+                            </if>
+                            <if cond="@(rej.Ready.Item2 != 0)">
+                                not ready @($"{(100 - 100.0 * rej.Ready.Item2 / rej.Ready.Item1):d0}")%
+                            </if>
+                        </if>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<script>
+    $().ready(function () {
+        $('.data-table').DataTable({
+            "paging": false,
+            "searching": true,
+            "ordering": true,
+            "order": [[0, 'desc']],
+            "info": false,
+            "autoWidth": true,
+            "language": {
+                "searchPlaceholder": "filter table",
+                "search": "_INPUT_",
+            },
+            'aoColumnDefs': [
+                { aTargets: ['sortable'], bSortable: true },
+                { aTargets: ['searchable'], bSearchable: true },
+                { aTargets: ['_all'], bSortable: false, bSearchable: false }
+            ],
+        });
+    });
+</script>
+
+<p>
+    <a asp-action="Add" class="btn btn-primary" title="Add new rejudging"><i class="fas fa-plus"></i>&nbsp;Add new rejudging</a>
+</p>

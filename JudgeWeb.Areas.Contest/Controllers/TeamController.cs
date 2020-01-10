@@ -22,7 +22,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
 
         public override async Task OnActionExecutingAsync(ActionExecutingContext context)
         {
-            if (Team == null || Team.Status == 1)
+            if (Team == null || Team.Status != 1)
             {
                 context.Result = IsWindowAjax
                     ? Message("401 Unauthorized",

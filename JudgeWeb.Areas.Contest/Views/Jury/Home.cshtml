@@ -7,14 +7,16 @@
     ContestProblem[] probs = ViewBag.Problems;
 }
 
-<h1 class="mt-2">
-    Contest
-    <span style="font-variant:small-caps;">
-        @ctx.ShortName
-    </span>
-    <a asp-action="Edit" class="btn btn-sm btn-outline-primary">Edit</a>
-    <a asp-action="Description" class="btn btn-sm btn-outline-info">Description</a>
-</h1>
+<div class="mt-2 mb-2">
+    <h1 class="mt-0 d-inline mb-0 mr-1">
+        Contest
+        <span style="font-variant:small-caps;">
+            @ctx.ShortName
+        </span>
+    </h1>
+    <a asp-action="Edit" class="btn btn-outline-primary btn-sm"><i class="fas fa-edit"></i> Edit</a>
+    <a asp-action="Description" class="btn btn-outline-info btn-sm"><i class="fab fa-markdown"></i> Description</a>
+</div>
 
 <h4 class="text-left mb-3">@ctx.Name</h4>
 
@@ -83,6 +85,41 @@
         </div>
         <div class="card mb-3">
             <div class="card-header">
+                Utilities
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-lg-6">
+                        <h5 class="ml-2 text-left">Infrastructures</h5>
+                        <ul>
+                            <li><a asp-area="Dashboard" asp-controller="Executables" asp-action="List">Executables</a></li>
+                            <li><a asp-area="Dashboard" asp-controller="Judgehosts" asp-action="List">Judgehosts</a></li>
+                            <li><a asp-area="Dashboard" asp-controller="InternalErrors" asp-action="List">Internal Errors</a></li>
+                            <li><a asp-area="Dashboard" asp-controller="Languages" asp-action="List">Languages</a></li>
+                            <li><a asp-controller="Teams" asp-action="List">Teams</a></li>
+                            <li><a asp-area="Dashboard" asp-controller="Categories" asp-action="List">Team Categories</a></li>
+                            <li><a asp-area="Dashboard" asp-controller="Affiliations" asp-action="List">Team Affiliations</a></li>
+                        </ul>
+                    </div>
+                    <div class="col-lg-6">
+                        <h5 class="ml-2 text-left">During contest</h5>
+                        <ul>
+                            <li><a>Balloon status</a></li>
+                            <li><a>Printing status</a></li>
+                            <li><a asp-controller="Rejudgings" asp-action="List">Rejudgings</a></li>
+                            <li><a asp-action="Statistics">Statistics/Analysis</a></li>
+                            <li><a asp-action="ResetEventFeed" data-target="refresh" data-toggle="ajaxWindow">Reset event feed</a></li>
+                            <li><a asp-action="RefreshCache" data-target="refresh" data-toggle="ajaxWindow">Refresh scoreboard cache</a></li>
+                            <li><a asp-action="Auditlog">Audit log</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card mb-3">
+            <div class="card-header">
                 Problems
             </div>
             <div class="card-body">
@@ -94,7 +131,7 @@
                             <th scope="col">submit?</th>
                             <th scope="col">judge?</th>
                             <th></th>
-                            <th><a class="text-reset" asp-controller="JuryProblem" asp-action="Add" data-toggle="ajaxWindow" data-target="addProb"><i class="fas fa-plus"></i></a></th>
+                            <th><a class="text-reset" asp-controller="Problems" asp-action="Add" data-toggle="ajaxWindow" data-target="addProb"><i class="fas fa-plus"></i></a></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -105,16 +142,14 @@
                                 <td use-a><div class="circle" style="background-color: @prob.Color"></div> <span class="text-monospace">@prob.ShortName</span> - @prob.Title</td>
                                 <td use-a>@(prob.AllowSubmit ? "Yes" : "No")</td>
                                 <td use-a>@(prob.AllowJudge ? "Yes" : "No")</td>
-                                <td><a asp-controller="JuryProblem" asp-action="Edit" asp-route-pid="@prob.ProblemId" data-toggle="ajaxWindow" data-target="editProb"><i class="fas fa-edit"></i></a></td>
-                                <td><a asp-controller="JuryProblem" asp-action="Delete" asp-route-pid="@prob.ProblemId" data-toggle="ajaxWindow" data-target="deleteProb"><i class="fas fa-trash-alt"></i></a></td>
+                                <td><a asp-controller="Problems" asp-action="Edit" asp-route-pid="@prob.ProblemId" data-toggle="ajaxWindow" data-target="editProb"><i class="fas fa-edit"></i></a></td>
+                                <td><a asp-controller="Problems" asp-action="Delete" asp-route-pid="@prob.ProblemId" data-toggle="ajaxWindow" data-target="deleteProb"><i class="fas fa-trash-alt"></i></a></td>
                             </tr>
                         }
                     </tbody>
                 </table>
             </div>
         </div>
-    </div>
-    <div class="col-lg-6">
         <div class="card mb-3">
             <div class="card-header">
                 Jury members
@@ -149,38 +184,6 @@
                         }
                     </tbody>
                 </table>
-            </div>
-        </div>
-        <div class="card mb-3">
-            <div class="card-header">
-                Utilities
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-lg-6">
-                        <h5 class="ml-2 text-left">Infrastructures</h5>
-                        <ul>
-                            <li><a asp-area="Dashboard" asp-controller="InternalErrors" asp-action="List">Internal Errors</a></li>
-                            <li><a asp-area="Dashboard" asp-controller="Judgehosts" asp-action="List">Judgehosts</a></li>
-                            <li><a asp-area="Dashboard" asp-controller="Executables" asp-action="List">Executables</a></li>
-                            <li><a asp-area="Dashboard" asp-controller="Languages" asp-action="List">Languages</a></li>
-                            <li><a asp-area="Dashboard" asp-controller="Categories" asp-action="List">Team Categories</a></li>
-                            <li><a asp-area="Dashboard" asp-controller="Affiliations" asp-action="List">Team Affiliations</a></li>
-                            <li><a asp-area="Dashboard" asp-controller="Users" asp-action="List">Users</a></li>
-                            <li><a asp-controller="JuryTeam" asp-action="List">Teams</a></li>
-                        </ul>
-                    </div>
-                    <div class="col-lg-6">
-                        <h5 class="ml-2 text-left">During contest</h5>
-                        <ul>
-                            <li><a asp-action="Auditlog">Audit log</a></li>
-                            <li><a asp-action="ResetEventFeed" data-target="refresh" data-toggle="ajaxWindow">Reset event feed</a></li>
-                            <li><a asp-action="Statistics">Statistics/Analysis</a></li>
-                            <li><a asp-action="RefreshCache" data-target="refresh" data-toggle="ajaxWindow">Refresh scoreboard cache</a></li>
-                            <li><a asp-action="Rejudging">Rejudgings</a></li>
-                        </ul>
-                    </div>
-                </div>
             </div>
         </div>
     </div>

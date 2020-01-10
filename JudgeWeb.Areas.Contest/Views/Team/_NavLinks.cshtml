@@ -2,7 +2,7 @@
 @{ 
     Contest cts = ViewBag.Contest;
     Team team = ViewBag.Team;
-    bool disabled_ = cts.GetState() < ContestState.Started || team.Status != 1;
+    bool disabled_ = cts.GetState() < ContestState.Started || team == null || team.Status != 1;
     disabled_ = disabled_ && !User.IsInRoles($"Administrator,JuryOfContest{cts.ContestId}");
     string disableClass = disabled_ ? "disabled" : "";
 }
@@ -31,7 +31,7 @@
 
     <viewmodule key="IsJury">
         <li class="nav-item">
-            <a class="nav-link" asp-controller="JuryMain" asp-action="Home">
+            <a class="nav-link" asp-controller="Jury" asp-action="Home">
                 <i class="fas fa-arrow-right"></i>
                 Jury
             </a>

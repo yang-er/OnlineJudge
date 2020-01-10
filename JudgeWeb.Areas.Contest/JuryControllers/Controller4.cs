@@ -44,6 +44,16 @@ namespace JudgeWeb.Areas.Contest.Controllers
             }
         }
 
+        protected void RefreshScoreboardCache(int cid)
+        {
+            DbContext.UpdateScoreboard(new ScoreboardState
+            {
+                ContestId = cid,
+                SubmissionId = -1,
+                Time = DateTimeOffset.Now,
+            });
+        }
+
         protected async Task<IEnumerable<SubmissionViewModel>> ListSubmissionsByJuryAsync(
             int cid, int? teamid = null, bool all = true)
         {

@@ -1,0 +1,78 @@
+﻿@model AddRejudgingModel
+@{
+    ViewData["Title"] = "Add rejudging";
+    ContestProblem[] cps = ViewBag.Problems;
+    Dictionary<int, Language> langs = ViewBag.Languages;
+    Dictionary<int, string> teams = ViewBag.Teams;
+    List<JudgeHost> hosts = ViewBag.Judgehosts;
+}
+
+<h2 class="mt-2">Add rejudging</h2>
+
+<div class="row" style="max-width:32em">
+<div class="col">
+<form asp-action="Add" method="post">
+    <div id="rejudging">
+        <div asp-validation-summary="All" class="text-danger"></div>
+        <div class="form-group">
+            <label asp-for="Reason" class="required">Reason</label>
+            <input asp-for="Reason" required class="form-control" />
+        </div>
+        <div class="form-group">
+            <label asp-for="Problems">Problem</label>
+            <select asp-for="Problems" class="form-control custom-select form-control" multiple asp-items="@(cps.Select(cp => new SelectListItem(cp.Title, $"{cp.ProblemId}")))"></select>
+        </div>
+        <div class="form-group">
+            <label asp-for="Languages">Language</label>
+            <select asp-for="Languages" class="form-control custom-select form-control" multiple asp-items="@(langs.Values.Select(l => new SelectListItem(l.Name, $"{l.ExternalId}")))"></select>
+        </div>
+        <div class="form-group">
+            <label asp-for="Teams">Team</label>
+            <select asp-for="Teams" class="form-control custom-select form-control" multiple asp-items="@(teams.Select(t => new SelectListItem(t.Value, $"{t.Key}")))"></select>
+        </div>
+        <div class="form-group">
+            <label asp-for="Judgehosts">Judgehost</label>
+            <select asp-for="Judgehosts" class="form-control custom-select form-control" multiple asp-items="@(hosts.Select(h => new SelectListItem(h.ServerName, h.ServerName)))"></select>
+        </div>
+        <div class="form-group">
+            <label asp-for="Verdicts">Verdict</label>
+            <select asp-for="Verdicts" class="form-control custom-select form-control" multiple>
+                <option value="@((int)Verdict.Accepted)">correct</option>
+                <option value="@((int)Verdict.CompileError)" selected="selected">compiler-error</option>
+                <option value="@((int)Verdict.MemoryLimitExceeded)" selected="selected">memory-limit</option>
+                <option value="@((int)Verdict.OutputLimitExceeded)" selected="selected">output-limit</option>
+                <option value="@((int)Verdict.RuntimeError)" selected="selected">run-error</option>
+                <option value="@((int)Verdict.TimeLimitExceeded)" selected="selected">timelimit</option>
+                <option value="@((int)Verdict.WrongAnswer)" selected="selected">wrong-answer</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label asp-for="TimeBefore">before (in form ±[HHH]H:MM[:SS[.uuuuuu]])</label>
+            <input asp-for="TimeBefore" class="form-control" />
+        </div>
+        <div class="form-group">
+            <label asp-for="TimeAfter">after (in form ±[HHH]H:MM[:SS[.uuuuuu]])</label>
+            <input asp-for="TimeAfter" class="form-control" />
+        </div>
+        <div class="form-group">
+            <button type="submit" class="btn-primary btn">Save</button>
+        </div>
+    </div>
+</form>
+</div>
+</div>
+
+
+@section Scripts {
+
+    <link rel="stylesheet" href="~/static/select2/css/select2.min.css">
+    <link rel="stylesheet" href="~/static/select2/css/select2-bootstrap.min.css">
+    <script src="~/static/select2/js/select2.min.js"></script>
+    <script>
+        $(function () {
+            $.fn.select2.defaults.set("theme", "bootstrap");
+
+            $('select[multiple]').select2();
+        });
+    </script>
+}

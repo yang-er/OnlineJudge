@@ -9,8 +9,8 @@ using System.Threading.Tasks;
 namespace JudgeWeb.Areas.Contest.Controllers
 {
     [Area("Contest")]
-    [Route("[area]/{cid}/jury/problems")]
-    public class JuryProblemController : JuryControllerBase
+    [Route("[area]/{cid}/jury/[controller]")]
+    public class ProblemsController : JuryControllerBase
     {
         private void MarkChanged()
         {
@@ -83,14 +83,15 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 MarkChanged();
 
                 var newprobs = await DbContext.GetProblemsAsync(cid);
-                DbContext.Events.AddCreate(cid, new Data.Api.ContestProblem2(newprobs.First(cp => cp.ProblemId == model.ProblemId)));
-                foreach (var (@new, old) in newprobs.Join(oldprobs, a => a.ProblemId, a => a.ProblemId, (a, b) => (a, b)))
-                    if (@new.Rank != old.Rank)
+                DbContext.Events.AddCreate(cid,
+                    new Data.Api.ContestProblem2(newprobs.Find(model.ProblemId)));
+                foreach (var @new in newprobs)
+                    if (@new.ProblemId != model.ProblemId)
                         DbContext.Events.AddUpdate(cid, new Data.Api.ContestProblem2(@new));
                 await DbContext.SaveChangesAsync();
 
                 StatusMessage = $"Problem {model.ShortName} saved.";
-                return RedirectToAction("Home", "JuryMain");
+                return RedirectToAction("Home", "Jury");
             }
             else
             {
@@ -154,13 +155,12 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 MarkChanged();
 
                 var newprobs = await DbContext.GetProblemsAsync(cid);
-                foreach (var (@new, old) in newprobs.Join(oldprobs, a => a.ProblemId, a => a.ProblemId, (a, b) => (a, b)))
-                    if (@new.ProblemId == pid || @new.Rank != old.Rank)
-                        DbContext.Events.AddUpdate(cid, new Data.Api.ContestProblem2(@new));
+                foreach (var @new in newprobs)
+                    DbContext.Events.AddUpdate(cid, new Data.Api.ContestProblem2(@new));
                 await DbContext.SaveChangesAsync();
 
                 StatusMessage = $"Problem {model.ShortName} saved.";
-                return RedirectToAction("Home", "JuryMain");
+                return RedirectToAction("Home", "Jury");
             }
             else
             {
@@ -179,7 +179,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
             return AskPost(
                 title: "Delete contest problem",
                 message: $"Are you sure to delete problem {prob.ShortName}?",
-                area: "Contest", ctrl: "JuryProblem", act: "Delete",
+                area: "Contest", ctrl: "Problems", act: "Delete",
                 routeValues: new Dictionary<string, string> { ["cid"] = $"{cid}", ["pid"] = $"{pid}" },
                 type: MessageType.Danger);
         }
@@ -197,11 +197,16 @@ namespace JudgeWeb.Areas.Contest.Controllers
             DbContext.Events.AddDelete(cid, new Data.Api.ContestProblem2(prob));
             await DbContext.SaveChangesAsync();
 
+            var newprobs = await DbContext.GetProblemsAsync(cid);
+            foreach (var @new in newprobs)
+                DbContext.Events.AddUpdate(cid, new Data.Api.ContestProblem2(@new));
+            await DbContext.SaveChangesAsync();
+
             if (tot == 1) MarkChanged();
             StatusMessage = tot == 1
                 ? $"Contest problem {prob.ShortName} has been deleted."
                 : $"Error when deleting contest problem {prob.ShortName}.";
-            return RedirectToAction("Home", "JuryMain");
+            return RedirectToAction("Home", "Jury");
         }
     }
 }

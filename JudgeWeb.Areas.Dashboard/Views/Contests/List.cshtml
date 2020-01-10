@@ -37,7 +37,7 @@
         <tbody>
             @foreach (var cts in Model)
             {
-                <tr asp-area="Contest" asp-controller="JuryMain" asp-action="Home" asp-route-cid="@cts.ContestId" role="row" data-target="gotoUrl" class="@ContestState(cts)">
+                <tr asp-area="Contest" asp-controller="Jury" asp-action="Home" asp-route-cid="@cts.ContestId" role="row" data-target="gotoUrl" class="@ContestState(cts)">
                     <td use-a>@cts.ContestId</td>
                     <td use-a>@cts.ShortName</td>
                     <td use-a><span class="forceWidth" style="max-width:20em">@(string.IsNullOrEmpty(cts.Name) ? "(unnamed)" : cts.Name)</span></td>
@@ -47,7 +47,7 @@
                     <td use-a>@teams.GetValueOrDefault(cts.ContestId)</td>
                     <td use-a>@probs.GetValueOrDefault(cts.ContestId)</td>
                     <td use-a class="rks"><verdict0 type="ContestRule" value="cts.RankingStrategy" /></td>
-                    <td><a asp-area="Contest" asp-controller="JuryMain" asp-action="Edit" asp-route-cid="@cts.ContestId" title="edit this contest"><i class="fas fa-edit"></i></a></td>
+                    <td><a asp-area="Contest" asp-controller="Jury" asp-action="Edit" asp-route-cid="@cts.ContestId" title="edit this contest"><i class="fas fa-edit"></i></a></td>
                 </tr>
             }
         </tbody>
