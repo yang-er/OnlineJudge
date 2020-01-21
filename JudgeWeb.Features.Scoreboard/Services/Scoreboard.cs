@@ -12,12 +12,12 @@ namespace JudgeWeb.Features.Scoreboard
 
         Task UpdateScoreboardPendingAsync(DbContext db, int cid, int teamid, int probid, bool freeze);
 
-        Task UpdateScoreboardCorrectAsync(DbContext db, int cid, int teamid, int probid, double time, bool freeze, bool opfb = true);
+        Task UpdateScoreboardCorrectAsync(DbContext db, int submitid, int cid, int teamid, int probid, double time, bool freeze, bool useBalloon, bool opfb = true);
 
         Task UpdateScoreboardCompileErrorAsync(DbContext db, int cid, int teamid, int probid, bool freeze);
 
         Task UpdateScoreboardRejectedAsync(DbContext db, int cid, int teamid, int probid, bool freeze);
 
-        Task UpdateScoreboardBundleAsync(DbContext db, Contest c, IEnumerable<(int team, int so, int prob, DateTimeOffset time, Verdict? v)> results);
+        Task UpdateScoreboardBundleAsync(DbContext db, Contest c, IEnumerable<(int sid, int team, int so, int prob, DateTimeOffset time, Verdict? v)> results);
     }
 }

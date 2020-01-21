@@ -1,0 +1,75 @@
+﻿@model IEnumerable<JudgeWeb.Data.Ext.Balloon>
+@{
+    ViewData["Title"] = "Balloons";
+    ViewData["RefreshSpan"] = 30;
+    Contest ctx = ViewBag.Contest;
+    if (ViewData.ContainsKey("InAjax")) { Layout = null; }
+}
+
+<h2 class="mt-2">@ViewData["Title"]</h2>
+
+<if cond="@(ctx.GetState() >= ContestState.Frozen)">
+    <div class="alert alert-info">
+        <i class="fas fa-snowflake"></i>
+        Scoreboard of c@(ctx.ContestId) (@ctx.ShortName) is now frozen.
+    </div>
+</if>
+
+<div class="table-wrapper">
+    <table class="data-table table table-sm table-striped" style="width:auto">
+        <thead class="">
+            <tr>
+                <th scope="col" class="sortable searchable"></th>
+                <th scope="col" class="sortable searchable">ID</th>
+                <th scope="col" class="sortable searchable">time</th>
+                <th scope="col" class="sortable searchable">solved</th>
+                <th scope="col" class="sortable searchable">team</th>
+                <th scope="col" class="sortable searchable">loc.</th>
+                <th scope="col" class="sortable searchable">category</th>
+                <th scope="col" class="sortable searchable">comments</th>
+                <th scope="col"></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var ball in Model)
+            {
+                <tr class="@(ball.Done ? "disabled" : "")">
+                    <td data-sort="@(ball.Done ? "1" : "0")"><i class="far fa-@(ball.Done ? "check-circle" : "hourglass")"></i></td>
+                    <td>@ball.SubmissionId</td>
+                    <td data-sort="@ball.Time.ToUnixTimeSeconds()">@ball.Time.ToString("HH:mm")</td>
+                    <td><i style="color: @ball.BalloonColor" class="fas fa-golf-ball"></i> @ball.ProblemShortName</td>
+                    <td>@ball.Team</td>
+                    <td>@ball.Location</td>
+                    <td>@ball.CategoryName</td>
+                    <td><if cond="ball.FirstToSolve">first to solve</if></td>
+                    <td>
+                        <if cond="!ball.Done">
+                            <a asp-action="BalloonSetDone" asp-route-bid="@ball.Id"><i class="fas fa-running"></i></a>
+                        </if>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+<script>
+    $().ready(function () {
+        $('.data-table').DataTable({
+            "paging": false,
+            "searching": true,
+            "ordering": true,
+            "order": [[0, 'asc']],
+            "info": false,
+            "autoWidth": true,
+            "language": {
+                "searchPlaceholder": "filter table",
+                "search": "_INPUT_",
+            },
+            'aoColumnDefs': [
+                { aTargets: ['sortable'], bSortable: true },
+                { aTargets: ['searchable'], bSearchable: true },
+                { aTargets: ['_all'], bSortable: false, bSearchable: false }
+            ],
+        });
+    });
+</script>

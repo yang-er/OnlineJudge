@@ -1,5 +1,6 @@
 ﻿using JudgeWeb.Data;
 using JudgeWeb.Features.Scoreboard;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.EntityFrameworkCore;
@@ -138,6 +139,33 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 Problems = Problems,
                 Category = cats.FirstOrDefault(c => c.CategoryId == bq.Team.CategoryId),
             };
+        }
+
+        protected IActionResult PrintView()
+        {
+            if (!Contest.PrintingAvaliable)
+                return NotFound();
+            return View(new Models.AddPrintModel());
+        }
+
+        protected async Task<IActionResult> PrintDo(int cid, Models.AddPrintModel model)
+        {
+            if (!Contest.PrintingAvaliable)
+                return NotFound();
+
+            DbContext.Printing.Add(new Data.Ext.Printing
+            {
+                ContestId = cid,
+                LanguageId = model.Language ?? "plain",
+                FileName = System.IO.Path.GetFileName(model.SourceFile.FileName),
+                Time = DateTimeOffset.Now,
+                UserId = int.Parse(UserManager.GetUserId(User)),
+                SourceCode = (await model.SourceFile.ReadAsync()).Item1
+            });
+
+            await DbContext.SaveChangesAsync();
+            StatusMessage = "File has been printed. Please wait.";
+            return RedirectToAction("Home");
         }
 
         protected async Task<IActionResult> ScoreboardView(bool isPublic, bool isJury, bool clear, int[] aff, int[] cat)

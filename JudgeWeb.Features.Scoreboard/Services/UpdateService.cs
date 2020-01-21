@@ -66,9 +66,9 @@ namespace JudgeWeb.Features.Scoreboard
             if (c.Verdict.Value == Verdict.Accepted)
             {
                 return board.UpdateScoreboardCorrectAsync(db,
-                    c.ContestId, c.TeamId, c.ProblemId,
+                    c.SubmissionId, c.ContestId, c.TeamId, c.ProblemId,
                     time: (c.Time - c.StartTime)?.TotalSeconds ?? 0,
-                    freeze: state == ContestState.Frozen, opfb);
+                    freeze: state == ContestState.Frozen, c.UseBalloon, opfb);
             }
             else if (c.Verdict.Value == Verdict.CompileError)
             {
@@ -102,7 +102,7 @@ namespace JudgeWeb.Features.Scoreboard
             var info = await subsQuery.ToListAsync();
             await Instance.Scoreboards[c.RankingStrategy]
                 .UpdateScoreboardBundleAsync(db, c,
-                    info.Select(a => (a.Author, a.SortOrder, a.ProblemId, a.Time, a.v)));
+                    info.Select(a => (a.SubmissionId, a.Author, a.SortOrder, a.ProblemId, a.Time, a.v)));
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)

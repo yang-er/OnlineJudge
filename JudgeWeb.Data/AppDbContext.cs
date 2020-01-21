@@ -36,6 +36,8 @@ namespace JudgeWeb.Data
         public virtual DbSet<RankCache> RankCache { get; set; }
         public virtual DbSet<ScoreCache> ScoreCache { get; set; }
         public virtual DbSet<Event> Events { get; set; }
+        public virtual DbSet<Ext.Balloon> Balloon { get; set; }
+        public virtual DbSet<Ext.Printing> Printing { get; set; }
 
 
         public virtual DbSet<Configure> Configures { get; set; }

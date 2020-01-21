@@ -1,0 +1,75 @@
+﻿@model AddPrintModel
+@{
+    ViewData["Title"] = "Print";
+}
+
+<div class="container mt-3 submitform">
+    <h1 class="text-center">Print source</h1>
+    <form asp-action="Print" method="post" enctype="multipart/form-data">
+        <div id="print">
+            <div class="form-group">
+                <label asp-for="SourceFile" class="required"></label>
+                <div class="custom-file">
+                    <input asp-for="SourceFile" required onchange="detectLanguage(this.value)" class="custom-file-input custom-file-input" />
+                    <label class="custom-file-label text-truncate text-muted" asp-for="SourceFile">No file selected</label>
+                </div>
+            </div>
+            <div class="form-group">
+                <label asp-for="Language"></label>
+                <select asp-for="Language" class="form-control custom-select form-control">
+                    <option value="" selected="selected">plain text</option>
+                    <option value="bash">Bash shell</option>
+                    <option value="c">C</option>
+                    <option value="csharp">C#</option>
+                    <option value="cpp">C++</option>
+                    <option value="f95">Fortran</option>
+                    <option value="hs">Haskell</option>
+                    <option value="java">Java</option>
+                    <option value="js">JavaScript</option>
+                    <option value="kt">Kotlin</option>
+                    <option value="pas">Pascal</option>
+                    <option value="py2">Python 2</option>
+                    <option value="py3">Python 3</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <button type="submit" class="btn-primary btn">Print code</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        function detectLanguage(filename) {
+            var parts = filename.toLowerCase().split('.').reverse();
+            if (parts.length < 2) return;
+
+            // language ID
+            var elt = document.getElementById('Language');
+            // the 'autodetect' option has empty value
+            if (elt.value !== '') return;
+
+            var langid = getMainExtension(parts[0]);
+            for (var i = 0; i < elt.length; i++) {
+                if (elt.options[i].value === langid) {
+                    elt.selectedIndex = i;
+                }
+            }
+        }
+
+        function getMainExtension(ext) {
+            switch (ext) {
+                case 'c': return 'c';
+                case 'h': return 'cpp';
+                case 'cpp': return 'cpp';
+                case 'cc': return 'cpp';
+                case 'cxx': return 'cpp';
+                case 'c++': return 'cpp';
+                case 'cs': return 'csharp';
+                case 'py': return 'py3';
+                default: return ext;
+            }
+        }
+    </script>
+}

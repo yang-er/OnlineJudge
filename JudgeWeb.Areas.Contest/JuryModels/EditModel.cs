@@ -29,6 +29,14 @@ namespace JudgeWeb.Areas.Contest.Models
         public bool IsPublic { get; set; }
 
         [Required]
+        [DisplayName("Create balloons")]
+        public bool UseBalloon { get; set; }
+
+        [Required]
+        [DisplayName("Send printings")]
+        public bool UsePrintings { get; set; }
+
+        [Required]
         [DisplayName("Self-registered category")]
         public int DefaultCategory { get; set; }
 

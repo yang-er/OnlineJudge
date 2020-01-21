@@ -22,14 +22,14 @@ namespace JudgeWeb.Data.Ext
         /// <summary>
         /// 比赛
         /// </summary>
-        [Index]
+        [HasOneWithMany(typeof(Contest), DeleteBehavior.Cascade)]
         public int ContestId { get; set; }
 
         /// <summary>
         /// 比赛队伍
         /// </summary>
-        [Index]
-        public int TeamId { get; set; }
+        [HasOneWithMany(typeof(User), DeleteBehavior.Cascade)]
+        public int UserId { get; set; }
 
         /// <summary>
         /// 是否已经处理过

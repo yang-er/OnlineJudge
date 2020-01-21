@@ -51,6 +51,14 @@ namespace JudgeWeb.Areas.Contest.Controllers
         }
 
 
+        [HttpGet("[action]")]
+        public IActionResult Print() => PrintView();
+
+
+        [HttpPost("[action]")]
+        public Task<IActionResult> Print(int cid, AddPrintModel model) => PrintDo(cid, model);
+
+
         [HttpGet]
         public IActionResult Home()
         {
@@ -272,6 +280,56 @@ namespace JudgeWeb.Areas.Contest.Controllers
 
 
         [HttpGet("[action]")]
+        public async Task<IActionResult> Balloon(int cid)
+        {
+            var balloonQuery =
+                from b in DbContext.Balloon
+                join s in DbContext.Submissions on b.SubmissionId equals s.SubmissionId
+                where s.ContestId == cid
+                join t in DbContext.Teams on new { s.ContestId, TeamId = s.Author } equals new { t.ContestId, t.TeamId }
+                join c in DbContext.TeamCategories on t.CategoryId equals c.CategoryId
+                select new Data.Ext.Balloon(b, s.ProblemId, s.Author, t.TeamName, t.Location, s.Time, c.Name, c.SortOrder);
+
+            var balloons = await balloonQuery.ToListAsync();
+            balloons.Sort((b1, b2) => b1.Time.CompareTo(b2.Time));
+            foreach (var g in balloons
+                .OrderBy(b => b.Time)
+                .GroupBy(b => new { b.ProblemId, b.SortOrder }))
+            {
+                var fb = true;
+                foreach (var item in g)
+                {
+                    item.FirstToSolve = fb;
+                    fb = false;
+                    var p = Problems.Find(item.ProblemId);
+                    item.BalloonColor = p.Color;
+                    item.ProblemShortName = p.ShortName;
+                }
+            }
+
+            return View(balloons);
+        }
+
+
+        [HttpGet("balloon/{bid}/set-done")]
+        public async Task<IActionResult> BalloonSetDone(int cid, int bid)
+        {
+            var bquery =
+                from b in DbContext.Balloon
+                where b.Id == bid
+                join s in DbContext.Submissions on b.SubmissionId equals s.SubmissionId
+                where s.ContestId == cid
+                select b.Id;
+
+            await DbContext.Balloon
+                .Where(b => bquery.Contains(b.Id))
+                .BatchUpdateAsync(b => new Data.Ext.Balloon { Done = true });
+
+            return RedirectToAction(nameof(Balloon));
+        }
+
+
+        [HttpGet("[action]")]
         [ValidateInAjax]
         [Authorize(Roles = "Administrator")]
         public IActionResult Assign() => Window(new JuryAssignModel());
@@ -364,6 +422,8 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 GoldenMedal = Contest.GoldMedal,
                 SilverMedal = Contest.SilverMedal,
                 IsPublic = Contest.IsPublic,
+                UsePrintings = Contest.PrintingAvaliable,
+                UseBalloon = Contest.BalloonAvaliable,
             });
         }
         
@@ -456,7 +516,9 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 FreezeTime = freezeTime,
                 EndTime = endTime,
                 UnfreezeTime = unfreezeTime,
-                RegisterDefaultCategory = model.DefaultCategory
+                RegisterDefaultCategory = model.DefaultCategory,
+                BalloonAvaliable = model.UseBalloon,
+                PrintingAvaliable = model.UsePrintings,
             };
 
             await UpdateContestAsync(update,
@@ -471,7 +533,9 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 nameof(update.FreezeTime),
                 nameof(update.EndTime),
                 nameof(update.UnfreezeTime),
-                nameof(update.RegisterDefaultCategory));
+                nameof(update.RegisterDefaultCategory),
+                nameof(update.PrintingAvaliable),
+                nameof(update.BalloonAvaliable));
 
             StatusMessage = "Contest updated successfully.";
             if (contestTimeChanged)

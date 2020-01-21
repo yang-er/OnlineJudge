@@ -36,6 +36,14 @@ namespace JudgeWeb.Areas.Contest.Controllers
 
 
         [HttpGet("[action]")]
+        public IActionResult Print() => PrintView();
+
+
+        [HttpPost("[action]")]
+        public Task<IActionResult> Print(int cid, AddPrintModel model) => PrintDo(cid, model);
+
+
+        [HttpGet("[action]")]
         public Task<IActionResult> Scoreboard(int cid,
             [FromQuery(Name = "affiliations[]")] int[] affiliations,
             [FromQuery(Name = "categories[]")] int[] categories,

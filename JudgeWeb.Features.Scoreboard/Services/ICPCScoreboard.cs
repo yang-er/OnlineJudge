@@ -111,7 +111,7 @@ namespace JudgeWeb.Features.Scoreboard
         }
 
         public async Task UpdateScoreboardCorrectAsync(
-            DbContext db, int cid, int teamid, int probid, double time, bool freeze, bool opfb = true)
+            DbContext db, int submitid, int cid, int teamid, int probid, double time, bool freeze, bool useBalloon, bool opfb = true)
         {
             Expression<Func<ScoreCache, ScoreCache>> scp;
 
@@ -209,16 +209,22 @@ namespace JudgeWeb.Features.Scoreboard
                 rc.TeamId = teamid;
                 await db.InsertAsync(rc);
             }
+
+            if (!freeze && useBalloon)
+            {
+                await db.InsertAsync(new Data.Ext.Balloon { SubmissionId = submitid });
+            }
         }
 
         public async Task UpdateScoreboardBundleAsync(
-            DbContext db, Contest c, IEnumerable<(int team, int so, int prob, DateTimeOffset time, Verdict? v)> results)
+            DbContext db, Contest c, IEnumerable<(int sid, int team, int so, int prob, DateTimeOffset time, Verdict? v)> results)
         {
             var rcc = new Dictionary<int, RankCache>();
             var scc = new Dictionary<(int, int), ScoreCache>();
             var fb = new HashSet<(int, int)>();
+            var oks = new List<int>();
 
-            foreach (var (team, so, prob, time, v) in results)
+            foreach (var (sid, team, so, prob, time, v) in results)
             {
                 var stat = c.GetState(time);
                 if (stat >= ContestState.Ended) continue;
@@ -244,6 +250,7 @@ namespace JudgeWeb.Features.Scoreboard
 
                     sc.IsCorrectRestricted = true;
                     sc.SolveTimeRestricted = (time - c.StartTime)?.TotalSeconds ?? 0;
+                    oks.Add(sid);
 
                     int penalty = (sc.SubmissionRestricted - 1) * 20;
                     penalty += sc.SolveTimeRestricted < 0 ? -(((int)(-sc.SolveTimeRestricted)) / 60) : ((int)(sc.SolveTimeRestricted)) / 60;
@@ -285,6 +292,22 @@ namespace JudgeWeb.Features.Scoreboard
                 .BatchDeleteAsync();
             await db.BulkInsertAsync(rcc.Values.ToList());
             await db.BulkInsertAsync(scc.Values.ToList());
+
+            if (c.BalloonAvaliable)
+            {
+                var createdBalloons = await db
+                    .Set<Data.Ext.Balloon>()
+                    .Select(b => b.SubmissionId)
+                    .ToListAsync();
+
+                var inserted = oks
+                    .Except(createdBalloons)
+                    .ToList();
+                var balloons = inserted
+                    .Select(s => new Data.Ext.Balloon { SubmissionId = s })
+                    .ToList();
+                await db.BulkInsertAsync(balloons);
+            }
         }
     }
 }

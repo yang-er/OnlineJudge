@@ -51,6 +51,11 @@ namespace JudgeWeb.Data
         public string Color { get; set; }
 
         /// <summary>
+        /// CF模式题目分数
+        /// </summary>
+        public int Score { get; set; }
+
+        /// <summary>
         /// [Ignore] 题目标题
         /// </summary>
         [Ignore]

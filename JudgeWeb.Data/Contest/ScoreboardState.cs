@@ -11,6 +11,7 @@ namespace JudgeWeb.Data
 
         public Verdict? Verdict { get; set; }
         public int RankStrategy { get; set; }
+        public bool UseBalloon { get; set; }
         
         public DateTimeOffset Time { get; set; }
         public DateTimeOffset? StartTime { get; set; }

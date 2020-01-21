@@ -79,5 +79,10 @@ namespace JudgeWeb.Data
         /// 打印可用性
         /// </summary>
         public bool PrintingAvaliable { get; set; }
+
+        /// <summary>
+        /// 气球可用性
+        /// </summary>
+        public bool BalloonAvaliable { get; set; }
     }
 }

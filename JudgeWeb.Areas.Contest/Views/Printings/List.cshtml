@@ -1,0 +1,70 @@
+﻿@model IEnumerable<ShowPrintModel>
+@{
+    ViewData["Title"] = "Printings";
+    ViewData["RefreshSpan"] = 30;
+    if (ViewData.ContainsKey("InAjax")) { Layout = null; }
+}
+
+@section Header {
+    <h2 class="mt-2">@ViewData["Title"]</h2>
+}
+
+<div class="table-wrapper">
+    <table class="data-table table table-sm table-striped" style="width:auto">
+        <thead class="">
+            <tr>
+                <th></th>
+                <th scope="col" class="sortable searchable">ID</th>
+                <th scope="col" class="sortable searchable">time</th>
+                <th scope="col" class="sortable searchable">team</th>
+                <th scope="col" class="sortable searchable">loc.</th>
+                <th scope="col" class="sortable searchable">file</th>
+                <th scope="col" class="sortable searchable">lang</th>
+                <th></th>
+                <th></th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var print in Model)
+            {
+                <tr class="@(print.Done.GetValueOrDefault() ? "disabled" : "")">
+                    <td data-sort="@(print.Done.HasValue ? print.Done.Value ? "1" : "-1" : "0")">
+                        <i class="far fa-@(print.Done.HasValue ? print.Done.Value ? "check-circle" : "hand-lizard" : "hourglass")"></i>
+                    </td>
+                    <td>@print.Id</td>
+                    <td>@print.Time.ToString("HH:mm")</td>
+                    <td>@print.TeamName</td>
+                    <td>@print.Location</td>
+                    <td class="text-monospace">@print.FileName</td>
+                    <td class="text-variant">@print.Language</td>
+                    <td><a asp-route-fid="@print.Id" asp-action="Download" title="download print file"><i class="fas fa-file-download"></i></a></td>
+                    <td><if cond="@(print.Done == true)"><a asp-route-fid="@print.Id" asp-action="Undone" title="redo this print"><i class="fas fa-copy"></i></a></if></td>
+                    <td><if cond="@(print.Done != true)"><a asp-route-fid="@print.Id" asp-action="Done" title="mark print as done"><i class="fas fa-running"></i></a></if></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<script>
+    $().ready(function () {
+        $('.data-table').DataTable({
+            "paging": false,
+            "searching": true,
+            "ordering": true,
+            "order": [[0, 'asc']],
+            "info": false,
+            "autoWidth": true,
+            "language": {
+                "searchPlaceholder": "filter table",
+                "search": "_INPUT_",
+            },
+            'aoColumnDefs': [
+                { aTargets: ['sortable'], bSortable: true },
+                { aTargets: ['searchable'], bSearchable: true },
+                { aTargets: ['_all'], bSortable: false, bSearchable: false }
+            ],
+        });
+    });
+</script>

@@ -133,6 +133,7 @@ namespace JudgeWeb.Areas.Api.Controllers
                     SubmissionId = j.SubmissionId,
                     TeamId = teamid,
                     Time = submitTime,
+                    UseBalloon = c.BalloonAvaliable,
                     Verdict = j.Status,
                 });
             }

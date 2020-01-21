@@ -104,8 +104,13 @@
                     <div class="col-lg-6">
                         <h5 class="ml-2 text-left">During contest</h5>
                         <ul>
-                            <li><a>Balloon status</a></li>
-                            <li><a>Printing status</a></li>
+                            <if cond="ctx.BalloonAvaliable">
+                                <li><a asp-action="Balloon">Balloon status</a></li>
+                            </if>
+                            <if cond="ctx.PrintingAvaliable">
+                                <li><a asp-controller="Printings" asp-action="List">Printing status</a></li>
+                                <li><a asp-action="Print">Print</a></li>
+                            </if>
                             <li><a asp-controller="Rejudgings" asp-action="List">Rejudgings</a></li>
                             <li><a asp-action="Statistics">Statistics/Analysis</a></li>
                             <li><a asp-action="ResetEventFeed" data-target="refresh" data-toggle="ajaxWindow">Reset event feed</a></li>

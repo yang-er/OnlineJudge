@@ -58,5 +58,10 @@ namespace JudgeWeb.Data
         /// 注册时间
         /// </summary>
         public DateTimeOffset? RegisterTime { get; set; }
+
+        /// <summary>
+        /// 队伍位置
+        /// </summary>
+        public string Location { get; set; }
     }
 }
