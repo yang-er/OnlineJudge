@@ -8,7 +8,7 @@ namespace JudgeWeb.Areas.Misc.Models
         public string Code { get; set; }
 
         [DisplayName("Language")]
-        public int Language { get; set; }
+        public string Language { get; set; }
 
         public int ProblemId { get; set; }
     }

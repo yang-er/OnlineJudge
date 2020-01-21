@@ -39,7 +39,6 @@ namespace JudgeWeb.Areas.Polygon.Controllers
 
             var query =
                 from s in baseQuery
-                join l in DbContext.Languages on s.Language equals l.LangId
                 join u in DbContext.Users on s.Author equals u.Id into uu
                 from u in uu.DefaultIfEmpty()
                 join j in DbContext.Judgings
@@ -49,7 +48,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
                 {
                     SubmissionId = s.SubmissionId,
                     JudgingId = j.JudgingId,
-                    Language = l.ExternalId,
+                    Language = s.Language,
                     Result = j.Status,
                     Time = s.Time,
                     UserName = u.UserName ?? "SYSTEM",
@@ -117,7 +116,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
             var query =
                 from j in judging
                 join s in DbContext.Submissions on new { j.SubmissionId, ProblemId = pid } equals new { s.SubmissionId, s.ProblemId }
-                join l in DbContext.Languages on s.Language equals l.LangId
+                join l in DbContext.Languages on s.Language equals l.Id
                 join p in DbContext.Problems on s.ProblemId equals p.ProblemId
                 select new ViewSubmissionModel
                 {
@@ -137,7 +136,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
                     Author = s.Author,
                     ServerName = j.Server ?? "UNKNOWN",
                     LanguageName = l.Name,
-                    LanguageExternalId = l.ExternalId,
+                    LanguageExternalId = l.Id,
                     TimeFactor = l.TimeFactor,
                 };
 
@@ -173,7 +172,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
         public async Task<IActionResult> Submit()
         {
             ViewData["Language"] = await DbContext.Languages
-                .ToDictionaryAsync(k => k.LangId, v => v.Name);
+                .ToDictionaryAsync(k => k.Id, v => v.Name);
             return Window(new CodeSubmitModel());
         }
 
@@ -184,7 +183,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
             [FromServices] UserManager userManager)
         {
             var lang = await DbContext.Languages
-                .Where(l => l.LangId == model.Language)
+                .Where(l => l.Id == model.Language)
                 .SingleOrDefaultAsync();
 
             var sub = await SubmissionManager.CreateAsync(

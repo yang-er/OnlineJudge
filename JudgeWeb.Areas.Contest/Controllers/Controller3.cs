@@ -32,7 +32,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
         public ContestProblem[] Problems { get; set; }
 
         [ViewData]
-        public Dictionary<int, Language> Languages { get; set; }
+        public Dictionary<string, Language> Languages { get; set; }
 
         [ViewData]
         public Team Team { get; set; }

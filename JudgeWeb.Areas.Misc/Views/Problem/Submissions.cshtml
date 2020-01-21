@@ -1,7 +1,7 @@
 ﻿@model IEnumerable<(Submission, Judging)>
 @{
     Layout = null;
-    Dictionary<int, string> langs = ViewBag.Lang;
+    Dictionary<string, string> langs = ViewBag.Lang;
 }
 
 <div class="modal fade" id="modal-@ViewData["HandleKey"]" tabindex="-1" role="dialog" aria-labelledby="modal-@ViewData["HandleKey"]-label" aria-hidden="true">

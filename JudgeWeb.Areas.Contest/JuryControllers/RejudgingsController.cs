@@ -127,9 +127,8 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 if (teams.Length > 0)
                     submissionSource = submissionSource.Where(s => teams.Contains(s.Author));
 
-                model.Languages = model.Languages ?? Array.Empty<string>();
-                var langs = Languages.Values.Where(l => model.Languages.Contains(l.ExternalId)).Select(l => l.LangId).ToArray();
-                if (model.Languages.Length > 0)
+                var langs = model.Languages ?? Array.Empty<string>();
+                if (langs.Length > 0)
                     submissionSource = submissionSource.Where(s => langs.Contains(s.Language));
 
                 var sjSource = submissionSource

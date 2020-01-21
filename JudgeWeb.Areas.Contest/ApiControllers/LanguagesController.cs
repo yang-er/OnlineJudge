@@ -1,5 +1,4 @@
-﻿using JudgeWeb.Data;
-using JudgeWeb.Data.Api;
+﻿using JudgeWeb.Data.Api;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -31,7 +30,7 @@ namespace JudgeWeb.Areas.Api.Controllers
             var langs = await DbContext.GetLanguagesAsync(cid);
             var query = langs.Values.Where(l => l.AllowSubmit);
             if (ids != null && ids.Length > 0)
-                query = query.Where(l => ids.Contains(l.ExternalId));
+                query = query.Where(l => ids.Contains(l.Id));
             return query.Select(l => new ContestLanguage(l)).ToArray();
         }
 
@@ -46,7 +45,7 @@ namespace JudgeWeb.Areas.Api.Controllers
         {
             var langs = await DbContext.GetLanguagesAsync(cid);
             var ll = langs.Values
-                .Where(l => l.ExternalId == id && l.AllowSubmit)
+                .Where(l => l.Id == id && l.AllowSubmit)
                 .SingleOrDefault();
             return new ContestLanguage(ll);
         }

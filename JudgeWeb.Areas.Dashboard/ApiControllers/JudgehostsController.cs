@@ -377,7 +377,7 @@ namespace JudgeWeb.Areas.Api.Controllers
                     from g in DbContext.Judgings
                     where g.Status == Verdict.Pending
                     join s in DbContext.Submissions on g.SubmissionId equals s.SubmissionId
-                    join l in DbContext.Languages on s.Language equals l.LangId
+                    join l in DbContext.Languages on s.Language equals l.Id
                     join p in DbContext.Problems on s.ProblemId equals p.ProblemId
                     join c in DbContext.Contests on s.ContestId equals c.ContestId into cc
                     from c in cc.DefaultIfEmpty()
@@ -415,7 +415,7 @@ namespace JudgeWeb.Areas.Api.Controllers
                 await DbContext.SaveChangesAsync();
             }
 
-            int memlimit = problem.MemoryLimit + (lang.ExternalId == "java" ? 131072 : 0);
+            int memlimit = problem.MemoryLimit + (lang.Id == "java" ? 131072 : 0);
             int timelimit = (int)(problem.TimeLimit * lang.TimeFactor);
 
             var toFindMd5 = new[] { problem.RunScript, problem.CompareScript, lang.CompileScript };
@@ -443,7 +443,7 @@ namespace JudgeWeb.Areas.Api.Controllers
                 cid = cccid,
                 teamid = teamid,
                 probid = problem.ProblemId,
-                langid = lang.ExternalId,
+                langid = lang.Id,
                 rejudgingid = rjid,
                 entry_point = null,
                 origsubmitid = null,
@@ -671,7 +671,7 @@ namespace JudgeWeb.Areas.Api.Controllers
             {
                 var langid = toDisable["langid"].Value<string>();
                 var lang = await DbContext.Languages
-                    .Where(l => l.ExternalId == langid)
+                    .Where(l => l.Id == langid)
                     .SingleAsync();
 
                 lang.AllowJudge = false;
@@ -680,7 +680,7 @@ namespace JudgeWeb.Areas.Api.Controllers
                 DbContext.AuditLogs.Add(new AuditLog
                 {
                     ContestId = model.cid ?? 0,
-                    EntityId = lang.LangId,
+                    EntityId = model.cid ?? 0,
                     Comment = "internal error created",
                     Resolved = true,
                     Time = DateTimeOffset.Now,

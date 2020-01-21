@@ -53,7 +53,7 @@ namespace JudgeWeb.Areas.Api.Controllers
                 .Join(
                     inner: DbContext.Languages,
                     outerKeySelector: s => s.Language,
-                    innerKeySelector: l => l.LangId,
+                    innerKeySelector: l => l.Id,
                     resultSelector: (s, l) => new { s.SourceCode, l.FileExtension })
                 .FirstOrDefaultAsync();
 
@@ -88,7 +88,7 @@ namespace JudgeWeb.Areas.Api.Controllers
                 .Join(
                     inner: DbContext.Languages,
                     outerKeySelector: s => s.Language,
-                    innerKeySelector: l => l.LangId,
+                    innerKeySelector: l => l.Id,
                     resultSelector: (s, l) => new { s.SourceCode, l.FileExtension })
                 .FirstOrDefaultAsync();
 

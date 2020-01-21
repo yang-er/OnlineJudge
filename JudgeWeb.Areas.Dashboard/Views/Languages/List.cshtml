@@ -10,7 +10,6 @@
         <thead>
             <tr role="row">
                 <th scope="col" class="sortable searchable">ID</th>
-                <th scope="col" class="sortable searchable">external ID</th>
                 <th scope="col" class="sortable searchable" style="min-width:6em">name</th>
                 <th scope="col" class="sortable searchable">allow submit</th>
                 <th scope="col" class="sortable searchable">allow judge</th>
@@ -22,15 +21,14 @@
         <tbody>
             @foreach (var lang in Model)
             {
-            <tr asp-action="Detail" asp-route-langid="@lang.ExternalId" data-toggle="gotoUrl" class="@(lang.AllowSubmit ? "" : "disabled")">
-                <td use-a>@lang.LangId</td>
-                <td use-a>@lang.ExternalId</td>
+            <tr asp-action="Detail" asp-route-langid="@lang.Id" data-toggle="gotoUrl" class="@(lang.AllowSubmit ? "" : "disabled")">
+                <td use-a>@lang.Id</td>
                 <td use-a>@lang.Name</td>
                 <td use-a>@(lang.AllowSubmit ? "yes" : "no")</td>
                 <td use-a>@(lang.AllowJudge ? "yes" : "no")</td>
                 <td use-a>@(lang.TimeFactor)&times;</td>
                 <td use-a>@lang.FileExtension</td>
-                <td><a title="edit this language" asp-action="Edit" asp-route-langid="@lang.ExternalId"><i class="fas fa-edit"></i></a></td>
+                <td><a title="edit this language" asp-action="Edit" asp-route-langid="@lang.Id"><i class="fas fa-edit"></i></a></td>
             </tr>
             }
         </tbody>

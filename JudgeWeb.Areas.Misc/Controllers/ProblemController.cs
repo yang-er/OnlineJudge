@@ -40,7 +40,7 @@ namespace JudgeWeb.Areas.Misc.Controllers
             {
                 var langs = await DbContext.Languages
                     .Where(t => t.AllowSubmit)
-                    .Select(l => new SelectListItem(l.Name, l.LangId.ToString()))
+                    .Select(l => new SelectListItem(l.Name, l.Id))
                     .ToListAsync();
 
                 key.AbsoluteExpirationRelativeToNow = System.TimeSpan.FromMinutes(5);
@@ -166,7 +166,7 @@ namespace JudgeWeb.Areas.Misc.Controllers
                 .OrderByDescending(a => a.s.SubmissionId)
                 .ToListAsync();
             ViewBag.Lang = await DbContext.Languages
-                .ToDictionaryAsync(k => k.LangId, v => v.ExternalId);
+                .ToDictionaryAsync(k => k.Id, v => v.Id);
             return View(subs.Select(a => (a.s, a.j)));
         }
 
@@ -195,7 +195,7 @@ namespace JudgeWeb.Areas.Misc.Controllers
                     on new { s.SubmissionId, Active = true }
                     equals new { j.SubmissionId, j.Active }
                 join l in DbContext.Languages
-                    on s.Language equals l.LangId
+                    on s.Language equals l.Id
                 select new CodeViewModel
                 {
                     CompileError = j.CompileError,
@@ -260,7 +260,7 @@ namespace JudgeWeb.Areas.Misc.Controllers
             return Window(new CodeSubmitModel
             {
                 Code = "",
-                Language = 2,
+                Language = "cpp",
                 ProblemId = pid,
             });
         }
@@ -302,7 +302,7 @@ namespace JudgeWeb.Areas.Misc.Controllers
 
             // check language blocking
             var lang = await DbContext.Languages
-                .Where(l => l.LangId == model.Language)
+                .Where(l => l.Id == model.Language)
                 .SingleOrDefaultAsync();
             if (lang == null)
                 ModelState.AddModelError("lang::notfound",

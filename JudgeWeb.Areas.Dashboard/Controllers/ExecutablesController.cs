@@ -56,7 +56,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
 
             ViewBag.AsCompile = await DbContext.Languages
                 .Where(l => l.CompileScript == execid)
-                .Select(l => l.ExternalId)
+                .Select(l => l.Id)
                 .ToListAsync();
             ViewBag.AsRun = await DbContext.Problems
                 .Where(p => p.RunScript == execid)

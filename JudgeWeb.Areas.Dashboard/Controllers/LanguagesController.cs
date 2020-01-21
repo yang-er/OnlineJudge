@@ -27,12 +27,12 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
         public async Task<IActionResult> Detail(string langid)
         {
             var lang = await DbContext.Languages
-                .Where(l => l.ExternalId == langid)
+                .Where(l => l.Id == langid)
                 .FirstOrDefaultAsync();
             if (lang is null) return NotFound();
 
             var query = await DbContext.Submissions
-                .Where(s => s.Language == lang.LangId)
+                .Where(s => s.Language == langid)
                 .OrderByDescending(a => a.SubmissionId)
                 .Join(
                     inner: DbContext.Judgings,
@@ -52,7 +52,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
         public async Task<IActionResult> ToggleSubmit(string langid)
         {
             await DbContext.Languages
-                .Where(l => l.ExternalId == langid)
+                .Where(l => l.Id == langid)
                 .BatchUpdateAsync(l =>
                     new Language { AllowSubmit = !l.AllowSubmit });
 
@@ -64,7 +64,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
         public async Task<IActionResult> ToggleJudge(string langid)
         {
             await DbContext.Languages
-                .Where(l => l.ExternalId == langid)
+                .Where(l => l.Id == langid)
                 .BatchUpdateAsync(l =>
                     new Language { AllowJudge = !l.AllowJudge });
 
@@ -75,7 +75,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
         public async Task<IActionResult> Edit(string langid)
         {
             var lang = await DbContext.Languages
-                .Where(l => l.ExternalId == langid)
+                .Where(l => l.Id == langid)
                 .FirstOrDefaultAsync();
             if (lang == null) return NotFound();
 
@@ -88,7 +88,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
             return View(new LanguageEditModel
             {
                 CompileScript = lang.CompileScript,
-                ExternalId = lang.ExternalId,
+                ExternalId = lang.Id,
                 FileExtension = lang.FileExtension,
                 Name = lang.Name,
                 TimeFactor = lang.TimeFactor,
@@ -100,7 +100,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
         public async Task<IActionResult> Edit(string langid, LanguageEditModel model)
         {
             var lang = await DbContext.Languages
-                .Where(l => l.ExternalId == langid)
+                .Where(l => l.Id == langid)
                 .FirstOrDefaultAsync();
             if (lang == null) return NotFound();
 
@@ -146,7 +146,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
                 FileExtension = model.FileExtension,
                 AllowJudge = false,
                 AllowSubmit = false,
-                ExternalId = model.ExternalId,
+                Id = model.ExternalId,
                 Name = model.Name,
                 TimeFactor = model.TimeFactor,
             });
@@ -162,7 +162,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
                 new Data.Api.ContestLanguage(entity.Entity).ToEvent("create", t)));
 
             await DbContext.SaveChangesAsync();
-            return RedirectToAction(nameof(Detail), new { langid = entity.Entity.ExternalId });
+            return RedirectToAction(nameof(Detail), new { langid = entity.Entity.Id });
         }
     }
 }

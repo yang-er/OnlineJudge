@@ -34,23 +34,12 @@ namespace JudgeWeb.Areas.Api.Controllers
                 .Where(s => s.ContestId == cid);
             if (ids != null && ids.Length > 0)
                 sq = sq.Where(s => ids.Contains(s.SubmissionId));
-
             if (language_id != null)
-            {
-                var lang = await DbContext.Languages
-                    .Where(l => l.ExternalId == language_id)
-                    .SingleOrDefaultAsync();
-                if (lang == null) return Array.Empty<ContestSubmission>();
-                int langid = lang.LangId;
-                sq = sq.Where(s => s.Language == langid);
-            }
-
-            var sQuery =
-                from s in sq
-                join l in DbContext.Languages on s.Language equals l.LangId
-                select new { LangId = l.ExternalId, s.SubmissionId, s.ProblemId, s.Author, s.Time };
-
-            var submissions = await sQuery.ToListAsync();
+                sq = sq.Where(s => s.Language == language_id);
+            
+            var submissions = await sq
+                .Select(s => new { LangId = s.Language, s.SubmissionId, s.ProblemId, s.Author, s.Time })
+                .ToListAsync();
             var contestTime = Contest.StartTime ?? DateTimeOffset.Now;
 
             return submissions
@@ -70,8 +59,7 @@ namespace JudgeWeb.Areas.Api.Controllers
             var sQuery =
                 from s in DbContext.Submissions
                 where s.ContestId == cid && s.SubmissionId == id
-                join l in DbContext.Languages on s.Language equals l.LangId
-                select new { LangId = l.ExternalId, s.SubmissionId, s.ProblemId, s.Author, s.Time };
+                select new { LangId = s.Language, s.SubmissionId, s.ProblemId, s.Author, s.Time };
 
             var ss = await sQuery.SingleOrDefaultAsync();
             if (ss == null) return null;

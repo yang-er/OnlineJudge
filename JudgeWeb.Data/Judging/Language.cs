@@ -11,15 +11,9 @@ namespace JudgeWeb.Data
         /// 语言编号
         /// </summary>
         [Key]
-        public int LangId { get; set; }
-
-        /// <summary>
-        /// 语言外部编号
-        /// </summary>
-        [Index]
         [IsRequired]
         [NonUnicode(MaxLength = 16)]
-        public string ExternalId { get; set; }
+        public string Id { get; set; }
 
         /// <summary>
         /// 语言正式名称

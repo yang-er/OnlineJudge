@@ -24,7 +24,7 @@
         </div>
         <div class="form-group">
             <label asp-for="Languages">Language</label>
-            <select asp-for="Languages" class="form-control custom-select form-control" multiple asp-items="@(langs.Values.Select(l => new SelectListItem(l.Name, $"{l.ExternalId}")))"></select>
+            <select asp-for="Languages" class="form-control custom-select form-control" multiple asp-items="@(langs.Values.Select(l => new SelectListItem(l.Name, l.Id)))"></select>
         </div>
         <div class="form-group">
             <label asp-for="Teams">Team</label>

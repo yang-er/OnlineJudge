@@ -61,7 +61,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
                     {
                         var langid = toDisable["langid"].Value<string>();
                         var lang = await DbContext.Languages
-                            .Where(l => l.ExternalId == langid)
+                            .Where(l => l.Id == langid)
                             .FirstOrDefaultAsync();
 
                         if (lang != null)

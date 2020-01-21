@@ -72,7 +72,7 @@ else
                             <tr asp-action="Submission" asp-route-sid="@submit.SubmissionId" data-toggle="ajaxWindow" data-target="submission" class="unseen" id="submit_@submit.SubmissionId">
                                 <td use-a>@t.ToString("HH:mm")</td>
                                 <td use-a class="probid" title="@submit.Problem.TimeLimit">@submit.Problem.ShortName</td>
-                                <td use-a class="langid">@submit.Language.ExternalId</td>
+                                <td use-a class="langid">@submit.Language.Id</td>
                                 <td use-a><verdict3 value="@submit.Verdict" too-late="!b" /></td>
                             </tr>
                         }

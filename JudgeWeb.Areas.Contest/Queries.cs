@@ -47,10 +47,10 @@ namespace JudgeWeb
             });
         }
 
-        public static Task<Dictionary<int, Language>> GetLanguagesAsync(this AppDbContext db, int cid)
+        public static Task<Dictionary<string, Language>> GetLanguagesAsync(this AppDbContext db, int cid)
         {
             return db.Languages.CachedToDictionaryAsync(
-                keySelector: k => k.LangId,
+                keySelector: k => k.Id,
                 tag: $"`c{cid}`langs",
                 timeSpan: TimeSpan.FromMinutes(10));
         }

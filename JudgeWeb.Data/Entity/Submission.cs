@@ -53,9 +53,10 @@ namespace JudgeWeb.Data
         /// <summary>
         /// 编程语言
         /// </summary>
-        [Index]
         [HasOneWithMany(typeof(Language), DeleteBehavior.Restrict)]
-        public int Language { get; set; }
+        [IsRequired]
+        [NonUnicode(MaxLength = 16)]
+        public string Language { get; set; }
 
         /// <summary>
         /// 提交时用户IP地址

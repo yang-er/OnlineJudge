@@ -9,14 +9,13 @@
 <div class="row">
     <div class="col-lg-4">
         <table class="table table-sm table-striped">
-            <tr><th>ID</th><td>@lang.LangId</td></tr>
-            <tr><th>External ID</th><td>@lang.ExternalId</td></tr>
+            <tr><th>ID</th><td>@lang.Id</td></tr>
             <tr><th>Name</th><td>@lang.Name</td></tr>
             <tr>
                 <th>Allow submit</th>
                 <td>
                     @(lang.AllowSubmit ? "Yes" : "No")
-                    <form asp-action="ToggleSubmit" asp-route-langid="@lang.ExternalId" method="post" class="d-inline">
+                    <form asp-action="ToggleSubmit" asp-route-langid="@lang.Id" method="post" class="d-inline">
                         <input type="hidden" name="allow_submit" value="" />
                         <input type="submit" class="btn btn-sm btn-outline-secondary" value="toggle" />
                     </form>
@@ -26,7 +25,7 @@
                 <th>Allow judge</th>
                 <td>
                     @(lang.AllowJudge ? "Yes" : "No")
-                    <form asp-action="ToggleJudge" asp-route-langid="@lang.ExternalId" method="post" class="d-inline">
+                    <form asp-action="ToggleJudge" asp-route-langid="@lang.Id" method="post" class="d-inline">
                         <input type="hidden" name="allow_judge" value="" />
                         <input type="submit" class="btn btn-sm btn-outline-secondary" value="toggle" />
                     </form>
@@ -40,7 +39,7 @@
 </div>
 
 <p>
-    <a asp-action="Edit" asp-route-langid="@lang.ExternalId" class="btn btn-primary" title="Edit"><i class="fas fa-edit"></i>&nbsp;Edit</a>
+    <a asp-action="Edit" asp-route-langid="@lang.Id" class="btn btn-primary" title="Edit"><i class="fas fa-edit"></i>&nbsp;Edit</a>
 </p>
 
 <h3>Submissions in @lang.Name</h3>

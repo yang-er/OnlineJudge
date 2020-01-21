@@ -81,7 +81,7 @@
                 <td use-a>s@(sub.SubmissionId)</td>
                 <td use-a>@sub.Time.ToString("HH:mm")</td>
                 <td use-a class="probid">@sub.Problem?.ShortName</td>
-                <td use-a class="langid">@sub.Language.ExternalId</td>
+                <td use-a class="langid">@sub.Language.Id</td>
                 <td use-a>
                     <verdict3 value="@sub.Verdict" too-late="tooLate" />
                     <if cond="tooLate"> (<verdict3 value="@sub.Verdict" />)</if>

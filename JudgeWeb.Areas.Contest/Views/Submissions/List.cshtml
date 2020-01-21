@@ -47,7 +47,7 @@
                 <td use-a title="@sub.Time">@((sub.Time - ctx.StartTime).GetValueOrDefault().ToDeltaString())</td>
                 <td use-a>@tn.GetValueOrDefault(sub.TeamId) (t@(sub.TeamId))</td>
                 <td use-a class="probid">@sub.Problem.ShortName</td>
-                <td use-a class="langid">@sub.Language.ExternalId</td>
+                <td use-a class="langid">@sub.Language.Id</td>
                 <td use-a>
                     <verdict3 value="@sub.Verdict" too-late="tooLate" />
                     <if cond="tooLate"> (<verdict3 value="@sub.Verdict" />)</if>

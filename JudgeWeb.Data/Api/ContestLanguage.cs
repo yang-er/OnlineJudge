@@ -17,7 +17,7 @@
             allow_judge = l.AllowJudge;
             time_factor = l.TimeFactor;
             extensions = new[] { l.FileExtension };
-            id = l.ExternalId;
+            id = l.Id;
             name = l.Name;
         }
     }

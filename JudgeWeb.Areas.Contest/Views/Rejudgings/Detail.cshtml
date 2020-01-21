@@ -188,7 +188,7 @@
                     <td use-a>@s.time</td>
                     <td use-a>@teams.GetValueOrDefault(s.teamid)</td>
                     <td use-a class="probid">@probs.FirstOrDefault(ss => ss.ProblemId == s.probid)?.ShortName</td>
-                    <td use-a class="langid">@langs[s.langid].ExternalId</td>
+                    <td use-a class="langid">@s.langid</td>
                     <td use-a><verdict3 value="@(s.@new.Status)" /></td>
                     <td use-a><verdict3 value="@s.old.Status" /></td>
                 </tr>

@@ -191,7 +191,7 @@ namespace JudgeWeb.Data
                 CodeLength = code.Length,
                 ContestId = cid?.ContestId ?? 0,
                 Ip = ipAddr.ToString(),
-                Language = langid.LangId,
+                Language = langid.Id,
                 ProblemId = probid,
                 Time = DateTimeOffset.Now,
                 SourceCode = code.ToBase64(),
@@ -223,7 +223,7 @@ namespace JudgeWeb.Data
             {
                 var cs = new Api.ContestSubmission(
                     cid: cid.ContestId,
-                    langid: langid.ExternalId,
+                    langid: langid.Id,
                     submitid: s.Entity.SubmissionId,
                     probid: probid,
                     teamid: uid,

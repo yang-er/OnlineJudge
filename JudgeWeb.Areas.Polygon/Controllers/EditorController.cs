@@ -258,7 +258,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
                 .Join(
                     inner: DbContext.Languages,
                     outerKeySelector: s => s.Language,
-                    innerKeySelector: l => l.LangId,
+                    innerKeySelector: l => l.Id,
                     resultSelector: (s, l) => new { s.ExpectedResult, l.FileExtension, s.SourceCode, s.SubmissionId })
                 .ToListAsync();
 
