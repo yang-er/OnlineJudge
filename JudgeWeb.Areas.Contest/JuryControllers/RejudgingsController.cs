@@ -139,11 +139,9 @@ namespace JudgeWeb.Areas.Contest.Controllers
                         innerKeySelector: j => new { j.SubmissionId, j.Active },
                         resultSelector: (s, j) => new { s, j });
 
-                var serversSrc = await DbContext.JudgeHosts.ToListAsync();
-                model.Judgehosts = model.Judgehosts ?? Array.Empty<string>();
-                var hosts = serversSrc.Where(h => model.Judgehosts.Contains(h.ServerName)).Select(h => h.ServerId).ToArray();
-                if (model.Judgehosts.Length > 0)
-                    sjSource = sjSource.Where(a => hosts.Contains(a.j.ServerId));
+                var hosts = model.Judgehosts ?? Array.Empty<string>();
+                if (hosts.Length > 0)
+                    sjSource = sjSource.Where(a => hosts.Contains(a.j.Server));
 
                 var verds = model.Verdicts ?? Array.Empty<Verdict>();
                 if (model.Verdicts.Length > 0)

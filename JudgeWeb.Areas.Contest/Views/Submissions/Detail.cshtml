@@ -93,7 +93,7 @@
             </tr>
         </thead>
         <tbody>
-            @foreach (var (j, serverName) in Model.AllJudgings)
+            @foreach (var j in Model.AllJudgings)
             {
                 <tr asp-route-jid="@j.JudgingId" data-toggle="gotoUrl" class="@(j.Active ? "" : "disabled")">
                     <td use-a><if cond="@(j.JudgingId == judging.JudgingId)"><i class="fas fa-long-arrow-alt-right"></i></if></td>
@@ -101,7 +101,7 @@
                     <td use-a>@j.StartTime?.ToString("HH:mm")</td>
                     <td use-a>@(j.ExecuteTime)ms</td>
                     <td use-a>@(j.ExecuteMemory)K</td>
-                    <td use-a><span class="hostname">@serverName</span></td>
+                    <td use-a><span class="hostname">@j.Server</span></td>
                     <td use-a><verdict3 value="@j.Status" class="@(j.Active ? "" : "disabled")" /></td>
                 </tr>
             }
@@ -113,8 +113,8 @@
     <if cond="@(Model.AllJudgings.Count() > 1)">
         <nvd3 id="maxruntime" title="Max Runtimes" key="Max Runtime"
               baseline="@timeLimit"
-              max-value="@(Model.AllJudgings.Max(j => j.j.ExecuteTime) / 1000.0)"
-              data="@Model.AllJudgings.Select(j => new { label = $"j{j.j.JudgingId}", value = j.j.ExecuteTime / 1000.0, color = ColorNvd3(j.j.Status) })"
+              max-value="@(Model.AllJudgings.Max(j => j.ExecuteTime) / 1000.0)"
+              data="@Model.AllJudgings.Select(j => new { label = $"j{j.JudgingId}", value = j.ExecuteTime / 1000.0, color = ColorNvd3(j.Status) })"
               x-axis="Judging" y-axis="Runtime (in s)" />
     </if>
     <nvd3 id="testcaseruntime" title="Testcase Runtimes" key="Runtime"
@@ -129,7 +129,7 @@
 <div class="mb-2">
     <div>
         Result: <verdict3 value="@judging.Status" class="@(judging.Active ? "" : "disabled")" />,
-        Judgehost: <span class="hostname">@(Model.AllJudgings.FirstOrDefault(j => j.j.JudgingId == judging.JudgingId).n)</span>,
+        Judgehost: <span class="hostname">@(Model.AllJudgings.FirstOrDefault(j => j.JudgingId == judging.JudgingId).Server)</span>,
         <span class="judgetime">
             <if cond="judging.StartTime.HasValue">
                 Judging started: @judging.StartTime?.ToString("HH:mm:ss"),

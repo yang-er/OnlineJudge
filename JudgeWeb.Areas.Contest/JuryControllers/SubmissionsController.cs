@@ -43,14 +43,6 @@ namespace JudgeWeb.Areas.Contest.Controllers
 
             var judgings = await submitMgr.Judgings
                 .Where(j => j.SubmissionId == sid)
-                .GroupJoin(
-                    inner: submitMgr.Judgehosts,
-                    outerKeySelector: j => j.ServerId,
-                    innerKeySelector: h => h.ServerId,
-                    resultSelector: (j, hh) => new { j, hh })
-                .SelectMany(
-                    collectionSelector: a => a.hh.DefaultIfEmpty(),
-                    resultSelector: (a, h) => new { a.j, n = h.ServerName })
                 .ToListAsync();
 
             var details = await submitMgr.GetDetailsAsync(result.j.JudgingId, result.s.ProblemId);
@@ -64,7 +56,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 Submission = result.s,
                 Judging = result.j,
                 Details = details,
-                AllJudgings = judgings.Select(a => (a.j, a.n)),
+                AllJudgings = judgings,
                 Team = team,
                 Problem = prob,
                 Language = lang,

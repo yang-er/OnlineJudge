@@ -42,10 +42,11 @@ namespace JudgeWeb.Data
         public DateTimeOffset? StopTime { get; set; }
 
         /// <summary>
-        /// 评测服务器编号
+        /// 评测服务器名称
         /// </summary>
-        [Index]
-        public int ServerId { get; set; }
+        [HasOneWithMany(typeof(JudgeHost), DeleteBehavior.Restrict)]
+        [NonUnicode(MaxLength = 64)]
+        public string Server { get; set; }
 
         /// <summary>
         /// 评测结果

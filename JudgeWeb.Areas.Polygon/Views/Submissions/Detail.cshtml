@@ -87,7 +87,7 @@
             </tr>
         </thead>
         <tbody>
-            @foreach (var (judging, serverName) in Model.AllJudgings)
+            @foreach (var judging in Model.AllJudgings)
             {
                 var subTime = judging.StartTime;
                 <tr asp-route-jid="@judging.JudgingId" data-toggle="gotoUrl" class="@(judging.Active ? "" : "disabled")">
@@ -99,7 +99,7 @@
                 <td use-a>@subTime?.ToString("HH:mm")</td>
                 <td use-a>@(judging.ExecuteTime)ms</td>
                 <td use-a>@(judging.ExecuteMemory)K</td>
-                <td use-a><span class="hostname">@serverName</span></td>
+                <td use-a><span class="hostname">@(judging.Server ?? "-")</span></td>
                 <td use-a><verdict3 value="@judging.Status" class="@(judging.Active ? "" : "disabled")" /></td>
             </tr>
         }
@@ -113,8 +113,8 @@
     {
         <nvd3 id="maxruntime" title="Max Runtimes" key="Max Runtime"
               baseline="@timeLimit"
-              max-value="@(Model.AllJudgings.Max(j => j.g.ExecuteTime) / 1000.0)"
-              data="@Model.AllJudgings.Select(j => new { label = $"j{j.g.JudgingId}", value = j.g.ExecuteTime / 1000.0, color = ColorNvd3(j.g.Status) })"
+              max-value="@(Model.AllJudgings.Max(j => j.ExecuteTime) / 1000.0)"
+              data="@Model.AllJudgings.Select(j => new { label = $"j{j.JudgingId}", value = j.ExecuteTime / 1000.0, color = ColorNvd3(j.Status) })"
               x-axis="Judging" y-axis="Runtime (in s)" />
     }
     <nvd3 id="testcaseruntime" title="Testcase Runtimes" key="Runtime"

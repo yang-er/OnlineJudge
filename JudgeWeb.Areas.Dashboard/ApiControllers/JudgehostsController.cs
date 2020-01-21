@@ -113,7 +113,7 @@ namespace JudgeWeb.Areas.Api.Controllers
             if (c != null)
             {
                 var its = new Data.Api.ContestJudgement(
-                    j, c.StartTime ?? DateTimeOffset.Now, hostname);
+                    j, c.StartTime ?? DateTimeOffset.Now);
                 DbContext.Events.Add(its.ToEvent("update", c.ContestId));
             }
 
@@ -140,7 +140,7 @@ namespace JudgeWeb.Areas.Api.Controllers
         }
 
 
-        private async Task ReturnToQueue(Judging j, string hostname, int cid, DateTimeOffset? cst)
+        private async Task ReturnToQueue(Judging j, int cid, DateTimeOffset? cst)
         {
             DbContext.Judgings.Add(new Judging
             {
@@ -162,7 +162,7 @@ namespace JudgeWeb.Areas.Api.Controllers
             if (cid != 0)
             {
                 var j2 = new Data.Api.ContestJudgement(
-                    j, cst ?? DateTimeOffset.Now, hostname);
+                    j, cst ?? DateTimeOffset.Now);
                 DbContext.Events.Add(j2.ToEvent("update", cid));
             }
 
@@ -171,7 +171,7 @@ namespace JudgeWeb.Areas.Api.Controllers
 
             Telemetry.TrackDependency(
                 dependencyTypeName: "JudgeHost",
-                dependencyName: hostname,
+                dependencyName: j.Server,
                 data: $"j{j.JudgingId} of s{j.SubmissionId} returned to queue",
                 startTime: j.StartTime ?? DateTimeOffset.Now,
                 duration: (j.StopTime - j.StartTime) ?? TimeSpan.Zero,
@@ -184,13 +184,12 @@ namespace JudgeWeb.Areas.Api.Controllers
             var query =
                 from j in DbContext.Judgings
                 where j.JudgingId == jid
-                join s in DbContext.JudgeHosts on j.ServerId equals s.ServerId
                 join ss in DbContext.Submissions on j.SubmissionId equals ss.SubmissionId
                 join c in DbContext.Contests on ss.ContestId equals c.ContestId into cc
                 from c in cc.DefaultIfEmpty()
-                select new { j, s.ServerName, c.StartTime, ss.ContestId };
+                select new { j, c.StartTime, ss.ContestId };
             var result = await query.SingleAsync();
-            await ReturnToQueue(result.j, result.ServerName, result.ContestId, result.StartTime);
+            await ReturnToQueue(result.j, result.ContestId, result.StartTime);
         }
 
 
@@ -274,7 +273,7 @@ namespace JudgeWeb.Areas.Api.Controllers
 
                 var oldjudgingQuery =
                     from j in DbContext.Judgings
-                    where j.ServerId == item.ServerId && j.Status == Verdict.Running
+                    where j.Server == item.ServerName && j.Status == Verdict.Running
                     join s in DbContext.Submissions on j.SubmissionId equals s.SubmissionId
                     join c in DbContext.Contests on s.ContestId equals c.ContestId into cc
                     from c in cc.DefaultIfEmpty()
@@ -282,7 +281,7 @@ namespace JudgeWeb.Areas.Api.Controllers
                 var oldJudgings = await oldjudgingQuery.ToListAsync();
 
                 foreach (var sg in oldJudgings)
-                    await ReturnToQueue(sg.j, hostname, sg.cid, sg.StartTime);
+                    await ReturnToQueue(sg.j, sg.cid, sg.StartTime);
 
                 return oldJudgings
                     .Select(s => new UnfinishedJudging
@@ -402,14 +401,14 @@ namespace JudgeWeb.Areas.Api.Controllers
                 rjid = next.RejudgeId;
                 full = next.g.FullTest;
                 judging.Status = Verdict.Running;
-                judging.ServerId = host.ServerId;
+                judging.Server = host.ServerName;
                 judging.StartTime = DateTimeOffset.Now;
                 DbContext.Judgings.Update(judging);
 
                 if (cccid != 0)
                 {
                     var cts = new Data.Api.ContestJudgement(
-                        judging, next.StartTime ?? DateTimeOffset.Now, host.ServerName);
+                        judging, next.StartTime ?? DateTimeOffset.Now);
                     DbContext.Events.Add(cts.ToEvent("create", cccid));
                 }
 
@@ -710,7 +709,7 @@ namespace JudgeWeb.Areas.Api.Controllers
                 DbContext.AuditLogs.Add(new AuditLog
                 {
                     ContestId = model.cid ?? 0,
-                    EntityId = host.ServerId,
+                    EntityId = model.cid ?? 0,
                     Comment = "internal error created",
                     Resolved = true,
                     Time = DateTimeOffset.Now,

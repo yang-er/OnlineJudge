@@ -15,11 +15,11 @@ namespace JudgeWeb.Data.Api
         public string judgehost { get; set; }
         public string judgement_type_id { get; set; }
 
-        public ContestJudgement(Judging j, DateTimeOffset contestTime, string serverName)
+        public ContestJudgement(Judging j, DateTimeOffset contestTime)
         {
             id = $"{j.JudgingId}";
             submission_id = $"{j.SubmissionId}";
-            judgehost = serverName;
+            judgehost = j.Server;
             judgement_type_id = JudgementType.For(j.Status);
             valid = j.Active;
             start_contest_time = j.StartTime.Value - contestTime;

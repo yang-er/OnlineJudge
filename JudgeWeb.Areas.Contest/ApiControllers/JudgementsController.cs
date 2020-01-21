@@ -43,16 +43,15 @@ namespace JudgeWeb.Areas.Api.Controllers
             var jQuery2 =
                 from j in jQuery
                 where j.StartTime != null
-                join h in DbContext.JudgeHosts on j.ServerId equals h.ServerId
                 join s in DbContext.Submissions on j.SubmissionId equals s.SubmissionId
                 where s.ContestId == cid
-                select new { j, h.ServerName };
+                select j;
 
             var js = await jQuery2.ToListAsync();
             var contestTime = Contest.StartTime ?? DateTimeOffset.Now;
 
             return js
-                .Select(judging => new ContestJudgement(judging.j, contestTime, judging.ServerName))
+                .Select(judging => new ContestJudgement(judging, contestTime))
                 .ToArray();
         }
 
@@ -68,15 +67,14 @@ namespace JudgeWeb.Areas.Api.Controllers
             var jQuery =
                 from j in DbContext.Judgings
                 where j.StartTime != null && j.JudgingId == id
-                join h in DbContext.JudgeHosts on j.ServerId equals h.ServerId
                 join s in DbContext.Submissions on j.SubmissionId equals s.SubmissionId
                 where s.ContestId == cid
-                select new { j, h.ServerName };
+                select j;
 
             var judging = await jQuery.SingleOrDefaultAsync();
             if (judging == null) return NotFound();
             var contestTime = Contest.StartTime ?? DateTimeOffset.Now;
-            return new ContestJudgement(judging.j, contestTime, judging.ServerName);
+            return new ContestJudgement(judging, contestTime);
         }
     }
 }

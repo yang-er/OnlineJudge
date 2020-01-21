@@ -7,7 +7,7 @@ namespace JudgeWeb.Areas.Contest.Models
     {
         public Submission Submission { get; set; }
         public Judging Judging { get; set; }
-        public IEnumerable<(Judging j, string n)> AllJudgings { get; set; }
+        public IEnumerable<Judging> AllJudgings { get; set; }
         public ContestProblem Problem { get; set; }
         public Language Language { get; set; }
         public Team Team { get; set; }

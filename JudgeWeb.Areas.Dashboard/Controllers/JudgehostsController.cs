@@ -32,11 +32,11 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
             ViewBag.Host = host;
 
             ViewData["Count"] = await DbContext.Judgings
-                .Where(g => g.ServerId == host.ServerId)
+                .Where(g => g.Server == hostname)
                 .CountAsync();
 
             ViewBag.Judgings = await DbContext.Judgings
-                .Where(j => j.ServerId == host.ServerId)
+                .Where(j => j.Server == hostname)
                 .OrderByDescending(g => g.JudgingId)
                 .Take(100)
                 .ToListAsync();

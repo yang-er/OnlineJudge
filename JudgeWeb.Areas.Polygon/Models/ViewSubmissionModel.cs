@@ -14,7 +14,6 @@ namespace JudgeWeb.Areas.Polygon.Models
         public Verdict? Expected { get; set; }
         public int ExecuteTime { get; set; }
         public int ExecuteMemory { get; set; }
-        public int ServerId { get; set; }
         public int JudgingId { get; set; }
         public int ContestId { get; set; }
         public string CompileError { get; set; }
@@ -34,7 +33,7 @@ namespace JudgeWeb.Areas.Polygon.Models
         public DateTimeOffset Time { get; set; }
         public string UserName { get; set; }
 
-        public IEnumerable<(Judging g, string n)> AllJudgings { get; set; }
+        public IEnumerable<Judging> AllJudgings { get; set; }
         public string SourceCode { get; set; }
     }
 }

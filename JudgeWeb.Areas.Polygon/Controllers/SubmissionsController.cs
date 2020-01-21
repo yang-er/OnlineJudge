@@ -119,8 +119,6 @@ namespace JudgeWeb.Areas.Polygon.Controllers
                 join s in DbContext.Submissions on new { j.SubmissionId, ProblemId = pid } equals new { s.SubmissionId, s.ProblemId }
                 join l in DbContext.Languages on s.Language equals l.LangId
                 join p in DbContext.Problems on s.ProblemId equals p.ProblemId
-                join h in DbContext.JudgeHosts on j.ServerId equals h.ServerId into hh
-                from h in hh.DefaultIfEmpty()
                 select new ViewSubmissionModel
                 {
                     SubmissionId = s.SubmissionId,
@@ -131,14 +129,13 @@ namespace JudgeWeb.Areas.Polygon.Controllers
                     Judging = j,
                     Expected = s.ExpectedResult,
                     JudgingId = j.JudgingId,
-                    ServerId = j.ServerId,
                     LanguageId = s.Language,
                     Time = s.Time,
                     SourceCode = s.SourceCode,
                     CompileError = j.CompileError,
                     CombinedRunCompare = p.CombinedRunCompare,
                     Author = s.Author,
-                    ServerName = h.ServerName ?? "UNKNOWN",
+                    ServerName = j.Server ?? "UNKNOWN",
                     LanguageName = l.Name,
                     LanguageExternalId = l.ExternalId,
                     TimeFactor = l.TimeFactor,
@@ -147,15 +144,10 @@ namespace JudgeWeb.Areas.Polygon.Controllers
             var model = await query.FirstOrDefaultAsync();
             if (model == null) return NotFound();
             model.TimeLimit = Problem.TimeLimit;
-            
-            var grades =
-                from j in DbContext.Judgings
-                where j.SubmissionId == sid
-                join h in DbContext.JudgeHosts on j.ServerId equals h.ServerId into hh
-                from h in hh.DefaultIfEmpty()
-                select new { j, n = h.ServerName ?? "" };
-            var gs = grades.ToList();
-            model.AllJudgings = gs.Select(a => (a.j, a.n));
+
+            model.AllJudgings = await DbContext.Judgings
+                .Where(j => j.SubmissionId == sid)
+                .ToListAsync();
 
             int gid = model.JudgingId;
             var details =

@@ -8,15 +8,9 @@ namespace JudgeWeb.Data
     public class JudgeHost
     {
         /// <summary>
-        /// 服务器编号
-        /// </summary>
-        [Key]
-        public int ServerId { get; set; }
-
-        /// <summary>
         /// 服务器名称
         /// </summary>
-        [Index]
+        [Key]
         [IsRequired]
         [NonUnicode(MaxLength = 64)]
         public string ServerName { get; set; }
