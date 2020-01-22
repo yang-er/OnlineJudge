@@ -1,7 +1,7 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.Extensions.DependencyInjection;
 using System;
-using System.Linq;
-using System.Linq.Expressions;
 
 namespace JudgeWeb.Data
 {
@@ -13,17 +13,13 @@ namespace JudgeWeb.Data
             return services;
         }
 
-        public static IQueryable<T> SelectSubmissionJudging<T>(this AppDbContext src,
-            Expression<Func<Submission, bool>> condition,
-            Expression<Func<Submission, Judging, T>> selector)
+        public static AuthenticationBuilder AddCookie2(
+            this AuthenticationBuilder builder,
+            Action<CookieAuthenticationOptions> options)
         {
-            return src.Submissions
-                .Where(condition)
-                .Join(
-                    inner: src.Judgings,
-                    outerKeySelector: s => new { s.SubmissionId, Active = true },
-                    innerKeySelector: j => new { j.SubmissionId, j.Active },
-                    resultSelector: selector);
+            builder.AddCookie(options);
+            builder.Services.ConfigureApplicationCookie(options);
+            return builder;
         }
     }
 }

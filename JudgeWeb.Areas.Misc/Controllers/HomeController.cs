@@ -12,7 +12,7 @@ namespace JudgeWeb.Areas.Misc.Controllers
 {
     [Area("Misc")]
     [Route("[action]")]
-    public class HomeController : Controller
+    public class HomeController : Controller2
     {
         private AppDbContext DbContext { get; }
 

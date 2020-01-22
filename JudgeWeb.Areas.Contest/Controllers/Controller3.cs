@@ -256,6 +256,12 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 if (Team != null) ViewData["HasTeam"] = true;
             }
 
+            if (!Contest.IsPublic && !ViewData.ContainsKey("IsJury") && !ViewData.ContainsKey("HasTeam"))
+            {
+                context.Result = NotFound();
+                return;
+            }
+
             await OnActionExecutingAsync(context);
             ViewData["ContestId"] = cid;
 

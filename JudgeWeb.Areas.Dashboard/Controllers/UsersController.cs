@@ -155,6 +155,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
                 model.Roles.Except(hasRole).Select(i => roles[i].Name));
             var r2 = await userManager.RemoveFromRolesAsync(user,
                 hasRole.Except(model.Roles).Select(i => roles[i].Name));
+            await userManager.SlideExpirationAsync(user);
             if (!r1.Succeeded) msg += $"Error in adding roles: {r1.Errors.First().Description}.\n";
             if (!r2.Succeeded) msg += $"Error in removing roles: {r2.Errors.First().Description}.\n";
 

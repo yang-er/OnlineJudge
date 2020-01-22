@@ -5,13 +5,13 @@
 function ajaxget(geturl, dom) {
     return $.ajax({
         type: "GET",
-        url: geturl + "?inajax=1",
+        url: geturl,
         dataType: "html",
         complete: function (jqXHR) {
+            if (jqXHR.getResponseHeader('X-Login-Page')) {
+                window.location = jqXHR.getResponseHeader('X-Login-Page');
+            }
             if (jqXHR.status == 200) {
-                if (jqXHR.getResponseHeader('X-Login-Page')) {
-                    window.location = jqXHR.getResponseHeader('X-Login-Page');
-                }
                 $(dom).html(jqXHR.responseText);
             }
         },
@@ -28,13 +28,13 @@ function ajaxget(geturl, dom) {
 function showWindow(handlekey, geturl) {
     return $.ajax({
         type: "GET",
-        url: geturl + "?handlekey=" + handlekey + "&inajax=1",
+        url: geturl + (geturl.indexOf('?') === -1 ? '?' : '&') + "handlekey=" + handlekey,
         dataType: "html",
         complete: function (jqXHR) {
+            if (jqXHR.getResponseHeader('X-Login-Page')) {
+                window.location = jqXHR.getResponseHeader('X-Login-Page');
+            }
             if (jqXHR.status == 200) {
-                if (jqXHR.getResponseHeader('X-Login-Page')) {
-                    window.location = jqXHR.getResponseHeader('X-Login-Page');
-                }
                 $("#append-parent").append('<div id="ajax_result_' + handlekey + '">' + jqXHR.responseText + '</div>');
                 $("#modal-" + handlekey).on(
                     "hidden.bs.modal",
@@ -67,7 +67,6 @@ function notice(text, type, header) {
 
 function ajaxpost(Form, handlekey, parent, arg2) {
     var form = new FormData(Form);
-    form.append("inajax", "1");
     form.append("handlekey", handlekey);
     $.ajax({
         url: $(Form).prop("action"),
@@ -97,6 +96,9 @@ function ajaxpost(Form, handlekey, parent, arg2) {
             ).modal("show");
         },
         error: function (jqXHR) {
+            if (jqXHR.getResponseHeader('X-Login-Page')) {
+                window.location = jqXHR.getResponseHeader('X-Login-Page');
+            }
             notice("请联系管理员。" + jqXHR.status + ' ' + jqXHR.statusText + "<br><pre>" + jqXHR.responseText, "danger", "内部错误");
         }
     });

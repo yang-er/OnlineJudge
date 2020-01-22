@@ -1,4 +1,7 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
@@ -52,6 +55,15 @@ namespace JudgeWeb.Data
             return nickName;
         }
 
+        public Task<IdentityResult> SlideExpirationAsync(User user)
+        {
+            SlideExpireMemoryCache.Set(
+                key: user.NormalizedUserName,
+                value: DateTimeOffset.UtcNow,
+                absoluteExpirationRelativeToNow: TimeSpan.FromMinutes(20));
+            return Task.FromResult(IdentityResult.Success);
+        }
+
         public virtual Task<string> GenerateEmail2ConfirmationTokenAsync(User user)
         {
             ThrowIfDisposed();
@@ -67,8 +79,17 @@ namespace JudgeWeb.Data
                 return IdentityResult.Failed(ErrorDescriber.InvalidToken());
             user.StudentVerified = true;
             var result = await UpdateUserAsync(user);
-            if (result.Succeeded) await AddToRoleAsync(user, "Student");
+
+            if (result.Succeeded)
+            {
+                await AddToRoleAsync(user, "Student");
+                await SlideExpirationAsync(user);
+            }
+
             return result;
         }
+
+        public static readonly MemoryCache SlideExpireMemoryCache =
+            new MemoryCache(new MemoryCacheOptions { Clock = new Microsoft.Extensions.Internal.SystemClock() });
     }
 }

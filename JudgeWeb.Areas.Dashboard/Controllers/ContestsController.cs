@@ -4,9 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace JudgeWeb.Areas.Dashboard.Controllers
@@ -73,6 +71,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
 
             var firstUser = await userManager.GetUserAsync(User);
             var roleAttach = await userManager.AddToRoleAsync(firstUser, roleName);
+            await userManager.SlideExpirationAsync(firstUser);
             if (!roleAttach.Succeeded) return Json(roleAttach);
             return RedirectToAction("Home", "Jury", new { area = "Contest", cid });
         }

@@ -16,7 +16,7 @@
                 <div class="modal-body">
                     <div class="form-group">
                         <label asp-for="UserName"></label>
-                        <input asp-for="UserName" onblur="ajaxget('teams/test-user/' + $(this).val(),'#tryUser')" class="form-control" required />
+                        <input asp-for="UserName" onblur="ajaxget('jury/test-user/' + $(this).val(),'#tryUser')" class="form-control" required />
                         <small id="tryUser" class="text-danger"></small>
                     </div>
                 </div>

@@ -115,6 +115,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
 
             var u = await UserManager.GetUserAsync(User);
             var i2 = await UserManager.AddToRoleAsync(u, "AuthorOfProblem" + p.Entity.ProblemId);
+            await UserManager.SlideExpirationAsync(u);
 
             if (!i2.Succeeded)
             {
@@ -179,7 +180,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
 
                 var u = await UserManager.GetUserAsync(User);
                 await UserManager.AddToRoleAsync(u, "AuthorOfProblem" + prob.ProblemId);
-                await signInManager.RefreshSignInAsync(u);
+                await UserManager.UpdateSecurityStampAsync(u);
 
                 return RedirectToAction(
                     actionName: "Overview",

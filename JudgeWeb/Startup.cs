@@ -4,6 +4,7 @@ using JudgeWeb.Features;
 using JudgeWeb.Features.Mailing;
 using JudgeWeb.Features.OjUpdate;
 using JudgeWeb.Features.Storage;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -78,7 +79,7 @@ namespace JudgeWeb
                 .AddTokenProvider<Email2TokenProvider>("Email2");
 
             services.AddAuthentication()
-                .AddCookie(options =>
+                .AddCookie2(options =>
                 {
                     options.Cookie.HttpOnly = true;
                     options.Cookie.Expiration = TimeSpan.FromDays(30);
@@ -86,6 +87,7 @@ namespace JudgeWeb
                     options.LogoutPath = "/account/logout";
                     options.AccessDeniedPath = "/account/access-denied";
                     options.SlidingExpiration = true;
+                    options.Events = new CookieAuthenticationValidator();
                 })
                 .AddBasic(options =>
                 {
@@ -93,13 +95,6 @@ namespace JudgeWeb
                     options.AllowInsecureProtocol = true;
                     options.Events = new BasicAuthenticationValidator<User, Role, int, AppDbContext>();
                 });
-
-            services.ConfigureApplicationCookie(options =>
-            {
-                options.LoginPath = "/account/login";
-                options.LogoutPath = "/account/logout";
-                options.AccessDeniedPath = "/account/access-denied";
-            });
 
             services.AddSingleton(
                 HtmlEncoder.Create(
@@ -124,7 +119,6 @@ namespace JudgeWeb
                 .UseAreaParts(AssemblyPrefix, EnabledAreas);
 
             services.AddDefaultManagers();
-            //services.AddScoreboardService();
 
             services.AddSwagger(options =>
             {

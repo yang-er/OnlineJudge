@@ -350,6 +350,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
             {
                 var result = await UserManager
                     .AddToRoleAsync(user, $"JuryOfContest{cid}");
+                await UserManager.SlideExpirationAsync(user);
 
                 if (result.Succeeded)
                     StatusMessage = $"Jury role of user {user.UserName} assigned.";
@@ -387,12 +388,30 @@ namespace JudgeWeb.Areas.Contest.Controllers
             if (user == null) return NotFound();
             var result = await UserManager
                 .RemoveFromRoleAsync(user, $"JuryOfContest{cid}");
+            await UserManager.SlideExpirationAsync(user);
 
             if (result.Succeeded)
                 StatusMessage = $"Jury role of user {user.UserName} unassigned.";
             else
                 StatusMessage = "Error " + string.Join('\n', result.Errors.Select(e => e.Description));
             return RedirectToAction(nameof(Home));
+        }
+
+
+        [HttpGet("[action]/{userName?}")]
+        public async Task<IActionResult> TestUser(string userName)
+        {
+            if (userName != null)
+            {
+                var user = await UserManager.FindByNameAsync(userName);
+                if (user == null)
+                    return Content("No such user.", "text/html");
+                return Content("", "text/html");
+            }
+            else
+            {
+                return Content("Please enter the username.", "text/html");
+            }
         }
 
 
