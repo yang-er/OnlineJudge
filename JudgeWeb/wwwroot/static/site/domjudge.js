@@ -520,6 +520,7 @@ function updateMenuAlerts()
         if (jqXHR.getResponseHeader('X-Login-Page')) {
             window.location = jqXHR.getResponseHeader('X-Login-Page');
         } else {
+            updateMenuTeams(json.teams);
             updateMenuClarifications(json.clarifications);
             updateMenuRejudgings(json.rejudgings);
             updateMenuJudgehosts(json.judgehosts);
@@ -528,29 +529,39 @@ function updateMenuAlerts()
     });
 }
 
-function updateMenuClarifications(data)
+function updateMenuTeams(num)
 {
-    var num = data.length;
-    if ( num == 0 ) {
+    if ( num === undefined ) {
+        // No team section
+    } else if ( num === 0 ) {
+        $("#num-alerts-teams").hide();
+        $("#menu_teams").removeClass("text-warning");
+    } else {
+        $("#num-alerts-teams").html(num);
+        $("#num-alerts-teams").show();
+        $("#menu_teams").addClass("text-warning");
+    }
+}
+
+function updateMenuClarifications(num)
+{
+    if ( num === undefined ) {
+        // No clar section
+    } else if ( num === 0 ) {
         $("#num-alerts-clarifications").hide();
         $("#menu_clarifications").removeClass("text-info");
     } else {
         $("#num-alerts-clarifications").html(num);
         $("#num-alerts-clarifications").show();
         $("#menu_clarifications").addClass("text-info");
-        for (var i=0; i<num; i++) {
-            sendNotification('New clarification requested.',
-                 {'tag': 'clar_' + data[i].clarid,
-                  'link': domjudge_base_url + '/jury/clarifications/'+data[i].clarid,
-                  'body': data[i].body });
-	}
     }
 }
 
-function updateMenuRejudgings(data)
+function updateMenuRejudgings(num)
 {
-    var num = data.length;
-    if ( num == 0 ) {
+    if ( num === undefined ) {
+        // No rej section
+    } else if ( num === 0 ) {
         $("#num-alerts-rejudgings").hide();
         $("#menu_rejudgings").removeClass("text-info");
     } else {
@@ -560,10 +571,11 @@ function updateMenuRejudgings(data)
     }
 }
 
-function updateMenuJudgehosts(data)
+function updateMenuJudgehosts(num)
 {
-    var num = data.length;
-    if ( num == 0 ) {
+    if ( num === undefined ) {
+        // No jh section
+    } else if ( num === 0 ) {
         $("#num-alerts-judgehosts").hide();
         $("#num-alerts-judgehosts-sub").html("");
         $("#menu_judgehosts").removeClass("text-danger");
@@ -572,20 +584,14 @@ function updateMenuJudgehosts(data)
         $("#num-alerts-judgehosts").show();
         $("#num-alerts-judgehosts-sub").html(num + " down");
         $("#menu_judgehosts").addClass("text-danger");
-        for(var i=0; i<num; i++) {
-            sendNotification('Judgehost down.',
-                {'tag': 'host_'+data[i].hostname+'@'+
-                 Math.floor(data[i].polltime),
-                 'link': domjudge_base_url + '/jury/judgehosts/' + encodeURIComponent(data[i].hostname),
-                 'body': data[i].hostname + ' is down'});
-        }
     }
 }
 
-function updateMenuInternalErrors(data)
+function updateMenuInternalErrors(num)
 {
-    var num = data.length;
-    if ( num == 0 ) {
+    if ( num === undefined ) {
+        // No ie section
+    } else if ( num === 0 ) {
         $("#num-alerts-internalerrors").hide();
         $("#num-alerts-internalerrors-sub").html("");
         $("#menu_internal_error").removeClass("text-danger").addClass("disabled");
@@ -594,11 +600,5 @@ function updateMenuInternalErrors(data)
         $("#num-alerts-internalerrors").show();
         $("#num-alerts-internalerrors-sub").html(num + " new");
         $("#menu_internal_error").addClass("text-danger").removeClass("disabled");
-        for(var i=0; i<num; i++) {
-            sendNotification('Judgehost internal error occurred.',
-                {'tag': 'ie_'+data[i].errorid,
-                 'link': domjudge_base_url + '/internal-errors/' + data[i].errorid,
-                 'body': data[i].description});
-        }
     }
 }

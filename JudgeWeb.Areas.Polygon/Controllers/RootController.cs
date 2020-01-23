@@ -71,12 +71,6 @@ namespace JudgeWeb.Areas.Polygon.Controllers
                 .Take(50)
                 .ToListAsync();
 
-            ViewBag.JudgehostCriticalCount = DbContext.JudgeHosts
-                .Where(jh => jh.PollTime < DateTimeOffset.Now.AddSeconds(-120) && jh.Active)
-                .Count();
-            ViewBag.InternalErrorCount = DbContext.InternalErrors
-                .Where(ie => ie.Status == InternalError.ErrorStatus.Open)
-                .Count();
             return View(model.Select(a => (a.p, a.id, a.tag)));
         }
 
@@ -161,8 +155,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
         [RequestFormLimits2(1 << 30)]
         public async Task<IActionResult> Import(IFormFile file,
             [FromServices] ProblemImportService importer,
-            [FromServices] RoleManager<Role> roleManager,
-            [FromServices] SignInManager<User> signInManager)
+            [FromServices] RoleManager<Role> roleManager)
         {
             try
             {

@@ -3,9 +3,9 @@
     ViewData["Title"] = $"Rejudging {Model.RejudgeId}";
     ViewData["RefreshAfter"] = "updateMatrix";
     ViewData["RefreshSpan"] = 15;
-    IEnumerable<(Judging @new, Judging old, int probid, int langid, DateTimeOffset time, int teamid)> js = ViewBag.Judgings;
+    IEnumerable<(Judging @new, Judging old, int probid, string langid, DateTimeOffset time, int teamid)> js = ViewBag.Judgings;
     Dictionary<int, string> teams = ViewBag.Teams;
-    Dictionary<int, Language> langs = ViewBag.Languages;
+    Dictionary<string, Language> langs = ViewBag.Languages;
     ContestProblem[] probs = ViewBag.Problems;
     if (ViewData.ContainsKey("InAjax")) { Layout = null; }
 }

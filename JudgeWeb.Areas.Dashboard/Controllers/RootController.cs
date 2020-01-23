@@ -18,6 +18,18 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
 
         public IActionResult Index() => View();
 
+        [HttpGet("[action]")]
+        public async Task<IActionResult> Updates()
+        {
+            var judgehosts = await DbContext.JudgeHosts
+                .Where(jh => jh.PollTime < DateTimeOffset.Now.AddSeconds(-120) && jh.Active)
+                .CountAsync();
+            var internal_error = await DbContext.InternalErrors
+                .Where(ie => ie.Status == InternalError.ErrorStatus.Open)
+                .CountAsync();
+            return Json(new { judgehosts, internal_error });
+        }
+
         [HttpGet("[action]/{page?}")]
         public async Task<IActionResult> Auditlog(int page = 1)
         {

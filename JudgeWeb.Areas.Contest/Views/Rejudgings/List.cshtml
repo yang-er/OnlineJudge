@@ -39,7 +39,7 @@
                                 <b>ready</b>
                             </if>
                             <if cond="@(rej.Ready.Item2 != 0)">
-                                not ready @($"{(100 - 100.0 * rej.Ready.Item2 / rej.Ready.Item1):d0}")%
+                                not ready @($"{(100 - 100.0 * rej.Ready.Item2 / rej.Ready.Item1):f0}")%
                             </if>
                         </if>
                     </td>

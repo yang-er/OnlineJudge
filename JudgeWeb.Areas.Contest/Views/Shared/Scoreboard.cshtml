@@ -104,7 +104,7 @@ else
         </div>
     </div>
 
-    <scoreboard model="Model" use-footer="true" />
+    <scoreboard model="Model" use-footer="true" in-jury="@(ViewData.ContainsKey("InJury"))" />
 }
 
 <p id="lastmod">

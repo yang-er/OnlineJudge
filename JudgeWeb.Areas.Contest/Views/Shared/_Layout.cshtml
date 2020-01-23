@@ -6,6 +6,7 @@
     var now = initial / 1000;
     var startTime = cont.StartTime is null ? -1 : cont.StartTime.Value.ToUnixTimeSeconds();
     var endTime = cont.EndTime is null ? -1 : cont.EndTime.Value.ToUnixTimeSeconds();
+    if (ViewData.ContainsKey("InJury")) { ViewData["AjaxUpdateUrl"] = $"/contest/{cont.ContestId}/jury/updates"; }
 }
 
 @section Clocking {

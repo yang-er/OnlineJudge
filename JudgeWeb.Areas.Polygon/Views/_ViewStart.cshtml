@@ -1,4 +1,9 @@
 ﻿@{
     Layout = "_Layout";
     ViewData["BigTitle"] = "Polygon";
+    if (User.IsInRole("Administrator") &&
+        (string)ViewContext.RouteData.Values.GetValueOrDefault("controller") == "Root")
+    {
+        ViewData["AjaxUpdateUrl"] = "/dashboard/updates";
+    }
 }

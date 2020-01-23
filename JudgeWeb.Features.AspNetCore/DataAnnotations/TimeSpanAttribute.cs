@@ -24,8 +24,8 @@ namespace System
         public static bool TryParseAsTimeSpan(this string s, out TimeSpan? value)
         {
             value = default;
-            if (s == "") return true;
-            if (!s.StartsWith('+')) return false;
+            if (string.IsNullOrEmpty(s)) return true;
+            if (!s.StartsWith('+') && !s.StartsWith('-')) return false;
             var ts = s.Substring(1).Split(':', 3, StringSplitOptions.None);
             if (ts.Length != 3) return false;
             if (!int.TryParse(ts[0], out int hour)) return false;
@@ -35,6 +35,7 @@ namespace System
             if (!int.TryParse(ts[2], out int secs)) return false;
             if (secs < 0 || secs >= 60) return false;
             value = new TimeSpan(hour, minutes, secs);
+            if (s.StartsWith('-')) value = -value;
             return true;
         }
 

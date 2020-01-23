@@ -2,7 +2,7 @@
 @{
     ViewData["Title"] = "Add rejudging";
     ContestProblem[] cps = ViewBag.Problems;
-    Dictionary<int, Language> langs = ViewBag.Languages;
+    Dictionary<string, Language> langs = ViewBag.Languages;
     Dictionary<int, string> teams = ViewBag.Teams;
     List<JudgeHost> hosts = ViewBag.Judgehosts;
 }
@@ -20,7 +20,7 @@
         </div>
         <div class="form-group">
             <label asp-for="Problems">Problem</label>
-            <select asp-for="Problems" class="form-control custom-select form-control" multiple asp-items="@(cps.Select(cp => new SelectListItem(cp.Title, $"{cp.ProblemId}")))"></select>
+            <select asp-for="Problems" class="form-control custom-select form-control" multiple asp-items="@(cps.Select(cp => new SelectListItem($"{cp.ShortName} - {cp.Title}", $"{cp.ProblemId}")))"></select>
         </div>
         <div class="form-group">
             <label asp-for="Languages">Language</label>
@@ -28,7 +28,7 @@
         </div>
         <div class="form-group">
             <label asp-for="Teams">Team</label>
-            <select asp-for="Teams" class="form-control custom-select form-control" multiple asp-items="@(teams.Select(t => new SelectListItem(t.Value, $"{t.Key}")))"></select>
+            <select asp-for="Teams" class="form-control custom-select form-control" multiple asp-items="@(teams.Select(t => new SelectListItem($"{t.Value} (t{t.Key})", $"{t.Key}")))"></select>
         </div>
         <div class="form-group">
             <label asp-for="Judgehosts">Judgehost</label>

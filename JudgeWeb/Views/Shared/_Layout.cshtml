@@ -53,7 +53,7 @@
             <span class="navbar-toggler-icon"></span>
         </button>
 
-        <div class="collapse navbar-collapse" id="menuDefault">
+        <div class="collapse navbar-collapse" id="menuDefault" data-update-url="@ViewData["AjaxUpdateUrl"]">
             <partial name="_NavLinks" />
             @RenderSection("Clocking", required: false)
         </div>
@@ -94,6 +94,15 @@
 
                 /* Enable page refresh if set if wanted by the page, and wanted by the user */
                 enableRefresh('@Html.Raw(ViewData["RefreshUrl"])', @ViewData["RefreshSpan"], 1);
+            });
+        </script>
+    </viewmodule>
+
+    <viewmodule key="AjaxUpdateUrl">
+        <script>
+            $(function () {
+                updateMenuAlerts();
+                setInterval(updateMenuAlerts, 20000);
             });
         </script>
     </viewmodule>

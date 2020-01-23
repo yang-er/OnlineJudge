@@ -10,9 +10,9 @@ namespace JudgeWeb.Features.Scoreboard
 
         public TeamScoreContent(TeamModel model) => _model = model;
 
-        public void WriteTo(TextWriter writer, HtmlEncoder encoder) => WriteTo(_model, writer, encoder);
+        public void WriteTo(TextWriter writer, HtmlEncoder encoder) => WriteTo(_model, writer, encoder, false);
 
-        public static void WriteTo(TeamModel model, TextWriter writer, HtmlEncoder encoder)
+        public static void WriteTo(TeamModel model, TextWriter writer, HtmlEncoder encoder, bool inJury)
         {
             writer.Write("<tr class=\"\" id=\"team:");
             writer.Write(model.TeamId);
@@ -44,7 +44,7 @@ namespace JudgeWeb.Features.Scoreboard
             var teamName = encoder.Encode(model.TeamName);
             writer.Write(teamName);
             writer.Write("\"><a");
-            if (model.ContestId.HasValue)
+            if (inJury)
                 writer.Write($" href=\"/contest/{model.ContestId}/jury/teams/{model.TeamId}\"");
             writer.Write("><span class=\"forceWidth\">");
             writer.Write(teamName);

@@ -70,6 +70,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 where j.RejudgeId == rid
                 join s in DbContext.Submissions on j.SubmissionId equals s.SubmissionId
                 join j2 in DbContext.Judgings on j.PreviousJudgingId equals j2.JudgingId
+                orderby s.Time descending
                 select new { s.ProblemId, s.Language, s.Time, s.Author, j, j2 };
             var jitem = await jquery.ToListAsync();
 
@@ -131,6 +132,18 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 if (langs.Length > 0)
                     submissionSource = submissionSource.Where(s => langs.Contains(s.Language));
 
+                if (model.TimeBefore.TryParseAsTimeSpan(out var tb) && tb.HasValue)
+                {
+                    var timed = (Contest.StartTime ?? DateTimeOffset.Now) + tb.Value;
+                    submissionSource = submissionSource.Where(s => s.Time <= timed);
+                }
+
+                if (model.TimeAfter.TryParseAsTimeSpan(out var ta) && ta.HasValue)
+                {
+                    var timed = (Contest.StartTime ?? DateTimeOffset.Now) + ta.Value;
+                    submissionSource = submissionSource.Where(s => s.Time >= timed);
+                }
+
                 var sjSource = submissionSource
                     .Join(
                         inner: DbContext.Judgings,
@@ -164,8 +177,8 @@ namespace JudgeWeb.Areas.Contest.Controllers
             else
             {
                 int tok = await DbContext.Database.ExecuteSqlCommandAsync(
-                    "INSERT INTO [Judgings] ([Active], [SubmissionId], [FullTest], [Status], [TotalScore], [ServerId], [ExecuteTime], [ExecuteMemory], [RejudgeId], [PreviousJudgingId])\n      " +
-                    "SELECT 0 AS [Active], [s].[SubmissionId], [j].[FullTest], 8 AS [Status], 0 AS [ServerId], 0 AS [TotalScore], 0 AS [ExecuteTime], 0 AS [ExecuteMemory], @__rejid_0 AS [RejudgeId], [j].[JudgingId] AS [PreviousJudgingId]\n      " +
+                    "INSERT INTO [Judgings] ([Active], [SubmissionId], [FullTest], [Status], [TotalScore], [ExecuteTime], [ExecuteMemory], [RejudgeId], [PreviousJudgingId])\n      " +
+                    "SELECT 0 AS [Active], [s].[SubmissionId], [j].[FullTest], 8 AS [Status], 0 AS [TotalScore], 0 AS [ExecuteTime], 0 AS [ExecuteMemory], @__rejid_0 AS [RejudgeId], [j].[JudgingId] AS [PreviousJudgingId]\n      " +
                     "FROM [Submissions] AS [s]\n      " +
                     "INNER JOIN [Judgings] AS [j] ON ([s].[SubmissionId] = [j].[SubmissionId]) AND ([j].[Active] = 1)\n      " +
                     "WHERE [s].[RejudgeId] = @__rejid_0",
@@ -231,8 +244,8 @@ namespace JudgeWeb.Areas.Contest.Controllers
             else
             {
                 int tok = await DbContext.Database.ExecuteSqlCommandAsync(
-                    "INSERT INTO [Judgings] ([Active], [SubmissionId], [FullTest], [Status], [TotalScore], [ServerId], [ExecuteTime], [ExecuteMemory], [RejudgeId], [PreviousJudgingId])\n      " +
-                    "SELECT 0 AS [Active], [s].[SubmissionId], [j].[FullTest], 8 AS [Status], 0 AS [ServerId], 0 AS [TotalScore], 0 AS [ExecuteTime], 0 AS [ExecuteMemory], @__rejid_0 AS [RejudgeId], [j].[JudgingId] AS [PreviousJudgingId]\n      " +
+                    "INSERT INTO [Judgings] ([Active], [SubmissionId], [FullTest], [Status], [TotalScore], [ExecuteTime], [ExecuteMemory], [RejudgeId], [PreviousJudgingId])\n      " +
+                    "SELECT 0 AS [Active], [s].[SubmissionId], [j].[FullTest], 8 AS [Status], 0 AS [TotalScore], 0 AS [ExecuteTime], 0 AS [ExecuteMemory], @__rejid_0 AS [RejudgeId], [j].[JudgingId] AS [PreviousJudgingId]\n      " +
                     "FROM [Submissions] AS [s]\n      " +
                     "INNER JOIN [Judgings] AS [j] ON ([s].[SubmissionId] = [j].[SubmissionId]) AND ([j].[Active] = 1)\n      " +
                     "WHERE [s].[RejudgeId] = @__rejid_0",

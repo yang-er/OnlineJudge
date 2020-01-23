@@ -617,6 +617,22 @@ namespace JudgeWeb.Areas.Contest.Controllers
         }
 
 
+        [HttpGet("[action]")]
+        public async Task<IActionResult> Updates(int cid)
+        {
+            var clarifications = await DbContext.Clarifications
+                .Where(c => c.ContestId == cid && !c.Answered)
+                .CachedCountAsync($"`c{cid}`clar`una_count", TimeSpan.FromSeconds(10));
+            var teams = await DbContext.Teams
+                .Where(t => t.Status == 0 && t.ContestId == cid)
+                .CachedCountAsync($"`c{cid}`teams`pending_count", TimeSpan.FromSeconds(10));
+            var rejudgings = await DbContext.Rejudges
+                .Where(t => t.Applied == null && t.ContestId == cid)
+                .CachedCountAsync($"`c{cid}`rejs`pending_count", TimeSpan.FromSeconds(10));
+            return Json(new { clarifications, teams, rejudgings });
+        }
+
+
         private bool InSequence(params DateTimeOffset?[] dateTimes)
         {
             if (dateTimes.Length == 0) return true;

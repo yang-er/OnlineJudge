@@ -7,12 +7,13 @@ namespace JudgeWeb.Features.Scoreboard
     public class BoardViewContent : IHtmlContent
     {
         private readonly BoardViewModel _model;
-        private readonly bool _usefoot;
+        private readonly bool _usefoot, _inJury;
 
-        public BoardViewContent(BoardViewModel model, bool u)
+        public BoardViewContent(BoardViewModel model, bool useFoot, bool inJury)
         {
             _model = model;
-            _usefoot = u;
+            _usefoot = useFoot;
+            _inJury = inJury;
         }
 
         public void WriteTo(TextWriter writer, HtmlEncoder encoder)
@@ -52,7 +53,7 @@ namespace JudgeWeb.Features.Scoreboard
                 foreach (var team in sortOrder)
                 {
                     totalPoints += team.Points;
-                    TeamScoreContent.WriteTo(team, writer, encoder);
+                    TeamScoreContent.WriteTo(team, writer, encoder, _inJury);
                     if (team.Category != null)
                         _model.ShowCategory.Add((team.CategoryColor, team.Category));
                 }

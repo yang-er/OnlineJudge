@@ -2,6 +2,7 @@
 @{
     ViewData["Title"] = "Judgehosts";
     ViewData["RefreshSpan"] = 5;
+    if (ViewData.ContainsKey("InAjax")) { Layout = null; }
 }
 
 @section Header {

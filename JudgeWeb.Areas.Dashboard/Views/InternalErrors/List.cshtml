@@ -2,6 +2,7 @@
 @{
     ViewData["Title"] = "Internal errors";
     ViewData["RefreshSpan"] = 15;
+    if (ViewData.ContainsKey("InAjax")) { Layout = null; }
 }
 
 @section Header {

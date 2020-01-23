@@ -1,23 +1,19 @@
 ﻿@inject UserManager UserManager
-@{
-    int jcc = ViewBag.JudgehostCriticalCount;
-    int iec = ViewBag.InternalErrorCount;
-}
 
 <ul class="navbar-nav mr-auto">
     <viewmodule roles="Administrator">
         <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownJudgehosts" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                 <i class="fas fa-gavel"></i> Judgings
-                <span class="badge badge-warning" id="num-alerts-judgehosts">@(iec == 0 && jcc > 0 ? $"{jcc}" : "")</span>
-                <span class="badge badge-danger" id="num-alerts-internalerrors">@(iec > 0 ? $"{iec}" : "")</span>
+                <span class="badge badge-warning" id="num-alerts-judgehosts"></span>
+                <span class="badge badge-danger" id="num-alerts-internalerrors"></span>
             </a>
             <div class="dropdown-menu" aria-labelledby="navbarDropdown">
                 <a class="dropdown-item" asp-area="Dashboard" asp-action="List" asp-controller="Judgehosts" id="menu_judgehosts">
-                    <i class="fas fa-server fa-fw"></i> judgehosts <span class="badge badge-warning" id="num-alerts-judgehosts-sub">@(jcc > 0 ? $"{jcc} down" : "")</span>
+                    <i class="fas fa-server fa-fw"></i> judgehosts <span class="badge badge-warning" id="num-alerts-judgehosts-sub"></span>
                 </a>
-                <a class="dropdown-item @(iec == 0 ? "disabled" : "")" asp-area="Dashboard" asp-action="List" asp-controller="InternalErrors" id="menu_internal_error">
-                    <i class="fas fa-bolt fa-fw"></i> internal error <span class="badge badge-danger" id="num-alerts-internalerrors-sub">@(iec > 0 ? $"{iec} new" : "")</span>
+                <a class="dropdown-item disabled" asp-area="Dashboard" asp-action="List" asp-controller="InternalErrors" id="menu_internal_error">
+                    <i class="fas fa-bolt fa-fw"></i> internal error <span class="badge badge-danger" id="num-alerts-internalerrors-sub"></span>
                 </a>
             </div>
         </li>
@@ -58,14 +54,6 @@
         </a>
         <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown">
             <a class="dropdown-item disabled" href="#">@(UserManager.GetNickName(User) ?? UserManager.GetUserName(User))</a>
-
-            <a class="dropdown-item d-none" href="#" id="notify_disable">
-                <i class="fas fa-bell-slash fa-fw"></i> Disable Notifications
-            </a>
-
-            <a class="dropdown-item d-none" href="#" id="notify_enable">
-                <i class="fas fa-bell fa-fw"></i> Enable Notifications
-            </a>
 
             <viewmodule key="RefreshSpan">
                 <a class="dropdown-item" href="#" id="refresh-navitem">
