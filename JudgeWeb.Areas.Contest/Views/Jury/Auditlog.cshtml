@@ -1,4 +1,4 @@
-﻿@model IEnumerable<AuditLog>
+﻿@model IEnumerable<Auditlog>
 @{
     ViewData["Title"] = "Auditlog";
     int currentPage = ViewBag.Page;
@@ -16,8 +16,7 @@
                 <th scope="col" class="searchable">ID</th>
                 <th scope="col" class="searchable">time</th>
                 <th scope="col" class="searchable">user</th>
-                <th scope="col" class="searchable">contest</th>
-                <th scope="col" class="searchable">type</th>
+                <th scope="col" class="searchable">entity</th>
                 <th scope="col" class="searchable">comment</th>
             </tr>
         </thead>
@@ -28,9 +27,8 @@
                     <td>@item.LogId</td>
                     <td title="@item.Time">@item.Time.ToString("HH:mm")</td>
                     <td>@item.UserName</td>
-                    <td>c@(item.ContestId)</td>
-                    <td>@item.Type</td>
-                    <td>@item.Comment</td>
+                    <td>@item.DataType @item.DataId</td>
+                    <td>@item.Action @item.ExtraInfo</td>
                 </tr>
             }
         </tbody>

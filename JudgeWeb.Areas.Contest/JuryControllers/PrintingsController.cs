@@ -1,4 +1,5 @@
 ﻿using EFCore.BulkExtensions;
+using JudgeWeb.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
@@ -19,7 +20,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 where p.ContestId == cid
                 join u in DbContext.Users on p.UserId equals u.Id
                 into uu from u in uu.DefaultIfEmpty()
-                join t in DbContext.Teams on new { p.ContestId, p.UserId } equals new { t.ContestId, t.UserId }
+                join t in DbContext.Teams on new { p.ContestId, UserId = (int?)p.UserId } equals new { t.ContestId, t.UserId }
                 into tt from t in tt.DefaultIfEmpty()
                 orderby p.Time descending
                 select new Models.ShowPrintModel
@@ -44,7 +45,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
             int cnt = await DbContext.Printing
                 .Where(p => p.ContestId == cid && p.Id == fid)
                 .Where(p => p.Done == null || p.Done == false)
-                .BatchUpdateAsync(p => new Data.Ext.Printing { Done = true });
+                .BatchUpdateAsync(p => new Printing { Done = true });
             if (cnt == 0) return NotFound();
             return RedirectToAction(nameof(List));
         }
@@ -56,7 +57,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
             int cnt = await DbContext.Printing
                 .Where(p => p.ContestId == cid && p.Id == fid)
                 .Where(p => p.Done == true)
-                .BatchUpdateAsync(new Data.Ext.Printing(), new List<string> { "Done" });
+                .BatchUpdateAsync(new Printing(), new List<string> { "Done" });
             if (cnt == 0) return NotFound();
             return RedirectToAction(nameof(List));
         }

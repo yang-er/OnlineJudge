@@ -102,15 +102,13 @@ namespace JudgeWeb.Areas.Polygon.Controllers
                 last.Point = model.Point;
                 DbContext.Testcases.Update(last);
 
-                DbContext.AuditLogs.Add(new AuditLog
+                DbContext.Auditlogs.Add(new Auditlog
                 {
                     UserName = userManager.GetUserName(User),
-                    ContestId = 0,
-                    Resolved = true,
                     Time = DateTimeOffset.Now,
-                    Type = AuditLog.TargetType.Testcase,
-                    Comment = "modified",
-                    EntityId = last.TestcaseId,
+                    DataId = $"{last.TestcaseId}",
+                    Action = "modified",
+                    DataType = AuditlogType.Testcase,
                 });
 
                 await DbContext.SaveChangesAsync();
@@ -180,15 +178,13 @@ namespace JudgeWeb.Areas.Polygon.Controllers
 
                 int tid = e.Entity.TestcaseId;
 
-                DbContext.AuditLogs.Add(new AuditLog
+                DbContext.Auditlogs.Add(new Auditlog
                 {
                     UserName = userManager.GetUserName(User),
-                    ContestId = 0,
-                    Resolved = true,
+                    DataType = AuditlogType.Testcase,
+                    DataId = $"{tid}",
+                    Action = "modified",
                     Time = DateTimeOffset.Now,
-                    Type = AuditLog.TargetType.Testcase,
-                    Comment = "modified",
-                    EntityId = tid,
                 });
 
                 await IoContext.WriteBinaryAsync($"p{pid}", $"t{tid}.in", input.Item1);

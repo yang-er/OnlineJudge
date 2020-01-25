@@ -119,6 +119,7 @@ namespace JudgeWeb.Data
                     .SingleAsync();
 
                 currentJudging.Active = false;
+                fullTest = fullTest || currentJudging.FullTest;
                 oldSolve?.Invoke(currentJudging);
                 DbContext.Judgings.Update(currentJudging);
 
@@ -150,37 +151,6 @@ namespace JudgeWeb.Data
         }
 
 
-        public async Task<int> RejudgeAsync(List<Submission> subs,
-            Func<Rejudge> rejudger, bool fullTest = false)
-        {
-            if (subs.Any(s => s.RejudgeId.HasValue))
-                return -1;
-            var rejudge = rejudger.Invoke();
-            if (rejudge.RejudgeId != 0)
-                throw new InvalidOperationException();
-            DbContext.Rejudges.Add(rejudge);
-            await DbContext.SaveChangesAsync();
-
-            foreach (var sub in subs)
-            {
-                sub.RejudgeId = rejudge.RejudgeId;
-                DbContext.Submissions.Update(sub);
-
-                DbContext.Judgings.Add(new Judging
-                {
-                    SubmissionId = sub.SubmissionId,
-                    FullTest = fullTest,
-                    Active = false,
-                    Status = Verdict.Pending,
-                    RejudgeId = rejudge.RejudgeId,
-                });
-            }
-
-            await DbContext.SaveChangesAsync();
-            return rejudge.RejudgeId;
-        }
-
-
         public async Task<Submission> CreateAsync(
             string code, Language langid, int probid, Contest cid, int uid,
             IPAddress ipAddr, string via, string username, Verdict? expected = null)
@@ -200,21 +170,23 @@ namespace JudgeWeb.Data
 
             await DbContext.SaveChangesAsync();
 
-            DbContext.AuditLogs.Add(new AuditLog
+            DbContext.Auditlogs.Add(new Auditlog
             {
-                ContestId = s.Entity.ContestId,
-                EntityId = s.Entity.SubmissionId,
+                ContestId = cid?.ContestId,
                 Time = s.Entity.Time.DateTime,
-                Resolved = true,
-                Type = AuditLog.TargetType.Submission,
+                DataId = $"{s.Entity.SubmissionId}",
+                DataType = AuditlogType.Submission,
+                Action = "added",
+                ExtraInfo = $"via {via}",
                 UserName = username,
-                Comment = "added via " + via,
             });
+
+            bool fullTest = expected.HasValue || ((cid?.RankingStrategy ?? 0) == 2);
 
             DbContext.Judgings.Add(new Judging
             {
                 SubmissionId = s.Entity.SubmissionId,
-                FullTest = expected.HasValue,
+                FullTest = fullTest,
                 Active = true,
                 Status = Verdict.Pending,
             });

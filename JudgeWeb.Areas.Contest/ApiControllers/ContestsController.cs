@@ -3,6 +3,7 @@ using JudgeWeb.Data.Api;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -67,15 +68,18 @@ namespace JudgeWeb.Areas.Api.Controllers
 
             var newcont = await DbContext.GetContestAsync(Contest.ContestId);
 
-            DbContext.AuditLogs.Add(new AuditLog
+            var userManager = HttpContext.RequestServices
+                .GetRequiredService<UserManager>();
+
+            DbContext.Auditlogs.Add(new Auditlog
             {
-                Comment = "updated",
+                Action = "changed time",
                 ContestId = Contest.ContestId,
-                EntityId = Contest.ContestId,
-                Resolved = true,
-                Type = AuditLog.TargetType.Contest,
+                DataId = $"{Contest.ContestId}",
+                DataType = AuditlogType.Contest,
+                ExtraInfo = "via ccs-api",
                 Time = DateTimeOffset.Now,
-                UserName = "CDS",
+                UserName = userManager.GetUserName(User),
             });
 
             DbContext.Events.Add(

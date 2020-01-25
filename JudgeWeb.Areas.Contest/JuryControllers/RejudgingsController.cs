@@ -184,6 +184,9 @@ namespace JudgeWeb.Areas.Contest.Controllers
                     "WHERE [s].[RejudgeId] = @__rejid_0",
                     new System.Data.SqlClient.SqlParameter("__rejid_0", rejid));
                 StatusMessage = $"{tok} submissions will be rejudged.";
+
+                InternalLog(AuditlogType.Rejudging, $"{rejid}", "added", $"with {tok} submissions");
+                await DbContext.SaveChangesAsync();
                 return RedirectToAction(nameof(Detail), new { rid = rejid });
             }
         }
@@ -286,7 +289,8 @@ namespace JudgeWeb.Areas.Contest.Controllers
 
         [HttpPost("{rid}/[action]")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Apply(int cid, int rid)
+        public async Task<IActionResult> Apply(int cid, int rid,
+            [FromServices] IScoreboardService scoreboardService)
         {
             var rej = await DbContext.Rejudges
                 .Where(r => r.ContestId == cid && r.RejudgeId == rid && r.EndTime == null)
@@ -327,7 +331,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
             DbContext.Rejudges.Update(rej);
             await DbContext.SaveChangesAsync();
 
-            RefreshScoreboardCache(cid);
+            scoreboardService.RefreshCache(Contest, DateTimeOffset.Now);
             StatusMessage = "Rejudging applied. Scoreboard cache will be refreshed.";
             return RedirectToAction(nameof(Detail));
         }

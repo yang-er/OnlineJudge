@@ -1,14 +1,13 @@
-﻿using JudgeWeb.Data;
+﻿using JudgeWeb.Areas.Dashboard.Models;
+using JudgeWeb.Data;
+using JudgeWeb.Features;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Threading.Tasks;
-using System.Linq;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
-using JudgeWeb.Areas.Dashboard.Models;
-using JudgeWeb.Features;
-using System.Text;
 using System;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace JudgeWeb.Areas.Dashboard.Controllers
 {
@@ -17,7 +16,20 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
     [Route("[area]/[controller]")]
     public class NewsController : Controller3
     {
-        public NewsController(AppDbContext db) : base(db) { }
+        private Task AuditlogAsync(int nid, string act)
+        {
+            DbContext.Auditlogs.Add(new Auditlog
+            {
+                Action = act,
+                DataId = $"{nid}",
+                DataType = AuditlogType.News,
+                Time = DateTimeOffset.Now,
+                UserName = UserManager.GetUserName(User),
+            });
+
+            return DbContext.SaveChangesAsync();
+        }
+
 
         [HttpGet]
         public async Task<IActionResult> List()
@@ -35,6 +47,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
             return View(news);
         }
 
+
         [HttpGet("{nid}/[action]")]
         [ValidateInAjax]
         public async Task<IActionResult> Delete(int nid)
@@ -49,12 +62,10 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
                 title: $"Delete news {nid} - \"{desc}\"",
                 message: $"You're about to delete news {nid} - \"{desc}\".\n" +
                     "Are you sure?",
-                area: "Dashboard",
-                ctrl: "News",
-                act: "Delete",
-                routeValues: new Dictionary<string, string> { { "nid", $"{nid}" } },
+                area: "Dashboard", ctrl: "News", act: "Delete",
                 type: MessageType.Danger);
         }
+
 
         [HttpPost("{nid}/[action]")]
         [ValidateAntiForgeryToken]
@@ -71,6 +82,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
             {
                 await DbContext.SaveChangesAsync();
                 StatusMessage = $"News {nid} deleted successfully.";
+                await AuditlogAsync(nid, "deleted");
             }
             catch (DbUpdateException)
             {
@@ -79,6 +91,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
 
             return RedirectToAction(nameof(List));
         }
+
 
         [HttpGet("{nid}/[action]")]
         public async Task<IActionResult> Edit(int nid)
@@ -97,6 +110,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
                 Title = news.Title,
             });
         }
+
 
         [HttpPost("{nid}/[action]")]
         [ValidateAntiForgeryToken]
@@ -121,8 +135,10 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
 
             await DbContext.SaveChangesAsync();
             StatusMessage = "News updated successfully.";
+            await AuditlogAsync(nid, "updated");
             return RedirectToAction(nameof(Edit), new { nid });
         }
+
 
         [HttpGet("[action]")]
         public IActionResult Add()
@@ -135,6 +151,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
                 Active = false,
             });
         }
+
 
         [HttpPost("[action]")]
         [ValidateAntiForgeryToken]
@@ -156,6 +173,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
 
             await DbContext.SaveChangesAsync();
             StatusMessage = "News created successfully.";
+            await AuditlogAsync(news.Entity.NewsId, "added");
             return RedirectToAction("Edit", new { nid = news.Entity.NewsId });
         }
     }

@@ -1,11 +1,11 @@
-﻿using JudgeWeb.Data;
+﻿using EFCore.BulkExtensions;
+using JudgeWeb.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json.Linq;
 using System.Linq;
 using System.Threading.Tasks;
-using InternalErrorStatus = JudgeWeb.Data.InternalError.ErrorStatus;
 
 namespace JudgeWeb.Areas.Dashboard.Controllers
 {
@@ -14,7 +14,20 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
     [Route("[area]/[controller]")]
     public class InternalErrorsController : Controller3
     {
-        public InternalErrorsController(AppDbContext db) : base(db) { }
+        private Task AuditlogAsync(int eid, string act)
+        {
+            DbContext.Add(new Auditlog
+            {
+                Action = act,
+                DataId = $"{eid}",
+                DataType = AuditlogType.InternalError,
+                UserName = UserManager.GetUserName(User),
+                Time = System.DateTimeOffset.Now,
+            });
+
+            return DbContext.SaveChangesAsync();
+        }
+
 
         [HttpGet]
         public async Task<IActionResult> List()
@@ -33,6 +46,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
             return View(model);
         }
 
+        
         [HttpGet("{eid}/{todo}")]
         public async Task<IActionResult> Mark(int eid, string todo)
         {
@@ -51,6 +65,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
                 if (ie.Status == InternalErrorStatus.Open)
                     return NotFound();
                 DbContext.InternalErrors.Update(ie);
+                await DbContext.SaveChangesAsync();
 
                 if (ie.Status == InternalErrorStatus.Resolved)
                 {
@@ -62,47 +77,30 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
                         var langid = toDisable["langid"].Value<string>();
                         var lang = await DbContext.Languages
                             .Where(l => l.Id == langid)
-                            .FirstOrDefaultAsync();
-
-                        if (lang != null)
-                        {
-                            lang.AllowJudge = true;
-                            DbContext.Languages.Update(lang);
-                        }
+                            .BatchUpdateAsync(l => new Language { AllowJudge = true });
                     }
                     else if (kind == "judgehost")
                     {
                         var hostname = toDisable["hostname"].Value<string>();
                         var host = await DbContext.JudgeHosts
                             .Where(h => h.ServerName == hostname)
-                            .FirstOrDefaultAsync();
-
-                        if (host != null)
-                        {
-                            host.Active = true;
-                            DbContext.JudgeHosts.Update(host);
-                        }
+                            .BatchUpdateAsync(h => new JudgeHost { Active = true });
                     }
                     else if (kind == "problem")
                     {
                         var probid = toDisable["probid"].Value<int>();
                         var prob = await DbContext.Problems
                             .Where(p => p.ProblemId == probid)
-                            .SingleAsync();
-
-                        if (prob != null)
-                        {
-                            prob.AllowJudge = true;
-                            DbContext.Problems.Update(prob);
-                        }
+                            .BatchUpdateAsync(p => new Problem { AllowJudge = true });
                     }
                 }
 
-                await DbContext.SaveChangesAsync();
+                await AuditlogAsync(eid, $"mark as {todo}d");
             }
 
             return RedirectToAction(nameof(Detail), new { eid });
         }
+
 
         [HttpGet("{eid}")]
         public async Task<IActionResult> Detail(int eid)

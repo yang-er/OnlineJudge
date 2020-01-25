@@ -22,7 +22,7 @@
         <tbody>
             @foreach (var ie in Model)
             {
-                <tr asp-action="Detail" asp-route-eid="@ie.ErrorId" data-toggle="gotoUrl" class="@(ie.Status == InternalError.ErrorStatus.Open ? "" : "disabled")">
+                <tr asp-action="Detail" asp-route-eid="@ie.ErrorId" data-toggle="gotoUrl" class="@(ie.Status == InternalErrorStatus.Open ? "" : "disabled")">
                     <td use-a>@ie.ErrorId</td>
                     <td use-a>@ie.Description</td>
                     <td use-a>@Html.CstTime(ie.Time)</td>

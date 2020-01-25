@@ -14,7 +14,6 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
-using InternalErrorStatus = JudgeWeb.Data.InternalError.ErrorStatus;
 
 namespace JudgeWeb.Areas.Api.Controllers
 {
@@ -91,15 +90,15 @@ namespace JudgeWeb.Areas.Api.Controllers
         {
             DbContext.Judgings.Update(j);
 
-            DbContext.AuditLogs.Add(new AuditLog
+            DbContext.Auditlogs.Add(new Auditlog
             {
-                Comment = $"judged {j.Status}",
-                EntityId = j.JudgingId,
-                ContestId = c?.ContestId ?? 0,
-                Resolved = c == null,
-                Time = DateTimeOffset.Now,
-                Type = AuditLog.TargetType.Judging,
+                Action = "judged",
+                ExtraInfo = $"{j.Status}",
+                ContestId = c?.ContestId,
+                DataId = $"{j.JudgingId}",
                 UserName = hostname,
+                Time = DateTimeOffset.Now,
+                DataType = AuditlogType.Judging,
             });
 
             Telemetry.TrackDependency(
@@ -119,24 +118,10 @@ namespace JudgeWeb.Areas.Api.Controllers
 
             await DbContext.SaveChangesAsync();
 
-            if (c != null)
-            {
-                DbContext.UpdateScoreboard(new ScoreboardState
-                {
-                    ContestId = c.ContestId,
-                    RankStrategy = c.RankingStrategy,
-                    StartTime = c.StartTime,
-                    FreezeTime = c.FreezeTime,
-                    EndTime = c.EndTime,
-                    UnfreezeTime = c.UnfreezeTime,
-                    ProblemId = pid,
-                    SubmissionId = j.SubmissionId,
-                    TeamId = teamid,
-                    Time = submitTime,
-                    UseBalloon = c.BalloonAvaliable,
-                    Verdict = j.Status,
-                });
-            }
+            if (c != null && j.Active)
+                HttpContext.RequestServices
+                    .GetRequiredService<IScoreboardService>()
+                    .JudgingFinished(c, submitTime, pid, teamid, j);
         }
 
 
@@ -158,6 +143,17 @@ namespace JudgeWeb.Areas.Api.Controllers
             j.PreviousJudgingId = null;
             if (!j.StopTime.HasValue)
                 j.StopTime = DateTimeOffset.Now;
+
+            DbContext.Auditlogs.Add(new Auditlog
+            {
+                Action = "judged",
+                ExtraInfo = $"{j.Status}",
+                ContestId = cid == 0 ? default(int?) : cid,
+                DataId = $"{j.JudgingId}",
+                UserName = j.Server,
+                Time = DateTimeOffset.Now,
+                DataType = AuditlogType.Judging,
+            });
 
             if (cid != 0)
             {
@@ -244,15 +240,17 @@ namespace JudgeWeb.Areas.Api.Controllers
 
                 DbContext.JudgeHosts.Add(item);
 
-                DbContext.AuditLogs.Add(new AuditLog
+                var userManager = HttpContext.RequestServices
+                    .GetRequiredService<UserManager>();
+
+                DbContext.Auditlogs.Add(new Auditlog
                 {
-                    ContestId = 0,
-                    Comment = $"judgehost {hostname} on {HttpContext.Connection.RemoteIpAddress} registered",
-                    Resolved = true,
+                    Action = "registered",
+                    DataType = AuditlogType.Judgehost,
+                    DataId = hostname,
+                    ExtraInfo = $"on {HttpContext.Connection.RemoteIpAddress}",
                     Time = DateTimeOffset.Now,
-                    Type = AuditLog.TargetType.Contest,
-                    EntityId = 0,
-                    UserName = "judgerest",
+                    UserName = userManager.GetUserName(User),
                 });
 
                 Telemetry.TrackDependency(
@@ -314,15 +312,17 @@ namespace JudgeWeb.Areas.Api.Controllers
             item.Active = active;
             DbContext.JudgeHosts.Update(item);
 
-            DbContext.AuditLogs.Add(new AuditLog
+            var userManager = HttpContext.RequestServices
+                .GetRequiredService<UserManager>();
+
+            DbContext.Auditlogs.Add(new Auditlog
             {
-                ContestId = 0,
-                Comment = $"judgehost {hostname} set {(active ? "" : "in")}active by {HttpContext.Connection.RemoteIpAddress}",
-                Resolved = true,
+                ExtraInfo = $"by api {HttpContext.Connection.RemoteIpAddress}",
+                Action = $"mark {(active ? "" : "in")}active",
+                DataType = AuditlogType.Judgehost,
+                DataId = hostname,
                 Time = DateTimeOffset.Now,
-                Type = AuditLog.TargetType.Contest,
-                EntityId = 0,
-                UserName = "judgerest",
+                UserName = userManager.GetUserName(User),
             });
 
             await DbContext.SaveChangesAsync();
@@ -619,17 +619,21 @@ namespace JudgeWeb.Areas.Api.Controllers
             // Check for the final status
             var countOfTestcase = await DbContext.Testcases
                 .CountAsync(t => t.ProblemId == judging.ProblemId);
-            var verdictsOfThis = await DbContext.Details
-                .Where(d => d.JudgingId == jid)
-                .GroupBy(d => d.JudgingId)
-                .Select(g => new
-                    {
-                        Status = g.Min(d => d.Status),
-                        Count = g.Count(),
-                        Memory = g.Max(d => d.ExecuteMemory),
-                        Time = g.Max(d => d.ExecuteTime),
-                    })
-                .FirstOrDefaultAsync();
+            var verdictQuery =
+                from d in DbContext.Details
+                where d.JudgingId == jid
+                join t in DbContext.Testcases on d.TestcaseId equals t.TestcaseId
+                group new { d.Status, d.ExecuteMemory, d.ExecuteTime, t.Point } by d.JudgingId into g
+                select new
+                {
+                    Status = g.Min(a => a.Status),
+                    Count = g.Count(), 
+                    Memory = g.Max(a => a.ExecuteMemory),
+                    Time = g.Max(a => a.ExecuteTime),
+                    Score = g.Sum(a => a.Status == Verdict.Accepted ? a.Point : 0)
+                };
+
+            var verdictsOfThis = await verdictQuery.FirstOrDefaultAsync();
 
             bool anyRejected = !judging.g.FullTest && verdictsOfThis.Status != Verdict.Accepted;
             bool fullTested = verdictsOfThis.Count >= countOfTestcase && countOfTestcase > 0;
@@ -640,6 +644,7 @@ namespace JudgeWeb.Areas.Api.Controllers
                 judging.g.ExecuteTime = verdictsOfThis.Time;
                 judging.g.Status = verdictsOfThis.Status;
                 judging.g.StopTime = host.PollTime;
+                judging.g.TotalScore = verdictsOfThis.Score;
 
                 await FinishJudging(
                     judging.g, host.ServerName, judging.c,
@@ -670,21 +675,16 @@ namespace JudgeWeb.Areas.Api.Controllers
             if (kind == "language")
             {
                 var langid = toDisable["langid"].Value<string>();
-                var lang = await DbContext.Languages
+                await DbContext.Languages
                     .Where(l => l.Id == langid)
-                    .SingleAsync();
+                    .BatchUpdateAsync(l => new Language { AllowJudge = false });
 
-                lang.AllowJudge = false;
-                DbContext.Languages.Update(lang);
-
-                DbContext.AuditLogs.Add(new AuditLog
+                DbContext.Auditlogs.Add(new Auditlog
                 {
-                    ContestId = model.cid ?? 0,
-                    EntityId = model.cid ?? 0,
-                    Comment = "internal error created",
-                    Resolved = true,
+                    Action = "set allow judge",
+                    DataId = langid,
                     Time = DateTimeOffset.Now,
-                    Type = AuditLog.TargetType.Contest,
+                    DataType = AuditlogType.Language,
                     UserName = "judgehost",
                 });
 
@@ -699,27 +699,22 @@ namespace JudgeWeb.Areas.Api.Controllers
             else if (kind == "judgehost")
             {
                 var hostname = toDisable["hostname"].Value<string>();
-                var host = await DbContext.JudgeHosts
+                await DbContext.JudgeHosts
                     .Where(h => h.ServerName == hostname)
-                    .SingleAsync();
+                    .BatchUpdateAsync(h => new JudgeHost { Active = false });
 
-                host.Active = false;
-                DbContext.JudgeHosts.Update(host);
-
-                DbContext.AuditLogs.Add(new AuditLog
+                DbContext.Auditlogs.Add(new Auditlog
                 {
-                    ContestId = model.cid ?? 0,
-                    EntityId = model.cid ?? 0,
-                    Comment = "internal error created",
-                    Resolved = true,
+                    Action = "set inactive",
+                    DataId = hostname,
                     Time = DateTimeOffset.Now,
-                    Type = AuditLog.TargetType.Contest,
-                    UserName = host.ServerName,
+                    DataType = AuditlogType.Judgehost,
+                    UserName = "judgehost",
                 });
 
                 Telemetry.TrackDependency(
                     dependencyTypeName: "JudgeHost",
-                    dependencyName: host.ServerName,
+                    dependencyName: hostname,
                     data: model.description,
                     startTime: DateTimeOffset.Now,
                     duration: TimeSpan.Zero,
@@ -728,27 +723,22 @@ namespace JudgeWeb.Areas.Api.Controllers
             else if (kind == "problem")
             {
                 var probid = toDisable["probid"].Value<int>();
-                var prob = await DbContext.Problems
+                await DbContext.Problems
                     .Where(p => p.ProblemId == probid)
-                    .SingleAsync();
+                    .BatchUpdateAsync(p => new Problem { AllowJudge = false });
 
-                prob.AllowJudge = false;
-                DbContext.Problems.Update(prob);
-
-                DbContext.AuditLogs.Add(new AuditLog
+                DbContext.Auditlogs.Add(new Auditlog
                 {
-                    ContestId = model.cid ?? 0,
-                    EntityId = probid,
-                    Comment = "internal error created",
-                    Resolved = true,
+                    Action = "set allow judge",
+                    DataId = $"{probid}",
                     Time = DateTimeOffset.Now,
-                    Type = AuditLog.TargetType.Problem,
+                    DataType = AuditlogType.Problem,
                     UserName = "judgehost",
                 });
 
                 Telemetry.TrackDependency(
                     dependencyTypeName: "Problem",
-                    dependencyName: $"p{probid} - {prob.Title}",
+                    dependencyName: $"p{probid}",
                     data: model.description,
                     startTime: DateTimeOffset.Now,
                     duration: TimeSpan.Zero,
@@ -780,6 +770,18 @@ namespace JudgeWeb.Areas.Api.Controllers
                 await ReturnToQueue(model.judgingid.Value);
 
             DbContext.InternalErrors.Add(ie);
+            await DbContext.SaveChangesAsync();
+
+            DbContext.Auditlogs.Add(new Auditlog
+            {
+                Action = "added",
+                UserName = "judgehost",
+                DataId = $"{ie.ErrorId}",
+                DataType = AuditlogType.InternalError,
+                ExtraInfo = $"for {kind}",
+                Time = ie.Time,
+            });
+
             await DbContext.SaveChangesAsync();
             return ie.ErrorId;
         }

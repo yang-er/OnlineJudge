@@ -49,11 +49,11 @@ namespace JudgeWeb.Features.Razor
         private (string, string) SolveAsRule()
         {
             if (Value == 0)
-                return ("sol", "ACM-ICPC");
+                return ("sol", "XCPC");
             else if (Value == 1)
                 return ("sol", "Codeforces");
             else if (Value == 2)
-                return ("sol", "NOI");
+                return ("sol", "OI");
             return ("sol sol_incorrect", "Unknown");
         }
 

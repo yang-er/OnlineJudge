@@ -15,7 +15,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
     [Route("[area]/{cid}/jury/[controller]")]
     public class TeamsController : JuryControllerBase
     {
-        protected async Task UpdateTeamAsync(Team team, string comment, string action, int? oldUid = null)
+        protected async Task UpdateTeamAsync(Team team, (string act, string extra) comment, string action, int? oldUid = null)
         {
             var aff = await DbContext.TeamAffiliations
                 .Where(a => a.AffiliationId == team.AffiliationId)
@@ -24,21 +24,13 @@ namespace JudgeWeb.Areas.Contest.Controllers
 
             DbContext.Teams.Update(team);
 
-            InternalLog(new AuditLog
-            {
-                Type = AuditLog.TargetType.Contest,
-                Resolved = true,
-                ContestId = team.ContestId,
-                Comment = comment,
-                EntityId = team.TeamId,
-            });
-
             if (action != null)
             {
                 var ct = new Data.Api.ContestTeam(team, aff);
                 DbContext.Events.Add(ct.ToEvent(action, team.ContestId));
             }
 
+            InternalLog(AuditlogType.Team, $"{team.TeamId}", comment.act, comment.extra);
             await DbContext.SaveChangesAsync();
             Cache.Remove($"`c{team.ContestId}`teams`t{team.TeamId}");
             Cache.Remove($"`c{team.ContestId}`teams`u{oldUid ?? team.UserId}");
@@ -149,7 +141,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 CategoryId = model.CategoryId,
                 ContestId = Contest.ContestId,
                 TeamName = model.TeamName,
-                UserId = user?.Id ?? 0,
+                UserId = user?.Id,
             });
 
             return Message(
@@ -186,9 +178,9 @@ namespace JudgeWeb.Areas.Contest.Controllers
             var oldUid = team.UserId;
             var raiseEvent = team.Status == 1;
             team.Status = 3;
-            team.UserId = 0;
+            team.UserId = null;
             await UpdateTeamAsync(team, oldUid: oldUid, action: raiseEvent ? "delete" : null,
-                comment: $"deleted team {team.TeamName} (t{team.TeamId}, u{oldUid})");
+                comment: ("deleted", $"with u{oldUid}"));
 
             StatusMessage = $"Team t{teamid} deleted.";
             return RedirectToAction(nameof(List));
@@ -223,12 +215,11 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 .Where(t => t.ContestId == cid && t.TeamId == teamid)
                 .SingleOrDefaultAsync();
             if (team == null) return NotFound();
-            var log = $"edit team t{team.TeamId}";
 
             team.TeamName = model.TeamName;
             team.AffiliationId = model.AffiliationId;
             team.CategoryId = model.CategoryId;
-            await UpdateTeamAsync(team, log, team.Status == 1 ? "update" : null);
+            await UpdateTeamAsync(team, ("updated", null), team.Status == 1 ? "update" : null);
 
             return Message(
                 title: "Edit team",
@@ -247,7 +238,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
             if (team == null) return NotFound();
             bool oldok = team.Status != 1;
             team.Status = 1;
-            await UpdateTeamAsync(team, "accept team", oldok ? "create" : null);
+            await UpdateTeamAsync(team, ("accepted", null), oldok ? "create" : null);
 
             return Message(
                 title: "Team registration confirm",
@@ -266,7 +257,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
             if (team == null) return NotFound();
             bool oldok = team.Status == 1;
             team.Status = 2;
-            await UpdateTeamAsync(team, "reject team", oldok ? "delete" : null);
+            await UpdateTeamAsync(team, ("rejected", null), oldok ? "delete" : null);
 
             return Message(
                 title: "Team registration confirm",

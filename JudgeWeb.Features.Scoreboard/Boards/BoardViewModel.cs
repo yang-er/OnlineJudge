@@ -12,8 +12,6 @@ namespace JudgeWeb.Features.Scoreboard
 
         public ContestProblem[] Problems { get; set; }
 
-        public IScoreboard ExecutionStrategy { get; set; }
-
         protected abstract IEnumerable<SortOrderModel> GetEnumerable();
 
         public IEnumerator<SortOrderModel> GetEnumerator()

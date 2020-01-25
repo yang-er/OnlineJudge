@@ -20,7 +20,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
 
         protected UserManager UserManager { get; private set; }
 
-        private static IScoreboard[] Scoreboards => Instance.Scoreboards;
+        protected IScoreboardService ScoreboardService { get; private set; }
 
         [TempData]
         public string StatusMessage { get; set; }
@@ -80,6 +80,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 ct.text = ct.text.Substring(0, 300) + "...";
             DbContext.Events.Add(ct.ToEvent("create", Contest.ContestId));
 
+            InternalLog(AuditlogType.Clarification, $"{clar.ClarificationId}", "added");
             await DbContext.SaveChangesAsync();
             return cl.Entity.ClarificationId;
         }
@@ -93,15 +94,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 team.TeamId = 1 + await DbContext.Teams
                     .CountAsync(tt => tt.ContestId == cid);
                 DbContext.Teams.Add(team);
-
-                InternalLog(new AuditLog
-                {
-                    Type = AuditLog.TargetType.Contest,
-                    Resolved = true,
-                    ContestId = team.ContestId,
-                    Comment = $"add team t{team.TeamId}",
-                    EntityId = team.TeamId,
-                });
+                InternalLog(AuditlogType.Team, $"{team.TeamId}", "added");
 
                 if (team.Status == 1)
                 {
@@ -117,12 +110,18 @@ namespace JudgeWeb.Areas.Contest.Controllers
             }
         }
 
-        protected void InternalLog(AuditLog log)
+        protected void InternalLog(AuditlogType type, string dataId, string action, string extraInfo = null)
         {
-            log.LogId = 0;
-            log.Time = DateTimeOffset.Now;
-            log.UserName = UserManager.GetUserName(User);
-            DbContext.AuditLogs.Add(log);
+            DbContext.Auditlogs.Add(new Auditlog
+            {
+                Time = DateTimeOffset.Now,
+                UserName = UserManager.GetUserName(User),
+                ContestId = Contest.ContestId,
+                Action = action,
+                ExtraInfo = extraInfo,
+                DataId = dataId,
+                DataType = type,
+            });
         }
 
         protected async Task<SingleBoardViewModel> FindScoreboardAsync(int teamid)
@@ -134,7 +133,6 @@ namespace JudgeWeb.Areas.Contest.Controllers
             return new SingleBoardViewModel
             {
                 QueryInfo = bq,
-                ExecutionStrategy = Scoreboards[Contest.RankingStrategy],
                 Contest = Contest,
                 Problems = Problems,
                 Category = cats.FirstOrDefault(c => c.CategoryId == bq.Team.CategoryId),
@@ -153,7 +151,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
             if (!Contest.PrintingAvaliable)
                 return NotFound();
 
-            DbContext.Printing.Add(new Data.Ext.Printing
+            var p = DbContext.Printing.Add(new Printing
             {
                 ContestId = cid,
                 LanguageId = model.Language ?? "plain",
@@ -164,6 +162,10 @@ namespace JudgeWeb.Areas.Contest.Controllers
             });
 
             await DbContext.SaveChangesAsync();
+
+            InternalLog(AuditlogType.Printing, $"{p.Entity.Id}", "added", $"from {HttpContext.Connection.RemoteIpAddress}");
+            await DbContext.SaveChangesAsync();
+
             StatusMessage = "File has been printed. Please wait.";
             return RedirectToAction("Home");
         }
@@ -181,7 +183,6 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 Problems = Problems,
                 IsPublic = isPublic && !isJury,
                 Categories = orgs,
-                ExecutionStrategy = Scoreboards[Contest.RankingStrategy],
                 Contest = Contest,
                 Affiliations = affs,
             };

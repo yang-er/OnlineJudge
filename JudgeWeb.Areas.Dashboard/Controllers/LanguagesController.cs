@@ -15,13 +15,40 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
     [Route("[area]/[controller]")]
     public class LanguagesController : Controller3
     {
-        public LanguagesController(AppDbContext db) : base(db) { }
+        private async Task AuditlogAsync(Language lang, string comment)
+        {
+            var now = System.DateTimeOffset.Now;
+
+            if (comment == "updated" || comment == "added")
+            {
+                var ev = comment == "updated" ? "update" : "create";
+                var cts = await DbContext.Contests
+                    .Where(c => c.EndTime == null || c.EndTime > now)
+                    .Select(c => c.ContestId)
+                    .ToArrayAsync();
+                DbContext.Events.AddRange(cts.Select(t =>
+                    new Data.Api.ContestLanguage(lang).ToEvent(ev, t)));
+            }
+
+            DbContext.Auditlogs.Add(new Auditlog
+            {
+                Action = comment,
+                DataId = lang.Id,
+                DataType = AuditlogType.Language,
+                Time = System.DateTimeOffset.Now,
+                UserName = UserManager.GetUserName(User),
+            });
+
+            await DbContext.SaveChangesAsync();
+        }
+
 
         [HttpGet]
         public async Task<IActionResult> List()
         {
             return View(await DbContext.Languages.ToListAsync());
         }
+
 
         [HttpGet("{langid}")]
         public async Task<IActionResult> Detail(string langid)
@@ -47,6 +74,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
             return View();
         }
 
+
         [HttpPost("{langid}/[action]")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ToggleSubmit(string langid)
@@ -56,8 +84,10 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
                 .BatchUpdateAsync(l =>
                     new Language { AllowSubmit = !l.AllowSubmit });
 
+            await AuditlogAsync(new Language { Id = langid }, "toggle allow submit");
             return RedirectToAction(nameof(Detail), new { langid });
         }
+
 
         [HttpPost("{langid}/[action]")]
         [ValidateAntiForgeryToken]
@@ -68,8 +98,10 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
                 .BatchUpdateAsync(l =>
                     new Language { AllowJudge = !l.AllowJudge });
 
+            await AuditlogAsync(new Language { Id = langid }, "toggle allow judge");
             return RedirectToAction(nameof(Detail), new { langid });
         }
+
 
         [HttpGet("{langid}/[action]")]
         public async Task<IActionResult> Edit(string langid)
@@ -95,6 +127,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
             });
         }
 
+
         [HttpPost("{langid}/[action]")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(string langid, LanguageEditModel model)
@@ -110,19 +143,12 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
             lang.Name = model.Name;
 
             DbContext.Languages.Update(lang);
-
-            var now = System.DateTimeOffset.Now;
-            var cts = await DbContext.Contests
-                .Where(c => c.EndTime == null || c.EndTime > now)
-                .Select(c => c.ContestId)
-                .ToArrayAsync();
-            DbContext.Events.AddRange(cts.Select(t =>
-                new Data.Api.ContestLanguage(lang).ToEvent("update", t)));
-
             await DbContext.SaveChangesAsync();
 
+            await AuditlogAsync(lang, "updated");
             return RedirectToAction(nameof(Detail), new { langid });
         }
+
 
         [HttpGet("[action]")]
         public async Task<IActionResult> Add()
@@ -135,6 +161,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
             ViewBag.Operator = "Add";
             return View("Edit", new LanguageEditModel { TimeFactor = 1 });
         }
+
 
         [HttpPost("[action]")]
         [ValidateAntiForgeryToken]
@@ -153,15 +180,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
 
             await DbContext.SaveChangesAsync();
 
-            var now = System.DateTimeOffset.Now;
-            var cts = await DbContext.Contests
-                .Where(c => c.EndTime == null || c.EndTime > now)
-                .Select(c => c.ContestId)
-                .ToArrayAsync();
-            DbContext.Events.AddRange(cts.Select(t =>
-                new Data.Api.ContestLanguage(entity.Entity).ToEvent("create", t)));
-
-            await DbContext.SaveChangesAsync();
+            await AuditlogAsync(entity.Entity, "added");
             return RedirectToAction(nameof(Detail), new { langid = entity.Entity.Id });
         }
     }

@@ -19,7 +19,20 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
     [Route("[area]/[controller]")]
     public class ExecutablesController : Controller3
     {
-        public ExecutablesController(AppDbContext db) : base(db) { }
+        private Task AuditlogAsync(string itemid, string act)
+        {
+            DbContext.Add(new Auditlog
+            {
+                Action = act + "d",
+                DataId = itemid,
+                DataType = AuditlogType.Executable,
+                UserName = UserManager.GetUserName(User),
+                Time = DateTimeOffset.Now,
+            });
+
+            return DbContext.SaveChangesAsync();
+        }
+
 
         [HttpGet]
         public async Task<IActionResult> List()
@@ -37,6 +50,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
 
             return View(execs);
         }
+
 
         [HttpGet("{execid}")]
         public async Task<IActionResult> Detail(string execid)
@@ -70,6 +84,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
             return View(exec);
         }
 
+
         [HttpGet("{execid}/[action]")]
         [ValidateInAjax]
         public async Task<IActionResult> Delete(string execid)
@@ -92,6 +107,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
                 type: MessageType.Danger);
         }
 
+
         [HttpGet("{execid}/[action]")]
         public async Task<IActionResult> Edit(string execid)
         {
@@ -107,6 +123,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
             if (exec == null) return NotFound();
             return View(exec);
         }
+
 
         [HttpPost("{execid}/[action]")]
         public async Task<IActionResult> Edit(string execid, ExecutableEditModel model)
@@ -125,8 +142,10 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
             exec.Type = model.Type;
             DbContext.Executable.Update(exec);
             await DbContext.SaveChangesAsync();
+            await AuditlogAsync(execid, "update");
             return RedirectToAction(nameof(Detail), new { execid });
         }
+
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -168,6 +187,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
                     await DbContext.SaveChangesAsync();
                     execid = e.Entity.ExecId;
                     StatusMessage = $"Executable {execid} uploaded successfully.";
+                    await AuditlogAsync(execid, "create");
                 }
                 catch (DbUpdateException ex)
                 {
@@ -178,6 +198,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
             if (execid != null) return RedirectToAction("Detail", new { execid });
             else return RedirectToAction("List");
         }
+
 
         [HttpGet("{execid}/[action]")]
         [ActionName("Content")]
@@ -216,6 +237,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
             return View(items);
         }
 
+
         [HttpPost("{execid}/[action]")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(string execid, int inajax)
@@ -231,6 +253,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
             {
                 await DbContext.SaveChangesAsync();
                 StatusMessage = $"Executable {execid} deleted successfully.";
+                await AuditlogAsync(execid, "delete");
             }
             catch (DbUpdateException)
             {
@@ -239,6 +262,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
 
             return RedirectToAction(nameof(List));
         }
+
 
         [HttpGet("{execid}/[action]")]
         public async Task<IActionResult> Download(string execid)

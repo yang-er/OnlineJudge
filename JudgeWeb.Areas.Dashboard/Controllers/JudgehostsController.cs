@@ -1,5 +1,5 @@
-﻿using JudgeWeb.Data;
-using EFCore.BulkExtensions;
+﻿using EFCore.BulkExtensions;
+using JudgeWeb.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -13,7 +13,20 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
     [Route("[area]/[controller]")]
     public class JudgehostsController : Controller3
     {
-        public JudgehostsController(AppDbContext db) : base(db) { }
+        private Task AuditlogAsync(string id, string act)
+        {
+            DbContext.Auditlogs.Add(new Auditlog
+            {
+                Action = act,
+                DataId = id,
+                DataType = AuditlogType.Judgehost,
+                Time = System.DateTimeOffset.Now,
+                UserName = UserManager.GetUserName(User),
+            });
+
+            return DbContext.SaveChangesAsync();
+        }
+
 
         [HttpGet]
         public async Task<IActionResult> List()
@@ -21,6 +34,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
             var hosts = await DbContext.JudgeHosts.ToListAsync();
             return View(hosts);
         }
+
 
         [HttpGet("{hostname}")]
         public async Task<IActionResult> Detail(string hostname)
@@ -44,22 +58,22 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
             return View();
         }
         
+
         [HttpGet("{hostname}/{tobe}")]
         public async Task<IActionResult> Toggle(string hostname, string tobe)
         {
-            var cur = await DbContext.JudgeHosts
-                .Where(l => l.ServerName == hostname)
-                .FirstOrDefaultAsync();
-            if (cur == null) return NotFound();
-
             bool active = tobe == "activate";
             if (!active && tobe != "deactivate") return NotFound();
-            cur.Active = active;
-            DbContext.JudgeHosts.Update(cur);
-            await DbContext.SaveChangesAsync();
 
+            var affected = await DbContext.JudgeHosts
+                .Where(h => h.ServerName == hostname)
+                .BatchUpdateAsync(h => new JudgeHost { Active = active });
+            if (affected == 0) return NotFound();
+
+            await AuditlogAsync(hostname, $"mark {(active ? "" : "in")}active");
             return RedirectToAction(nameof(List));
         }
+
 
         [HttpPost("[action]")]
         [ValidateAntiForgeryToken]
@@ -67,8 +81,10 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
         {
             await DbContext.JudgeHosts
                 .BatchUpdateAsync(jh => new JudgeHost { Active = true });
+            await AuditlogAsync(null, "marked all active");
             return RedirectToAction(nameof(List));
         }
+
 
         [HttpPost("[action]")]
         [ValidateAntiForgeryToken]
@@ -76,6 +92,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
         {
             await DbContext.JudgeHosts
                 .BatchUpdateAsync(jh => new JudgeHost { Active = false });
+            await AuditlogAsync(null, "marked all inactive");
             return RedirectToAction(nameof(List));
         }
     }

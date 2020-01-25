@@ -1,33 +1,26 @@
 ﻿using JudgeWeb.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
-using System;
-using System.Linq;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace JudgeWeb.Areas.Dashboard.Controllers
 {
     public class Controller3 : Controller2
     {
-        protected AppDbContext DbContext { get; }
+        protected AppDbContext DbContext { get; private set; }
 
-        public Controller3(AppDbContext db) => DbContext = db;
+        protected UserManager UserManager { get; private set; }
 
         [TempData]
         public string StatusMessage { get; set; }
 
-        public override void OnActionExecuted(ActionExecutedContext context)
+        public override void OnActionExecuting(ActionExecutingContext context)
         {
-            base.OnActionExecuted(context);
-
-            if (context.Result is ViewResult)
-            {
-                ViewBag.JudgehostCriticalCount = DbContext.JudgeHosts
-                    .Where(jh => jh.PollTime < DateTimeOffset.Now.AddSeconds(-120) && jh.Active)
-                    .Count();
-                ViewBag.InternalErrorCount = DbContext.InternalErrors
-                    .Where(ie => ie.Status == InternalError.ErrorStatus.Open)
-                    .Count();
-            }
+            DbContext = HttpContext.RequestServices
+                .GetRequiredService<AppDbContext>();
+            UserManager = HttpContext.RequestServices
+                .GetRequiredService<UserManager>();
+            base.OnActionExecuting(context);
         }
     }
 }

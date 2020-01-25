@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -13,13 +12,37 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
     [Route("[area]/[controller]")]
     public class CategoriesController : Controller3
     {
-        public CategoriesController(AppDbContext db) : base(db) { }
+        private async Task AuditlogAsync(TeamCategory cat, string act)
+        {
+            // solve the events
+            var now = System.DateTimeOffset.Now;
+            var cts = await DbContext.Contests
+                .Where(c => c.EndTime == null || c.EndTime > now)
+                .Select(c => c.ContestId)
+                .ToArrayAsync();
+            DbContext.Events.AddRange(cts.Select(t =>
+                new Data.Api.ContestGroup(cat).ToEvent(act, t)));
+
+            // solve the auditlogs
+            DbContext.Auditlogs.Add(new Auditlog
+            {
+                Action = act + "d",
+                DataId = $"{cat.CategoryId}",
+                DataType = AuditlogType.TeamCategory,
+                UserName = UserManager.GetUserName(User),
+                Time = now,
+            });
+
+            await DbContext.SaveChangesAsync();
+        }
+
 
         [HttpGet]
         public async Task<IActionResult> List()
         {
             return View(await DbContext.TeamCategories.ToListAsync());
         }
+
 
         [HttpGet("{catid}")]
         public async Task<IActionResult> Detail(int catid)
@@ -31,8 +54,10 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
             return View(cat);
         }
 
+
         [HttpGet("[action]")]
         public IActionResult Add() => View("Edit", new TeamCategory());
+
 
         [HttpGet("{catid}/[action]")]
         public async Task<IActionResult> Edit(int catid)
@@ -44,6 +69,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
             return View(cat);
         }
 
+
         [HttpPost("[action]")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Add(TeamCategory model)
@@ -51,17 +77,11 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
             model.CategoryId = 0;
             var e = DbContext.TeamCategories.Add(model);
             await DbContext.SaveChangesAsync();
-
-            var now = System.DateTimeOffset.Now;
-            var cts = await DbContext.Contests
-                .Where(c => c.EndTime == null || c.EndTime > now)
-                .Select(c => c.ContestId)
-                .ToArrayAsync();
-            DbContext.Events.AddRange(cts.Select(t =>
-                new Data.Api.ContestGroup(e.Entity).ToEvent("create", t)));
+            await AuditlogAsync(e.Entity, "create");
 
             return RedirectToAction(nameof(Detail), new { catid = e.Entity.CategoryId });
         }
+
 
         [HttpPost("{catid}/[action]")]
         [ValidateAntiForgeryToken]
@@ -80,18 +100,12 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
             cat.SortOrder = model.SortOrder;
 
             DbContext.TeamCategories.Update(cat);
-
-            var now = System.DateTimeOffset.Now;
-            var cts = await DbContext.Contests
-                .Where(c => c.EndTime == null || c.EndTime > now)
-                .Select(c => c.ContestId)
-                .ToArrayAsync();
-            DbContext.Events.AddRange(cts.Select(t =>
-                new Data.Api.ContestGroup(cat).ToEvent("update", t)));
-
             await DbContext.SaveChangesAsync();
+            await AuditlogAsync(cat, "update");
+
             return RedirectToAction(nameof(Detail), new { catid });
         }
+
 
         [HttpGet("{catid}/[action]")]
         [ValidateInAjax]
@@ -106,12 +120,10 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
                 title: $"Delete team category {catid} - \"{desc.Name}\"",
                 message: $"You're about to delete team category {catid} - \"{desc.Name}\".\n" +
                     "Are you sure?",
-                area: "Dashboard",
-                ctrl: "Categories",
-                act: "Delete",
-                routeValues: new Dictionary<string, string> { { "catid", catid.ToString() } },
+                area: "Dashboard", ctrl: "Categories", act: "Delete",
                 type: MessageType.Danger);
         }
+
 
         [HttpPost("{catid}/[action]")]
         [ValidateAntiForgeryToken]
@@ -122,20 +134,12 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
                 .FirstOrDefaultAsync();
             if (desc == null) return NotFound();
 
-            DbContext.TeamCategories.Remove(desc);
-
-            var now = System.DateTimeOffset.Now;
-            var cts = await DbContext.Contests
-                .Where(c => c.EndTime == null || c.EndTime > now)
-                .Select(c => c.ContestId)
-                .ToArrayAsync();
-            DbContext.Events.AddRange(cts.Select(t =>
-                new Data.Api.ContestGroup(desc).ToEvent("delete", t)));
-
             try
             {
+                DbContext.TeamCategories.Remove(desc);
                 await DbContext.SaveChangesAsync();
                 StatusMessage = $"Team category {catid} deleted successfully.";
+                await AuditlogAsync(desc, "delete");
             }
             catch (DbUpdateException)
             {

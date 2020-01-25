@@ -14,8 +14,6 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
     [Route("[area]/[controller]")]
     public class ContestsController : Controller3
     {
-        public ContestsController(AppDbContext db) : base(db) { }
-
         [HttpGet]
         public async Task<IActionResult> List()
         {
@@ -31,6 +29,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
             return View(await DbContext.Contests.ToListAsync());
         }
 
+
         [HttpGet("[action]")]
         public async Task<IActionResult> Add(
             [FromServices] RoleManager<Role> roleManager,
@@ -42,27 +41,23 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
             {
                 IsPublic = false,
                 RegisterDefaultCategory = 0,
-                ShortName = "",
-                Name = "",
+                ShortName = "DOMjudge",
+                Name = "Round 1",
             });
 
             await DbContext.SaveChangesAsync();
 
-            if (username != null)
+            DbContext.Auditlogs.Add(new Auditlog
             {
-                DbContext.AuditLogs.Add(new AuditLog
-                {
-                    Comment = "created",
-                    UserName = username,
-                    ContestId = c.Entity.ContestId,
-                    EntityId = c.Entity.ContestId,
-                    Resolved = true,
-                    Time = DateTimeOffset.Now,
-                    Type = AuditLog.TargetType.Contest,
-                });
+                Action = "added",
+                UserName = username,
+                Time = DateTimeOffset.Now,
+                DataType = AuditlogType.Contest,
+                DataId = $"{c.Entity.ContestId}",
+                ContestId = c.Entity.ContestId,
+            });
 
-                await DbContext.SaveChangesAsync();
-            }
+            await DbContext.SaveChangesAsync();
 
             int cid = c.Entity.ContestId;
             var roleName = $"JuryOfContest{cid}";

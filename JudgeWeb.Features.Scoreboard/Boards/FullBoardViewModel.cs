@@ -47,7 +47,7 @@ namespace JudgeWeb.Features.Scoreboard
             int last_point = int.MinValue;
             int last_penalty = int.MinValue;
             var cats = new Dictionary<int, TeamCategory>();
-            src = ExecutionStrategy.SortByRule(src, ispublic);
+            src = ScoreboardService.SC[Contest.RankingStrategy].SortByRule(src, ispublic);
 
             foreach (var item in src)
             {

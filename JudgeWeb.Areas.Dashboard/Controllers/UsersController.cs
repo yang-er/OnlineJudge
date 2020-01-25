@@ -13,8 +13,6 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
     [Route("[area]/[controller]")]
     public class UsersController : Controller3
     {
-        public UsersController(AppDbContext db) : base(db) { }
-
         [HttpGet]
         public async Task<IActionResult> List(int page = 1)
         {
@@ -44,6 +42,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
                        .Select(ur => roles[ur.RoleId].ShortName)
                 )));
         }
+
 
         [HttpGet("{uid}")]
         public async Task<IActionResult> Detail(int uid)
@@ -80,6 +79,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
             return View(user);
         }
 
+
         [HttpGet("{uid}/[action]")]
         public async Task<IActionResult> Edit(int uid)
         {
@@ -108,34 +108,33 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
             });
         }
 
+
         [HttpPost("{uid}/[action]")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(
-            int uid, UserEditModel model,
-            [FromServices] UserManager userManager)
+        public async Task<IActionResult> Edit(int uid, UserEditModel model)
         {
-            var user = await userManager.FindByIdAsync($"{uid}");
+            var user = await UserManager.FindByIdAsync($"{uid}");
             if (user == null) return NotFound();
 
             var msg = "";
 
             if (model.Password != null)
             {
-                var token = await userManager.GeneratePasswordResetTokenAsync(user);
-                var result = await userManager.ResetPasswordAsync(user, token, model.Password);
+                var token = await UserManager.GeneratePasswordResetTokenAsync(user);
+                var result = await UserManager.ResetPasswordAsync(user, token, model.Password);
                 if (!result.Succeeded) msg += $"Error in reset password: {result.Errors.First().Description}.\n";
             }
 
             if (model.Email != null)
             {
-                var result = await userManager.SetEmailAsync(user, model.Email);
+                var result = await UserManager.SetEmailAsync(user, model.Email);
                 if (!result.Succeeded) msg += $"Error in set email: {result.Errors.First().Description}.\n";
             }
 
             if (model.NickName != null)
             {
                 user.NickName = model.NickName;
-                var result = await userManager.UpdateAsync(user);
+                var result = await UserManager.UpdateAsync(user);
                 if (!result.Succeeded) msg += $"Error in set nickname: {result.Errors.First().Description}.\n";
             }
 
@@ -149,18 +148,28 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
                 .ToDictionaryAsync(r => r.Id);
             hasRole = roles.Keys.Intersect(hasRole).ToArray();
             model.Roles = roles.Keys.Intersect(model.Roles ?? Enumerable.Empty<int>()).ToArray();
-            if (userManager.GetUserName(User) == user.UserName)
+            if (UserManager.GetUserName(User) == user.UserName)
                 model.Roles = model.Roles.Append(-1).Distinct().ToArray();
-            var r1 = await userManager.AddToRolesAsync(user,
+            var r1 = await UserManager.AddToRolesAsync(user,
                 model.Roles.Except(hasRole).Select(i => roles[i].Name));
-            var r2 = await userManager.RemoveFromRolesAsync(user,
+            var r2 = await UserManager.RemoveFromRolesAsync(user,
                 hasRole.Except(model.Roles).Select(i => roles[i].Name));
-            await userManager.SlideExpirationAsync(user);
+            await UserManager.SlideExpirationAsync(user);
             if (!r1.Succeeded) msg += $"Error in adding roles: {r1.Errors.First().Description}.\n";
             if (!r2.Succeeded) msg += $"Error in removing roles: {r2.Errors.First().Description}.\n";
 
             if (msg == "") msg = null;
-            StatusMessage = msg;
+            StatusMessage = msg ?? $"User u{uid} updated successfully.";
+
+            DbContext.Auditlogs.Add(new Auditlog
+            {
+                Action = "updated",
+                DataId = $"{uid}",
+                DataType = AuditlogType.User,
+                Time = System.DateTimeOffset.Now,
+                UserName = UserManager.GetUserName(User)
+            });
+
             return RedirectToAction(nameof(Detail), new { uid });
         }
     }

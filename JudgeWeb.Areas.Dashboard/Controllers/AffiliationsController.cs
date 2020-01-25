@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -15,13 +14,37 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
     [Route("[area]/[controller]")]
     public class AffiliationsController : Controller3
     {
-        public AffiliationsController(AppDbContext db) : base(db) { }
+        private async Task AuditlogAsync(TeamAffiliation aff, string act)
+        {
+            // solve the events
+            var now = System.DateTimeOffset.Now;
+            var cts = await DbContext.Contests
+                .Where(c => c.EndTime == null || c.EndTime > now)
+                .Select(c => c.ContestId)
+                .ToArrayAsync();
+            DbContext.Events.AddRange(cts.Select(t =>
+                new Data.Api.ContestOrganization(aff).ToEvent(act, t)));
+
+            // solve the auditlogs
+            DbContext.Auditlogs.Add(new Auditlog
+            {
+                Action = act + "d",
+                DataId = $"{aff.AffiliationId}",
+                DataType = AuditlogType.TeamAffiliation,
+                UserName = UserManager.GetUserName(User),
+                Time = now,
+            });
+
+            await DbContext.SaveChangesAsync();
+        }
+
 
         [HttpGet]
         public async Task<IActionResult> List()
         {
             return View(await DbContext.TeamAffiliations.ToListAsync());
         }
+
 
         [HttpGet("{affid}")]
         public async Task<IActionResult> Detail(int affid)
@@ -33,8 +56,10 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
             return View(aff);
         }
 
+
         [HttpGet("[action]")]
         public IActionResult Add() => View("Edit", new TeamAffiliation());
+
 
         [HttpGet("{affid}/[action]")]
         public async Task<IActionResult> Edit(int affid)
@@ -45,6 +70,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
             if (aff == null) return NotFound();
             return View(aff);
         }
+
 
         private async Task SolveLogo(IFormFile logo, string extid)
         {
@@ -68,6 +94,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
             }
         }
 
+
         [HttpPost("[action]")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Add(TeamAffiliation model, IFormFile logo)
@@ -78,17 +105,11 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
             var e = DbContext.TeamAffiliations.Add(model);
             await DbContext.SaveChangesAsync();
             await SolveLogo(logo, model.ExternalId);
-
-            var now = System.DateTimeOffset.Now;
-            var cts = await DbContext.Contests
-                .Where(c => c.EndTime == null || c.EndTime > now)
-                .Select(c => c.ContestId)
-                .ToArrayAsync();
-            DbContext.Events.AddRange(cts.Select(t =>
-                new Data.Api.ContestOrganization(e.Entity).ToEvent("create", t)));
+            await AuditlogAsync(e.Entity, "create");
 
             return RedirectToAction(nameof(Detail), new { affid = e.Entity.AffiliationId });
         }
+
 
         [HttpPost("{affid}/[action]")]
         [ValidateAntiForgeryToken]
@@ -105,19 +126,14 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
             aff.ExternalId = model.ExternalId;
             aff.CountryCode = model.CountryCode;
 
-            var now = System.DateTimeOffset.Now;
-            var cts = await DbContext.Contests
-                .Where(c => c.EndTime == null || c.EndTime > now)
-                .Select(c => c.ContestId)
-                .ToArrayAsync();
-            DbContext.Events.AddRange(cts.Select(t =>
-                new Data.Api.ContestOrganization(aff).ToEvent("update", t)));
-
             DbContext.TeamAffiliations.Update(aff);
             await DbContext.SaveChangesAsync();
             await SolveLogo(logo, model.ExternalId);
+            await AuditlogAsync(aff, "update");
+
             return RedirectToAction(nameof(Detail), new { affid });
         }
+
 
         [HttpGet("{affid}/[action]")]
         [ValidateInAjax]
@@ -132,12 +148,10 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
                 title: $"Delete team affiliation {desc.ExternalId} - \"{desc.FormalName}\"",
                 message: $"You're about to delete team affiliation {desc.ExternalId} - \"{desc.FormalName}\".\n" +
                     "Are you sure?",
-                area: "Dashboard",
-                ctrl: "Affiliations",
-                act: "Delete",
-                routeValues: new Dictionary<string, string> { { "affid", affid.ToString() } },
+                area: "Dashboard", ctrl: "Affiliations", act: "Delete",
                 type: MessageType.Danger);
         }
+
 
         [HttpPost("{affid}/[action]")]
         [ValidateAntiForgeryToken]
@@ -148,20 +162,12 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
                 .FirstOrDefaultAsync();
             if (desc == null) return NotFound();
 
-            DbContext.TeamAffiliations.Remove(desc);
-
-            var now = System.DateTimeOffset.Now;
-            var cts = await DbContext.Contests
-                .Where(c => c.EndTime == null || c.EndTime > now)
-                .Select(c => c.ContestId)
-                .ToArrayAsync();
-            DbContext.Events.AddRange(cts.Select(t =>
-                new Data.Api.ContestOrganization(desc).ToEvent("delete", t)));
-
             try
             {
+                DbContext.TeamAffiliations.Remove(desc);
                 await DbContext.SaveChangesAsync();
                 StatusMessage = $"Team affiliation {desc.ExternalId} deleted successfully.";
+                await AuditlogAsync(desc, "delete");
             }
             catch (DbUpdateException)
             {

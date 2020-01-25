@@ -6,6 +6,7 @@ using JudgeWeb.Features.Storage;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,15 +22,6 @@ namespace JudgeWeb.Areas.Contest.Controllers
         {
             await DbContext.UpdateContestAsync(Contest.ContestId, template, contents);
 
-            InternalLog(new AuditLog
-            {
-                Comment = "updated",
-                ContestId = Contest.ContestId,
-                EntityId = Contest.ContestId,
-                Resolved = true,
-                Type = AuditLog.TargetType.Contest,
-            });
-
             var newcont = await DbContext.GetContestAsync(Contest.ContestId);
 
             DbContext.Events.Add(
@@ -39,6 +31,8 @@ namespace JudgeWeb.Areas.Contest.Controllers
             DbContext.Events.Add(
                 new Data.Api.ContestTime(newcont)
                     .ToEvent("update", Contest.ContestId));
+
+            InternalLog(AuditlogType.Contest, $"{Contest.ContestId}", "updated");
 
             await DbContext.SaveChangesAsync();
         }
@@ -119,6 +113,10 @@ namespace JudgeWeb.Areas.Contest.Controllers
                     .Where(c => c.ContestId == cid)
                     .Select(c => new Data.Api.ContestClarification(c, Contest.StartTime.Value))
                     .ToListAsync());
+            await DbContext.SaveChangesAsync();
+
+            InternalLog(AuditlogType.Scoreboard, null, "reset event");
+            await DbContext.SaveChangesAsync();
 
             StatusMessage = "Event feed reset.";
             return RedirectToAction(nameof(Home));
@@ -171,13 +169,13 @@ namespace JudgeWeb.Areas.Contest.Controllers
         public async Task<IActionResult> Auditlog(int cid, int page = 1)
         {
             if (page <= 0) return NotFound();
-            var counts = await DbContext.AuditLogs
+            var counts = await DbContext.Auditlogs
                 .Where(l => l.ContestId == cid)
                 .CachedCountAsync($"`c{cid}`logcount", TimeSpan.FromSeconds(15));
             int totalPage = (counts + 999) / 1000;
             if (page > totalPage) return NotFound();
 
-            var model = await DbContext.AuditLogs
+            var model = await DbContext.Auditlogs
                 .Where(l => l.ContestId == cid)
                 .OrderByDescending(l => l.LogId)
                 .Skip((page - 1) * 1000).Take(1000)
@@ -275,6 +273,8 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 nameof(Contest.FreezeTime),
                 nameof(Contest.UnfreezeTime));
 
+            InternalLog(AuditlogType.Contest, $"{Contest.ContestId}", "changed time");
+            await DbContext.SaveChangesAsync();
             return GoBackHome("Contest state changed.");
         }
 
@@ -288,7 +288,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 where s.ContestId == cid
                 join t in DbContext.Teams on new { s.ContestId, TeamId = s.Author } equals new { t.ContestId, t.TeamId }
                 join c in DbContext.TeamCategories on t.CategoryId equals c.CategoryId
-                select new Data.Ext.Balloon(b, s.ProblemId, s.Author, t.TeamName, t.Location, s.Time, c.Name, c.SortOrder);
+                select new Balloon(b, s.ProblemId, s.Author, t.TeamName, t.Location, s.Time, c.Name, c.SortOrder);
 
             var balloons = await balloonQuery.ToListAsync();
             balloons.Sort((b1, b2) => b1.Time.CompareTo(b2.Time));
@@ -323,7 +323,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
 
             await DbContext.Balloon
                 .Where(b => bquery.Contains(b.Id))
-                .BatchUpdateAsync(b => new Data.Ext.Balloon { Done = true });
+                .BatchUpdateAsync(b => new Balloon { Done = true });
 
             return RedirectToAction(nameof(Balloon));
         }
@@ -350,10 +350,14 @@ namespace JudgeWeb.Areas.Contest.Controllers
             {
                 var result = await UserManager
                     .AddToRoleAsync(user, $"JuryOfContest{cid}");
-                await UserManager.SlideExpirationAsync(user);
 
                 if (result.Succeeded)
+                {
+                    await UserManager.SlideExpirationAsync(user);
                     StatusMessage = $"Jury role of user {user.UserName} assigned.";
+                    InternalLog(AuditlogType.User, $"{user.Id}", "assigned jury");
+                    await DbContext.SaveChangesAsync();
+                }
                 else
                     StatusMessage = "Error " + string.Join('\n', result.Errors.Select(e => e.Description));
             }
@@ -388,10 +392,14 @@ namespace JudgeWeb.Areas.Contest.Controllers
             if (user == null) return NotFound();
             var result = await UserManager
                 .RemoveFromRoleAsync(user, $"JuryOfContest{cid}");
-            await UserManager.SlideExpirationAsync(user);
 
             if (result.Succeeded)
+            {
                 StatusMessage = $"Jury role of user {user.UserName} unassigned.";
+                await UserManager.SlideExpirationAsync(user);
+                InternalLog(AuditlogType.User, $"{uid}", "unassigned jury");
+                await DbContext.SaveChangesAsync();
+            }
             else
                 StatusMessage = "Error " + string.Join('\n', result.Errors.Select(e => e.Description));
             return RedirectToAction(nameof(Home));
@@ -556,11 +564,16 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 nameof(update.PrintingAvaliable),
                 nameof(update.BalloonAvaliable));
 
+            InternalLog(AuditlogType.Contest, $"{cid}", "updated", "via edit-page");
+            await DbContext.SaveChangesAsync();
+
             StatusMessage = "Contest updated successfully.";
             if (contestTimeChanged)
             {
                 StatusMessage += " Scoreboard cache will be refreshed later.";
-                RefreshScoreboardCache(cid);
+                HttpContext.RequestServices
+                    .GetRequiredService<IScoreboardService>()
+                    .RefreshCache(Contest, DateTimeOffset.Now);
             }
 
             return RedirectToAction(nameof(Home));
@@ -570,10 +583,13 @@ namespace JudgeWeb.Areas.Contest.Controllers
         [HttpPost("[action]")]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Administrator")]
-        public IActionResult RefreshCache(int cid, bool post = true)
+        public async Task<IActionResult> RefreshCache(int cid,
+            [FromServices] IScoreboardService scoreboardService)
         {
-            RefreshScoreboardCache(cid);
+            scoreboardService.RefreshCache(Contest, DateTimeOffset.Now);
             StatusMessage = "Scoreboard cache will be refreshed in minutes...";
+            InternalLog(AuditlogType.Scoreboard, null, "refresh cache");
+            await DbContext.SaveChangesAsync();
             return RedirectToAction(nameof(Home));
         }
 
@@ -613,6 +629,9 @@ namespace JudgeWeb.Areas.Contest.Controllers
             model.Markdown = model.Markdown ?? "";
             await io.WritePartAsync($"c{cid}", "readme.md", model.Markdown);
             await io.WritePartAsync($"c{cid}", "readme.html", md.Render(model.Markdown));
+
+            InternalLog(AuditlogType.Contest, $"{cid}", "updated", "description");
+            await DbContext.SaveChangesAsync();
             return View(model);
         }
 

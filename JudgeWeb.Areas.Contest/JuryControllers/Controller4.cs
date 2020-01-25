@@ -1,7 +1,6 @@
 ﻿using JudgeWeb.Areas.Contest.Models;
 using JudgeWeb.Data;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
@@ -26,16 +25,6 @@ namespace JudgeWeb.Areas.Contest.Controllers
 
             ViewData["InJury"] = true;
             return base.OnActionExecutingAsync(context);
-        }
-
-        protected void RefreshScoreboardCache(int cid)
-        {
-            DbContext.UpdateScoreboard(new ScoreboardState
-            {
-                ContestId = cid,
-                SubmissionId = -1,
-                Time = DateTimeOffset.Now,
-            });
         }
 
         protected async Task<IEnumerable<SubmissionViewModel>> ListSubmissionsByJuryAsync(

@@ -3,6 +3,7 @@ using JudgeWeb.Data;
 using JudgeWeb.Features;
 using JudgeWeb.Features.Mailing;
 using JudgeWeb.Features.OjUpdate;
+using JudgeWeb.Features.Scoreboard;
 using JudgeWeb.Features.Storage;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
@@ -107,7 +108,7 @@ namespace JudgeWeb
             services.AddOjUpdateService(
                 Environment.IsDevelopment() ? 24 * 7 * 60 : 3 * 24 * 60);
             services.AddHostedService<ArchiveCacheService>();
-            services.AddHostedService<Features.Scoreboard.ScoreboardUpdateService>();
+            services.AddScoreboard();
 
             services.AddProblemRepository();
             services.AddMarkdown();
