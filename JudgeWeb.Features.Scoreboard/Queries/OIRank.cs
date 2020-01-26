@@ -175,7 +175,7 @@ namespace JudgeWeb.Features.Scoreboard
                 if (!scc.ContainsKey((s.TeamId, s.ProblemId)))
                     scc.Add((s.TeamId, s.ProblemId), new ScoreCache { ContestId = cid, TeamId = s.TeamId, ProblemId = s.ProblemId });
                 var sc = scc[(s.TeamId, s.ProblemId)];
-                if (sc.IsCorrectRestricted || s.Status == Verdict.CompileError) continue;
+                if (s.Status == Verdict.CompileError) continue;
 
                 if (s.Status == Verdict.Running || s.Status == Verdict.Pending)
                 {
