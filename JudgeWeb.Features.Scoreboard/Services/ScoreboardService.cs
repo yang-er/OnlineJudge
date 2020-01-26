@@ -30,6 +30,7 @@ namespace JudgeWeb.Features.Scoreboard
                 SubmissionId = judging.SubmissionId,
                 SubmitTime = time,
                 TeamId = teamid,
+                TotalScore = judging.TotalScore,
             });
         }
 

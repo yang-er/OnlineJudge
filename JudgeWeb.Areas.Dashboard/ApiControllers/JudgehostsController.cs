@@ -426,6 +426,7 @@ namespace JudgeWeb.Areas.Api.Controllers
 
             var tcs = await DbContext.Testcases
                 .Where(t => t.ProblemId == problem.ProblemId)
+                .OrderBy(t => t.Rank)
                 .Select(t =>
                     new TestcaseToJudge
                     {
@@ -459,7 +460,7 @@ namespace JudgeWeb.Areas.Api.Controllers
                 run_md5sum = md5s.First(a => a.ExecId == problem.RunScript).Md5sum,
                 compile_script_md5sum = md5s.First(a => a.ExecId == lang.CompileScript).Md5sum,
                 judgingid = judging.JudgingId,
-                full_judge = full,
+                full_judge = full && (cccid == 0 || judging.RejudgeId != null),
                 testcases = tcs
             };
         }

@@ -64,12 +64,12 @@ namespace JudgeWeb.Features.Scoreboard
             }
 
             writer.Write("</table><style>");
-            foreach (var (color, name) in _model.ShowCategory)
+            foreach (var (color, _) in _model.ShowCategory)
                 writer.Write($".cl_{color.Substring(1)}{{background-color:{color};}}");
             writer.WriteLine("</style>");
 
             if (_usefoot)
-                BoardFooterContent.WriteTo(_model.ShowCategory, writer, encoder);
+                BoardFooterContent.WriteTo(_model.ShowCategory, writer, encoder, _model.Contest.RankingStrategy);
         }
     }
 }

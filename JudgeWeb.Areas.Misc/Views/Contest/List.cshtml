@@ -1,11 +1,13 @@
 ﻿@model IEnumerable<ContestListModel>
 @{
     ViewData["Title"] = "Contests";
+    HashSet<int> rg = ViewBag.RegisteredContests;
 
     string ContestState(ContestListModel c)
     {
         if (!c.StartTime.HasValue) return "table-primary";
-        if (DateTime.Now < c.EndTime) return "table-warning";
+        if (DateTimeOffset.Now < c.StartTime) return "table-warning";
+        if (DateTimeOffset.Now < c.EndTime) return "table-success";
         return "";
     }
 }
@@ -25,7 +27,7 @@
     <tbody>
         @foreach (var contest in Model)
         {
-        <if cond="@(contest.IsPublic || contest.IsRegistered || User.IsInRoles("Administrator,JuryOfContest"+contest.ContestId))">
+        <if cond="@(contest.IsPublic || rg.Contains(contest.ContestId) || User.IsInRoles("Administrator,JuryOfContest"+contest.ContestId))">
             <tr class="@ContestState(contest)">
                 <td class="bowtie">
                     <if cond="!contest.IsPublic">

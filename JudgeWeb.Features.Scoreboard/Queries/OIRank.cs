@@ -14,7 +14,9 @@ namespace JudgeWeb.Features.Scoreboard
         public IEnumerable<BoardQuery> SortByRule(IEnumerable<BoardQuery> source, bool isPublic)
             => isPublic
                 ? source.OrderByDescending(a => a.Rank.PointsPublic)
-                : source.OrderByDescending(a => a.Rank.PointsRestricted);
+                    .ThenBy(a => a.Rank.TotalTimePublic)
+                : source.OrderByDescending(a => a.Rank.PointsRestricted)
+                    .ThenBy(a => a.Rank.TotalTimeRestricted);
 
 
         public Task Accept(AppDbContext db, ScoreboardEventArgs args)
@@ -44,7 +46,6 @@ namespace JudgeWeb.Features.Scoreboard
             }
 
             return db.Score(args)
-                .Where(s => !s.IsCorrectRestricted)
                 .BatchUpdateAsync(scp);
         }
 
@@ -67,7 +68,6 @@ namespace JudgeWeb.Features.Scoreboard
             else
             {
                 await db.Score(args)
-                    .Where(s => !s.IsCorrectRestricted)
                     .BatchUpdateAsync(s => new ScoreCache
                     {
                         PendingPublic = s.PendingPublic + 1,
@@ -80,7 +80,7 @@ namespace JudgeWeb.Features.Scoreboard
         public async Task Reject(AppDbContext db, ScoreboardEventArgs args)
         {
             var sr = await (from t in db.Teams
-                            where t.TeamId == args.TeamId
+                            where t.TeamId == args.TeamId && t.ContestId == args.ContestId
                             join scc in db.ScoreCache on new { t.ContestId, t.TeamId, args.ProblemId } equals new { scc.ContestId, scc.TeamId, scc.ProblemId }
                             into sccs from scc in sccs.DefaultIfEmpty()
                             join rcc in db.RankCache on new { t.ContestId, t.TeamId } equals new { rcc.ContestId, rcc.TeamId }
@@ -117,16 +117,17 @@ namespace JudgeWeb.Features.Scoreboard
             }
 
             // first blood
-            rc.PointsRestricted -= (int)sc.SolveTimeRestricted;
+            rc.PointsRestricted -= (int)sc.SolveTimeRestricted / 60;
             var allScore = await (from t in db.Testcases
                                   where t.ProblemId == args.ProblemId
                                   select t.Point).SumAsync();
             sc.FirstToSolve = allScore == args.TotalScore;
-            sc.SolveTimeRestricted = args.TotalScore;
+            sc.SolveTimeRestricted = args.TotalScore * 60;
             sc.IsCorrectRestricted = args.TotalScore > 0;
             sc.PendingRestricted--;
             sc.SubmissionRestricted++;
-            rc.PointsRestricted += (int)sc.SolveTimeRestricted;
+            rc.PointsRestricted += args.TotalScore;
+            rc.TotalTimeRestricted = (int)(DateTimeOffset.Now - args.ContestTime).TotalMinutes;
 
             if (!args.Frozen)
             {
@@ -153,6 +154,14 @@ namespace JudgeWeb.Features.Scoreboard
                 select new { s.SubmissionId, TeamId = s.Author, s.ProblemId, s.Time, j.Status, j.TotalScore };
             var results = await query.ToListAsync();
 
+            var scrs =
+                from cp in db.ContestProblem
+                where cp.ContestId == cid
+                join t in db.Testcases on cp.ProblemId equals t.ProblemId
+                select new { cp.ProblemId, t.Point };
+            var q = await scrs.ToListAsync();
+            var full = q.GroupBy(a => a.ProblemId).ToDictionary(a => a.Key, a => a.Sum(aa => aa.Point));
+
             var rcc = new Dictionary<int, RankCache>();
             var scc = new Dictionary<(int, int), ScoreCache>();
             var endTime = args.EndTime < args.SubmitTime ? args.EndTime : args.SubmitTime;
@@ -174,7 +183,8 @@ namespace JudgeWeb.Features.Scoreboard
 
                 sc.SubmissionRestricted++;
                 sc.IsCorrectRestricted = s.TotalScore != 0;
-                sc.SolveTimeRestricted = s.TotalScore;
+                sc.SolveTimeRestricted = s.TotalScore * 60;
+                sc.FirstToSolve = s.TotalScore == full.GetValueOrDefault(s.ProblemId);
 
                 if (args.FreezeTime.HasValue && s.Time >= args.FreezeTime.Value)
                 {
@@ -198,9 +208,11 @@ namespace JudgeWeb.Features.Scoreboard
 
                 foreach (var rr in r)
                 {
-                    item.PointsPublic += (int)rr.SolveTimePublic;
-                    item.PointsRestricted += (int)rr.SolveTimeRestricted;
+                    item.PointsPublic += (int)(rr.SolveTimePublic / 60.0);
+                    item.PointsRestricted += (int)(rr.SolveTimeRestricted / 60.0);
                 }
+
+                rcc.Add(r.Key, item);
             }
 
             await db.ScoreCache

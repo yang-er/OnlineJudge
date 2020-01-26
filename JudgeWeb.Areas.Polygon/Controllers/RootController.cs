@@ -173,7 +173,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
 
                 var u = await UserManager.GetUserAsync(User);
                 await UserManager.AddToRoleAsync(u, "AuthorOfProblem" + prob.ProblemId);
-                await UserManager.UpdateSecurityStampAsync(u);
+                await UserManager.SlideExpirationAsync(u);
 
                 return RedirectToAction(
                     actionName: "Overview",

@@ -1,9 +1,10 @@
-﻿using JudgeWeb.Data.Api;
+﻿using JudgeWeb.Areas.Contest.Models;
+using JudgeWeb.Data;
+using JudgeWeb.Data.Api;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -66,6 +67,40 @@ namespace JudgeWeb.Areas.Api.Controllers
             var contestTime = Contest.StartTime ?? DateTimeOffset.Now;
 
             return new ContestSubmission(cid, ss.LangId, ss.SubmissionId, ss.ProblemId, ss.Author, ss.Time, ss.Time - contestTime);
+        }
+
+        /// <summary>
+        /// Restore a submission for this contest
+        /// </summary>
+        /// <param name="cid">The contest ID</param>
+        /// <param name="model">The content</param>
+        /// <param name="scoreboardService">Internal service</param>
+        /// <param name="submissionManager">Internal service</param>
+        /// <response code="201">Added</response>
+        [HttpPost("[action]")]
+        public async Task<ActionResult<ContestSubmission>> Restore(int cid,
+            RestoreSubmissionModel model,
+            [FromServices] IScoreboardService scoreboardService,
+            [FromServices] SubmissionManager submissionManager)
+        {
+            var lang = await DbContext.Languages
+                .Where(l => l.Id == model.langid)
+                .SingleOrDefaultAsync();
+            if (lang == null) return NotFound();
+
+            var s = await submissionManager.CreateAsync(
+                code: model.code,
+                langid: lang,
+                probid: model.probid,
+                cid: Contest,
+                uid: model.teamid,
+                ipAddr: System.Net.IPAddress.Parse(model.ip),
+                via: "restorer",
+                username: "api");
+
+            scoreboardService.SubmissionCreated(Contest, s);
+            return Created($"/api/contests/{cid}/submissions/{s.SubmissionId}",
+                new ContestSubmission(cid, lang.Id, s.SubmissionId, s.ProblemId, s.Author, s.Time, s.Time - (Contest.StartTime ?? DateTimeOffset.Now)));
         }
     }
 }

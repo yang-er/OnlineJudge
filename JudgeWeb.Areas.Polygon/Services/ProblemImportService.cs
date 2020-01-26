@@ -244,6 +244,12 @@ namespace JudgeWeb.Areas.Polygon.Services
                 var desc = zip.GetEntry(prefix + file + ".desc");
                 var point = zip.GetEntry(prefix + file + ".point");
 
+                string usedParts = "in,out";
+                if (outp == null)
+                    outp = zip.GetEntry(prefix + file + ".out");
+                else
+                    usedParts = "in,ans";
+
                 if (inp == null || outp == null)
                 {
                     Log($"Ignoring {prefix}{file}.*");
@@ -272,6 +278,8 @@ namespace JudgeWeb.Areas.Polygon.Services
                         var content = await reader.ReadToEndAsync();
                         tc.Description = string.IsNullOrWhiteSpace(content) ? file : content.Trim();
                     }
+
+                    usedParts += ",desc";
                 }
 
                 if (point != null)
@@ -283,6 +291,8 @@ namespace JudgeWeb.Areas.Polygon.Services
                         if (int.TryParse(content.Trim(), out int pnt))
                             tc.Point = pnt;
                     }
+
+                    usedParts += ",point";
                 }
 
                 var inp2 = await File.ReadAllBytesAsync($"{guid}.in");
@@ -293,7 +303,8 @@ namespace JudgeWeb.Areas.Polygon.Services
                 await dbContext.SaveChangesAsync();
                 File.Move($"{guid}.in", $"Problems/p{Problem.ProblemId}/t{t.Entity.TestcaseId}.in");
                 File.Move($"{guid}.ans", $"Problems/p{Problem.ProblemId}/t{t.Entity.TestcaseId}.out");
-                Log($"Adding testcase t{t.Entity.TestcaseId} 'data/{cat}/{file}.{{in,ans}}.");
+
+                Log($"Adding testcase t{t.Entity.TestcaseId} 'data/{cat}/{file}.{{{usedParts}}}.");
             }
         }
 

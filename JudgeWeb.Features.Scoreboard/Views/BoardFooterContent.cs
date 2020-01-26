@@ -13,7 +13,7 @@ namespace JudgeWeb.Features.Scoreboard
 
         public void WriteTo(TextWriter writer, HtmlEncoder encoder) => WriteTo(_cats, writer, encoder);
 
-        public static void WriteTo(HashSet<(string, string)> cats, TextWriter writer, HtmlEncoder encoder)
+        public static void WriteTo(HashSet<(string, string)> cats, TextWriter writer, HtmlEncoder encoder, int rs = 0)
         {
             writer.WriteLine("<p><br /><br /></p>");
 
@@ -36,8 +36,18 @@ namespace JudgeWeb.Features.Scoreboard
 
             writer.WriteLine("<table id=\"cell_legend\" class=\"scoreboard scorelegend\">");
             writer.WriteLine("<thead><tr><th scope=\"col\">Cell colours</th></tr></thead><tbody>");
-            writer.WriteLine("<tr class=\"score_first\"><td>Solved first</td></tr>");
-            writer.WriteLine("<tr class=\"score_correct\"><td>Solved</td></tr>");
+
+            if (rs == 0)
+            {
+                writer.WriteLine("<tr class=\"score_first\"><td>Solved first</td></tr>");
+                writer.WriteLine("<tr class=\"score_correct\"><td>Solved</td></tr>");
+            }
+            else if (rs == 2)
+            {
+                writer.WriteLine("<tr class=\"score_first\"><td>Solved</td></tr>");
+                writer.WriteLine("<tr class=\"score_correct\"><td>Partially correct</td></tr>");
+            }
+            
             writer.WriteLine("<tr class=\"score_incorrect\"><td>Tried, incorrect</td></tr>");
             writer.WriteLine("<tr class=\"score_pending\"><td>Tried, pending</td></tr>");
             writer.WriteLine("<tr class=\"score_neutral\"><td>Untried</td></tr>");
