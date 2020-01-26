@@ -65,9 +65,10 @@
         editor0.session.setMode({ path: lang, v: Date.now() });
     }
 
-    var langlist = ["", "c_cpp", "c_cpp", "java", "python", "python",
-        "pascal", "csharp", "kotlin", "haskell", "perl", "fortran"];
-
+    var langlist = {
+        '': '', 'c': 'c_cpp', 'cpp': 'c_cpp', 'java': 'java',
+        'py2': 'python', 'py3': 'python', 'pas': 'pascal', 'csharp': 'csharp',
+        'kt': 'kotlin', 'pl': 'perl', 'f95': 'fortran' };
     $('#submit-lang').on('change', function () {
         setEditorMode("ace/mode/" + langlist[$(this).val()]);
     });

@@ -50,7 +50,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
                     select new { s.SubmissionId, s.Time, j.Status, s.ProblemId, s.Author, s.Language, d = (Verdict?)d.Status, s.Ip };
                 var result = await query.ToListAsync();
 
-                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(10);
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(3);
 
                 return result
                     .GroupBy(a => new { a.Status, a.SubmissionId, a.Time, a.ProblemId, a.Author, a.Language, a.Ip }, a => a.d)

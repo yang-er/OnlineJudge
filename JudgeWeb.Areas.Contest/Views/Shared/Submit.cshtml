@@ -3,8 +3,8 @@
     Layout = null;
     var prv = (ContestProblem[])ViewData["Problems"];
     var prb_sel = prv.Select(cp => new SelectListItem($"{cp.ShortName} - {cp.Title}", cp.ShortName));
-    var lang = (Dictionary<int,Language>)ViewData["Languages"];
-    var lang_sel = lang.Where(l => l.Value.AllowSubmit).Select(l => new SelectListItem(l.Value.Name, $"{l.Key}"));
+    var lang = (Dictionary<string,Language>)ViewData["Languages"];
+    var lang_sel = lang.Where(l => l.Value.AllowSubmit).Select(l => new SelectListItem(l.Value.Name, l.Key));
 }
 
 <form asp-action="Submit" method="post" name="submit_problem">
@@ -74,9 +74,10 @@
         editor0.session.setMode({ path: lang, v: Date.now() });
     }
 
-    var langlist = ["", "c_cpp", "c_cpp", "java", "python", "python",
-        "pascal", "csharp", "kotlin", "haskell", "perl", "fortran"];
-
+    var langlist = {
+        '': '', 'c': 'c_cpp', 'cpp': 'c_cpp', 'java': 'java',
+        'py2': 'python', 'py3': 'python', 'pas': 'pascal', 'csharp': 'csharp',
+        'kt': 'kotlin', 'pl': 'perl', 'f95': 'fortran' };
     $('#submit-lang').on('change', function () {
         setEditorMode("ace/mode/" + langlist[$(this).val()]);
     });

@@ -132,11 +132,14 @@ namespace JudgeWeb.Areas.Polygon.Controllers
                 from j in DbContext.Judgings
                 where j.JudgingId == jid
                 join s in DbContext.Submissions on j.SubmissionId equals s.SubmissionId
-                select new { sid = s.SubmissionId, pid = s.ProblemId, jid = j.JudgingId };
+                select new { sid = s.SubmissionId, pid = s.ProblemId, jid = j.JudgingId, cid = s.ContestId };
 
             var item = await query.FirstOrDefaultAsync();
             if (item == null) return NotFound();
-            return RedirectToAction("Detail", "Submissions", item);
+            if (item.cid == 0)
+                return RedirectToAction("Detail", "Submissions", new { item.sid, item.jid, item.pid });
+            else
+                return RedirectToAction("Detail", "Submissions", new { area = "Contest", item.cid, item.sid, item.jid });
         }
 
 

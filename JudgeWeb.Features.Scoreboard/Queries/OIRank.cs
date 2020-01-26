@@ -127,7 +127,7 @@ namespace JudgeWeb.Features.Scoreboard
             sc.PendingRestricted--;
             sc.SubmissionRestricted++;
             rc.PointsRestricted += args.TotalScore;
-            rc.TotalTimeRestricted = (int)(DateTimeOffset.Now - args.ContestTime).TotalMinutes;
+            rc.TotalTimeRestricted = (int)(args.SubmitTime - args.ContestTime).TotalMinutes;
 
             if (!args.Frozen)
             {
@@ -136,6 +136,7 @@ namespace JudgeWeb.Features.Scoreboard
                 sc.IsCorrectPublic = sc.IsCorrectRestricted;
                 sc.PendingPublic = sc.PendingRestricted;
                 rc.PointsPublic = rc.PointsRestricted;
+                rc.TotalTimePublic = rc.TotalTimeRestricted;
             }
 
             await db.SaveChangesAsync();
@@ -164,6 +165,8 @@ namespace JudgeWeb.Features.Scoreboard
 
             var rcc = new Dictionary<int, RankCache>();
             var scc = new Dictionary<(int, int), ScoreCache>();
+            var lastop1 = new Dictionary<int, int>();
+            var lastop2 = new Dictionary<int, int>();
             var endTime = args.EndTime < args.SubmitTime ? args.EndTime : args.SubmitTime;
 
             foreach (var s in results)
@@ -185,6 +188,10 @@ namespace JudgeWeb.Features.Scoreboard
                 sc.IsCorrectRestricted = s.TotalScore != 0;
                 sc.SolveTimeRestricted = s.TotalScore * 60;
                 sc.FirstToSolve = s.TotalScore == full.GetValueOrDefault(s.ProblemId);
+                if (lastop2.ContainsKey(s.TeamId))
+                    lastop2[s.TeamId] = (int)(s.Time - args.ContestTime).TotalMinutes;
+                else
+                    lastop2.Add(s.TeamId, (int)(s.Time - args.ContestTime).TotalMinutes);
 
                 if (args.FreezeTime.HasValue && s.Time >= args.FreezeTime.Value)
                 {
@@ -195,6 +202,10 @@ namespace JudgeWeb.Features.Scoreboard
                     sc.SolveTimePublic = sc.SolveTimeRestricted;
                     sc.SubmissionPublic = sc.SubmissionRestricted;
                     sc.IsCorrectPublic = sc.IsCorrectRestricted;
+                    if (lastop1.ContainsKey(s.TeamId))
+                        lastop1[s.TeamId] = (int)(s.Time - args.ContestTime).TotalMinutes;
+                    else
+                        lastop1.Add(s.TeamId, (int)(s.Time - args.ContestTime).TotalMinutes);
                 }
             }
 
@@ -210,6 +221,8 @@ namespace JudgeWeb.Features.Scoreboard
                 {
                     item.PointsPublic += (int)(rr.SolveTimePublic / 60.0);
                     item.PointsRestricted += (int)(rr.SolveTimeRestricted / 60.0);
+                    item.TotalTimePublic = lastop1.GetValueOrDefault(r.Key);
+                    item.TotalTimeRestricted = lastop2.GetValueOrDefault(r.Key);
                 }
 
                 rcc.Add(r.Key, item);
