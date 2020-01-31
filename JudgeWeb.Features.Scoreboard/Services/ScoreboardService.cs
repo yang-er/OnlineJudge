@@ -15,6 +15,7 @@ namespace JudgeWeb.Features.Scoreboard
 
         public void JudgingFinished(Contest contest, DateTimeOffset time, int probid, int teamid, Judging judging)
         {
+            if (time >= (contest.EndTime ?? DateTimeOffset.Now)) return;
             ScoreboardUpdateService.OnUpdateRequested(new ScoreboardEventArgs
             {
                 Balloon = contest.BalloonAvaliable,
@@ -57,6 +58,7 @@ namespace JudgeWeb.Features.Scoreboard
 
         public void SubmissionCreated(Contest contest, Submission submission)
         {
+            if (submission.Time >= (contest.EndTime ?? DateTimeOffset.Now)) return;
             ScoreboardUpdateService.OnUpdateRequested(new ScoreboardEventArgs
             {
                 Balloon = contest.BalloonAvaliable,

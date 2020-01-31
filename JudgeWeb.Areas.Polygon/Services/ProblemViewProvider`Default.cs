@@ -20,7 +20,7 @@ namespace JudgeWeb.Areas.Polygon.Services
         }
 
         public StringBuilder Build(string description,
-            string inputdesc, string outputdesc, string hint,
+            string inputdesc, string outputdesc, string hint, string interact,
             Problem model, List<TestCase> samples)
         {
             var htmlBuilder = new StringBuilder();
@@ -53,6 +53,12 @@ namespace JudgeWeb.Areas.Polygon.Services
             {
                 htmlBuilder.AppendLine("<h3>Output</h3>");
                 htmlBuilder.AppendLine(Markdown.Render(outputdesc));
+            }
+
+            if (!string.IsNullOrEmpty(interact))
+            {
+                htmlBuilder.AppendLine("<h3>Interaction Protocol</h3>");
+                htmlBuilder.AppendLine(Markdown.Render(interact));
             }
 
             if (samples.Count > 0)

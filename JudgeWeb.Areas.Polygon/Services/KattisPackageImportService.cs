@@ -1,6 +1,5 @@
 ﻿using JudgeWeb.Areas.Polygon.Services;
 using JudgeWeb.Data;
-using JudgeWeb.Features.Storage;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -12,22 +11,22 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-[assembly: Inject(typeof(ProblemImportService))]
+[assembly: Inject(typeof(KattisPackageImportService))]
 namespace JudgeWeb.Areas.Polygon.Services
 {
-    public class ProblemImportService
+    public class KattisPackageImportService : IProblemImportService
     {
         #region Static Visitors
 
-        delegate void Visitor(string token, ProblemImportService node);
+        delegate void Visitor(string token, KattisPackageImportService node);
 
         private static readonly Dictionary<string, Visitor> iniParser;
         private static readonly Dictionary<string, Visitor> yamlParser;
 
         private static readonly string[] statements
-            = new[] { "description.md", "hint.md", "inputdesc.md", "outputdesc.md" };
+            = new[] { "description.md", "hint.md", "inputdesc.md", "outputdesc.md", "interact.md" };
 
-        static ProblemImportService()
+        static KattisPackageImportService()
         {
             iniParser = new Dictionary<string, Visitor>();
             yamlParser = new Dictionary<string, Visitor>();
@@ -123,15 +122,15 @@ namespace JudgeWeb.Areas.Polygon.Services
 
         private readonly AppDbContext dbContext;
         private readonly SubmissionManager submissionManager;
-        private readonly ILogger<ProblemImportService> logger;
+        private readonly ILogger<KattisPackageImportService> logger;
 
         public StringBuilder LogBuffer { get; }
 
         public Problem Problem { get; private set; }
 
-        public ProblemImportService(
+        public KattisPackageImportService(
             AppDbContext db, SubmissionManager sub,
-            ILogger<ProblemImportService> logger)
+            ILogger<KattisPackageImportService> logger)
         {
             dbContext = db;
             submissionManager = sub;

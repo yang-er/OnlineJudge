@@ -19,7 +19,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
         private IFileRepository IoContext { get; }
 
         private static readonly string[] AcceptableTarget =
-            new[] { "description", "inputdesc", "outputdesc", "hint" };
+            new[] { "description", "inputdesc", "outputdesc", "hint", "interact" };
 
         public DescriptionController(AppDbContext db, IFileRepository io) : base(db, true)
         {
@@ -46,6 +46,8 @@ namespace JudgeWeb.Areas.Polygon.Controllers
                 .ReadPartAsync($"p{pid}", "outputdesc.md") ?? "";
             var hint = await IoContext
                 .ReadPartAsync($"p{pid}", "hint.md") ?? "";
+            var interact = await IoContext
+                .ReadPartAsync($"p{pid}", "interact.md") ?? "";
 
             var testcases = await DbContext.Testcases
                 .Where(t => t.ProblemId == pid && !t.IsSecret)
@@ -61,7 +63,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
             }
 
            return generator
-                .Build(description, inputdesc, outputdesc, hint, Problem, samples)
+                .Build(description, inputdesc, outputdesc, hint, interact, Problem, samples)
                 .ToString();
         }
 

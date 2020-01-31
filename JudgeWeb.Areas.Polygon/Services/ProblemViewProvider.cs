@@ -11,7 +11,7 @@ namespace JudgeWeb.Areas.Polygon.Services
     public interface IProblemViewProvider
     {
         StringBuilder Build(string description,
-            string inputdesc, string outputdesc, string hint,
+            string inputdesc, string outputdesc, string hint, string interact,
             Problem problem, List<TestCase> samples);
     }
 }

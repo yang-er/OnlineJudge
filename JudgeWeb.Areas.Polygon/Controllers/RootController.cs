@@ -150,18 +150,28 @@ namespace JudgeWeb.Areas.Polygon.Controllers
             return Window();
         }
 
+        static readonly Dictionary<string, Type> ImportServiceKinds =
+            new Dictionary<string, Type>
+            {
+                ["kattis"] = typeof(KattisPackageImportService),
+                ["xysxml"] = typeof(XmlPackageImportService),
+            };
 
         [HttpPost("[action]")]
         [ValidateInAjax]
         [ValidateAntiForgeryToken]
         [RequestSizeLimit(1 << 30)]
         [RequestFormLimits2(1 << 30)]
-        public async Task<IActionResult> Import(IFormFile file,
-            [FromServices] ProblemImportService importer,
+        public async Task<IActionResult> Import(IFormFile file, string type,
             [FromServices] RoleManager<Role> roleManager)
         {
             try
             {
+                if (!ImportServiceKinds.TryGetValue(type, out var importType))
+                    return BadRequest();
+                var importer = (IProblemImportService)
+                    HttpContext.RequestServices.GetService(importType);
+
                 var prob = await importer.ImportAsync(
                     zipFile: file,
                     username: UserManager.GetUserName(User));
