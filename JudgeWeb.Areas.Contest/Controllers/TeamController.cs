@@ -132,7 +132,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
         [HttpGet("problems/{prob}")]
         public async Task<IActionResult> Problemset(string prob, [FromServices] IFileRepository pe)
         {
-            if (TooEarly) return NotFound();
+            if (TooEarly && !ViewData.ContainsKey("IsJury")) return NotFound();
             var problem = Problems.Find(prob);
             if (problem == null) return NotFound();
 

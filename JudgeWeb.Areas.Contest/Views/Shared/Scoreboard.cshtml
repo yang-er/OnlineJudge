@@ -12,6 +12,7 @@
     var affs = Model.Affiliations.Where(a => a.AffiliationId != 0 || inJury);
     var grps = Model.Categories.Where(g => g.IsPublic || inJury);
     var state = Model.Contest.GetState();
+    var dateFormat = System.Globalization.CultureInfo.GetCultureInfo(1033);
 }
 
 <div class="card">
@@ -23,7 +24,7 @@
             </if>
             <if cond="@(state == ContestState.ScheduledToStart)">
                 <if cond="@(Model.Contest.StartTime.Value.Date > DateTimeOffset.Now)">
-                    scheduled to start on @Model.Contest.StartTime
+                    scheduled to start on @string.Format(dateFormat, "{0:ddd, dd MMM yyyy HH:mm:ss CST}", Model.Contest.StartTime)
                 </if>
                 <if cond="@(Model.Contest.StartTime.Value.Date < DateTimeOffset.Now)">
                     scheduled to start on @Model.Contest.StartTime?.ToString("HH:mm")
@@ -108,7 +109,7 @@ else
 }
 
 <p id="lastmod">
-    Last Update: @string.Format("{0:R}", Model.UpdateTime).Replace("GMT", "CST")<br />
+    Last Update: @string.Format(dateFormat, "{0:ddd, dd MMM yyyy HH:mm:ss CST}", Model.UpdateTime)<br />
     using <a href="https://www.domjudge.org/" rel="nofollow" target="_top">DOMjudge</a> judgehost and theme
 </p>
 

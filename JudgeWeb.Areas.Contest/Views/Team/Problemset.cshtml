@@ -6,7 +6,7 @@
 
 <h1 class="mt-4 text-center">Contest problems</h1>
 
-@if ((cts.StartTime ?? DateTimeOffset.MaxValue) > DateTimeOffset.Now)
+@if ((cts.StartTime ?? DateTimeOffset.MaxValue) > DateTimeOffset.Now && !ViewData.ContainsKey("IsJury"))
 {
     <div class="alert alert-secondary mt-4">No problem texts available at this point.</div>
 }
