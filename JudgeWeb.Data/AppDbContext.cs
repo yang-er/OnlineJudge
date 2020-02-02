@@ -12,6 +12,8 @@ namespace JudgeWeb.Data
         }
 
         public virtual DbSet<Student> Students { get; set; }
+        public virtual DbSet<TeachingClass> Classes { get; set; }
+        public virtual DbSet<ClassStudent> ClassStudent { get; set; }
         public virtual DbSet<PersonRank> PersonRanks { get; set; }
         public virtual DbSet<News> News { get; set; }
         public virtual DbSet<Auditlog> Auditlogs { get; set; }
@@ -50,6 +52,8 @@ namespace JudgeWeb.Data
             modelBuilder.ApplyConfiguration<User>(this);
             modelBuilder.ApplyConfiguration<Role>(this);
             modelBuilder.ApplyConfiguration<Student>(this);
+            modelBuilder.ApplyConfiguration<TeachingClass>(this);
+            modelBuilder.ApplyConfiguration<ClassStudent>(this);
             modelBuilder.ApplyConfiguration<PersonRank>(this);
             modelBuilder.ApplyConfiguration<News>(this);
             modelBuilder.ApplyConfiguration<Auditlog>(this);

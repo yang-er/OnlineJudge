@@ -19,9 +19,19 @@ namespace JudgeWeb.Data
         public string Name { get; set; }
 
         /// <summary>
-        /// 学生行政班
+        /// 对应本站用户名
         /// </summary>
-        public int Class { get; set; }
+        public string UserName { get; set; }
+
+        /// <summary>
+        /// 学生邮箱
+        /// </summary>
+        public string StudentEmail { get; set; }
+
+        /// <summary>
+        /// 是否验证通过
+        /// </summary>
+        public bool? IsVerified { get; set; }
     }
 
     public partial class AppDbContext : IEntityTypeConfiguration<Student>
@@ -35,6 +45,12 @@ namespace JudgeWeb.Data
 
             entity.Property(s => s.Id)
                 .ValueGeneratedNever();
+
+            entity.Ignore(s => s.UserName);
+
+            entity.Ignore(s => s.StudentEmail);
+
+            entity.Ignore(s => s.IsVerified);
         }
     }
 }

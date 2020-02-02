@@ -1,0 +1,75 @@
+﻿@model IEnumerable<Student>
+@{
+    ViewData["Title"] = "Students";
+    int curPage = ViewBag.Page;
+    int totPage = ViewBag.TotalPage;
+}
+
+<h2 class="mt-2 mb-3">@ViewData["Title"]</h2>
+
+<div class="d-none" id="paging">
+    <partial name="_Pagination" model="(curPage, totPage)" />
+</div>
+
+<div class="table-wrapper">
+    <table class="data-table table table-sm table-striped" style="width:auto">
+        <thead>
+            <tr role="row">
+                <th scope="col" class="sortable searchable">ID</th>
+                <th scope="col" class="sortable searchable">name</th>
+                <th scope="col" class="sortable searchable">user</th>
+                <th scope="col" class="sortable searchable">email</th>
+                <th></th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var stu in Model)
+            {
+                <tr asp-area="Account" asp-controller="Profile" asp-action="Show" asp-route-username="@stu.UserName" role="row" data-toggle="gotoUrl">
+                    <td use-a>@stu.Id</td>
+                    <td use-a>@stu.Name</td>
+                    <td class="@(stu.UserName != null ? "" : "disabled")" colspan="@(stu.UserName != null ? "1" : "2")" use-a>@(stu.UserName == null ? "none" : stu.UserName)</td>
+                    <if cond="@(stu.UserName != null)">
+                        <td class="@(stu.IsVerified.GetValueOrDefault() ? "" : "text-decoration-del")" use-a>@stu.StudentEmail</td>
+                    </if>
+                    <td><if cond="stu.UserName != null"><a asp-action="Unlink" asp-route-stuid="@stu.Id" title="unlink this student with account" data-toggle="ajaxWindow" data-target="unlinkStud"><i class="fas fa-unlink"></i></a></if></td>
+                    <td><a asp-action="Delete" asp-route-stuid="@stu.Id" title="delete this student" data-toggle="ajaxWindow" data-target="deleteStud"><i class="fas fa-trash-alt"></i></a></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<style>
+    .text-decoration-del { text-decoration: line-through; }
+</style>
+
+<script>
+    $().ready(function () {
+        $('.data-table').DataTable({
+            "paging": false,
+            "searching": true,
+            "ordering": true,
+            "order": [[0, 'asc']],
+            "info": false,
+            "autoWidth": true,
+            "language": {
+                "searchPlaceholder": "filter table",
+                "search": "_INPUT_",
+            },
+            'aoColumnDefs': [
+                { aTargets: ['sortable'], bSortable: true },
+                { aTargets: ['searchable'], bSearchable: true },
+                { aTargets: ['_all'], bSortable: false, bSearchable: false }
+            ],
+        });
+
+        $('.dataTables_wrapper .row:first-child .col-md-6:first-child').html($('#paging').html());
+        $('.dataTables_wrapper .pagination-sm').addClass('mb-0');
+    });
+</script>
+
+<p>
+    <a asp-action="Add" class="btn btn-primary" data-toggle="ajaxWindow" data-target="addStud" title="add students"><i class="fas fa-plus"></i>&nbsp;Add</a>
+</p>

@@ -239,6 +239,18 @@ namespace JudgeWeb.Areas.Account.Controllers
                 return RedirectToAction(nameof(StudentVerify));
             }
 
+            var users = await UserManager.Users
+                .Where(u => u.StudentId == model.StudentId)
+                .CountAsync();
+
+            if (users > 0)
+            {
+                ModelState.AddModelError("XYS.VerifyCount",
+                    "Your student has been verified by other account. " +
+                    "If you believe this is a mistake, please contact us.");
+                return View(model);
+            }
+
             if (!model.Email.EndsWith(_studentMailSuffix))
             {
                 ModelState.AddModelError("XYS.EmailType", "Your email address is not a student mail of JLU.");
