@@ -74,7 +74,9 @@ namespace JudgeWeb.Areas.Contest.Controllers
         public async Task<IActionResult> Detail(int cid, int teamid)
         {
             ViewBag.Submissions = await ListSubmissionsByJuryAsync(cid, teamid);
-            return View(await FindScoreboardAsync(teamid));
+            var model = await FindScoreboardAsync(teamid);
+            if (model == null) return NotFound();
+            return View(model);
         }
 
 

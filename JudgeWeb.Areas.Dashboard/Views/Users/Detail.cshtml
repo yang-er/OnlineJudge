@@ -4,6 +4,7 @@
     IEnumerable<Role> roles = ViewBag.Roles;
     IEnumerable<(Contest, Team, TeamAffiliation, TeamCategory)> teams = ViewBag.Teams;
     IEnumerable<(Submission, Judging)> subs = ViewBag.Submissions;
+    Student student = ViewBag.Student;
 }
 
 <h2 class="mt-2">@ViewData["Title"]</h2>
@@ -14,7 +15,7 @@
             <tr><th>ID</th><td>u@(Model.Id)</td></tr>
             <tr><th>Login</th><td class="text-monospace text-small">@Model.UserName</td></tr>
             <tr><th>Nick name</th><td>@Model.NickName</td></tr>
-            <tr><th>Email</th><td>@Model.Email</td></tr>
+            <tr><th>Email @(Model.EmailConfirmed ? "" : "?")</th><td>@Model.Email</td></tr>
             <tr><th>Password</th><td>@(Model.PasswordHash == null ? "Not set" : "Set")</td></tr>
             <tr><th>Register date</th><td>@Html.CstTime(Model.RegisterTime)</td></tr>
             <tr><th>Plan</th><td>@Model.Plan</td></tr>
@@ -25,6 +26,7 @@
             <tr><th>Roles</th><td>@Html.Raw(string.Join("<br>", roles.Where(r => r.ShortName != null).Select(r => r.Description)))</td></tr>
             <tr><th>Jury of</th><td>@foreach (var r in roles.Where(r => r.Name.StartsWith("JuryOfContest"))) { int cid = int.Parse(r.Name.Substring("JuryOfContest".Length)); <a asp-area="Contest" asp-route-cid="@cid" asp-controller="Public" asp-action="Info">c@(cid)</a> }</td></tr>
             <tr><th>Author of</th><td>@foreach (var r in roles.Where(r => r.Name.StartsWith("AuthorOfProblem"))) { int cid = int.Parse(r.Name.Substring("AuthorOfProblem".Length)); <a asp-area="Contest" asp-route-cid="@cid" asp-controller="Public" asp-action="Info">p@(cid)</a> }</td></tr>
+            <tr><th>Student @(Model.StudentVerified ? "" : "?")</th><td>@student.Id @student.Name</td></tr>
         </table>
     </div>
 </div>

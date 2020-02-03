@@ -39,7 +39,8 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
                     Id = s.Id,
                     IsVerified = u.StudentVerified,
                     Name = s.Name,
-                    StudentEmail = u.StudentEmail,
+                    Email = u.StudentEmail,
+                    UserId = u.Id,
                     UserName = u.UserName,
                 };
 

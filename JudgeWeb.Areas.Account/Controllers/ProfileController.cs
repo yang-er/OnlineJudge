@@ -241,9 +241,9 @@ namespace JudgeWeb.Areas.Account.Controllers
 
             var users = await UserManager.Users
                 .Where(u => u.StudentId == model.StudentId)
-                .CountAsync();
+                .ToListAsync();
 
-            if (users > 0)
+            if (users.Count >= 1 && users.First().Id != user.Id)
             {
                 ModelState.AddModelError("XYS.VerifyCount",
                     "Your student has been verified by other account. " +
@@ -271,6 +271,12 @@ namespace JudgeWeb.Areas.Account.Controllers
             user.StudentEmail = model.Email;
             user.StudentId = model.StudentId;
             await UserManager.UpdateAsync(user);
+
+            var code = await UserManager.GenerateEmail2ConfirmationTokenAsync(user);
+            var callbackUrl = Url.Email2ConfirmationLink(user.Id.ToString(), code, Request.Scheme);
+            await EmailSender.SendEmailConfirmationAsync(user.StudentEmail, callbackUrl);
+
+            StatusMessage = "Verification email sent. Please check your email.";
             return RedirectToAction(nameof(StudentVerify));
         }
 

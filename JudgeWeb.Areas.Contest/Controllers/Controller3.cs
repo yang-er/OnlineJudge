@@ -128,6 +128,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
         {
             var scb = await DbContext.LoadScoreboardAsync(Contest.ContestId);
             var bq = scb.Data.GetValueOrDefault(teamid);
+            if (bq == null) return null;
             var cats = await DbContext.ListTeamCategoryAsync(Contest.ContestId);
 
             return new SingleBoardViewModel

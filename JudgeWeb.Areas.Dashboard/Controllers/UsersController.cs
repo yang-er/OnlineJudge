@@ -76,6 +76,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
             ViewBag.Roles = await roleQuery.ToListAsync();
             ViewBag.Submissions = (await submitQuery.Take(100).ToListAsync()).Select(a => (a.s, a.j));
             ViewBag.Teams = (await teamQuery.ToListAsync()).Select(a => (a.c, a.t, a.a, a.o));
+            ViewBag.Student = await DbContext.Students.Where(s => s.Id == user.StudentId).FirstOrDefaultAsync();
             return View(user);
         }
 

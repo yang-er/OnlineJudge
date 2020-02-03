@@ -51,7 +51,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
                     Language = s.Language,
                     Result = j.Status,
                     Time = s.Time,
-                    UserName = u.UserName ?? "SYSTEM",
+                    UserName = s.ContestId != 0 ? "CONTEST" : u.UserName ?? "SYSTEM",
                     Expected = s.ExpectedResult,
                     ExecutionTime = j.ExecuteTime,
                 };
