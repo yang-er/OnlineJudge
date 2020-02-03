@@ -1,4 +1,5 @@
-﻿using JudgeWeb.Data;
+﻿using EFCore.BulkExtensions;
+using JudgeWeb.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -78,7 +79,7 @@ namespace JudgeWeb.Features.OjUpdate
         /// <summary>
         /// 上次更新时间
         /// </summary>
-        public DateTimeOffset LastUpdate { get; private set; }
+        public DateTimeOffset? LastUpdate { get; private set; }
 
         /// <summary>
         /// 构造基础刷新服务实例。
@@ -94,7 +95,6 @@ namespace JudgeWeb.Features.OjUpdate
             string siteName)
         {
             Logger = logger;
-            LastUpdate = DateTimeOffset.UnixEpoch;
             SiteName = siteName;
             OjList[siteName] = this;
             CategoryId = catId;
@@ -175,6 +175,59 @@ namespace JudgeWeb.Features.OjUpdate
         }
 
         /// <summary>
+        /// 初始化服务同时加载上次更新时间。
+        /// </summary>
+        public override async Task StartAsync(CancellationToken cancellationToken)
+        {
+            await base.StartAsync(cancellationToken);
+
+            using (var scope = ServiceProvider.CreateScope())
+            using (var db = scope.ServiceProvider.GetRequiredService<AppDbContext>())
+            {
+                var confName = $"oj_{CategoryId}_update_time";
+                var conf = await db.Configures
+                    .Where(c => c.Name == confName)
+                    .FirstOrDefaultAsync();
+
+                if (conf == null)
+                {
+                    var cnf = db.Configures.Add(new Configure
+                    {
+                        Name = confName,
+                        Description = $"The last update time of {SiteName}.",
+                        Public = -1,
+                        Value = "null",
+                        Type = "datetime",
+                        Category = "Internal",
+                    });
+
+                    await db.SaveChangesAsync();
+                    conf = cnf.Entity;
+                }
+
+                LastUpdate = conf.Value.AsJson<DateTimeOffset?>();
+            }
+        }
+
+        /// <summary>
+        /// 将上次结束的时间储存起来。
+        /// </summary>
+        public override async Task StopAsync(CancellationToken cancellationToken)
+        {
+            await base.StopAsync(cancellationToken);
+
+            using (var scope = ServiceProvider.CreateScope())
+            using (var db = scope.ServiceProvider.GetRequiredService<AppDbContext>())
+            {
+                var confName = $"oj_{CategoryId}_update_time";
+                var confValue = LastUpdate.ToJson();
+                var conf = await db.Configures
+                    .Where(c => c.Name == confName)
+                    .BatchUpdateAsync(c => new Configure { Value = confValue });
+            }
+        }
+
+        /// <summary>
         /// 尝试一次更新操作。
         /// </summary>
         /// <param name="stoppingToken">提前终止的令牌</param>
@@ -188,7 +241,7 @@ namespace JudgeWeb.Features.OjUpdate
 
                     using (var httpClient = new HttpClient())
                     {
-                        LastUpdate = DateTimeOffset.UnixEpoch;
+                        LastUpdate = null;
                         ConfigureHttpClient(httpClient);
 
                         using (var scope = ServiceProvider.CreateScope())

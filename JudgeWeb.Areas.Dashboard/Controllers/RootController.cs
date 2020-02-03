@@ -54,7 +54,10 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
         [HttpGet("[action]")]
         public async Task<IActionResult> Config()
         {
-            return View(await DbContext.Configures.ToListAsync());
+            var model = await DbContext.Configures
+                .Where(c => c.Public >= 0)
+                .ToListAsync();
+            return View(model);
         }
 
 
@@ -62,7 +65,9 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Config(ConfigureEditModel models)
         {
-            var items = await DbContext.Configures.ToListAsync();
+            var items = await DbContext.Configures
+                .Where(c => c.Public >= 0)
+                .ToListAsync();
             var now = DateTimeOffset.Now;
             
             foreach (var item in items)

@@ -17,6 +17,11 @@ namespace JudgeWeb.Data
         /// 教学班名称
         /// </summary>
         public string Name { get; set; }
+
+        /// <summary>
+        /// 教学班人数
+        /// </summary>
+        public int Count { get; set; }
     }
 
     public partial class AppDbContext : IEntityTypeConfiguration<TeachingClass>
@@ -27,6 +32,8 @@ namespace JudgeWeb.Data
 
             entity.Property(s => s.Name)
                 .HasMaxLength(64);
+
+            entity.Ignore(s => s.Count);
         }
     }
 }

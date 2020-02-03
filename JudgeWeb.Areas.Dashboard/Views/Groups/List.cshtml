@@ -1,6 +1,6 @@
-﻿@model IEnumerable<Student>
+﻿@model IEnumerable<TeachingClass>
 @{
-    ViewData["Title"] = "Students";
+    ViewData["Title"] = "Groups";
     int curPage = ViewBag.Page;
     int totPage = ViewBag.TotalPage;
 }
@@ -17,24 +17,18 @@
             <tr role="row">
                 <th scope="col" class="sortable searchable">ID</th>
                 <th scope="col" class="sortable searchable">name</th>
-                <th scope="col" class="sortable searchable">user</th>
-                <th scope="col" class="sortable searchable">email</th>
-                <th></th>
-                <th></th>
+                <th scope="col" class="sortable searchable">count</th>
                 <th></th>
             </tr>
         </thead>
         <tbody>
             @foreach (var stu in Model)
             {
-                <tr asp-controller="Users" asp-action="Detail" asp-route-uid="@stu.UserId" role="row" data-toggle="gotoUrl">
-                    <td>@stu.Id</td>
-                    <td>@stu.Name</td>
-                    <td class="@(stu.UserName != null ? "" : "disabled")" use-a>@stu.UserName</td>
-                    <td class="@(stu.IsVerified.GetValueOrDefault() ? "" : "text-decoration-del")" use-a>@stu.Email</td>
-                    <td><if cond="@(stu.UserName != null && !stu.IsVerified.GetValueOrDefault())"><a asp-action="MarkVerified" asp-route-stuid="@stu.Id" asp-route-page="@curPage" title="mark this student verified" data-toggle="ajaxWindow" data-target="signStud"><i class="fas fa-signature"></i></a></if></td>
-                    <td><if cond="stu.UserName != null"><a asp-action="Unlink" asp-route-stuid="@stu.Id" asp-route-page="@curPage" title="unlink this student with account" data-toggle="ajaxWindow" data-target="unlinkStud"><i class="fas fa-unlink"></i></a></if></td>
-                    <td><a asp-action="Delete" asp-route-stuid="@stu.Id" asp-route-page="@curPage" title="delete this student" data-toggle="ajaxWindow" data-target="deleteStud"><i class="fas fa-trash-alt"></i></a></td>
+                <tr asp-action="Detail" asp-route-gid="@stu.Id" role="row" data-toggle="gotoUrl">
+                    <td use-a>@stu.Id</td>
+                    <td use-a>@stu.Name</td>
+                    <td use-a>@stu.Count</td>
+                    <td><a asp-action="Delete" asp-route-gid="@stu.Id" title="delete this group" data-toggle="ajaxWindow" data-target="deleteGroup"><i class="fas fa-trash-alt"></i></a></td>
                 </tr>
             }
         </tbody>
@@ -71,5 +65,5 @@
 </script>
 
 <p>
-    <a asp-action="Add" class="btn btn-primary" data-toggle="ajaxWindow" data-target="addStud" title="add students"><i class="fas fa-plus"></i>&nbsp;Add</a>
+    <a asp-action="Create" class="btn btn-primary" data-toggle="ajaxWindow" data-target="createGroup" title="create groups"><i class="fas fa-plus"></i>&nbsp;Create</a>
 </p>

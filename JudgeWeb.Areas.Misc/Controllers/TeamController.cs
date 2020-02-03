@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using System.Threading.Tasks;
 using JudgeWeb.Data;
 using Microsoft.EntityFrameworkCore;
+using System;
 
 namespace JudgeWeb.Areas.Misc.Controllers
 {
@@ -42,7 +43,7 @@ namespace JudgeWeb.Areas.Misc.Controllers
             return View(new RanklistViewModel
             {
                 OjName = name,
-                LastUpdate = oj.LastUpdate,
+                LastUpdate = oj.LastUpdate ?? DateTimeOffset.UnixEpoch,
                 IsUpdating = oj.IsUpdating,
                 RankTemplate = oj.RankTemplate,
                 AccountTemplate = oj.AccountTemplate,

@@ -16,7 +16,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
     [Route("[area]/[controller]")]
     public class StudentsController : Controller3
     {
-        const int ItemPerPage = 100;
+        const int ItemPerPage = 50;
 
 
         [HttpGet]
@@ -67,6 +67,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
                 title: $"Unlink student {stuid}",
                 message: $"Are you sure to unlink student {stuid} with {user.UserName} (u{user.Id})?",
                 area: "Dashboard", ctrl: "Students", act: "Unlink",
+                routeValues: new Dictionary<string, string> { ["page"] = $"{page}" },
                 type: MessageType.Warning);
         }
 
@@ -87,7 +88,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
             await UserManager.RemoveFromRoleAsync(user, "Student");
             await UserManager.SlideExpirationAsync(user);
             StatusMessage = $"Student ID {stuid} has been unlinked with u{user.Id}.";
-            return RedirectToAction(nameof(List));
+            return RedirectToAction(nameof(List), new { page });
         }
 
 
@@ -104,6 +105,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
                 title: $"Delete student {stuid}",
                 message: $"Are you sure to delete student {stuid}?",
                 area: "Dashboard", ctrl: "Students", act: "Delete",
+                routeValues: new Dictionary<string, string> { ["page"] = $"{page}" },
                 type: MessageType.Warning);
         }
 
@@ -134,7 +136,34 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
             DbContext.Students.Remove(stuId);
             await DbContext.SaveChangesAsync();
             StatusMessage = $"Student ID {stuid} has been removed.";
-            return RedirectToAction(nameof(List));
+            return RedirectToAction(nameof(List), new { page });
+        }
+
+
+        [HttpGet("{stuid}/[action]")]
+        [ValidateInAjax]
+        public async Task<IActionResult> MarkVerified(int page, int stuid)
+        {
+            var stuId = await DbContext.Students
+                .Where(s => s.Id == stuid)
+                .FirstOrDefaultAsync();
+            if (stuId == null) return NotFound();
+
+            var user = await DbContext.Users
+                .Where(u => u.StudentId == stuid)
+                .FirstOrDefaultAsync();
+            if (user == null) return NotFound();
+            
+            if (!user.StudentVerified)
+            {
+                user.StudentVerified = true;
+                await UserManager.UpdateAsync(user);
+                await UserManager.AddToRoleAsync(user, "Student");
+                await UserManager.SlideExpirationAsync(user);
+            }
+
+            StatusMessage = $"Marked {user.UserName} (u{user.Id}) as verified student.";
+            return RedirectToAction(nameof(List), new { page });
         }
 
 

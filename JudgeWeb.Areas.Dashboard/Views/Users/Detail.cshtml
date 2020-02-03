@@ -26,7 +26,7 @@
             <tr><th>Roles</th><td>@Html.Raw(string.Join("<br>", roles.Where(r => r.ShortName != null).Select(r => r.Description)))</td></tr>
             <tr><th>Jury of</th><td>@foreach (var r in roles.Where(r => r.Name.StartsWith("JuryOfContest"))) { int cid = int.Parse(r.Name.Substring("JuryOfContest".Length)); <a asp-area="Contest" asp-route-cid="@cid" asp-controller="Public" asp-action="Info">c@(cid)</a> }</td></tr>
             <tr><th>Author of</th><td>@foreach (var r in roles.Where(r => r.Name.StartsWith("AuthorOfProblem"))) { int cid = int.Parse(r.Name.Substring("AuthorOfProblem".Length)); <a asp-area="Contest" asp-route-cid="@cid" asp-controller="Public" asp-action="Info">p@(cid)</a> }</td></tr>
-            <tr><th>Student @(Model.StudentVerified ? "" : "?")</th><td>@student.Id @student.Name</td></tr>
+            <tr><th>Student @(Model.StudentVerified ? "" : "?")</th><td>@student?.Id @student?.Name</td></tr>
         </table>
     </div>
 </div>
