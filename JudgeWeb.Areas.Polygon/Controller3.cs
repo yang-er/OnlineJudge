@@ -9,6 +9,15 @@ namespace JudgeWeb.Areas.Polygon.Controllers
 {
     public abstract class Controller3 : Controller2
     {
+        internal static readonly string[] MarkdownFiles = new[]
+        {
+            "description",
+            "inputdesc",
+            "outputdesc",
+            "hint",
+            "interact"
+        };
+
         protected AppDbContext DbContext { get; }
 
         [TempData]

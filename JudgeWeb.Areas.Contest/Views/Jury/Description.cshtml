@@ -20,10 +20,13 @@
                 id: "editormd",
                 path: "/static/lib/",
                 tex: true,
+                imageUpload: true,
+                imageFormats: ["jpg", "jpeg", "gif", "png"],
+                imageUploadURL: "/api/static/images-upload?type=c&id=@(ViewBag.ContestId)",
             });
             editormd.katexURL = {
-                js: "//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.3.0/katex.min",
-                css: "//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.3.0/katex.min"
+                js: "/static/katex.min",
+                css: "/static/katex.min"
             };
         });
     </script>

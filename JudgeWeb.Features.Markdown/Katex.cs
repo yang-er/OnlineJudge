@@ -1,6 +1,7 @@
 ﻿using Markdig.Extensions.Mathematics;
 using Markdig.Renderers;
 using Markdig.Renderers.Html;
+using Markdig.Renderers.Normalize;
 
 namespace Markdig
 {
@@ -37,6 +38,28 @@ namespace Markdig
             }
         }
 
+        public class NormalizeKatexInlineRenderer : NormalizeObjectRenderer<MathInline>
+        {
+            protected override void Write(NormalizeRenderer renderer, MathInline obj)
+            {
+                renderer.Write('$');
+                renderer.Write(ref obj.Content);
+                renderer.Write('$');
+            }
+        }
+
+        public class NormalizeKatexBlockRenderer : NormalizeObjectRenderer<MathBlock>
+        {
+            protected override void Write(NormalizeRenderer renderer, MathBlock obj)
+            {
+                renderer.EnsureLine();
+                renderer.WriteLine("$$");
+                renderer.WriteLeafRawLines(obj, true);
+                renderer.Write("$$");
+                renderer.FinishBlock(renderer.Options.EmptyLineAfterCodeBlock);
+            }
+        }
+
         public void Setup(MarkdownPipelineBuilder pipeline)
         {
             // Adds the inline parser
@@ -65,6 +88,18 @@ namespace Markdig
                 if (!htmlRenderer.ObjectRenderers.Contains<HtmlKatexBlockRenderer>())
                 {
                     htmlRenderer.ObjectRenderers.Insert(0, new HtmlKatexBlockRenderer());
+                }
+            }
+            else if (renderer is NormalizeRenderer normalizeRenderer)
+            {
+                if (!normalizeRenderer.ObjectRenderers.Contains<NormalizeKatexInlineRenderer>())
+                {
+                    normalizeRenderer.ObjectRenderers.Insert(0, new NormalizeKatexInlineRenderer());
+                }
+
+                if (!normalizeRenderer.ObjectRenderers.Contains<NormalizeKatexBlockRenderer>())
+                {
+                    normalizeRenderer.ObjectRenderers.Insert(0, new NormalizeKatexBlockRenderer());
                 }
             }
         }

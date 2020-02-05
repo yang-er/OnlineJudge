@@ -1,5 +1,6 @@
 ﻿using JudgeWeb.Areas.Polygon.Services;
 using JudgeWeb.Data;
+using JudgeWeb.Features;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -22,9 +23,6 @@ namespace JudgeWeb.Areas.Polygon.Services
 
         private static readonly Dictionary<string, Visitor> iniParser;
         private static readonly Dictionary<string, Visitor> yamlParser;
-
-        private static readonly string[] statements
-            = new[] { "description.md", "hint.md", "inputdesc.md", "outputdesc.md", "interact.md" };
 
         static KattisPackageImportService()
         {
@@ -123,6 +121,7 @@ namespace JudgeWeb.Areas.Polygon.Services
         private readonly AppDbContext dbContext;
         private readonly SubmissionManager submissionManager;
         private readonly ILogger<KattisPackageImportService> logger;
+        private readonly IMarkdownService markdown;
 
         public StringBuilder LogBuffer { get; }
 
@@ -130,12 +129,14 @@ namespace JudgeWeb.Areas.Polygon.Services
 
         public KattisPackageImportService(
             AppDbContext db, SubmissionManager sub,
-            ILogger<KattisPackageImportService> logger)
+            ILogger<KattisPackageImportService> logger,
+            IMarkdownService markdownService)
         {
             dbContext = db;
             submissionManager = sub;
             this.logger = logger;
             LogBuffer = new StringBuilder();
+            markdown = markdownService;
         }
 
         private void Log(string log)
@@ -303,7 +304,7 @@ namespace JudgeWeb.Areas.Polygon.Services
                 File.Move($"{guid}.in", $"Problems/p{Problem.ProblemId}/t{t.Entity.TestcaseId}.in");
                 File.Move($"{guid}.ans", $"Problems/p{Problem.ProblemId}/t{t.Entity.TestcaseId}.out");
 
-                Log($"Adding testcase t{t.Entity.TestcaseId} 'data/{cat}/{file}.{{{usedParts}}}.");
+                Log($"Adding testcase t{t.Entity.TestcaseId} 'data/{cat}/{file}.{{{usedParts}}}'.");
             }
         }
 
@@ -360,6 +361,23 @@ namespace JudgeWeb.Areas.Polygon.Services
                     }
                 }
             }
+        }
+
+        private async Task LoadStatementsAsync(ZipArchive zip, string mdfile)
+        {
+            var entry = zip.GetEntry("problem_statement/" + mdfile + ".md");
+            if (entry == null) return;
+
+            string mdcontent;
+            using (var st = entry.Open())
+            using (var sw = new StreamReader(st))
+                mdcontent = await sw.ReadToEndAsync();
+
+            var tags = $"p{Problem.ProblemId}";
+            var content = await markdown.ImportWithImagesAsync(mdcontent, tags);
+            await File.WriteAllTextAsync($"Problems/{tags}/{mdfile}.md", content);
+
+            Log($"Adding statement section 'problem_statement/{mdfile}.md'.");
         }
 
         public async Task<Problem> ImportAsync(IFormFile zipFile, string username)
@@ -423,9 +441,8 @@ namespace JudgeWeb.Areas.Polygon.Services
                 dbContext.Problems.Update(Problem);
                 await dbContext.SaveChangesAsync();
 
-                foreach (var mdfile in statements)
-                    zipArchive.GetEntry("problem_statement/" + mdfile)
-                        ?.ExtractToFile($"Problems/p{Problem.ProblemId}/{mdfile}", true);
+                foreach (var mdfile in Controllers.Controller3.MarkdownFiles)
+                    await LoadStatementsAsync(zipArchive, mdfile);
 
                 await CreateTestcasesAsync(zipArchive, "sample", false);
                 await CreateTestcasesAsync(zipArchive, "secret", true);

@@ -1,6 +1,7 @@
 ﻿using JudgeWeb.Areas.Polygon.Models;
 using JudgeWeb.Areas.Polygon.Services;
 using JudgeWeb.Data;
+using JudgeWeb.Features;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using System;
@@ -17,6 +18,7 @@ namespace JudgeWeb.Areas.Polygon.Services
     {
         public StringBuilder LogBuffer { get; }
         public AppDbContext DbContext { get; }
+        public IMarkdownService Markdown { get; }
         public Problem Problem { get; private set; }
         public ILogger<XmlPackageImportService> Logger { get; }
 
@@ -30,17 +32,30 @@ namespace JudgeWeb.Areas.Polygon.Services
 
         static readonly (string, bool)[] testcaseGroups = new[] { ("samples", false), ("test_cases", true) };
 
-        public XmlPackageImportService(AppDbContext adbc, ILogger<XmlPackageImportService> logger)
+        public XmlPackageImportService(
+            AppDbContext adbc,
+            ILogger<XmlPackageImportService> logger,
+            IMarkdownService markdownService)
         {
             LogBuffer = new StringBuilder();
             DbContext = adbc;
             Logger = logger;
+            Markdown = markdownService;
         }
 
         private void Log(string log)
         {
             Logger.LogInformation(log);
             LogBuffer.AppendLine(log);
+        }
+
+        private async Task LoadStatementsAsync(XElement element, string fileName)
+        {
+            if (string.IsNullOrEmpty(element?.Value)) return;
+            string mdcontent = element.Value;
+            var tags = $"p{Problem.ProblemId}";
+            var content = await Markdown.ImportWithImagesAsync(mdcontent, tags);
+            await File.WriteAllTextAsync($"Problems/{tags}/{fileName}", content);
         }
 
         public async Task<Problem> ImportAsync(IFormFile zipFile, string username)
@@ -77,10 +92,7 @@ namespace JudgeWeb.Areas.Polygon.Services
 
             // Write all markdown files into folders.
             foreach (var (nodeName, fileName) in nodes)
-                if (doc.Element(nodeName)?.Value != null)
-                    await File.WriteAllTextAsync(
-                        path: $"Problems/p{Problem.ProblemId}/{fileName}",
-                        contents: doc.Element(nodeName).Value);
+                await LoadStatementsAsync(doc.Element(nodeName), fileName);
 
             // Add testcases.
             int tot = 0;

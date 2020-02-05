@@ -18,9 +18,6 @@ namespace JudgeWeb.Areas.Polygon.Controllers
     {
         private IFileRepository IoContext { get; }
 
-        private static readonly string[] AcceptableTarget =
-            new[] { "description", "inputdesc", "outputdesc", "hint", "interact" };
-
         public DescriptionController(AppDbContext db, IFileRepository io) : base(db, true)
         {
             IoContext = io;
@@ -90,11 +87,12 @@ namespace JudgeWeb.Areas.Polygon.Controllers
         [HttpGet("{target}")]
         public async Task<IActionResult> Markdown(string target, int pid)
         {
-            if (!AcceptableTarget.Contains(target))
+            if (!MarkdownFiles.Contains(target))
                 return NotFound();
             var backstore = "p" + pid;
             var lastVersion = await IoContext
                 .ReadPartAsync(backstore, target + ".md") ?? "";
+            ViewBag.ProblemId = pid;
 
             return View(new MarkdownModel
             {
@@ -110,7 +108,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
         public async Task<IActionResult> Markdown(
             string target, int pid, MarkdownModel model)
         {
-            if (!AcceptableTarget.Contains(target))
+            if (!MarkdownFiles.Contains(target))
                 return NotFound();
             var backstore = "p" + pid;
             if (target != model.Target || backstore != model.BackingStore)

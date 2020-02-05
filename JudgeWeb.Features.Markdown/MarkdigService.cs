@@ -1,8 +1,12 @@
 ﻿using JudgeWeb.Features;
 using JudgeWeb.Features.Markdown;
 using Markdig.Renderers.Html;
+using Markdig.Renderers.Normalize;
 using Markdig.Syntax;
+using Markdig.Syntax.Inlines;
+using System;
 using System.IO;
+using System.Threading.Tasks;
 
 namespace Markdig
 {
@@ -42,6 +46,27 @@ namespace Markdig
                 }
 
                 tree = node.ToString();
+            }
+        }
+
+        public async Task<string> SolveImagesAsync(string source, Func<string, Task<string>> converter)
+        {
+            using (var tw = new StringWriter())
+            {
+                var writer = new NormalizeRenderer(tw);
+                Pipeline.Setup(writer);
+                var doc1 = Markdown.Parse(source, Pipeline);
+
+                await doc1.TransverseAsync<LinkInline>(async item =>
+                {
+                    if (item.IsImage)
+                    {
+                        item.Url = await converter(item.Url);
+                    }
+                });
+
+                writer.Render(doc1);
+                return tw.ToString();
             }
         }
     }
