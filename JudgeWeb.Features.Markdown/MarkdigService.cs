@@ -1,51 +1,52 @@
 ﻿using JudgeWeb.Features;
-using JudgeWeb.Features.Markdown;
+using Markdig.Extensions.Math;
+using Markdig.Extensions.SelfPipeline;
+using Markdig.Extensions.Toc;
+using Markdig.Renderers;
 using Markdig.Renderers.Html;
 using Markdig.Renderers.Normalize;
 using Markdig.Syntax;
 using Markdig.Syntax.Inlines;
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Markdig
 {
     public class MarkdigService : IMarkdownService
     {
-        private MarkdownPipeline Pipeline { get; }
+        public MarkdownPipeline Pipeline { get; set; }
 
-        public MarkdigService(MarkdownPipeline mdpl)
+        public MarkdigService()
         {
-            Pipeline = mdpl;
+            Pipeline = new MarkdownPipelineBuilder()
+                .Use<KatexExtension>()
+                .Use<HeadingIdExtension>()
+                .UseSoftlineBreakAsHardlineBreak()
+                .UseNoFollowLinks()
+                .UsePipeTables()
+                .UseBootstrap()
+                .Build();
         }
 
-        public string Render(string source)
+        public MarkdownDocument Parse(string source)
         {
-            return Markdown.ToHtml(source, Pipeline);
+            var selfPipeline = Pipeline.Extensions.Find<SelfPipelineExtension>();
+            if (selfPipeline != null)
+                Pipeline = selfPipeline.CreatePipelineFromInput(source);
+            return Markdown.Parse(source, Pipeline);
         }
 
-        public void Render(string source, out string html, out string tree)
+        public string RenderAsHtml(MarkdownDocument doc)
         {
-            using (var sw = new StringWriter())
+            using (var textWriter = new StringWriter())
             {
-                var doc = Markdown.ToHtml(source, sw, Pipeline);
-                html = sw.ToString();
-                var node = new HeadingNode();
-
-                foreach (var item in doc)
-                {
-                    if (item is HeadingBlock hb)
-                    {
-                        node.Insert(new HeadingNode
-                        {
-                            Id = hb.GetAttributes().Id,
-                            Level = hb.Level,
-                            Title = hb.Inline?.FirstChild.ToString()
-                        });
-                    }
-                }
-
-                tree = node.ToString();
+                var renderer = new HtmlRenderer(textWriter);
+                Pipeline.Setup(renderer);
+                renderer.Render(doc);
+                renderer.Writer.Flush();
+                return textWriter.ToString();
             }
         }
 
@@ -55,7 +56,7 @@ namespace Markdig
             {
                 var writer = new NormalizeRenderer(tw);
                 Pipeline.Setup(writer);
-                var doc1 = Markdown.Parse(source, Pipeline);
+                var doc1 = Parse(source);
 
                 await doc1.TransverseAsync<LinkInline>(async item =>
                 {
@@ -66,8 +67,25 @@ namespace Markdig
                 });
 
                 writer.Render(doc1);
+                writer.Writer.Flush();
                 return tw.ToString();
             }
+        }
+
+        public string TocAsHtml(MarkdownDocument doc)
+        {
+            var node = new HeadingNode();
+            foreach (var item in doc.OfType<HeadingBlock>())
+            {
+                node.Insert(new HeadingNode
+                {
+                    Id = item.GetAttributes().Id,
+                    Level = item.Level,
+                    Title = item.Inline?.FirstChild.ToString()
+                });
+            }
+
+            return node.ToString();
         }
     }
 }

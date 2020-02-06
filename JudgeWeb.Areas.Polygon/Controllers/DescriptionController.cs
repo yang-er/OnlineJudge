@@ -6,7 +6,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using System;
-using System.Collections.Generic;
+using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -30,38 +31,9 @@ namespace JudgeWeb.Areas.Polygon.Controllers
         {
             var generator = HttpContext.RequestServices
                 .GetRequiredService<IProblemViewProvider>();
-
-            int pid = Problem.ProblemId;
-            var description = await IoContext
-                .ReadPartAsync($"p{pid}", "description.md");
-            description = description ?? await IoContext
-                .ReadPartAsync($"p{pid}", "compact.html");
-            description = description ?? "";
-            var inputdesc = await IoContext
-                .ReadPartAsync($"p{pid}", "inputdesc.md") ?? "";
-            var outputdesc = await IoContext
-                .ReadPartAsync($"p{pid}", "outputdesc.md") ?? "";
-            var hint = await IoContext
-                .ReadPartAsync($"p{pid}", "hint.md") ?? "";
-            var interact = await IoContext
-                .ReadPartAsync($"p{pid}", "interact.md") ?? "";
-
-            var testcases = await DbContext.Testcases
-                .Where(t => t.ProblemId == pid && !t.IsSecret)
-                .OrderBy(t => t.Rank)
-                .ToListAsync();
-            var samples = new List<TestCase>();
-
-            foreach (var item in testcases)
-            {
-                var input = await IoContext.ReadPartAsync($"p{pid}", $"t{item.TestcaseId}.in");
-                var output = await IoContext.ReadPartAsync($"p{pid}", $"t{item.TestcaseId}.out");
-                samples.Add(new TestCase(item.Description, input, output, item.Point));
-            }
-
-           return generator
-                .Build(description, inputdesc, outputdesc, hint, interact, Problem, samples)
-                .ToString();
+            var statement = await generator
+                .LoadStatement(Problem, DbContext.Testcases);
+           return generator.BuildHtml(statement).ToString();
         }
 
 
@@ -125,6 +97,19 @@ namespace JudgeWeb.Areas.Polygon.Controllers
             await IoContext.WritePartAsync($"p{pid}", "view.html", content);
             StatusMessage = "Problem description saved successfully.";
             return RedirectToAction(nameof(Preview), new { @new = false });
+        }
+
+
+        [HttpGet]
+        public async Task<IActionResult> GenerateLatex(int pid,
+            [FromServices] IProblemViewProvider generator)
+        {
+            var statement = await generator.LoadStatement(Problem, DbContext.Testcases);
+            var memstream = new MemoryStream();
+            using (var zip = new ZipArchive(memstream, ZipArchiveMode.Create, true))
+                generator.BuildLatex(zip, statement);
+            memstream.Position = 0;
+            return File(memstream, "application/zip", $"p{pid}-statements.zip");
         }
     }
 }

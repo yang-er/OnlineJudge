@@ -53,7 +53,7 @@
         <tbody>
             @foreach (var (c, t, a, o) in teams)
             {
-                <tr asp-area="Contest" asp-route-cid="@c.ContestId" asp-controller="JuryTeam" asp-action="Team" asp-route-teamid="@t.TeamId" data-toggle="gotoUrl">
+                <tr asp-area="Contest" asp-route-cid="@c.ContestId" asp-controller="Teams" asp-action="Detail" asp-route-teamid="@t.TeamId" data-toggle="gotoUrl">
                     <td use-a title="c@(c.ContestId) - @c.Name"><span class="forceWidth" style="max-width:20em">c@(c.ContestId) - @c.Name</span></td>
                     <td use-a title="t@(t.TeamId) - @t.TeamName"><span class="forceWidth" style="max-width:20em">t@(t.TeamId) - @t.TeamName</span></td>
                     <td use-a class="text-variant" title="@a.FormalName">@a.ExternalId</td>

@@ -1,13 +1,19 @@
-﻿using System;
+﻿using Markdig;
+using Markdig.Syntax;
+using System;
 using System.Threading.Tasks;
 
 namespace JudgeWeb.Features
 {
     public interface IMarkdownService
     {
-        string Render(string source);
+        MarkdownPipeline Pipeline { get; }
 
-        void Render(string source, out string html, out string tree);
+        MarkdownDocument Parse(string source);
+
+        string RenderAsHtml(MarkdownDocument doc);
+
+        string TocAsHtml(MarkdownDocument doc);
 
         Task<string> SolveImagesAsync(string source, Func<string, Task<string>> converter);
     }

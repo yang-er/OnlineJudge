@@ -125,7 +125,10 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
                 .FirstOrDefaultAsync();
             if (news is null) return NotFound();
 
-            markdownService.Render(model.MarkdownSource, out var html, out var tree);
+            var document = markdownService.Parse(model.MarkdownSource);
+            var html = markdownService.RenderAsHtml(document);
+            var tree = markdownService.TocAsHtml(document);
+
             news.Source = Encoding.UTF8.GetBytes(model.MarkdownSource);
             news.Title = model.Title;
             news.Active = model.Active;
@@ -159,7 +162,9 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
             NewsEditModel model,
             [FromServices] IMarkdownService markdownService)
         {
-            markdownService.Render(model.MarkdownSource, out var html, out var tree);
+            var document = markdownService.Parse(model.MarkdownSource);
+            var html = markdownService.RenderAsHtml(document);
+            var tree = markdownService.TocAsHtml(document);
 
             var news = DbContext.News.Add(new News
             {

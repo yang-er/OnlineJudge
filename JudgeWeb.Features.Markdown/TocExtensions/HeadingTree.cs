@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace JudgeWeb.Features.Markdown
+namespace Markdig.Extensions.Toc
 {
     public class HeadingNode
     {

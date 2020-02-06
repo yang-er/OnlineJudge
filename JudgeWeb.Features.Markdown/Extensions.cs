@@ -1,4 +1,5 @@
 ﻿using Markdig;
+using Markdig.Renderers;
 using Markdig.Syntax;
 using Markdig.Syntax.Inlines;
 using Microsoft.Extensions.DependencyInjection;
@@ -9,15 +10,13 @@ namespace JudgeWeb.Features
 {
     public static class MarkdownExtensions
     {
-        public static MarkdownPipelineBuilder PipelineFactory()
+        public static void TryPrepend<TRenderer>(this ObjectRendererCollection list)
+            where TRenderer : class, IMarkdownObjectRenderer, new()
         {
-            return new MarkdownPipelineBuilder()
-                .Use<KatexExtension>()
-                .Use<HeadingIdExtension>()
-                .UseSoftlineBreakAsHardlineBreak()
-                .UseNoFollowLinks()
-                .UsePipeTables()
-                .UseBootstrap();
+            if (!list.Contains<TRenderer>())
+            {
+                list.Insert(0, new TRenderer());
+            }
         }
 
         public static void Transverse<T>(this IMarkdownObject obj, Action<T> action) where T : Inline
@@ -32,6 +31,11 @@ namespace JudgeWeb.Features
             else if (obj is ContainerInline ctk)
                 foreach (var item in ctk)
                     item?.Transverse(action);
+        }
+
+        public static string Render(this IMarkdownService markdown, string source)
+        {
+            return markdown.RenderAsHtml(markdown.Parse(source));
         }
 
         public static async Task TransverseAsync<T>(this IMarkdownObject obj, Func<T, Task> action) where T : Inline
@@ -50,7 +54,6 @@ namespace JudgeWeb.Features
 
         public static IServiceCollection AddMarkdown(this IServiceCollection services)
         {
-            services.AddScoped<MarkdownPipeline>(p => PipelineFactory().Build());
             services.AddScoped<IMarkdownService, MarkdigService>();
             return services;
         }

@@ -1,5 +1,6 @@
 ﻿using EFCore.BulkExtensions;
 using JudgeWeb.Areas.Contest.Models;
+using JudgeWeb.Areas.Polygon.Services;
 using JudgeWeb.Data;
 using JudgeWeb.Features;
 using JudgeWeb.Features.Storage;
@@ -9,6 +10,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -628,11 +631,64 @@ namespace JudgeWeb.Areas.Contest.Controllers
             io.SetContext("Problems");
             model.Markdown = model.Markdown ?? "";
             await io.WritePartAsync($"c{cid}", "readme.md", model.Markdown);
-            await io.WritePartAsync($"c{cid}", "readme.html", md.Render(model.Markdown));
+
+            var document = md.Parse(model.Markdown);
+            await io.WritePartAsync($"c{cid}", "readme.html", md.RenderAsHtml(document));
 
             InternalLog(AuditlogType.Contest, $"{cid}", "updated", "description");
             await DbContext.SaveChangesAsync();
             return View(model);
+        }
+
+
+        [HttpGet("[action]")]
+        public async Task<IActionResult> GenerateStatement(int cid,
+            [FromServices] IProblemViewProvider generator)
+        {
+            var probs =
+                from cp in DbContext.ContestProblem
+                where cp.ContestId == cid
+                join p in DbContext.Problems on cp.ProblemId equals p.ProblemId
+                select new { cp.ShortName, p };
+            await probs.ToListAsync();
+
+            var memstream = new MemoryStream();
+            using (var zip = new ZipArchive(memstream, ZipArchiveMode.Create, true))
+            {
+                zip.CreateEntryFromFile("wwwroot/static/olymp.sty", "olymp.sty");
+                var documentStart = await System.IO.File.ReadAllTextAsync("wwwroot/static/contest.tex-begin");
+                var documentBuilder = new System.Text.StringBuilder(documentStart)
+                    .Append("\\begin {document}\n\n")
+                    .Append("\\contest\n{")
+                    .Append(Contest.Name)
+                    .Append("}%\n{Location}%\n{")
+                    .Append("Monday, January 13, 2020")
+                    .Append("}%\n\n")
+                    .Append("\\binoppenalty=10000\n")
+                    .Append("\\relpenalty=10000\n\n")
+                    .Append("\\renewcommand{\\t}{\\texttt}\n\n");
+
+                foreach (var item in probs)
+                {
+                    var folderPrefix = $"{item.ShortName}/";
+                    var statement = await generator
+                        .LoadStatement(item.p, DbContext.Testcases);
+                    generator.BuildLatex(zip, statement, folderPrefix);
+
+                    documentBuilder
+                        .Append("\\graphicspath{{./")
+                        .Append(item.ShortName)
+                        .Append("/}}\n\\import{./")
+                        .Append(item.ShortName)
+                        .Append("/}{./problem.tex}\n\n");
+                }
+
+                documentBuilder.Append("\\end{document}\n\n");
+                zip.CreateEntryFromString(documentBuilder.ToString(), "contest.tex");
+            }
+
+            memstream.Position = 0;
+            return File(memstream, "application/zip", $"c{cid}-statements.zip");
         }
 
 

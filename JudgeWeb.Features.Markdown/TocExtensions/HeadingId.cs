@@ -4,7 +4,7 @@ using Markdig.Renderers.Html;
 using Markdig.Syntax;
 using System;
 
-namespace Markdig
+namespace Markdig.Extensions.Toc
 {
     public class HeadingIdExtension : IMarkdownExtension
     {
