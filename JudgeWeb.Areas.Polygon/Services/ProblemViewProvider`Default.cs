@@ -107,8 +107,8 @@ namespace JudgeWeb.Areas.Polygon.Services
         {
             if (url.StartsWith("/images/problem/") && File.Exists("wwwroot" + url))
             {
-                var fileName = localPrefix + Path.GetFileName(url);
-                zip.CreateEntryFromFile("wwwroot" + url, fileName);
+                var fileName = Path.GetFileName(url);
+                zip.CreateEntryFromFile("wwwroot" + url, localPrefix + fileName);
                 return fileName;
             }
             else if (url.StartsWith("data:image/"))
@@ -116,19 +116,13 @@ namespace JudgeWeb.Areas.Polygon.Services
                 var index = url.IndexOf(";base64,");
                 if (index == -1) return url;
                 string ext = url.Substring(11, index - 11);
-
-                string fileName;
-                do
-                {
-                    var guid = Guid.NewGuid().ToString("N").Substring(0, 16);
-                    fileName = $"{localPrefix}p{pid}.{guid}.{ext}";
-                }
-                while (zip.GetEntry(fileName) != null);
+                var guid = Guid.NewGuid().ToString("N").Substring(0, 16);
+                var fileName = $"p{pid}.{guid}.{ext}";
 
                 try
                 {
                     var fileIn = Convert.FromBase64String(url.Substring(index + 8));
-                    zip.CreateEntryFromByteArray(fileIn, fileName);
+                    zip.CreateEntryFromByteArray(fileIn, localPrefix + fileName);
                     return fileName;
                 }
                 catch
