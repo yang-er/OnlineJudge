@@ -109,7 +109,7 @@ namespace JudgeWeb.Areas.Polygon.Services
             {
                 var fileName = Path.GetFileName(url);
                 zip.CreateEntryFromFile("wwwroot" + url, localPrefix + fileName);
-                return fileName;
+                return "{" + Path.GetFileNameWithoutExtension(fileName) + "}" + Path.GetExtension(fileName);
             }
             else if (url.StartsWith("data:image/"))
             {
@@ -123,7 +123,7 @@ namespace JudgeWeb.Areas.Polygon.Services
                 {
                     var fileIn = Convert.FromBase64String(url.Substring(index + 8));
                     zip.CreateEntryFromByteArray(fileIn, localPrefix + fileName);
-                    return fileName;
+                    return "{" + Path.GetFileNameWithoutExtension(fileName) + "}" + Path.GetExtension(fileName);
                 }
                 catch
                 {

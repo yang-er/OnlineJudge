@@ -8,7 +8,7 @@ namespace Markdig.Renderers.LaTeX
         {
             renderer.EnsureLine();
             renderer.WriteLine("\\begin{lstlisting}");
-            renderer.WriteLeafRawLines(obj, true, true);
+            renderer.WriteLeafRawLines(obj, true, false);
             renderer.Write("\\end{lstlisting}");
             renderer.FinishBlock(true);
         }

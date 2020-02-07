@@ -652,6 +652,10 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 select new { cp.ShortName, p };
             await probs.ToListAsync();
 
+            var startTime = Contest.StartTime ?? DateTimeOffset.Now;
+            var startDate = startTime.ToString("dddd, MMMM d, yyyy",
+                formatProvider: System.Globalization.CultureInfo.GetCultureInfo(1033));
+
             var memstream = new MemoryStream();
             using (var zip = new ZipArchive(memstream, ZipArchiveMode.Create, true))
             {
@@ -661,8 +665,8 @@ namespace JudgeWeb.Areas.Contest.Controllers
                     .Append("\\begin {document}\n\n")
                     .Append("\\contest\n{")
                     .Append(Contest.Name)
-                    .Append("}%\n{Location}%\n{")
-                    .Append("Monday, January 13, 2020")
+                    .Append("}%\n{ACM.XYLAB.FUN}%\n{")
+                    .Append(startDate)
                     .Append("}%\n\n")
                     .Append("\\binoppenalty=10000\n")
                     .Append("\\relpenalty=10000\n\n")

@@ -54,50 +54,43 @@ namespace Markdig.Renderers.LaTeX
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public LatexRenderer WriteEscape(ref StringSlice slice, bool softEscape = false)
+        public LatexRenderer WriteEscape(ref StringSlice slice)
         {
             if (slice.Start > slice.End)
             {
                 return this;
             }
 
-            return WriteEscape(slice.Text, slice.Start, slice.Length, softEscape);
+            return WriteEscape(slice.Text, slice.Start, slice.Length);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public LatexRenderer WriteEscape(StringSlice slice, bool softEscape = false)
-        {
-            return WriteEscape(ref slice, softEscape);
-        }
-
-        public LatexRenderer WriteEscape(string content, int offset, int length, bool softEscape = false)
+        public LatexRenderer WriteEscape(string content, int offset, int length)
         {
             if (string.IsNullOrEmpty(content) || length == 0)
                 return this;
 
             var end = offset + length;
             int previousOffset = offset;
+
+            void FlushAs(string str)
+            {
+                Write(content, previousOffset, offset - previousOffset);
+                Write(str);
+                previousOffset = offset + 1;
+            }
+
             for (; offset < end; offset++)
             {
                 switch (content[offset])
                 {
-                    case '_':
-                        Write(content, previousOffset, offset - previousOffset);
-                        Write("\\_");
-                        previousOffset = offset + 1;
-                        break;
-
-                    case '#':
-                        Write(content, previousOffset, offset - previousOffset);
-                        Write("\\#");
-                        previousOffset = offset + 1;
-                        break;
-
-                    case '\\':
-                        Write(content, previousOffset, offset - previousOffset);
-                        Write("\\backslash");
-                        previousOffset = offset + 1;
-                        break;
+                    case '_': FlushAs("\\_"); break;
+                    case '#': FlushAs("\\#"); break;
+                    case '\\': FlushAs("\\backslash"); break;
+                    case '{': FlushAs("\\lbrace"); break;
+                    case '}': FlushAs("\\rbrace"); break;
+                    case '~': FlushAs("\\~{}"); break;
+                    case '^': FlushAs("\\^{}"); break;
+                    case '&': FlushAs("\\&"); break;
                 }
             }
 
@@ -105,7 +98,7 @@ namespace Markdig.Renderers.LaTeX
             return this;
         }
 
-        public LatexRenderer WriteLeafRawLines(LeafBlock leafBlock, bool writeEndOfLines, bool escape, bool softEscape = false)
+        public LatexRenderer WriteLeafRawLines(LeafBlock leafBlock, bool writeEndOfLines, bool escape)
         {
             if (leafBlock == null) throw new ArgumentNullException(nameof(leafBlock));
 
@@ -117,7 +110,7 @@ namespace Markdig.Renderers.LaTeX
                 for (int i = 0; i < lines.Count; i++)
                 {
                     if (!writeEndOfLines && i > 0) WriteLine();
-                    if (escape) WriteEscape(ref slices[i].Slice, softEscape);
+                    if (escape) WriteEscape(ref slices[i].Slice);
                     else Write(ref slices[i].Slice);
                     if (writeEndOfLines) WriteLine();
                 }
