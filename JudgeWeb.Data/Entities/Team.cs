@@ -20,11 +20,6 @@ namespace JudgeWeb.Data
         public int TeamId { get; set; }
 
         /// <summary>
-        /// 用户编号
-        /// </summary>
-        public int? UserId { get; set; }
-
-        /// <summary>
         /// 队伍名称
         /// </summary>
         public string TeamName { get; set; }
@@ -65,13 +60,6 @@ namespace JudgeWeb.Data
                 .WithMany()
                 .HasForeignKey(e => e.ContestId)
                 .OnDelete(DeleteBehavior.Cascade);
-
-            entity.HasIndex(e => e.UserId);
-
-            entity.HasOne<User>()
-                .WithMany()
-                .HasForeignKey(e => e.UserId)
-                .OnDelete(DeleteBehavior.SetNull);
 
             entity.Property(e => e.TeamName)
                 .IsRequired()

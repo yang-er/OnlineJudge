@@ -1,6 +1,7 @@
 ﻿using JudgeWeb.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -10,6 +11,14 @@ namespace JudgeWeb.Areas.Contest.Controllers
     [Route("[area]/{cid}/[action]")]
     public class PublicController : Controller3
     {
+        public override Task OnActionExecutingAsync(ActionExecutingContext context)
+        {
+            if (Contest.Gym)
+                context.Result = NotFound();
+            return base.OnActionExecutingAsync(context);
+        }
+
+
         [HttpGet]
         public Task<IActionResult> Scoreboard(int cid,
             [FromQuery(Name = "affiliations[]")] int[] affiliations,
@@ -58,16 +67,18 @@ namespace JudgeWeb.Areas.Contest.Controllers
             var aff = affs.FirstOrDefault(a => a.ExternalId == defaultAff);
             if (aff == null) throw new System.ApplicationException("No default affiliation.");
 
-            await CreateTeamAsync(aff: aff, team: new Team
-            {
-                AffiliationId = aff.AffiliationId,
-                ContestId = Contest.ContestId,
-                CategoryId = Contest.RegisterDefaultCategory,
-                RegisterTime = System.DateTimeOffset.Now,
-                Status = 0,
-                TeamName = UserManager.GetNickName(User) ?? UserManager.GetUserName(User),
-                UserId = int.Parse(UserManager.GetUserId(User)),
-            });
+            await CreateTeamAsync(
+                aff: aff,
+                uids: new[] { int.Parse(UserManager.GetUserId(User)) },
+                team: new Team
+                {
+                    AffiliationId = aff.AffiliationId,
+                    ContestId = Contest.ContestId,
+                    CategoryId = Contest.RegisterDefaultCategory,
+                    RegisterTime = System.DateTimeOffset.Now,
+                    Status = 0,
+                    TeamName = UserManager.GetNickName(User) ?? UserManager.GetUserName(User),
+                });
 
             StatusMessage = "Registration succeeded.";
             return RedirectToAction(nameof(Info));

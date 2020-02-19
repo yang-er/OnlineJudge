@@ -1,0 +1,70 @@
+﻿@model IEnumerable<StatusListModel>
+@{
+    ViewData["Title"] = "Status";
+    int curPage = ViewBag.Page;
+}
+
+<h2 class="mt-2 mb-3">@ViewData["Title"]</h2>
+
+<div class="d-none" id="paging">
+    <partial name="_PaginationUnlimited" model="curPage" />
+</div>
+
+<div class="table-wrapper">
+    <table class="data-table table table-sm table-striped" style="width:auto">
+        <thead>
+            <tr role="row">
+                <th scope="col" class="sortable searchable">ID</th>
+                <th scope="col" class="sortable searchable">time</th>
+                <th scope="col" class="sortable searchable">verdict</th>
+                <th scope="col" class="sortable searchable">problem</th>
+                <th scope="col" class="sortable">exe.time</th>
+                <th scope="col" class="sortable">exe.mem</th>
+                <th scope="col" class="sortable">code len</th>
+                <th scope="col" class="sortable searchable">lang</th>
+                <th scope="col" class="sortable searchable">author</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var stat in Model)
+            {
+                <tr asp-action="ByJudgingId" asp-route-jid="@stat.JudgingId" role="row" data-toggle="gotoUrl">
+                    <td use-a>@stat.SubmissionId</td>
+                    <td use-a>@Html.CstTime(stat.Time)</td>
+                    <td use-a><verdict3 value="@stat.Verdict" /></td>
+                    <td use-a>p@(stat.ProblemId)</td>
+                    <td use-a>@(stat.ExecutionTime)ms</td>
+                    <td use-a>@(stat.ExecutionMemory)kb</td>
+                    <td use-a>@(stat.CodeLength)B</td>
+                    <td class="text-variant" use-a>@stat.Language</td>
+                    <td use-a>@(stat.ContestId == 0 ? $"u{stat.Author}" : $"c{stat.ContestId}t{stat.Author}")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<script>
+    $().ready(function () {
+        $('.data-table').DataTable({
+            "paging": false,
+            "searching": true,
+            "ordering": true,
+            "order": [[0, 'desc']],
+            "info": false,
+            "autoWidth": true,
+            "language": {
+                "searchPlaceholder": "filter table",
+                "search": "_INPUT_",
+            },
+            'aoColumnDefs': [
+                { aTargets: ['sortable'], bSortable: true },
+                { aTargets: ['searchable'], bSearchable: true },
+                { aTargets: ['_all'], bSortable: false, bSearchable: false }
+            ],
+        });
+
+        $('.dataTables_wrapper .row:first-child .col-md-6:first-child').html($('#paging').html());
+        $('.dataTables_wrapper .pagination-sm').addClass('mb-0');
+    });
+</script>

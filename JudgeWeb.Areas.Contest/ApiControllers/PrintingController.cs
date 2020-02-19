@@ -38,7 +38,9 @@ namespace JudgeWeb.Areas.Api.Controllers
                 where p.Done == null
                 join u in DbContext.Users on p.UserId equals u.Id
                 into uu from u in uu.DefaultIfEmpty()
-                join t in DbContext.Teams on new { p.ContestId, UserId = (int?)p.UserId } equals new { t.ContestId, t.UserId }
+                join tu in DbContext.TeamMembers on new { p.ContestId, p.UserId } equals new { tu.ContestId, tu.UserId }
+                into tuu from tu in tuu.DefaultIfEmpty()
+                join t in DbContext.Teams on new { tu.ContestId, tu.TeamId } equals new { t.ContestId, t.TeamId }
                 into tt from t in tt.DefaultIfEmpty()
                 orderby p.Time
                 select new { p, u.UserName, t.TeamName, TeamId = (int?)t.TeamId, t.Location };
@@ -92,7 +94,9 @@ namespace JudgeWeb.Areas.Api.Controllers
                 where p.Id == id
                 join u in DbContext.Users on p.UserId equals u.Id
                 into uu from u in uu.DefaultIfEmpty()
-                join t in DbContext.Teams on new { p.ContestId, UserId = (int?)p.UserId } equals new { t.ContestId, t.UserId }
+                join tu in DbContext.TeamMembers on new { p.ContestId, p.UserId } equals new { tu.ContestId, tu.UserId }
+                into tuu from tu in tuu.DefaultIfEmpty()
+                join t in DbContext.Teams on new { tu.ContestId, tu.TeamId } equals new { t.ContestId, t.TeamId }
                 into tt from t in tt.DefaultIfEmpty()
                 select new EntityPrintModel
                 {

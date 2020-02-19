@@ -13,7 +13,6 @@
                 <th scope="col" class="sortable searchable">teamname</th>
                 <th scope="col" class="sortable searchable">category</th>
                 <th scope="col" class="sortable searchable">affiliation</th>
-                <th scope="col" class="sortable searchable">user</th>
                 <th scope="col" class="sortable searchable">status</th>
                 <th scope="col" class="sortable searchable">register time</th>
                 <th></th>
@@ -31,7 +30,6 @@
                     <td use-a class="force-width">@team.TeamName</td>
                     <td use-a>@team.Category</td>
                     <td use-a class="text-variant" title="@team.AffiliationName">@team.Affiliation</td>
-                    <td use-a>@team.UserName</td>
                     <td use-a><verdict0 type="TeamStatus" value="@team.Status" /></td>
                     <td use-a>@Html.CstTime(team.RegisterTime)</td>
                     <td><a asp-route-teamid="@team.TeamId" asp-action="Edit" data-toggle="ajaxWindow" data-target="editTeam" title="edit this team"><i class="fas fa-edit"></i></a></td>

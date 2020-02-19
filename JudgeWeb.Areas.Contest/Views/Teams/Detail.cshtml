@@ -6,6 +6,7 @@
     IEnumerable<SubmissionViewModel> submissions = ViewBag.Submissions;
     ViewData["Title"] = "Team " + team.TeamId;
     Contest ctx = ViewBag.Contest;
+    List<string> members = ViewBag.Member;
     int correct = 0, total = 0;
 }
 
@@ -40,6 +41,17 @@
                 <th>Status</th>
                 <td><verdict0 type="TeamStatus" value="@team.Status" /></td>
             </tr>
+            <if cond="members.Count > 0">
+                <tr>
+                    <th>User</th>
+                    <td>
+                        @foreach (var item in members)
+                        {
+                            <a asp-area="Account" asp-controller="Profile" asp-action="Show" asp-route-username="@item">@item</a>
+                        }
+                    </td>
+                </tr>
+            </if>
         </table>
     </div>
 </div>

@@ -74,6 +74,11 @@ namespace JudgeWeb.Data
         public bool Interactive { get; set; }
 
         /// <summary>
+        /// [Ignore] 是否共享
+        /// </summary>
+        public bool Shared { get; set; }
+
+        /// <summary>
         /// 默认构造函数
         /// </summary>
         public ContestProblem() { }
@@ -82,7 +87,7 @@ namespace JudgeWeb.Data
         /// 拷贝构造函数
         /// </summary>
         /// <param name="cp">拷贝源</param>
-        public ContestProblem(ContestProblem cp, string tit, int time, int mem, bool ia)
+        public ContestProblem(ContestProblem cp, string tit, int time, int mem, bool ia, bool shared)
         {
             AllowJudge = cp.AllowJudge;
             AllowSubmit = cp.AllowSubmit;
@@ -95,6 +100,7 @@ namespace JudgeWeb.Data
             TimeLimit = time;
             MemoryLimit = mem;
             Interactive = ia;
+            Shared = shared;
         }
     }
 
@@ -129,6 +135,7 @@ namespace JudgeWeb.Data
             entity.Ignore(e => e.MemoryLimit);
             entity.Ignore(e => e.TestcaseCount);
             entity.Ignore(e => e.Interactive);
+            entity.Ignore(e => e.Shared);
         }
     }
 }

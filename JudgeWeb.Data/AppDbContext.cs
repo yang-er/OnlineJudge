@@ -35,6 +35,7 @@ namespace JudgeWeb.Data
         public virtual DbSet<Contest> Contests { get; set; }
         public virtual DbSet<ContestProblem> ContestProblem { get; set; }
         public virtual DbSet<Team> Teams { get; set; }
+        public virtual DbSet<TeamMember> TeamMembers { get; set; }
         public virtual DbSet<TeamAffiliation> TeamAffiliations { get; set; }
         public virtual DbSet<TeamCategory> TeamCategories { get; set; }
         public virtual DbSet<Clarification> Clarifications { get; set; }
@@ -80,6 +81,7 @@ namespace JudgeWeb.Data
             modelBuilder.ApplyConfiguration<Contest>(this);
             modelBuilder.ApplyConfiguration<ContestProblem>(this);
             modelBuilder.ApplyConfiguration<Team>(this);
+            modelBuilder.ApplyConfiguration<TeamMember>(this);
             modelBuilder.ApplyConfiguration<TeamAffiliation>(this);
             modelBuilder.ApplyConfiguration<TeamCategory>(this);
             modelBuilder.ApplyConfiguration<Clarification>(this);

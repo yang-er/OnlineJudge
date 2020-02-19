@@ -1,0 +1,29 @@
+@model int
+
+<ul class="pagination pagination-sm">
+    <li class="page-item @(1 == Model ? "disabled" : "")">
+        <a class="page-link" asp-route-page="@(Model-1)">&laquo;</a>
+    </li>
+
+    @for (int i = Math.Max(1, Model - 2); i < Model; i++)
+    {
+        <li class="page-item">
+            <a class="page-link" asp-route-page="@i">@i</a>
+        </li>
+    }
+
+    <li class="page-item active">
+        <a class="page-link" asp-route-page="@Model">@Model</a>
+    </li>
+    
+    @for (int i = Model + 1; i <= Model + 2; i++)
+    {
+        <li class="page-item">
+            <a class="page-link" asp-route-page="@i">@i</a>
+        </li>
+    }
+
+    <li class="page-item">
+        <a class="page-link" asp-route-page="@(Model+1)">&raquo;</a>
+    </li>
+</ul>

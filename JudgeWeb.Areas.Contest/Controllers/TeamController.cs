@@ -22,7 +22,12 @@ namespace JudgeWeb.Areas.Contest.Controllers
 
         public override async Task OnActionExecutingAsync(ActionExecutingContext context)
         {
-            if (Team == null || Team.Status != 1)
+            if (Contest.Gym)
+            {
+                context.Result = NotFound();
+            }
+
+            else if (Team == null || Team.Status != 1)
             {
                 context.Result = IsWindowAjax
                     ? Message("401 Unauthorized",
@@ -64,8 +69,8 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 .Where(c => c.ContestId == cid)
                 .Where(c => (c.Sender == null && c.Recipient == null)
                     || c.Recipient == teamid || c.Sender == teamid)
-                .CachedToListAsync($"`c{cid}`t{teamid}`clar", TimeSpan.FromSeconds(15));
-            
+                .ToListAsync();
+
             ViewBag.Clarifications = clars;
 
             var subQuery = await DbContext.Submissions
@@ -114,6 +119,8 @@ namespace JudgeWeb.Areas.Contest.Controllers
                     innerKeySelector: g => new { g.SubmissionId, g.Active },
                     resultSelector: (s, g) => new { s.SubmissionId, g.Status, s.Time, s.ProblemId, g.CompileError, s.Language, s.SourceCode })
                 .SingleOrDefaultAsync();
+
+            if (model == null) return NotFound();
 
             return Window(new SubmissionViewModel
             {

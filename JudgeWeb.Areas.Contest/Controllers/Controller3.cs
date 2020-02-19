@@ -57,8 +57,13 @@ namespace JudgeWeb.Areas.Contest.Controllers
         protected Task<Team> FindTeamByUserAsync(int uid)
         {
             int cid = Contest.ContestId;
-            return DbContext.Teams
-                .Where(t => t.ContestId == cid && t.UserId == uid)
+            return DbContext.TeamMembers
+                .Where(tu => tu.ContestId == cid && tu.UserId == uid)
+                .Join(
+                    inner: DbContext.Teams,
+                    outerKeySelector: tu => new { tu.ContestId, tu.TeamId },
+                    innerKeySelector: t => new { t.ContestId, t.TeamId },
+                    resultSelector: (tu, t) => t)
                 .CachedSingleOrDefaultAsync($"`c{cid}`teams`u{uid}", TimeSpan.FromMinutes(5));
         }
 
@@ -85,7 +90,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
             return cl.Entity.ClarificationId;
         }
 
-        protected async Task<int> CreateTeamAsync(Team team, TeamAffiliation aff)
+        protected async Task<int> CreateTeamAsync(Team team, TeamAffiliation aff, int[] uids = null)
         {
             using (await ContestCache._locker.LockAsync())
             {
@@ -94,6 +99,21 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 team.TeamId = 1 + await DbContext.Teams
                     .CountAsync(tt => tt.ContestId == cid);
                 DbContext.Teams.Add(team);
+
+                if (uids != null)
+                {
+                    foreach (var uid in uids)
+                    {
+                        DbContext.TeamMembers.Add(new TeamMember
+                        {
+                            ContestId = team.ContestId,
+                            TeamId = team.TeamId,
+                            UserId = uid,
+                            Temporary = false
+                        });
+                    }
+                }
+
                 InternalLog(AuditlogType.Team, $"{team.TeamId}", "added");
 
                 if (team.Status == 1)
@@ -105,7 +125,10 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 await DbContext.SaveChangesAsync();
                 Cache.Remove($"`c{cid}`teams`list_jury");
                 Cache.Remove($"`c{cid}`teams`t{team.TeamId}");
-                Cache.Remove($"`c{cid}`teams`u{team.UserId}");
+
+                if (uids != null)
+                    foreach (var uid in uids)
+                        Cache.Remove($"`c{cid}`teams`u{uid}");
                 return team.TeamId;
             }
         }

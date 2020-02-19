@@ -327,6 +327,8 @@ img.affiliation-logo {
     padding-right: 3pt;
 }
 
+.gym_correct     { color: #0a0; font-weight: bold; }
+.gym_incorrect   { color: #00a; }
 .score_correct   { background: #60e760; }
 .score_first     { background: #1daa1d !important; }
 .score_pending   { background: #6666FF; }

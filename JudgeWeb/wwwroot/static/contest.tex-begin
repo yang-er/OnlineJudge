@@ -15,3 +15,5 @@
 \usepackage {ulem}
 \usepackage {xeCJK}
 
+\lstset{basicstyle=\ttfamily}
+

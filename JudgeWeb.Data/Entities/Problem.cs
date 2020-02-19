@@ -72,6 +72,11 @@ namespace JudgeWeb.Data
         /// 是否运行和比较使用同一个脚本
         /// </summary>
         public bool CombinedRunCompare { get; set; }
+
+        /// <summary>
+        /// 提供部分共享
+        /// </summary>
+        public bool Shared { get; set; }
     }
 
     public partial class AppDbContext : IEntityTypeConfiguration<Problem>

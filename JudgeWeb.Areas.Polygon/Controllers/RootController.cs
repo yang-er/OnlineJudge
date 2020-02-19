@@ -1,4 +1,5 @@
-﻿using JudgeWeb.Areas.Polygon.Services;
+﻿using JudgeWeb.Areas.Polygon.Models;
+using JudgeWeb.Areas.Polygon.Services;
 using JudgeWeb.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -31,7 +32,8 @@ namespace JudgeWeb.Areas.Polygon.Controllers
         }
 
 
-        [HttpGet]
+        [HttpGet("/polygon")]
+        [HttpGet("/dashboard/problems")]
         public async Task<IActionResult> List(int page = 1)
         {
             IQueryable<Problem> problemSource;
@@ -150,12 +152,14 @@ namespace JudgeWeb.Areas.Polygon.Controllers
             return Window();
         }
 
+
         static readonly Dictionary<string, Type> ImportServiceKinds =
             new Dictionary<string, Type>
             {
                 ["kattis"] = typeof(KattisPackageImportService),
                 ["xysxml"] = typeof(XmlPackageImportService),
             };
+
 
         [HttpPost("[action]")]
         [ValidateInAjax]
@@ -199,6 +203,42 @@ namespace JudgeWeb.Areas.Polygon.Controllers
                     "Import failed. Please contact XiaoYang immediately. " + ex,
                     MessageType.Danger);
             }
+        }
+
+
+        [HttpGet("/dashboard/status")]
+        public async Task<IActionResult> Status(int page = 1)
+        {
+            if (page <= 0) return BadRequest();
+
+            var statusQuery =
+                from s in DbContext.Submissions
+                join j in DbContext.Judgings
+                    on new { s.SubmissionId, Active = true }
+                    equals new { j.SubmissionId, j.Active }
+                orderby s.SubmissionId descending
+                select new StatusListModel
+                {
+                    SubmissionId = s.SubmissionId,
+                    Verdict = j.Status,
+                    CodeLength = s.CodeLength,
+                    ExecutionMemory = j.ExecuteMemory,
+                    ExecutionTime = j.ExecuteTime,
+                    Language = s.Language,
+                    ProblemId = s.ProblemId,
+                    Time = s.Time,
+                    Author = s.Author,
+                    ContestId = s.ContestId,
+                    JudgingId = j.JudgingId,
+                };
+
+            var model = await statusQuery
+                .Skip((page - 1) * 50)
+                .Take(50)
+                .ToListAsync();
+
+            ViewBag.Page = page;
+            return View(model);
         }
     }
 }

@@ -66,8 +66,9 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
                 select new { s, j };
 
             var teamQuery =
-                from t in DbContext.Teams
-                where t.UserId == uid
+                from tu in DbContext.TeamMembers
+                where tu.UserId == uid
+                join t in DbContext.Teams on new { tu.ContestId, tu.TeamId } equals new { t.ContestId, t.TeamId }
                 join c in DbContext.Contests on t.ContestId equals c.ContestId
                 join a in DbContext.TeamAffiliations on t.AffiliationId equals a.AffiliationId
                 join o in DbContext.TeamCategories on t.CategoryId equals o.CategoryId

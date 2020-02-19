@@ -28,7 +28,7 @@ namespace JudgeWeb
                     where cp.ContestId == cid
                     orderby cp.Rank ascending
                     join p in db.Problems on cp.ProblemId equals p.ProblemId
-                    select new ContestProblem(cp, p.Title, p.TimeLimit, p.MemoryLimit, p.CombinedRunCompare);
+                    select new ContestProblem(cp, p.Title, p.TimeLimit, p.MemoryLimit, p.CombinedRunCompare, p.Shared);
 
                 var query2 =
                     from cp in db.ContestProblem

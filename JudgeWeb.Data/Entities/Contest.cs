@@ -120,6 +120,11 @@ namespace JudgeWeb.Data
         /// </summary>
         public bool BalloonAvaliable { get; set; }
 
+        /// <summary>
+        /// 标志位
+        /// </summary>
+        public bool Gym { get; set; }
+
         public ContestState GetState(DateTimeOffset? nowTime = null)
         {
             var now = nowTime ?? DateTimeOffset.Now;
