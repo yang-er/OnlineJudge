@@ -79,6 +79,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
             Cache.Remove($"`c{team.ContestId}`teams`aff0");
             Cache.Remove($"`c{team.ContestId}`teams`cat`1");
             Cache.Remove($"`c{team.ContestId}`teams`cat`2");
+            Cache.Remove($"`c{team.ContestId}`teams`members");
         }
 
 

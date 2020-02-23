@@ -84,6 +84,9 @@ namespace JudgeWeb.Areas.Account.Controllers
                 Plan = user.Plan,
             };
 
+            if (string.IsNullOrEmpty(StatusMessage))
+                TempData["StatusMessage"] = "You can change your avatar in GAVATAR.";
+
             return View(model);
         }
 

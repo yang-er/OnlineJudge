@@ -125,6 +125,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 await DbContext.SaveChangesAsync();
                 Cache.Remove($"`c{cid}`teams`list_jury");
                 Cache.Remove($"`c{cid}`teams`t{team.TeamId}");
+                Cache.Remove($"`c{cid}`teams`members");
 
                 if (uids != null)
                     foreach (var uid in uids)
