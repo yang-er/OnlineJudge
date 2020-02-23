@@ -153,7 +153,7 @@ namespace JudgeWeb.Data
 
         public async Task<Submission> CreateAsync(
             string code, Language langid, int probid, Contest cid, int uid,
-            IPAddress ipAddr, string via, string username, Verdict? expected = null)
+            IPAddress ipAddr, string via, string username, Verdict? expected = null, DateTimeOffset? time = null)
         {
             var s = DbContext.Submissions.Add(new Submission
             {
@@ -163,7 +163,7 @@ namespace JudgeWeb.Data
                 Ip = ipAddr.ToString(),
                 Language = langid.Id,
                 ProblemId = probid,
-                Time = DateTimeOffset.Now,
+                Time = time ?? DateTimeOffset.Now,
                 SourceCode = code.ToBase64(),
                 ExpectedResult = expected,
             });

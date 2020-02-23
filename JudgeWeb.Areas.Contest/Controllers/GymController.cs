@@ -329,7 +329,6 @@ namespace JudgeWeb.Areas.Contest.Controllers
         [HttpGet("[action]")]
         public async Task<IActionResult> Submissions(int cid, int page = 1)
         {
-            if (Contest.GetState() < ContestState.Ended) return Forbid();
             if (page <= 0) return BadRequest();
 
             var statusQuery =

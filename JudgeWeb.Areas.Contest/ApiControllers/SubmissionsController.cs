@@ -96,7 +96,8 @@ namespace JudgeWeb.Areas.Api.Controllers
                 uid: model.teamid,
                 ipAddr: System.Net.IPAddress.Parse(model.ip),
                 via: "restorer",
-                username: "api");
+                username: "api",
+                time: model.time);
 
             scoreboardService.SubmissionCreated(Contest, s);
             return Created($"/api/contests/{cid}/submissions/{s.SubmissionId}",
