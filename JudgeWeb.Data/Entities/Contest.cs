@@ -96,21 +96,6 @@ namespace JudgeWeb.Data
         public int RegisterDefaultCategory { get; set; }
 
         /// <summary>
-        /// 金牌数量
-        /// </summary>
-        public int GoldMedal { get; set; }
-
-        /// <summary>
-        /// 银牌数量
-        /// </summary>
-        public int SilverMedal { get; set; }
-
-        /// <summary>
-        /// 铜牌数量
-        /// </summary>
-        public int BronzeMedal { get; set; }
-
-        /// <summary>
         /// 打印可用性
         /// </summary>
         public bool PrintingAvaliable { get; set; }
@@ -124,6 +109,11 @@ namespace JudgeWeb.Data
         /// 标志位
         /// </summary>
         public bool Gym { get; set; }
+
+        /// <summary>
+        /// Gym下其他人代码可见性，0为不可见，1为可见，2为过题可见
+        /// </summary>
+        public int StatusAvaliable { get; set; }
 
         public ContestState GetState(DateTimeOffset? nowTime = null)
         {

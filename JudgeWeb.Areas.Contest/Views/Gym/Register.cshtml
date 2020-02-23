@@ -1,0 +1,103 @@
+﻿@model GymRegisterModel
+@inject UserManager UserManager
+@{
+    ViewData["Title"] = "Register";
+    Contest ctx = ViewBag.Contest;
+}
+<form asp-action="Register" method="post">
+<div class="container pl-0 pr-0">
+<partial name="_StatusMessage" model="@TempData["StatusMessage"]" />
+@{ TempData.Remove("StatusMessage"); }
+<h2 class="mt-4 mb-3">Register</h2>
+<div class="row">
+<div class="col-12 col-lg-8 main">
+    <h3>Terms of agreement</h3>
+    <textarea class="form-control mb-3" readonly style="height:15em;background-color:#f7f7f7">
+If this gym is homework for some course, you should not copy others' codes. Plagiarism detection may be used.
+
+If you register as virtual participant, it is forbidden to use someone else's code, to read the analysis of the problems and to communicate about the problems with anyone.
+
+If you register as practice, the copyrights for shared codes belongs to its writer, please don't share it without author's agreement.</textarea>
+    <h3>Take part</h3>
+    <div class="form-group">
+        <div class="custom-control custom-radio mb-1">
+            <input type="radio" id="individual" value="True" asp-for="AsIndividual" class="custom-control-input">
+            <label class="custom-control-label" for="individual">as individual participant</label>
+        </div>
+        <div class="custom-control custom-radio mb-2">
+            <input type="radio" id="team-member" value="False" asp-for="AsIndividual" class="custom-control-input">
+            <label class="custom-control-label" for="team-member">as a team member</label>
+        </div>
+        <div class="row" id="team-selection">
+            <div class="col-10 col-lg-6">
+                <select class="form-control ml-4 mb-2 mt-2" id="team-ids" asp-for="TeamId">
+                    <option value="0">select a team...</option>
+                </select>
+                <div class="d-flex mb-2" id="team-members"></div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="col-12 col-lg-4 sidebar">
+    <h3 class="mt-lg-5">Gym</h3>
+    <p>
+        @ctx.Name
+        <br />
+        Start Time: @Html.CstTime(ctx.StartTime)
+        <br />
+        End Time: @Html.CstTime(ctx.EndTime)
+    </p>
+</div>
+</div>
+<p>
+    <button type="submit" class="btn btn-primary"><i class="fas fa-rocket"></i> Register</button>
+</p>
+</div>
+</form>
+<script>
+    $(function () {
+        $('#team-selection').hide();
+
+        var teamInfo = @Html.Raw(ViewData["TeamsJson"]);
+        for (var i = 0; i < teamInfo.length; i++) {
+            $('#team-ids').append('<option value="' + teamInfo[i].team.id + '">' + teamInfo[i].team.name + '</option>');
+        }
+
+        $('#team-ids').on('change', function () {
+            $('#team-members').html('');
+            if ($('#team-ids').val() === '0') return;
+            for (var i = 0; i < teamInfo.length; i++) {
+                if (teamInfo[i].team.id != $('#team-ids').val()) continue;
+                for (var j = 0; j < teamInfo[i].users.length; j++) {
+                    $('#team-members').append('<div class="custom-control custom-checkbox ml-4"><input type="checkbox" class="custom-control-input sel-user" name="UserIds[]" id="sel-user' + teamInfo[i].users[j].id + '" value="' + teamInfo[i].users[j].id + '"><label class="custom-control-label" for="sel-user' + teamInfo[i].users[j].id + '">' + teamInfo[i].users[j].name + '</label></div>');
+                }
+            }
+            $('.sel-user').attr('checked', true);
+            $('#sel-user@(UserManager.GetUserId(User))').attr('disabled', true);
+        });
+
+        $('#individual').change(function () { $('#team-selection').hide(); });
+        $('#team-member').change(function () { $('#team-selection').show(); });
+    });
+</script>
+
+<style>
+    .thead-light-2 { background: #F9FAFB; }
+    #eoj-scoreboard td { border-color: rgba(34,36,38,.1); }
+    #eoj-scoreboard a[href] { color: #4183c4; text-decoration: none; }
+    #eoj-scoreboard tbody tr td, .table tbody tr th { padding-top: .5em; padding-bottom: .5em; }
+    #eoj-scoreboard thead > tr:first-child > th:first-child { border-top-left-radius: .26666667rem; }
+    #eoj-scoreboard thead > tr:first-child > th:last-child { border-top-right-radius: .26666667rem; }
+    #eoj-scoreboard tbody > tr:last-child > td:first-child { border-bottom-left-radius: .26666667rem; }
+    #eoj-scoreboard tbody > tr:last-child > td:last-child { border-bottom-right-radius: .26666667rem; }
+    .head-box { min-width: 3em; max-width: 3em; width: 3em; }
+    .head-box-2 { min-width: 5.5em; max-width: 5.5em; width: 5.5em; }
+    .accepted-problem td.prob-short-name { color: #28a745 !important; }
+    .rejected-problem td.prob-short-name { color: #dc3545 !important; }
+    .main h3, .sidebar h3 { font-size: 1.5rem; }
+
+    @@media (min-width: 1200px) {
+        .head-box { min-width: 4.5em; max-width: 4.5em; width: 4.5em; }
+        .head-box-2 { min-width: 6.5em; max-width: 6.5em; width: 6.5em; }
+    }
+</style>

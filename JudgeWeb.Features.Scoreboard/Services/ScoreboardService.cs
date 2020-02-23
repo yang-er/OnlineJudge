@@ -15,7 +15,7 @@ namespace JudgeWeb.Features.Scoreboard
 
         public void JudgingFinished(Contest contest, DateTimeOffset time, int probid, int teamid, Judging judging)
         {
-            if (!contest.Gym && time >= (contest.EndTime ?? DateTimeOffset.Now)) return;
+            if (time >= (contest.EndTime ?? DateTimeOffset.Now)) return;
             ScoreboardUpdateService.OnUpdateRequested(new ScoreboardEventArgs
             {
                 Balloon = contest.BalloonAvaliable,
@@ -37,16 +37,12 @@ namespace JudgeWeb.Features.Scoreboard
 
         public void RefreshCache(Contest contest, DateTimeOffset now)
         {
-            var endTime = contest.Gym
-                ? contest.EndTime ?? (DateTimeOffset.Now + TimeSpan.FromSeconds(5))
-                : DateTimeOffset.Now + TimeSpan.FromSeconds(5);
-
             ScoreboardUpdateService.OnUpdateRequested(new ScoreboardEventArgs
             {
                 Balloon = contest.BalloonAvaliable,
                 ContestId = contest.ContestId,
                 ContestTime = contest.StartTime ?? DateTimeOffset.Now,
-                EndTime = endTime,
+                EndTime = contest.EndTime ?? (DateTimeOffset.Now + TimeSpan.FromSeconds(5)),
                 EventType = 5,
                 FreezeTime = contest.FreezeTime,
                 Frozen = contest.GetState() >= ContestState.Frozen,
@@ -62,7 +58,7 @@ namespace JudgeWeb.Features.Scoreboard
 
         public void SubmissionCreated(Contest contest, Submission submission)
         {
-            if (!contest.Gym && submission.Time >= (contest.EndTime ?? DateTimeOffset.Now)) return;
+            if (submission.Time >= (contest.EndTime ?? DateTimeOffset.Now)) return;
             ScoreboardUpdateService.OnUpdateRequested(new ScoreboardEventArgs
             {
                 Balloon = contest.BalloonAvaliable,

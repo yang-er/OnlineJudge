@@ -45,7 +45,8 @@
 <body>
     <div id="append-parent"></div>
     <!-- #header start -->
-    <nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
+    @{ var theme = ViewData.ContainsKey("UseLightTheme") ? "light" : "dark"; }
+    <nav class="navbar navbar-expand-md navbar-@theme bg-@theme fixed-top">
         <partial name="_NavLogo" />
 
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#menuDefault"

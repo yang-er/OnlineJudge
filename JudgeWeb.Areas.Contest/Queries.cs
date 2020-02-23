@@ -151,13 +151,39 @@ namespace JudgeWeb
                 var result = new ScoreboardDataModel
                 {
                     Data = value,
-                    RefreshTime = DateTimeOffset.Now
+                    RefreshTime = DateTimeOffset.Now,
+                    Statistics = new Dictionary<int, int>()
                 };
+
+                foreach (var (_, item) in value)
+                {
+                    foreach (var ot in item.Score)
+                    {
+                        var val = result.Statistics.GetValueOrDefault(ot.ProblemId);
+                        if (ot.IsCorrectRestricted)
+                            result.Statistics[ot.ProblemId] = ++val;
+                    }
+                }
 
                 entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(3);
                 return result;
             });
         }
 
+        public static Task<Dictionary<int, IGrouping<int, string>>> ListTeamMembersAsync(this AppDbContext db, int cid)
+        {
+            return db.TeamMembers
+                .Where(tu => tu.ContestId == cid)
+                .Join(
+                    inner: db.Users,
+                    outerKeySelector: tu => tu.UserId,
+                    innerKeySelector: u => u.Id,
+                    resultSelector: (tu, u) => new { tu.TeamId, u.UserName })
+                .GroupBy(a => a.TeamId, a => a.UserName)
+                .CachedToDictionaryAsync(
+                    keySelector: g => g.Key,
+                    tag: $"`c{cid}`teams`members",
+                    timeSpan: TimeSpan.FromMinutes(5));
+        }
     }
 }

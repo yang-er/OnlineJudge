@@ -31,7 +31,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
 
 
         [HttpGet("[action]")]
-        public async Task<IActionResult> Add(
+        public async Task<IActionResult> Add(bool isgym,
             [FromServices] RoleManager<Role> roleManager,
             [FromServices] UserManager userManager)
         {
@@ -43,6 +43,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
                 RegisterDefaultCategory = 0,
                 ShortName = "DOMjudge",
                 Name = "Round 1",
+                Gym = isgym,
             });
 
             await DbContext.SaveChangesAsync();

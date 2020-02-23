@@ -1,0 +1,50 @@
+@using JudgeWeb.Data
+@model (Detail, Testcase)
+@{
+    var (detail, testcase) = Model;
+    ContestProblem[] probs = ViewBag.Problems;
+}
+
+<div class="run @(detail.Status == JudgeWeb.Verdict.Accepted ? "run_correct" : "")">
+    <h4 id="run-@testcase.Rank">Run @testcase.Rank</h4>
+
+    <table>
+        <tr>
+            <td>
+                <table class="table table-sm table-striped table-bordered table-hover">
+                    <tr>
+                        <th>Description</th>
+                        <td>@testcase.Description</td>
+                    </tr>
+                    <tr>
+                        <th>Download</th>
+                        <td>
+                            <a asp-route-prob="@probs.FirstOrDefault(p => p.ProblemId == testcase.ProblemId)?.ShortName" asp-action="FetchTestcase" asp-route-tcid="@detail.TestcaseId" asp-route-filetype="input">Input</a>
+                            /
+                            <a asp-route-prob="@probs.FirstOrDefault(p => p.ProblemId == testcase.ProblemId)?.ShortName" asp-action="FetchTestcase" asp-route-tcid="@detail.TestcaseId" asp-route-filetype="output">Reference Output</a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Status</th>
+                        <td>@(detail.ExecuteTime)ms, @(detail.ExecuteMemory)kb.</td>
+                    </tr>
+                    <tr>
+                        <th>Result</th>
+                        <td><verdict3 value="@detail.Status" /></td>
+                    </tr>
+                </table>
+            </td>
+            <td></td>
+        </tr>
+    </table>
+
+    <h5>Validator output</h5>
+    <snippet base64="@detail.OutputDiff" nodata="There was no diff output." />
+
+    <interactive h5-title="Validator/Submission interaction" filename="Runs/j@(detail.JudgingId)/r@(detail.TestId).out" />
+
+    <snippet h5-title="Program error output" filename="Runs/j@(detail.JudgingId)/r@(detail.TestId).err" nodata="There was no stderr output." />
+
+    <h5>Judging system output (info/debug/errors)</h5>
+    <snippet base64="@detail.OutputSystem" />
+</div>

@@ -17,6 +17,8 @@ namespace JudgeWeb.Data
         public virtual DbSet<PersonRank> PersonRanks { get; set; }
         public virtual DbSet<News> News { get; set; }
         public virtual DbSet<Auditlog> Auditlogs { get; set; }
+        public virtual DbSet<TrainingTeam> TrainingTeams { get; set; }
+        public virtual DbSet<TrainingTeamUser> TrainingTeamUsers { get; set; }
 
         public virtual DbSet<Configure> Configures { get; set; }
         public virtual DbSet<Executable> Executable { get; set; }
@@ -58,6 +60,8 @@ namespace JudgeWeb.Data
             modelBuilder.ApplyConfiguration<PersonRank>(this);
             modelBuilder.ApplyConfiguration<News>(this);
             modelBuilder.ApplyConfiguration<Auditlog>(this);
+            modelBuilder.ApplyConfiguration<TrainingTeam>(this);
+            modelBuilder.ApplyConfiguration<TrainingTeamUser>(this);
             modelBuilder.Entity<IdentityUserRole<int>>()
                 .HasData(new IdentityUserRole<int> { RoleId = -4, UserId = -1 });
 

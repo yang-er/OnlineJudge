@@ -45,6 +45,9 @@ namespace JudgeWeb.Data
         public override bool SupportsUserTwoFactorRecoveryCodes => false;
 
         public IQueryable<Student> Students => _dbContext.Students;
+        public IQueryable<TeachingClass> Classes => _dbContext.Classes;
+        public IQueryable<TrainingTeam> TrainingTeams => _dbContext.TrainingTeams;
+        public IQueryable<TrainingTeamUser> TrainingTeamUsers => _dbContext.TrainingTeamUsers;
 
         public string GetNickName(ClaimsPrincipal claim)
         {

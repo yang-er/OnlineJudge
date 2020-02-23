@@ -26,5 +26,11 @@ namespace JudgeWeb.Areas.Contest.Models
         public string CompilerOutput { get; set; }
 
         public string SourceCode { get; set; }
+
+        public int JudgingId { get; set; }
+
+        public int ExecuteTime { get; set; }
+
+        public int ExecuteMemory { get; set; }
     }
 }

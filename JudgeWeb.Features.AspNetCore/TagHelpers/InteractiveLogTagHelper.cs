@@ -7,6 +7,9 @@ namespace JudgeWeb.Features.Razor
     [HtmlTargetElement("interactive")]
     public class InteractiveLogTagHelper : TagHelper
     {
+        [HtmlAttributeName("h5-title")]
+        public string Header5 { get; set; }
+
         [HtmlAttributeName("filename")]
         public string FileName { get; set; }
 
@@ -48,10 +51,18 @@ namespace JudgeWeb.Features.Razor
         {
             if (!System.IO.File.Exists(FileName))
             {
-                output.TagName = "p";
-                output.TagMode = TagMode.StartTagAndEndTag;
-                output.Attributes.Add("class", "nodata");
-                output.Content.Append("Record has been deleted.");
+                if (!string.IsNullOrEmpty(Header5))
+                {
+                    output.TagName = "p";
+                    output.TagMode = TagMode.StartTagAndEndTag;
+                    output.Attributes.Add("class", "nodata");
+                    output.Content.Append("Record has been deleted.");
+                }
+                else
+                {
+                    output.TagName = null;
+                }
+
                 return;
             }
 
@@ -66,6 +77,9 @@ namespace JudgeWeb.Features.Razor
             output.Content.AppendHtml("</table>\n");
             if (len >= 2000)
                 output.Content.Append("[content display truncated after 2000B]");
+
+            if (!string.IsNullOrWhiteSpace(Header5))
+                output.PreContent.AppendHtml("<h5>").Append(Header5).AppendHtml("</h5>");
         }
     }
 }

@@ -1,62 +1,42 @@
 ﻿@inject UserManager UserManager
-@{ Contest ctx = ViewBag.Contest; }
+@{
+    Contest cts = ViewBag.Contest;
+    Team team = ViewBag.Team;
+    bool disabled_ = cts.GetState() < ContestState.Started || team == null || team.Status != 1;
+    disabled_ = disabled_ && !User.IsInRoles($"Administrator,JuryOfContest{cts.ContestId}");
+    string disableClass = disabled_ ? "disabled" : "";
+}
 
 <ul class="navbar-nav mr-auto">
     <li class="nav-item">
-        <a class="nav-link" active-ctrl="Teams" asp-controller="Teams" asp-action="List" id="menu_teams">
-            <i class="fas fa-address-book"></i>
-            Teams
-            <span class="badge badge-warning" id="num-alerts-teams"></span>
+        <a class="nav-link" active-act="Home,ProblemView" asp-action="Home">
+            <i class="fas fa-book-open"></i>
+            Problems
         </a>
     </li>
 
     <li class="nav-item">
-        <a class="nav-link" active-ctrl="Clarifications" asp-controller="Clarifications" asp-action="List" id="menu_clarifications">
-            <i class="fas fa-comments"></i>
-            Clarifications
-            <span class="badge badge-info" id="num-alerts-clarifications"></span>
-        </a>
-    </li>
-
-    <li class="nav-item">
-        <a class="nav-link" active-ctrl="Submissions" asp-controller="Submissions" asp-action="List">
+        <a class="nav-link" active-act="Submissions" asp-action="Submissions">
             <i class="fas fa-file-code"></i>
-            Submissions
-        </a>
-    </li>
-    
-    <li class="nav-item">
-        <a class="nav-link" active-ctrl="Rejudgings" asp-controller="Rejudgings" asp-action="List" id="menu_rejudgings">
-            <i class="fas fa-sync-alt"></i>
-            Rejudgings
-            <span class="badge badge-info" id="num-alerts-rejudgings"></span>
+            Status
         </a>
     </li>
 
     <li class="nav-item">
-        <a class="nav-link" active-act="Scoreboard" asp-controller="Jury" asp-action="Scoreboard">
+        <a class="nav-link" active-act="Scoreboard" asp-action="Scoreboard">
             <i class="fas fa-list-ol"></i>
-            Scoreboard
+            Standings
         </a>
     </li>
 
-    <if cond="@(ViewData.ContainsKey("HasTeam") && !ctx.Gym)">
+    <viewmodule key="IsJury">
         <li class="nav-item">
-            <a class="nav-link" asp-controller="Team" asp-action="Home">
+            <a class="nav-link" asp-controller="Jury" asp-action="Home">
                 <i class="fas fa-arrow-right"></i>
-                Team
+                Jury
             </a>
         </li>
-    </if>
-
-    <if cond="ctx.Gym">
-        <li class="nav-item">
-            <a class="nav-link" asp-controller="Gym" asp-action="Home">
-                <i class="fas fa-arrow-right"></i>
-                Gym
-            </a>
-        </li>
-    </if>
+    </viewmodule>
 </ul>
 
 <ul class="navbar-nav">
@@ -71,6 +51,15 @@
         </a>
         <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown">
             <a class="dropdown-item disabled" href="#">@UserManager.GetNickName(User)</a>
+
+            <a class="dropdown-item d-none" href="#" id="notify_disable">
+                <i class="fas fa-bell-slash fa-fw"></i> Disable Notifications
+            </a>
+
+            <a class="dropdown-item d-none" href="#" id="notify_enable">
+                <i class="fas fa-bell fa-fw"></i> Enable Notifications
+            </a>
+
             <viewmodule key="RefreshSpan">
                 <a class="dropdown-item" href="#" id="refresh-navitem">
                     <i class="fas fa-sync-alt fa-fw"></i>
@@ -80,6 +69,7 @@
                     <span class="small text-muted">(@ViewData["RefreshSpan"]s)</span>
                 </a>
             </viewmodule>
+
             <a class="dropdown-item" asp-area="Misc" asp-controller="Home" asp-action="Index">
                 <i class="fas fa-sign-out-alt fa-fw"></i> Back to main site
             </a>

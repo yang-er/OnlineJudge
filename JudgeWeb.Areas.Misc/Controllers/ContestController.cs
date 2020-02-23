@@ -73,6 +73,7 @@ namespace JudgeWeb.Areas.Misc.Controllers
             var cts = await GlobalCache.Instance.GetOrCreateAsync("gym::list", async key =>
             {
                 var contests = await DbContext.Contests
+                    .Where(c => c.Gym)
                     .Select(c => new ContestListModel
                     {
                         Name = c.Name,

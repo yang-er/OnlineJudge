@@ -27,11 +27,12 @@ namespace JudgeWeb.Features.Scoreboard
             var fbQuery =
                 from sc in db.ScoreCache
                 where sc.ContestId == args.ContestId && sc.ProblemId == args.ProblemId && sc.FirstToSolve
-                join t in db.Teams on sc.TeamId equals t.TeamId
+                join t in db.Teams on new { sc.ContestId, sc.TeamId } equals new { t.ContestId, t.TeamId }
                 join c in db.TeamCategories on t.CategoryId equals c.CategoryId
                 where (from t in db.Teams
-                        join c in db.TeamCategories on t.CategoryId equals c.CategoryId
-                        select c.SortOrder).Contains(c.SortOrder)
+                       where t.ContestId == args.ContestId && t.TeamId == args.TeamId
+                       join c in db.TeamCategories on t.CategoryId equals c.CategoryId
+                       select c.SortOrder).Contains(c.SortOrder)
                 select new { tid = sc.TeamId };
             var it = await fbQuery.CountAsync();
             bool firstBlood = it == 0;

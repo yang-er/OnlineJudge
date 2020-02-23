@@ -8,6 +8,8 @@ namespace JudgeWeb.Features.Razor
     [HtmlTargetElement("snippet")]
     public class SnippetTagHelper : TagHelper
     {
+        const string deleted = "Record has been deleted.";
+
         [HtmlAttributeName("base64")]
         public string Base64Source { get; set; }
 
@@ -16,6 +18,9 @@ namespace JudgeWeb.Features.Razor
 
         [HtmlAttributeName("nodata")]
         public string NoData { get; set; }
+
+        [HtmlAttributeName("h5-title")]
+        public string Header5 { get; set; }
 
         private static (bool, string) ConvertBase64(string b64, string nodata)
         {
@@ -33,7 +38,7 @@ namespace JudgeWeb.Features.Razor
 
         private static async ValueTask<(bool, string)> ReadFileAsync(string filename, string nodata)
         {
-            if (!System.IO.File.Exists(filename)) return (false, "Record has been deleted.");
+            if (!System.IO.File.Exists(filename)) return (false, deleted);
             var sb = new StringBuilder();
 
             using (var sr = new System.IO.StreamReader(filename))
@@ -58,6 +63,12 @@ namespace JudgeWeb.Features.Razor
             else
                 (ok, result) = await ReadFileAsync(FileName, NoData);
 
+            if (!string.IsNullOrWhiteSpace(Header5) && result == deleted)
+            {
+                output.TagName = null;
+                return;
+            }
+
             if (ok)
             {
                 output.TagName = "pre";
@@ -74,6 +85,9 @@ namespace JudgeWeb.Features.Razor
             output.Attributes.SetAttribute("class", append_class);
             output.TagMode = TagMode.StartTagAndEndTag;
             output.Content.Append(result);
+
+            if (!string.IsNullOrWhiteSpace(Header5))
+                output.PreContent.AppendHtml("<h5>").Append(Header5).AppendHtml("</h5>");
         }
     }
 }

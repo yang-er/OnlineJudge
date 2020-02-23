@@ -1,7 +1,7 @@
 ﻿@model IEnumerable<ContestListModel>
 @{
-    ViewData["Title"] = "Contests";
-    ViewData["ActiveAction"] = "Contest";
+    ViewData["Title"] = "Gyms";
+    ViewData["ActiveAction"] = "Gym";
     HashSet<int> rg = ViewBag.RegisteredContests;
 
     string ContestState(ContestListModel c)
@@ -13,7 +13,7 @@
     }
 }
 
-<h2 class="mt-4">Contests</h2>
+<h2 class="mt-4">Gyms</h2>
 
 <table class="table table-responsive-lg mt-3">
     <thead>
@@ -34,7 +34,7 @@
                     <if cond="!contest.IsPublic">
                         <i class="fas fa-eye-slash"></i>
                     </if>
-                    <a asp-action="Info" asp-controller="Public" asp-area="Contest" asp-route-cid="@contest.ContestId">@(string.IsNullOrEmpty(contest.Name) ? "(unnamed)" : contest.Name)</a>
+                    <a asp-action="Home" asp-controller="Gym" asp-area="Contest" asp-route-cid="@contest.ContestId">@(string.IsNullOrEmpty(contest.Name) ? "(unnamed)" : contest.Name)</a>
                 </td>
                 <td>@Html.CstTime(contest.StartTime)</td>
                 <td align="center">@(contest.EndTime - contest.StartTime)</td>

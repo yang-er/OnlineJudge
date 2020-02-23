@@ -74,16 +74,19 @@
                 <select class="form-control" asp-for="DefaultCategory" asp-items="catSel">
                     <option value="0">-- Registration Closed --</option>
                 </select>
-                <span asp-validation-for="RankingStrategy" class="text-danger"></span>
+                <span asp-validation-for="DefaultCategory" class="text-danger"></span>
             </div>
-            <div class="form-group">
-                <label for="medal_input">Medal counts for golden / silver / bronze</label>
-                <div class="input-group mb-3" id="medal_input">
-                    <input type="number" class="form-control" placeholder="Golden" aria-label="Golden" asp-for="GoldenMedal" />
-                    <input type="number" class="form-control" placeholder="Silver" aria-label="Golden" asp-for="SilverMedal" />
-                    <input type="number" class="form-control" placeholder="Bronze" aria-label="Golden" asp-for="BronzeMedal" />
+            <if cond="ViewBag.Contest.Gym">
+                <div class="form-group">
+                    <label asp-for="StatusAvailable"></label>
+                    <select class="form-control" asp-for="StatusAvailable">
+                        <option value="0">Users can see only his submissions</option>
+                        <option value="1">Users can see all submissions</option>
+                        <option value="2">Users can see submissions for problems he solved</option>
+                    </select>
+                    <span asp-validation-for="StatusAvailable" class="text-danger"></span>
                 </div>
-            </div>
+            </if>
         </div>
         <div class="col-lg-4">
             <b>Specification of short name:</b><br />

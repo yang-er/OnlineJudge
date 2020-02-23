@@ -1,0 +1,115 @@
+﻿@model FullBoardViewModel
+@{
+    ViewData["Title"] = "Standings";
+    var dateFormat = System.Globalization.CultureInfo.GetCultureInfo(1033);
+    var state = Model.Contest.GetState();
+    Dictionary<int, IGrouping<int, string>> members = ViewBag.Members;
+}
+
+<div class="container-fluid pl-0 pr-0">
+<div class="row">
+<div class="col-12">
+<h2 class="mt-3 mb-2 text-md-center">@Model.Contest.Name</h2>
+<span class="d-block text-md-center mb-3 text-muted" style="font-size:1.2em">
+    <if cond="@(state == ContestState.NotScheduled)">
+        scheduling
+    </if>
+    <if cond="@(state == ContestState.ScheduledToStart)">
+        <if cond="@(Model.Contest.StartTime.Value.Date > DateTimeOffset.Now)">
+            scheduled to start on @string.Format(dateFormat, "{0:ddd, dd MMM yyyy HH:mm:ss CST}", Model.Contest.StartTime)
+        </if>
+        <if cond="@(Model.Contest.StartTime.Value.Date < DateTimeOffset.Now)">
+            scheduled to start on @Model.Contest.StartTime?.ToString("HH:mm")
+        </if>
+    </if>
+    <if cond="@(state == ContestState.Started || state == ContestState.Frozen)">
+        starts: @Model.Contest.StartTime?.ToString("HH:mm") - ends: @Model.Contest.EndTime?.ToString("HH:mm")
+    </if>
+    <if cond="@(state == ContestState.Ended)">
+        contest over, waiting for results
+    </if>
+    <if cond="@(state == ContestState.Finalized)">
+        final standings
+    </if>
+</span>
+
+<table class="table table-bordered center" style="width:auto" id="eoj-scoreboard">
+    <thead>
+        <tr class="text-center thead-light-2">
+            <th class="head-box" title="Rank">#</th>
+            <th class="text-left head-box-2">Who</th>
+            <th class="head-box" title="Score">=</th>
+            @foreach (var prob in Model.Problems) {<th class="head-box"><a asp-action="ProblemView" asp-route-prob="@prob.ShortName">@prob.ShortName</a></th>}
+        </tr>
+    </thead>
+    @foreach (var ___sortOrder in Model)
+    {
+        <tbody>
+            @foreach (var row in ___sortOrder)
+            {
+                bool fst = true;
+                <tr class="text-center">
+                    <td scope="row">@row.Rank</td>
+                    <td class="text-left">
+                        <a class="font-weight-semibold">@row.TeamName</a>
+                        <if cond="members.ContainsKey(row.TeamId)">@foreach (var it in members[row.TeamId]) {@(fst ? ": " : ", ")<a asp-area="Account" asp-controller="Profile" asp-action="Show" asp-route-username="@it">@it</a>fst = false;}</if>
+                    </td>
+                    <td>@row.Points</td>
+                    @foreach (var penalty in row.Problems)
+                    {
+                        if (penalty == null || penalty.JudgedCount == 0)
+                        {
+                            <td></td>
+                            continue;
+                        }
+
+                        if (Model.Contest.RankingStrategy == 0)
+                        {
+                            <td class="text-center">
+                                <span class="@(penalty.SolveTime.HasValue ? "text-success" : "text-danger") font-weight-bold">
+                                    @(penalty.SolveTime.HasValue ? penalty.JudgedCount == 1 ? "+" : $"+{penalty.JudgedCount-1}" : $"-{penalty.JudgedCount}")
+                                </span>
+                            </td>
+                        }
+                        else if (Model.Contest.RankingStrategy == 2)
+                        {
+                            int val = (int)penalty.SolveTime.GetValueOrDefault();
+                            <td class="text-center"><span class="font-weight-bold">@val</span></td>
+                        }
+                    }
+                </tr>
+            }
+        </tbody>
+        <tfoot>
+            <tr class="thead-light-2">
+                <td colspan="3"><span class="text-success">通过</span><br>提交</td>
+                @foreach (var item in ___sortOrder.Statistics) {<td class="text-center" style="width: 6.25%"><span class="text-success">@item.Accepted</span><br>@(item.Accepted + item.Rejected)</td>}
+            </tr>
+        </tfoot>
+    }
+</table>
+
+<small class="text-muted mt-2 text-right d-block">
+    Last Update: @string.Format(dateFormat, "{0:ddd, dd MMM yyyy HH:mm:ss CST}", Model.UpdateTime)
+</small>
+
+<style>
+    .thead-light-2 { background: #F9FAFB; }
+    #eoj-scoreboard td { border-color: rgba(34,36,38,.1); }
+    #eoj-scoreboard a[href] { color: #4183c4; text-decoration: none; }
+    #eoj-scoreboard tbody tr td, .table tbody tr th { padding-top: .5em; padding-bottom: .5em; }
+    #eoj-scoreboard thead > tr:first-child > th:first-child { border-top-left-radius: .26666667rem; }
+    #eoj-scoreboard thead > tr:first-child > th:last-child { border-top-right-radius: .26666667rem; }
+    #eoj-scoreboard tfoot > tr:last-child > td:first-child { border-bottom-left-radius: .26666667rem; }
+    #eoj-scoreboard tfoot > tr:last-child > td:last-child { border-bottom-right-radius: .26666667rem; }
+    .head-box { min-width: 3em; max-width: 3em; width: 3em; }
+    .head-box-2 { min-width: 7em; max-width: 7em; }
+
+    @@media (min-width: 1200px) {
+        .head-box { min-width: 4.5em; max-width: 4.5em; width: 4.5em; }
+        .head-box-2 { min-width: 8em; max-width: 10em; }
+    }
+</style>
+</div>
+</div>
+</div>

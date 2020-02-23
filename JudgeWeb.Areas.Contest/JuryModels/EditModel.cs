@@ -13,18 +13,6 @@ namespace JudgeWeb.Areas.Contest.Models
         public int RankingStrategy { get; set; }
 
         [Required]
-        [DisplayName("Golden medal rank")]
-        public int GoldenMedal { get; set; }
-
-        [Required]
-        [DisplayName("Silver medal rank")]
-        public int SilverMedal { get; set; }
-
-        [Required]
-        [DisplayName("Bronze medal rank")]
-        public int BronzeMedal { get; set; }
-
-        [Required]
         [DisplayName("Is active and visible to public")]
         public bool IsPublic { get; set; }
 
@@ -39,6 +27,10 @@ namespace JudgeWeb.Areas.Contest.Models
         [Required]
         [DisplayName("Self-registered category")]
         public int DefaultCategory { get; set; }
+
+        [Required]
+        [DisplayName("Status availability")]
+        public int StatusAvailable { get; set; }
 
         [Required]
         [DisplayName("Shortname")]

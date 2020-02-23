@@ -1,0 +1,127 @@
+﻿@{
+    ViewData["Title"] = "Dashboard";
+    bool inajax = ViewData.ContainsKey("InAjax");
+    Team team = ViewBag.Team;
+    Contest ctx = ViewBag.Contest;
+    BoardQuery query = ViewBag.ScoreboardData;
+    Dictionary<int, int> stats = ViewBag.Statistics;
+    ContestProblem[] probs = ViewBag.Problems;
+    IEnumerable<Clarification> clars = ViewBag.Clarifications;
+}
+
+@if ((ctx.StartTime ?? DateTimeOffset.MaxValue) >= DateTimeOffset.Now)
+{
+    <h1 id="teamwelcome" class="text-center">
+        Welcome <span id="teamwelcometeam">@team?.TeamName</span>!
+    </h1>
+    <h2 id="contestnotstarted" class="text-center">
+        Gym has not been started
+    </h2>
+}
+else
+{
+    
+<div class="container pl-0 pr-0">
+<partial name="_StatusMessage" model="@TempData["StatusMessage"]" />
+@{ TempData.Remove("StatusMessage"); }
+<div class="row">
+<div class="col-12 col-lg-8 main">
+    <h2 class="mt-4 mb-3">Problems</h2>
+    <table class="table table-bordered text-center" id="eoj-scoreboard">
+        <thead>
+            <tr class="thead-light-2">
+                <th class="head-box" title="Problem ID">#</th>
+                <th class="text-left">Title</th>
+                <th class="head-box-2" title="Passed Count">%</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var prob in probs)
+            {
+                var ot = query?.Score?.FirstOrDefault(sc => sc.ProblemId == prob.ProblemId) ?? new ScoreCache();
+                <tr class="@(ot.IsCorrectRestricted ? "accepted-problem" : ot.SubmissionRestricted > 0 ? "rejected-problem" : "")">
+                    <td class="prob-short-name" style="font-weight:bold">@prob.ShortName</td>
+                    <td class="text-left"><a asp-action="ProblemView" asp-route-prob="@prob.ShortName">@prob.Title</a></td>
+                    <td><i class="fas fa-user"></i> &times; @stats.GetValueOrDefault(prob.ProblemId)</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    <h3 class="mt-4 mt-lg-5 mb-3">Announcement</h3>
+    <ul class="list-unstyled">
+        @if (clars.Any())
+        {
+            foreach (var clar in clars)
+            {
+                var prob = probs.FirstOrDefault(c => c.ProblemId == clar.ProblemId);
+                <li>
+                    <p>
+                        <b>@clar.Category @prob?.ShortName issue</b>
+                        <br />
+                        @clar.Body
+                        <br />
+                        <span class="text-muted">@clar.SubmitTime.ToString("yyyy/MM/dd HH:mm")</span>
+                    </p>
+                </li>
+            }
+        }
+        else
+        {
+            <li>No announcement.</li>
+        }
+    </ul>
+</div>
+<div class="col-12 col-lg-4 sidebar">
+    <h3 class="mt-lg-5">Gym</h3>
+    <p>
+        @ctx.Name
+        <br />
+        Start Time: @Html.CstTime(ctx.StartTime)
+        <br />
+        End Time: @Html.CstTime(ctx.EndTime)
+    </p>
+    @Html.Raw(ViewBag.Markdown)
+    <h3 class="mt-4">Practice</h3>
+    <if cond="@(!ViewData.ContainsKey("HasTeam"))">
+        <if cond="ctx.RegisterDefaultCategory == 0">
+            <p>Registration closed.</p>
+        </if>
+        <if cond="ctx.RegisterDefaultCategory != 0">
+            <p>
+                Want to solve the contest problems? Just register for practice and you will be able to submit solutions.
+            </p>
+            <p>
+                <a class="btn btn-sm btn-primary" asp-action="Register">Register</a>
+            </p>
+        </if>
+    </if>
+    <viewmodule key="HasTeam">
+        <p>
+            You have registered as Team <b>@team.TeamName</b>.
+        </p>
+    </viewmodule>
+</div>
+</div>
+</div>
+
+<style>
+    .thead-light-2 { background: #F9FAFB; }
+    #eoj-scoreboard td { border-color: rgba(34,36,38,.1); }
+    #eoj-scoreboard a[href] { color: #4183c4; text-decoration: none; }
+    #eoj-scoreboard tbody tr td, .table tbody tr th { padding-top: .5em; padding-bottom: .5em; }
+    #eoj-scoreboard thead > tr:first-child > th:first-child { border-top-left-radius: .26666667rem; }
+    #eoj-scoreboard thead > tr:first-child > th:last-child { border-top-right-radius: .26666667rem; }
+    #eoj-scoreboard tbody > tr:last-child > td:first-child { border-bottom-left-radius: .26666667rem; }
+    #eoj-scoreboard tbody > tr:last-child > td:last-child { border-bottom-right-radius: .26666667rem; }
+    .head-box { min-width: 3em; max-width: 3em; width: 3em; }
+    .head-box-2 { min-width: 5.5em; max-width: 5.5em; width: 5.5em; }
+    .accepted-problem td.prob-short-name { color: #28a745 !important; }
+    .rejected-problem td.prob-short-name { color: #dc3545 !important; }
+    .main h3, .sidebar h3 { font-size: 1.5rem; }
+
+    @@media (min-width: 1200px) {
+        .head-box { min-width: 4.5em; max-width: 4.5em; width: 4.5em; }
+        .head-box-2 { min-width: 6.5em; max-width: 6.5em; width: 6.5em; }
+    }
+</style>
+}

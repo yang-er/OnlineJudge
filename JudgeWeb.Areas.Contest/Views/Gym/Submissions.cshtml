@@ -1,0 +1,70 @@
+﻿@model IEnumerable<StatusListModel>
+@{
+    ViewData["Title"] = "Status";
+    int curPage = ViewBag.Page;
+    Contest ctx = ViewBag.Contest;
+    ContestProblem[] probs = ViewBag.Problems;
+    Dictionary<int, string> names = ViewBag.TeamsName;
+    var dateFormat = System.Globalization.CultureInfo.GetCultureInfo(1033);
+    BoardQuery q = ViewBag.ScoreboardData; q = q ?? new BoardQuery();
+    var avp = q.Score?.Where(sc => sc.IsCorrectRestricted).Select(sc => sc.ProblemId).ToHashSet() ?? new HashSet<int>();
+    Team team = ViewBag.Team; int? teamid = team?.TeamId;
+}
+
+<div class="container pl-0 pr-0">
+<div class="row">
+<div class="col-12">
+    <h2 class="mt-3 mb-2 text-md-center">@ctx.Name</h2>
+    <span class="d-block text-md-center mb-3 text-muted" style="font-size:1.2em">
+        submission status
+    </span>
+
+    <table class="table table-bordered text-center" id="eoj-scoreboard" style="width:100%">
+        <thead>
+            <tr role="row" class="thead-light-2">
+                <th scope="col">ID</th>
+                <th scope="col" title="Submit Time">Time</th>
+                <th scope="col" title="Author">Author</th>
+                <th scope="col" title="Problem">Problem</th>
+                <th scope="col" class="d-none d-lg-table-cell" title="Language">Lang</th>
+                <th scope="col" title="Verdict">Verdict</th>
+                <th scope="col" class="d-none d-lg-table-cell" title="Execution Time">E.Time</th>
+                <th scope="col" class="d-none d-lg-table-cell" title="Execution Memory">E.Mem</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var stat in Model)
+            {
+                var prob = probs.FirstOrDefault(cp => cp.ProblemId == stat.ProblemId);
+                if (prob == null) { continue; }
+                var notIgnore = ctx.StatusAvaliable == 1 || (ctx.StatusAvaliable == 0 ? stat.Author == teamid : avp.Contains(stat.ProblemId));
+                <tr role="row" asp-link-ignore="@(!notIgnore)" asp-action="Submission" asp-route-sid="@stat.SubmissionId" data-toggle="ajaxWindow" data-target="showSubmission">
+                    <td use-a="">@stat.SubmissionId</td>
+                    <td use-a>@Html.CstTime(stat.Time)</td>
+                    <td>@names.GetValueOrDefault(stat.Author)</td>
+                    <td><a asp-action="ProblemView" asp-route-prob="@prob.ShortName">@(prob.ShortName)<span class="d-none d-sm-inline">. @prob.Title</span></a></td>
+                    <td class="d-none d-lg-table-cell text-variant" use-a>@stat.Language</td>
+                    <td use-a><verdict3 value="@stat.Verdict" /></td>
+                    <td class="d-none d-lg-table-cell" use-a>@(stat.Verdict == Verdict.CompileError ? "N/A" : $"{stat.ExecutionTime / 1000.0:F3}")</td>
+                    <td class="d-none d-lg-table-cell" use-a>@(stat.Verdict == Verdict.CompileError ? "N/A" : $"{stat.ExecutionMemory / 1024.0:F1}")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <partial name="_PaginationUnlimited" model="curPage" />
+</div>
+</div>
+</div>
+
+<style>
+    .thead-light-2 { background: #F9FAFB; }
+    #eoj-scoreboard td { border-color: rgba(34,36,38,.1); }
+    #eoj-scoreboard a[href] { color: #4183c4; text-decoration: none; }
+    #eoj-scoreboard tbody tr td, .table tbody tr th { padding-top: .5em; padding-bottom: .5em; }
+    #eoj-scoreboard thead > tr:first-child > th:first-child { border-top-left-radius: .26666667rem; }
+    #eoj-scoreboard thead > tr:first-child > th:last-child { border-top-right-radius: .26666667rem; }
+    #eoj-scoreboard tbody > tr:last-child > td:first-child { border-bottom-left-radius: .26666667rem; }
+    #eoj-scoreboard tbody > tr:last-child > td:last-child { border-bottom-right-radius: .26666667rem; }
+    #eoj-scoreboard .link-a { color: #4183c4; }
+</style>

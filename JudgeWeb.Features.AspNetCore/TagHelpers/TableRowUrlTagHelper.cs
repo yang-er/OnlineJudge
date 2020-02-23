@@ -41,6 +41,9 @@ namespace JudgeWeb.Features.Razor
         [HtmlAttributeNotBound]
         public string AjaxWindow { get; set; }
 
+        [HtmlAttributeName("asp-link-ignore")]
+        public bool Ignore { get; set; }
+
         public override void Init(TagHelperContext context)
         {
             base.Init(context);
@@ -80,11 +83,12 @@ namespace JudgeWeb.Features.Razor
             output.Attributes.Remove(usedTag);
 
             if (context.Items.TryGetValue("tr-url", out var trTag2)
-                && trTag2 is TableRowDataUrlTagHelper trTag)
+                && trTag2 is TableRowDataUrlTagHelper trTag && !trTag.Ignore)
             {
                 var item = new TagBuilder("a");
                 item.Attributes.Add("href", trTag.DataUrl);
-                item.AddCssClass("text-reset");
+                string @class = usedTag.ValueStyle == HtmlAttributeValueStyle.Minimized ? "text-reset text-decoration-none" : usedTag.Value.ToString();
+                item.AddCssClass(@class);
 
                 if (trTag.AjaxWindow != null)
                 {

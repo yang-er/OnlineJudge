@@ -448,12 +448,10 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 StopTime = stopTime,
                 UnfreezeTime = unfTime,
                 DefaultCategory = Contest.RegisterDefaultCategory,
-                BronzeMedal = Contest.BronzeMedal,
-                GoldenMedal = Contest.GoldMedal,
-                SilverMedal = Contest.SilverMedal,
                 IsPublic = Contest.IsPublic,
                 UsePrintings = Contest.PrintingAvaliable,
                 UseBalloon = Contest.BalloonAvaliable,
+                StatusAvailable = Contest.StatusAvaliable,
             });
         }
         
@@ -539,9 +537,6 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 Name = model.Name,
                 RankingStrategy = model.RankingStrategy,
                 IsPublic = model.IsPublic,
-                GoldMedal = model.GoldenMedal,
-                SilverMedal = model.SilverMedal,
-                BronzeMedal = model.BronzeMedal,
                 StartTime = startTime,
                 FreezeTime = freezeTime,
                 EndTime = endTime,
@@ -549,6 +544,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 RegisterDefaultCategory = model.DefaultCategory,
                 BalloonAvaliable = model.UseBalloon,
                 PrintingAvaliable = model.UsePrintings,
+                StatusAvaliable = model.StatusAvailable,
             };
 
             await UpdateContestAsync(update,
@@ -556,13 +552,11 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 nameof(update.Name),
                 nameof(update.RankingStrategy),
                 nameof(update.IsPublic),
-                nameof(update.GoldMedal),
-                nameof(update.SilverMedal),
-                nameof(update.BronzeMedal),
                 nameof(update.StartTime),
                 nameof(update.FreezeTime),
                 nameof(update.EndTime),
                 nameof(update.UnfreezeTime),
+                nameof(update.StatusAvaliable),
                 nameof(update.RegisterDefaultCategory),
                 nameof(update.PrintingAvaliable),
                 nameof(update.BalloonAvaliable));

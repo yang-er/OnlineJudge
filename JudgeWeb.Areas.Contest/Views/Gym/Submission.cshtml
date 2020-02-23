@@ -1,0 +1,64 @@
+﻿@model SubmissionViewModel
+@{
+    Layout = null;
+    Contest ctx = ViewBag.Contest;
+    var time = Model.Time;
+    var compile_badge = Model.CompilerOutput is null ? "secondary"
+                      : Model.Verdict == Verdict.CompileError ? "danger" : "success";
+    var compile_result = Model.CompilerOutput is null ? "waiting"
+                      : Model.Verdict == Verdict.CompileError ? "failed" : "successful";
+}
+
+<div class="modal fade" id="modal-@ViewData["HandleKey"]" tabindex="-1" role="dialog" aria-labelledby="modal-@ViewData["HandleKey"]-label" aria-hidden="true">
+    <div class="modal-dialog" style="max-width:800px" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modal-@ViewData["HandleKey"]-label">Submission details</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="container">
+                    <div class="d-flex flex-row">
+                        <div class="p-2">Problem: <b><span class="probid">@Model.Problem.ShortName</span> - @Model.Problem.Title</b></div>
+                        <div class="p-2">Team: <b>@Model.TeamName</b></div>
+                    </div>
+                    <div class="d-flex flex-row mb-3">
+                        <div class="p-2">Run result: <verdict3 value="@Model.Verdict" /></div>
+                        <div class="p-2">Language: <b>@Model.Language.Name</b></div>
+                        <div class="p-2">Time: @(Model.ExecuteTime / 1000.0)s</div>
+                        <div class="p-2">Memory: @(Model.ExecuteMemory / 1024)MB</div>
+                    </div>
+
+                    <ace value="@Model.SourceCode.UnBase64()" file="Main.@Model.Language.FileExtension" />
+
+                    <if cond="Model.Verdict == Verdict.CompileError">
+                        <hr />
+                        <h4 class="text-center">Compilation output</h4>
+                        <snippet class="pre-scrollable" base64="@Model.CompilerOutput" nodata="There were no compiler errors or warnings." />
+                    </if>
+
+                    <if cond="Model.Verdict != Verdict.CompileError">
+                        <hr />
+                        <h4 class="text-center">Judging Protocol</h4>
+
+                        @{ ViewData["Shared"] = true; }
+                        @foreach (var (t, r) in (IEnumerable<(Testcase, Detail)>)ViewBag.Runs)
+                        {
+                            var type = r == null
+                                ? "_SubmissionDetailNull"
+                                : Model.Problem.Interactive
+                                ? "_SubmissionDetailInteractive"
+                                : "_SubmissionDetailOutput";
+                            <partial name="@type" model="(r, t)" />
+                        }
+                    </if>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
