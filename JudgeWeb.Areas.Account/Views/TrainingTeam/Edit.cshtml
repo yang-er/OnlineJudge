@@ -1,0 +1,96 @@
+﻿@model TrainingTeam
+@inject UserManager UserManager
+@{
+    ViewData["Title"] = "Edit team " + Model.TrainingTeamId;
+    User user = ViewBag.User;
+    List<TeamAffiliation> affs = ViewBag.Affils;
+    var aff = affs.Where(a => a.AffiliationId == Model.AffiliationId).SingleOrDefault();
+    List<TrainingTeamUser> users = ViewBag.Users;
+    ViewData["ActiveAction"] = "TrainingTeams";
+}
+
+@section Banner  {
+    <style type="text/css">
+        #jlucpcid {
+            max-width: 768px;
+        }
+
+        @@media (min-width: 768px) {
+            #jlucpcid {
+                box-shadow: 0px 1px 5px 0px rgba(0,0,0,0.2);
+            }
+        }
+    </style>
+    <div class="container-fluid mt-md-4 mb-4 pl-0 pr-0" id="jlucpcid">
+        <div style="background-color:#f2f2f2">
+            <div class="container-fluid d-flex pt-4 pb-4 pl-md-4 pr-md-4">
+                <div class="avatar @(aff.ExternalId == "null" ? "d-none" : "")">
+                    <img src="~/images/affiliations/@(aff.ExternalId).png" style="width:100%;max-width:5em" />
+                </div>
+                <div class="plan ml-3 mt-auto mb-auto pt-2">
+                    <h2><a asp-action="Detail" class="text-reset text-decoration-none">@Model.TeamName</a></h2>
+                    <h6 class="text-muted">Created on @Model.Time.ToString("yyyy-MM-dd")</h6>
+                </div>
+            </div>
+        </div>
+        <partial name="_StatusMessage" model="@TempData["StatusMessage"]" />
+        @{ TempData["StatusMessage"] = null; }
+        <div class="row ml-0 mr-0 ml-md-4 mr-md-4 mt-4 pb-5">
+            <div class="col-12 col-md-6">
+                <form asp-action="Edit">
+                    <h4 class="mb-3">Team info</h4>
+                    <div class="form-group">
+                        <label asp-for="TeamName">Team Name</label>
+                        <input asp-for="TeamName" class="form-control" />
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="AffiliationId">Team Affiliation</label>
+                        <select asp-for="AffiliationId" class="form-control" asp-items="affs.Select(a => new SelectListItem(a.FormalName, a.AffiliationId.ToString()))"></select>
+                    </div>
+                    <p class="mb-0">
+                        <button type="submit" class="btn btn-primary">Save</button>
+                    </p>
+                </form>
+                <hr class="mt-4 mb-3" />
+                <form asp-action="Invite">
+                    <h5 class="mb-3">Invite user</h5>
+                    <input required name="username" id="ipt-username" class="form-control mb-3" />
+                    <button type="submit" class="btn btn-info">Invite</button>
+                </form>
+            </div>
+            <div class="col-12 col-md-6">
+                <h4 class="mb-3 mt-4 mt-md-0">Members</h4>
+                <table class="table table-sm data-table">
+                    <thead>
+                        <tr>
+                            <th>user</th>
+                            <th>status</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var u in users)
+                        {
+                            <tr>
+                                <td class="pt-2 pb-2">
+                                    <a asp-controller="Profile" asp-action="Show" asp-route-username="@u.UserName" style="width:6em;text-decoration:none;color:black">
+                                        <img gravatar-email="@u.UserEmail" style="width:3em;margin-right:0.5em" />
+                                        @u.UserName
+                                    </a>
+                                </td>
+                                <td style="vertical-align:middle">
+                                    <if cond="u.Accepted ?? false">Active</if>
+                                    <if cond="u.Accepted.HasValue && !u.Accepted.Value">Rejected</if>
+                                    <if cond="!u.Accepted.HasValue">Inviting</if>
+                                </td>
+                                <td style="vertical-align:middle">
+                                    <a asp-action="Delete" asp-route-username="@u.UserName" data-toggle="ajaxWindow" data-target="removeMember"><i class="fas fa-times"></i></a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+}

@@ -48,6 +48,7 @@ namespace JudgeWeb.Data
         public IQueryable<TeachingClass> Classes => _dbContext.Classes;
         public IQueryable<TrainingTeam> TrainingTeams => _dbContext.TrainingTeams;
         public IQueryable<TrainingTeamUser> TrainingTeamUsers => _dbContext.TrainingTeamUsers;
+        public IQueryable<TeamAffiliation> TeamAffiliations => _dbContext.TeamAffiliations;
 
         public string GetNickName(ClaimsPrincipal claim)
         {
@@ -88,6 +89,41 @@ namespace JudgeWeb.Data
             }
 
             return result;
+        }
+
+        public virtual Task AddTeamMemberAsync(TrainingTeam team, User user)
+        {
+            _dbContext.TrainingTeamUsers.Add(new TrainingTeamUser
+            {
+                TrainingTeamId = team.TrainingTeamId,
+                UserId = user.Id,
+            });
+
+            return _dbContext.SaveChangesAsync();
+        }
+
+        public virtual async Task<int> CreateTeamAsync(string teamName, User user, int affid)
+        {
+            var t = _dbContext.TrainingTeams.Add(new TrainingTeam
+            {
+                AffiliationId = affid,
+                TeamName = teamName,
+                UserId = user.Id,
+                Time = DateTimeOffset.Now,
+            });
+
+            await _dbContext.SaveChangesAsync();
+            int teamId = t.Entity.TrainingTeamId;
+
+            _dbContext.TrainingTeamUsers.Add(new TrainingTeamUser
+            {
+                TrainingTeamId = teamId,
+                UserId = user.Id,
+                Accepted = true
+            });
+
+            await _dbContext.SaveChangesAsync();
+            return teamId;
         }
 
         public static readonly MemoryCache SlideExpireMemoryCache =

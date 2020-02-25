@@ -1,0 +1,79 @@
+﻿@model TrainingTeam
+@inject UserManager UserManager
+@{
+    ViewData["Title"] = "Team " + Model.TrainingTeamId;
+    User user = ViewBag.User;
+    TeamAffiliation aff = ViewBag.Affil;
+    List<TrainingTeamUser> users = ViewBag.Users;
+    ViewData["ActiveAction"] = "TrainingTeams";
+}
+
+@section Banner  {
+    <style type="text/css">
+        #jlucpcid {
+            max-width: 768px;
+        }
+
+        @@media (min-width: 768px) {
+            #jlucpcid {
+                box-shadow: 0px 1px 5px 0px rgba(0,0,0,0.2);
+            }
+        }
+    </style>
+    <div class="container-fluid mt-md-4 mb-4 pl-0 pr-0" id="jlucpcid">
+        <div style="background-color:#f2f2f2">
+            <div class="container-fluid d-flex pt-4 pb-4 pl-md-4 pr-md-4">
+                <div class="avatar @(aff.ExternalId == "null" ? "d-none" : "")">
+                    <img src="~/images/affiliations/@(aff.ExternalId).png" style="width:100%;max-width:5em" />
+                </div>
+                <div class="plan ml-3 mt-auto mb-auto pt-2">
+                    <h2><a asp-action="Detail" class="text-reset text-decoration-none">@Model.TeamName</a></h2>
+                    <h6 class="text-muted">Created on @Model.Time.ToString("yyyy-MM-dd")</h6>
+                </div>
+            </div>
+        </div>
+        <div class="row ml-0 mr-0 ml-md-4 mr-md-4 mt-4 pb-5">
+            <div class="col-12">
+                <h4>Members</h4>
+                <partial name="_StatusMessage" model="@TempData["StatusMessage"]" />
+                @{ TempData["StatusMessage"] = null; }
+                <div class="d-flex text-center mb-3">
+                    @foreach (var u in users.Where(u => u.Accepted == true))
+                    {
+                        <a asp-controller="Profile" asp-action="Show" asp-route-username="@u.UserName" style="width:6em;margin-right:10px;text-decoration:none;color:black">
+                            <img gravatar-email="@u.UserEmail" style="width:6em;margin-bottom:0.25em" />
+                            @u.UserName
+                        </a>
+                    }
+                </div>
+
+                <if cond="users.Where(u => u.Accepted != true).Any() && users.Where(u => u.UserId == user.Id).Any()">
+                    <h4>Inactive Members</h4>
+
+                    <div class="d-flex text-center mb-3">
+                        @foreach (var u in users.Where(u => u.Accepted != true))
+                        {
+                            <a asp-controller="Profile" asp-action="Show" asp-route-username="@u.UserName" style="width:6em;margin-right:10px;text-decoration:none;color:black">
+                                <img gravatar-email="@u.UserEmail" style="width:6em;margin-bottom:0.25em" />
+                                @u.UserName <if cond="u.Accepted.HasValue">(&times)</if><if cond="!u.Accepted.HasValue">(?)</if>
+                            </a>
+                        }
+                    </div>
+                </if>
+
+                <if cond="Model.UserId == user.Id">
+                    <p class="mt-4 mb-0">
+                        <a asp-action="Edit" class="btn btn-primary">Edit team</a>
+                        <a asp-action="Dismiss" data-toggle="ajaxWindow" data-target="dismissTeam" class="btn btn-danger">Delete team</a>
+                    </p>
+                </if>
+                <if cond="Model.UserId != user.Id && users.Where(u => u.UserId == user.Id).Any()">
+                    <form method="post" class="mt-4 mb-0">
+                        <button type="submit" asp-action="Accept" class="btn btn-success">Accept invitation</button>
+                        <button type="submit" asp-action="Reject" class="btn btn-danger">Reject invitation</button>
+                    </form>
+                </if>
+            </div>
+        </div>
+    </div>
+}

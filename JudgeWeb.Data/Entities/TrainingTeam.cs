@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using System;
 
 namespace JudgeWeb.Data
 {
@@ -27,6 +28,11 @@ namespace JudgeWeb.Data
         /// 队伍创建者
         /// </summary>
         public int UserId { get; set; }
+
+        /// <summary>
+        /// 成立时间
+        /// </summary>
+        public DateTimeOffset Time { get; set; }
     }
 
     public partial class AppDbContext : IEntityTypeConfiguration<TrainingTeam>

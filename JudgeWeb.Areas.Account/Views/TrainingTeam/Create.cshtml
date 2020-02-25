@@ -1,0 +1,33 @@
+﻿@{
+    Layout = null;
+    List<TeamAffiliation> affs = ViewBag.Affils;
+}
+
+<form asp-action="Create" method="post">
+    <div class="modal fade" id="modal-@ViewData["HandleKey"]" tabindex="-1" role="dialog" aria-labelledby="modal-@ViewData["HandleKey"]-label" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modal-@ViewData["HandleKey"]-label">Create team</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="teamName">Team Name</label>
+                        <input name="teamName" id="teamName" class="form-control" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="affilId">Team Affiliation</label>
+                        <select id="affilId" name="affilId" class="form-control" asp-items="affs.Select(a => new SelectListItem(a.FormalName, a.AffiliationId.ToString()))"></select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
