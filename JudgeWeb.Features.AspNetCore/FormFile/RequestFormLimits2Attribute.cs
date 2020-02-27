@@ -1,6 +1,6 @@
 ﻿namespace Microsoft.AspNetCore.Mvc
 {
-    public class RequestFormLimits2Attribute : RequestFormLimitsAttribute
+    public sealed class RequestFormLimits2Attribute : RequestFormLimitsAttribute
     {
         public RequestFormLimits2Attribute(int bytes)
         {

@@ -30,7 +30,7 @@ namespace Microsoft.AspNetCore.Authentication.Cookies
 
             if (userName != null)
             {
-                userName = um.NormalizeKey(userName);
+                userName = userName.ToUpper();
                 if (SlideExpireMemoryCache.TryGetValue(userName, out DateTimeOffset last)
                     && last > context.Properties.IssuedUtc)
                     context.Properties.IssuedUtc = null;

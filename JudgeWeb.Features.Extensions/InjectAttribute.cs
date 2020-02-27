@@ -3,7 +3,7 @@
 namespace System
 {
     [AttributeUsage(AttributeTargets.Assembly, AllowMultiple = true)]
-    public class InjectAttribute : Attribute
+    public sealed class InjectAttribute : Attribute
     {
         private Type ServiceType { get; }
 

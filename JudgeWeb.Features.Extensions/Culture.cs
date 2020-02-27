@@ -1,6 +1,6 @@
 ﻿namespace System.Globalization
 {
-    public class Culture
+    public static class Culture
     {
         public static void SetCultureInfo(string cultureName)
         {

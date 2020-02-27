@@ -1,6 +1,6 @@
 ﻿namespace System.Threading.Tasks
 {
-    public class AsyncLock : IDisposable
+    public sealed class AsyncLock : IDisposable
     {
         private readonly SemaphoreSlim semaphore;
         private readonly Releaser releaser;

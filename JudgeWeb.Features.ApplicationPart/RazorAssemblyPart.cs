@@ -23,7 +23,7 @@ namespace Microsoft.AspNetCore.Mvc.ApplicationParts
         {
             get
             {
-                var loader = new AreaCompiledItemLoader(AreaName);
+                var loader = new RazorCompiledItemLoader2(AreaName);
                 return loader.LoadItems(Assembly);
             }
         }

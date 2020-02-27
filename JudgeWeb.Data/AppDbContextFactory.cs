@@ -1,7 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Logging;
-#pragma warning disable CS0618
 
 namespace JudgeWeb.Data
 {
@@ -10,7 +9,8 @@ namespace JudgeWeb.Data
         public AppDbContext CreateDbContext(string[] args)
         {
             var optionsBuilder = new DbContextOptionsBuilder<AppDbContext>();
-            optionsBuilder.UseLoggerFactory(new LoggerFactory().AddConsole());
+            var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+            optionsBuilder.UseLoggerFactory(loggerFactory);
 
             // For dotnet cli users: 
             //   dotnet ef migrations add InitialForMyDbContext

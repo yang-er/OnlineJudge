@@ -11,7 +11,7 @@ namespace Microsoft.AspNetCore.Mvc.Infrastructure
 {
     public class ContentFileResultExecutor : FileResultExecutorBase, IActionResultExecutor<ContentFileResult>
     {
-        private readonly IHostingEnvironment _hostingEnvironment;
+        private readonly IWebHostEnvironment _hostingEnvironment;
 
         static readonly Action<ILogger, FileResult, string, string, Exception> _executingFileResult;
         static readonly Action<ILogger, Exception> _writingRangeToBody;
@@ -29,7 +29,7 @@ namespace Microsoft.AspNetCore.Mvc.Infrastructure
                 "Writing the requested range of bytes to the body...");
         }
 
-        public ContentFileResultExecutor(ILogger<ContentFileResultExecutor> logger, IHostingEnvironment hostingEnvironment)
+        public ContentFileResultExecutor(ILogger<ContentFileResultExecutor> logger, IWebHostEnvironment hostingEnvironment)
             : base(logger)
         {
             _hostingEnvironment = hostingEnvironment ?? throw new ArgumentNullException(nameof(hostingEnvironment));
@@ -99,7 +99,7 @@ namespace Microsoft.AspNetCore.Mvc.Infrastructure
                 _writingRangeToBody(Logger, null);
             }
 
-            var sendFile = response.HttpContext.Features.Get<IHttpSendFileFeature>();
+            var sendFile = response.HttpContext.Features.Get<IHttpResponseBodyFeature>();
             if (sendFile != null && !string.IsNullOrEmpty(physicalPath))
             {
                 if (range != null)
@@ -108,14 +108,14 @@ namespace Microsoft.AspNetCore.Mvc.Infrastructure
                         physicalPath,
                         offset: range.From ?? 0L,
                         count: rangeLength,
-                        cancellation: default);
+                        cancellationToken: default);
                 }
 
                 return sendFile.SendFileAsync(
                     physicalPath,
                     offset: 0,
                     count: null,
-                    cancellation: default);
+                    cancellationToken: default);
             }
 
             return WriteFileAsync(context.HttpContext, GetFileStream(fileInfo), range, rangeLength);

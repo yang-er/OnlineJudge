@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using System.Linq;
@@ -55,12 +56,12 @@ namespace JudgeWeb.Areas.Api.Controllers
         [HttpGet]
         [AllowAnonymous]
         public ActionResult<object> Info(
-            [FromServices] IHostingEnvironment environment)
+            [FromServices] IWebHostEnvironment environment)
         {
             return new
             {
                 api_version = 4,
-                domjudge_version = "7.0.2",
+                domjudge_version = "7.2.0",
                 environment = environment.IsDevelopment() ? "dev" : "prod",
             };
         }

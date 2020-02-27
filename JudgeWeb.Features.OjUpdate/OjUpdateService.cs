@@ -88,7 +88,7 @@ namespace JudgeWeb.Features.OjUpdate
         /// <param name="catId">分类编号</param>
         /// <param name="serviceProvider">服务提供程序</param>
         /// <param name="siteName">站点名称</param>
-        public OjUpdateService(
+        protected OjUpdateService(
             ILogger<OjUpdateService> logger,
             IServiceProvider serviceProvider,
             int catId,
@@ -235,36 +235,32 @@ namespace JudgeWeb.Features.OjUpdate
         {
             try
             {
-                using (var handler = new HttpClientHandler())
+                using var handler = new HttpClientHandler();
+                ConfigureHandler(handler);
+
+                using var httpClient = new HttpClient();
+                LastUpdate = null;
+                ConfigureHttpClient(httpClient);
+
+                using (var scope = ServiceProvider.CreateScope())
                 {
-                    ConfigureHandler(handler);
+                    var dbContext = scope.ServiceProvider
+                        .GetRequiredService<AppDbContext>();
+                    int category = CategoryId;
 
-                    using (var httpClient = new HttpClient())
+                    var names = await dbContext.PersonRanks
+                        .Where(r => r.Category == category)
+                        .ToListAsync();
+
+                    foreach (var id in names)
                     {
-                        LastUpdate = null;
-                        ConfigureHttpClient(httpClient);
-
-                        using (var scope = ServiceProvider.CreateScope())
-                        {
-                            var dbContext = scope.ServiceProvider
-                                .GetRequiredService<AppDbContext>();
-                            int category = CategoryId;
-
-                            var names = await dbContext.PersonRanks
-                                .Where(r => r.Category == category)
-                                .ToListAsync();
-
-                            foreach (var id in names)
-                            {
-                                await UpdateOne(httpClient, id, stoppingToken);
-                                dbContext.PersonRanks.Update(id);
-                                await dbContext.SaveChangesAsync();
-                            }
-                        }
-
-                        LastUpdate = DateTimeOffset.Now;
+                        await UpdateOne(httpClient, id, stoppingToken);
+                        dbContext.PersonRanks.Update(id);
+                        await dbContext.SaveChangesAsync();
                     }
                 }
+
+                LastUpdate = DateTimeOffset.Now;
             }
             catch (OperationCanceledException)
             {

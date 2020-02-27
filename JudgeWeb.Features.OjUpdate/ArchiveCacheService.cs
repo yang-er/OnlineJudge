@@ -28,7 +28,7 @@ namespace JudgeWeb.Features.OjUpdate
         {
             Logger.LogDebug("Fetch service started.");
             bool firstRun = ServiceProvider
-                .GetRequiredService<IHostingEnvironment>()
+                .GetRequiredService<IHostEnvironment>()
                 .IsDevelopment();
 
             while (!stoppingToken.IsCancellationRequested)

@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using Newtonsoft.Json;
 using System;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace JudgeWeb.Features.Storage
@@ -17,7 +17,7 @@ namespace JudgeWeb.Features.Storage
         public static async Task<T> ReadAsync<T>(this IFileRepository io, string backstore, string fileName)
         {
             var tot = await io.ReadPartAsync(backstore, fileName);
-            if (string.IsNullOrEmpty(tot)) return default(T);
+            if (string.IsNullOrEmpty(tot)) return default;
 
             try
             {

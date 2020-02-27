@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json;
+﻿using System.Text.Json;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
@@ -40,16 +40,8 @@ namespace System
         /// <exception cref="JsonException" />
         public static T AsJson<T>(this string jsonString)
         {
-            try
-            {
-                var json = new JsonSerializer();
-                if (jsonString == "") throw new JsonReaderException();
-                return json.Deserialize<T>(new JsonTextReader(new StringReader(jsonString)));
-            }
-            catch (JsonException)
-            {
-                return default;
-            }
+            if (string.IsNullOrEmpty(jsonString)) return default;
+            return JsonSerializer.Deserialize<T>(jsonString);
         }
 
         /// <summary>
@@ -57,12 +49,9 @@ namespace System
         /// </summary>
         /// <param name="value">要被序列化的对象。</param>
         /// <returns>序列化后的JSON文本。</returns>
-        public static string ToJson(this object value)
+        public static string ToJson<T>(this T value)
         {
-            var json = new JsonSerializer();
-            var sb = new StringBuilder();
-            json.Serialize(new JsonTextWriter(new StringWriter(sb)), value);
-            return sb.ToString();
+            return JsonSerializer.Serialize(value);
         }
 
         /// <summary>
@@ -94,10 +83,8 @@ namespace System
         /// <returns>加密后编码数组。</returns>
         public static byte[] ToMD5(this byte[] source)
         {
-            using (var MD5p = new MD5CryptoServiceProvider())
-            {
-                return MD5p.ComputeHash(source);
-            }
+            using var MD5p = new MD5CryptoServiceProvider();
+            return MD5p.ComputeHash(source);
         }
 
         /// <summary>

@@ -1,9 +1,9 @@
-﻿using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Mvc.ApplicationParts;
-using Microsoft.AspNetCore.Mvc.Razor;
+﻿using Microsoft.AspNetCore.Mvc.ApplicationParts;
+using Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.Hosting;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -34,8 +34,10 @@ namespace Microsoft.AspNetCore.Mvc
 #if DEBUG
             // only in debug mode should we open this module
             // so that we can hot-fix our cshtml.
-            builder.Services.AddOptions<RazorViewEngineOptions>()
-                .Configure<IHostingEnvironment>((options, env) =>
+            builder.AddRazorRuntimeCompilation();
+
+            builder.Services.AddOptions<MvcRazorRuntimeCompilationOptions>()
+                .Configure<IHostEnvironment>((options, env) =>
                 {
                     var areaProvider = new AreasFileProvider(
                         new PhysicalFileProvider(env.ContentRootPath + "/../"),

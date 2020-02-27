@@ -2,11 +2,11 @@
 
 namespace Microsoft.AspNetCore.Razor.Hosting
 {
-    internal class AreaCompiledItemLoader : RazorCompiledItemLoader
+    internal class RazorCompiledItemLoader2 : RazorCompiledItemLoader
     {
         public string AreaName { get; }
 
-        public AreaCompiledItemLoader(string areaName)
+        public RazorCompiledItemLoader2(string areaName)
         {
             AreaName = areaName;
         }

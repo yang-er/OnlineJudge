@@ -16,6 +16,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using System;
 using System.Text.Encodings.Web;
 using System.Text.Unicode;
@@ -24,7 +25,7 @@ namespace JudgeWeb
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration, IHostingEnvironment env)
+        public Startup(IConfiguration configuration, IWebHostEnvironment env)
         {
             Configuration = configuration;
             Environment = env;
@@ -34,7 +35,7 @@ namespace JudgeWeb
 
         public IConfiguration Configuration { get; }
 
-        public IHostingEnvironment Environment { get; }
+        public IWebHostEnvironment Environment { get; }
 
         public string[] EnabledAreas { get; }
 
@@ -83,7 +84,7 @@ namespace JudgeWeb
                 .AddCookie2(options =>
                 {
                     options.Cookie.HttpOnly = true;
-                    options.Cookie.Expiration = TimeSpan.FromDays(30);
+                    options.ExpireTimeSpan = TimeSpan.FromDays(30);
                     options.LoginPath = "/account/login";
                     options.LogoutPath = "/account/logout";
                     options.AccessDeniedPath = "/account/access-denied";
@@ -113,10 +114,10 @@ namespace JudgeWeb
             services.AddProblemRepository();
             services.AddMarkdown();
 
-            services.AddMvc()
+            services.AddControllersWithViews(a => a.EnableEndpointRouting = false)
                 .SetTokenTransform<SlugifyParameterTransformer>()
                 .EnableContentFileResult()
-                .SetCompatibilityVersion(CompatibilityVersion.Version_2_1)
+                .SetCompatibilityVersion(CompatibilityVersion.Version_3_0)
                 .UseAreaParts(AssemblyPrefix, EnabledAreas);
 
             services.AddDefaultManagers();
@@ -164,8 +165,14 @@ namespace JudgeWeb
             //app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseCookiePolicy();
+            app.UseRouting();
             app.UseAuthentication();
-            app.UseMvc();
+            app.UseAuthorization();
+
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapControllers();
+            });
         }
     }
 }

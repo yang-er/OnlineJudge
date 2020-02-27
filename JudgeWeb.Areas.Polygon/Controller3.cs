@@ -31,7 +31,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
             ProblemLoad = load;
         }
 
-        public Problem Problem { get; set; }
+        public new Problem Problem { get; set; }
 
         private async Task<IActionResult> ValidateAsync()
         {

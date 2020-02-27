@@ -95,7 +95,7 @@ namespace JudgeWeb.Data
             modelBuilder.ApplyConfiguration<Balloon>(this);
             modelBuilder.ApplyConfiguration<Printing>(this);
 
-            modelBuilder.Query<SubmissionStatistics>();
+            modelBuilder.Entity<SubmissionStatistics>().HasNoKey();
         }
     }
 }

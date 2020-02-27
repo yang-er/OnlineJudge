@@ -3,7 +3,7 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Internal;
 using System;
 using System.Collections.Generic;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Net;
@@ -54,8 +54,8 @@ namespace JudgeWeb.Data
             return Cache.GetOrCreateAsync<IEnumerable<SubmissionStatistics>>($"SubStatU{uid}", async (t) =>
             {
                 var item = await DbContext
-                    .Query<SubmissionStatistics>()
-                    .FromSql(
+                    .Set<SubmissionStatistics>()
+                    .FromSqlRaw(
                         "SELECT COUNT(*) AS [TotalSubmission], [a].[PublicId] AS [ProblemId], " +
                             "SUM(CASE WHEN [j].[Status] = 11 THEN 1 ELSE 0 END) AS [AcceptedSubmission], " +
                             "@__uid AS [Author], 0 AS [ContestId] " +
