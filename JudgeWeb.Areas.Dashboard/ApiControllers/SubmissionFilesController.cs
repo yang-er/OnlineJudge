@@ -20,6 +20,7 @@ namespace JudgeWeb.Areas.Api.Controllers
     [Authorize(AuthenticationSchemes = "Basic")]
     [Authorize(Roles = "Administrator,Judgehost,CDS")]
     [Produces("application/json")]
+    [ControllerName("Submissions")]
     public class SubmissionFilesController : ControllerBase
     {
         /// <summary>

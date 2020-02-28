@@ -39,6 +39,7 @@
     <ProjectReference Include="..\JudgeWeb.Areas.Misc\JudgeWeb.Areas.Misc.csproj" />
     <ProjectReference Include="..\JudgeWeb.Areas.Polygon\JudgeWeb.Areas.Polygon.csproj" />
     <ProjectReference Include="..\JudgeWeb.Data\JudgeWeb.Data.csproj" />
+    <ProjectReference Include="..\JudgeWeb.Features.ApiExplorer\JudgeWeb.Features.ApiExplorer.csproj" />
     <ProjectReference Include="..\JudgeWeb.Features.ApplicationPart\JudgeWeb.Features.ApplicationPart.csproj" />
     <ProjectReference Include="..\JudgeWeb.Features.AspNetCore\JudgeWeb.Features.AspNetCore.csproj" />
     <ProjectReference Include="..\JudgeWeb.Features.Extensions\JudgeWeb.Features.Extensions.csproj" />

@@ -18,6 +18,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System;
+using System.Linq;
 using System.Text.Encodings.Web;
 using System.Text.Unicode;
 
@@ -123,16 +124,10 @@ namespace JudgeWeb
 
             services.AddDefaultManagers();
 
-            /*services.AddSwagger(options =>
-            {
-                foreach (var item in EnabledAreas)
-                {
-                    var xmlFile = $"{AssemblyPrefix}{item}.xml";
-                    var xmlPath = System.IO.Path.Combine(AppContext.BaseDirectory, xmlFile);
-                    if (System.IO.File.Exists(xmlPath))
-                        options.IncludeXmlComments(xmlPath);
-                }
-            });*/
+            services.AddApiExplorer()
+                .AddDocument("DOMjudge", "DOMjudge compact API v4", "7.2.0")
+                .AddSecurityScheme("basic", Microsoft.OpenApi.Models.SecuritySchemeType.Http)
+                .IncludeXmlComments(EnabledAreas.Select(item => System.IO.Path.Combine(AppContext.BaseDirectory, $"{AssemblyPrefix}{item}.xml")));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -173,6 +168,7 @@ namespace JudgeWeb
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
+                endpoints.MapSwaggerUI("/api/doc");
             });
         }
     }

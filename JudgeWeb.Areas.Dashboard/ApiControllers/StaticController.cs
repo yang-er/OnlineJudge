@@ -9,9 +9,9 @@ using FileUtils = System.IO.File;
 
 namespace JudgeWeb.Areas.Api.Controllers
 {
-    [Area("Api")]
+    [Area("Dashboard")]
     [Authorize]
-    [Route("[area]/[controller]/[action]")]
+    [Route("api/[controller]/[action]")]
     [Produces("application/json")]
     public class StaticController : ControllerBase
     {
