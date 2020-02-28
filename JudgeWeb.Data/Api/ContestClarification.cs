@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Text;
 
 namespace JudgeWeb.Data.Api
 {
@@ -19,7 +18,7 @@ namespace JudgeWeb.Data.Api
         public ContestClarification(Clarification c, DateTimeOffset contestTime)
         {
             time = c.SubmitTime;
-            contest_time = contestTime - c.SubmitTime;
+            contest_time = c.SubmitTime - contestTime;
             id = $"{c.ClarificationId}";
             reply_to_id = c.ResponseToId?.ToString();
             from_team_id = c.Sender?.ToString();

@@ -20,6 +20,7 @@ using Microsoft.Extensions.Hosting;
 using System;
 using System.Linq;
 using System.Text.Encodings.Web;
+using System.Text.Json.Serialization;
 using System.Text.Unicode;
 
 namespace JudgeWeb
@@ -116,6 +117,7 @@ namespace JudgeWeb
             services.AddMarkdown();
 
             services.AddControllersWithViews()
+                .AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new TimeSpanJsonConverter()))
                 .SetTokenTransform<SlugifyParameterTransformer>()
                 .ReplaceLinkGenerator()
                 .EnableContentFileResult()

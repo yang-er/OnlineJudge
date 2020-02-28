@@ -6,9 +6,9 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
-using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace JudgeWeb.Areas.Api.Controllers
@@ -139,18 +139,21 @@ namespace JudgeWeb.Areas.Api.Controllers
         [Authorize(Roles = "Judgehost,Administrator")]
         public async Task<IActionResult> Config(string name)
         {
-            var jo = new JObject();
             var query = DbContext.Configures
                 .Select(c => new { c.Name, c.Value });
-
             if (name != null)
-            {
                 query = query.Where(c => c.Name == name);
-            }
-
             var value = await query.ToListAsync();
-            value.ForEach(a => jo[a.Name] = JToken.Parse(a.Value));
-            return new JsonResult(jo);
+
+            var result = new StringBuilder();
+            result.Append("{");
+            for (int i = 0; i < value.Count; i++)
+                result.Append(i != 0 ? ",\"" : "\"")
+                      .Append(value[i].Name)
+                      .Append("\":")
+                      .Append(value[i].Value);
+            result.Append("}");
+            return Content(result.ToString(), "application/json");
         }
     }
 }

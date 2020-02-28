@@ -18,20 +18,27 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
         {
             if (page < 1) page = 1;
 
-            var users = await DbContext.Users
+            var users1 = await DbContext.Users
                 .OrderBy(u => u.Id)
                 .Skip((page - 1) * 100).Take(100)
-                .GroupJoin(
-                    inner: DbContext.UserRoles,
-                    outerKeySelector: u => u.Id,
-                    innerKeySelector: ur => ur.UserId,
-                    resultSelector: (u, ur) => new { User = u, Roles = ur.ToArray() })
+                .ToListAsync();
+            if (users1.Count == 0) return NotFound();
+
+            int min = users1.First().Id, max = users1.Last().Id;
+            var userRoles = await DbContext.UserRoles
+                .Where(ur => ur.UserId >= min && ur.UserId <= max)
                 .ToListAsync();
 
+            var users =
+                from u in users1
+                join ur in userRoles on u.Id equals ur.UserId into urs
+                select new { User = u, Roles = urs.ToArray() };
+            
             int total = await DbContext.Users.CountAsync();
             var roles = await DbContext.Roles
                 .Where(r => r.ShortName != null)
-                .ToDictionaryAsync(r => r.Id);
+                .Select(r => new { r.Id, r.ShortName })
+                .ToDictionaryAsync(r => r.Id, r => r.ShortName);
 
             ViewBag.CurrentPage = page;
             ViewBag.TotalPage = (total + 99) / 100;
@@ -39,7 +46,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
             return View(users.Select(a => (
                 a.User,
                 a.Roles.Where(r => roles.ContainsKey(r.RoleId))
-                       .Select(ur => roles[ur.RoleId].ShortName)
+                       .Select(ur => roles[ur.RoleId])
                 )));
         }
 
