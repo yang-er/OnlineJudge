@@ -114,15 +114,16 @@ namespace JudgeWeb
             services.AddProblemRepository();
             services.AddMarkdown();
 
-            services.AddControllersWithViews(a => a.EnableEndpointRouting = false)
+            services.AddControllersWithViews()
                 .SetTokenTransform<SlugifyParameterTransformer>()
+                .ReplaceLinkGenerator()
                 .EnableContentFileResult()
                 .SetCompatibilityVersion(CompatibilityVersion.Version_3_0)
                 .UseAreaParts(AssemblyPrefix, EnabledAreas);
 
             services.AddDefaultManagers();
 
-            services.AddSwagger(options =>
+            /*services.AddSwagger(options =>
             {
                 foreach (var item in EnabledAreas)
                 {
@@ -131,7 +132,7 @@ namespace JudgeWeb
                     if (System.IO.File.Exists(xmlPath))
                         options.IncludeXmlComments(xmlPath);
                 }
-            });
+            });*/
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -142,7 +143,7 @@ namespace JudgeWeb
                 app.UseDeveloperExceptionPage();
                 app.UseMiddleware<AjaxExceptionMiddleware>();
                 app.UseDatabaseErrorPage();
-                app.UseApiExplorer();
+                // app.UseApiExplorer();
             }
             else if (Environment.EnvironmentName == "Test")
             {

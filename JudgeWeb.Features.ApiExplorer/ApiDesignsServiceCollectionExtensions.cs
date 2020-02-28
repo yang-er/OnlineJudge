@@ -25,7 +25,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 {
                     Title = "DOMjudge",
                     Description = "DOMjudge compact API v4",
-                    Version = "7.0.2",
+                    Version = "7.2.0",
                 });
 
                 options.AddSecurityDefinition("BasicAuth", new OpenApiSecurityScheme
@@ -44,11 +44,11 @@ namespace Microsoft.Extensions.DependencyInjection
         {
             app.UseSwagger(options => options.RouteTemplate = "/api/swagger/{documentName}.json");
 
-            app.UseSwaggerUI(options =>
-            {
-                options.SwaggerEndpoint("/api/swagger/domjudge.json", "domjudge");
-                options.RoutePrefix = "api/doc";
-            });
+            //app.UseSwaggerUI(options =>
+            //{
+            //    options.SwaggerEndpoint("/api/swagger/domjudge.json", "domjudge");
+            //    options.RoutePrefix = "api/doc";
+            //});
 
             return app;
         }

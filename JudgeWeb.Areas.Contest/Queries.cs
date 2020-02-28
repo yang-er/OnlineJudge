@@ -137,16 +137,22 @@ namespace JudgeWeb
                     join rc in db.RankCache on new { t.TeamId, t.ContestId } equals new { rc.TeamId, rc.ContestId } into rcs
                     from rc in rcs.DefaultIfEmpty()
                     join sc in db.ScoreCache on new { t.TeamId, t.ContestId } equals new { sc.TeamId, sc.ContestId } into scs
-                    select new Features.Scoreboard.BoardQuery
-                    {
-                        Rank = rc ?? new RankCache(),
-                        Score = scs.ToList(),
-                        Team = t,
-                        Affiliation = a
-                    };
+                    from sc in scs.DefaultIfEmpty()
+                    select new { t = new { t, a, rc }, sc };
 
-                var value = await query
-                    .ToDictionaryAsync(k => k.Team.TeamId);
+                var value = (await query.ToListAsync())
+                    .GroupBy(
+                        keySelector: a => a.t,
+                        elementSelector: a => a.sc)
+                    .ToDictionary(
+                        keySelector: a => a.Key.t.TeamId,
+                        elementSelector: g => new Features.Scoreboard.BoardQuery
+                        {
+                            Rank = g.Key.rc ?? new RankCache(),
+                            Score = g.Where(a => a != null).ToList(),
+                            Team = g.Key.t,
+                            Affiliation = g.Key.a
+                        });
 
                 var result = new ScoreboardDataModel
                 {
@@ -172,18 +178,20 @@ namespace JudgeWeb
 
         public static Task<Dictionary<int, IGrouping<int, string>>> ListTeamMembersAsync(this AppDbContext db, int cid)
         {
-            return db.TeamMembers
-                .Where(tu => tu.ContestId == cid)
-                .Join(
-                    inner: db.Users,
-                    outerKeySelector: tu => tu.UserId,
-                    innerKeySelector: u => u.Id,
-                    resultSelector: (tu, u) => new { tu.TeamId, u.UserName })
-                .GroupBy(a => a.TeamId, a => a.UserName)
-                .CachedToDictionaryAsync(
-                    keySelector: g => g.Key,
-                    tag: $"`c{cid}`teams`members",
-                    timeSpan: TimeSpan.FromMinutes(5));
+            return ContestCache._cache.GetOrCreateAsync($"`c{cid}`teams`members", async entry =>
+            {
+                var query =
+                    from tu in db.TeamMembers
+                    where tu.ContestId == cid
+                    join u in db.Users on tu.UserId equals u.Id
+                    select new { tu.TeamId, u.UserName };
+
+                var result = (await query.ToListAsync())
+                    .GroupBy(a => a.TeamId, a => a.UserName)
+                    .ToDictionary(g => g.Key);
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5);
+                return result;
+            });
         }
     }
 }

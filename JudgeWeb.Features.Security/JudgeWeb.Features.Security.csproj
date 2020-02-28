@@ -14,10 +14,11 @@
 
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="idunno.Authentication.Basic" Version="2.2.2-g1f1e46bf22" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\JudgeWeb.Features.Extensions\JudgeWeb.Features.Extensions.csproj" />
+    <ProjectReference Include="..\JudgeWeb.Data\JudgeWeb.Data.csproj" />
   </ItemGroup>
 
 </Project>

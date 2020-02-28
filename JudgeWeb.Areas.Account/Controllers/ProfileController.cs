@@ -176,7 +176,11 @@ namespace JudgeWeb.Areas.Account.Controllers
                 return NotFound();
 
             var code = await UserManager.GenerateEmailConfirmationTokenAsync(user);
-            var callbackUrl = Url.EmailConfirmationLink(user.Id.ToString(), code, Request.Scheme);
+            var callbackUrl = Url.Action(
+                action: "ConfirmEmail",
+                controller: "Sign",
+                values: new { userId = $"{user.Id}", code, area = "Account" },
+                protocol: Request.Scheme);
 
             try
             {
@@ -276,7 +280,11 @@ namespace JudgeWeb.Areas.Account.Controllers
             await UserManager.UpdateAsync(user);
 
             var code = await UserManager.GenerateEmail2ConfirmationTokenAsync(user);
-            var callbackUrl = Url.Email2ConfirmationLink(user.Id.ToString(), code, Request.Scheme);
+            var callbackUrl = Url.Action(
+                action: "ConfirmEmail2",
+                controller: "Sign",
+                values: new { userId = $"{user.Id}", code, area = "Account" },
+                protocol: Request.Scheme);
             await EmailSender.SendEmailConfirmationAsync(user.StudentEmail, callbackUrl);
 
             StatusMessage = "Verification email sent. Please check your email.";
@@ -299,7 +307,11 @@ namespace JudgeWeb.Areas.Account.Controllers
             }
 
             var code = await UserManager.GenerateEmail2ConfirmationTokenAsync(user);
-            var callbackUrl = Url.Email2ConfirmationLink(user.Id.ToString(), code, Request.Scheme);
+            var callbackUrl = Url.Action(
+                action: "ConfirmEmail2",
+                controller: "Sign",
+                values: new { userId = $"{user.Id}", code, area = "Account" },
+                protocol: Request.Scheme);
             await EmailSender.SendEmailConfirmationAsync(user.StudentEmail, callbackUrl);
 
             StatusMessage = "Verification email sent. Please check your email.";

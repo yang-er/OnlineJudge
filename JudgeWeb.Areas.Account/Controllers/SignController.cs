@@ -14,7 +14,6 @@ namespace JudgeWeb.Areas.Account.Controllers
     [Authorize]
     [Area("Account")]
     [Route("[area]/[action]")]
-    //[Route("[area]/[controller]/[action]")]
     public class SignController : Controller2
     {
         private SignInManager<User> SignInManager { get; }
@@ -135,7 +134,11 @@ namespace JudgeWeb.Areas.Account.Controllers
                     Logger.LogInformation("User created a new account with password.");
 
                     var code = await UserManager.GenerateEmailConfirmationTokenAsync(user);
-                    var callbackUrl = Url.EmailConfirmationLink(user.Id.ToString(), code, Request.Scheme);
+                    var callbackUrl = Url.Action(
+                        action: "ConfirmEmail",
+                        controller: "Sign",
+                        values: new { userId = $"{user.Id}", code, area = "Account" },
+                        protocol: Request.Scheme);
                     await EmailSender.SendEmailConfirmationAsync(model.Email, callbackUrl);
 
                     await SignInManager.SignInAsync(user, isPersistent: false);
@@ -174,7 +177,11 @@ namespace JudgeWeb.Areas.Account.Controllers
                 // For more information on how to enable account confirmation and password reset please
                 // visit https://go.microsoft.com/fwlink/?LinkID=532713
                 var code = await UserManager.GeneratePasswordResetTokenAsync(user);
-                var callbackUrl = Url.ResetPasswordCallbackLink(user.Id.ToString(), code, Request.Scheme);
+                var callbackUrl = Url.Action(
+                    action: "ResetPassword",
+                    controller: "Sign",
+                    values: new { userId = $"{user.Id}", code, area = "Account" },
+                    protocol: Request.Scheme);
                 await EmailSender.SendEmailAsync(model.Email, "Reset Password",
                    $"Please reset your password by clicking here: <a href='{callbackUrl}'>link</a>");
                 return RedirectToAction(nameof(ForgotPasswordConfirmation));
