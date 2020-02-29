@@ -140,7 +140,6 @@ namespace JudgeWeb
                 app.UseDeveloperExceptionPage();
                 app.UseMiddleware<AjaxExceptionMiddleware>();
                 app.UseDatabaseErrorPage();
-                // app.UseApiExplorer();
             }
             else if (Environment.EnvironmentName == "Test")
             {
@@ -166,11 +165,12 @@ namespace JudgeWeb
             app.UseRouting();
             app.UseAuthentication();
             app.UseAuthorization();
-
+            
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
-                endpoints.MapSwaggerUI("/api/doc");
+                endpoints.MapSwaggerUI("/api/doc")
+                    .RequireRoles("Administrator");
             });
         }
     }

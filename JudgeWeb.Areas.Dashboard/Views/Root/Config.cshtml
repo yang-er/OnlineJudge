@@ -17,7 +17,7 @@
                     {
                         var (type, val) = little.Type == "int"
                             ? ("number", little.Value)
-                            : ("text", Newtonsoft.Json.Linq.JToken.Parse(little.Value).ToObject<string>());
+                            : ("text", little.Value.AsJson<string>());
                         <li class="list-group-item" style="padding:0;padding-top:10px;">
                             <div class="form-group">
                                 @little.Name

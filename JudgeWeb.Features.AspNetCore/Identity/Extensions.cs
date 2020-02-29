@@ -1,10 +1,12 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using System.Linq;
 using System.Security.Claims;
 using System.Text;
+using System.Text.Json;
 
 namespace Microsoft.AspNetCore.Mvc
 {
@@ -13,6 +15,11 @@ namespace Microsoft.AspNetCore.Mvc
         public static bool IsInRoles(this ClaimsPrincipal user, string roles)
         {
             return roles.Split(',').Any(role => user.IsInRole(role));
+        }
+
+        public static T Deserialize<T>(this IJsonHelper jsonHelper, string content)
+        {
+            return JsonSerializer.Deserialize<T>(content);
         }
 
         public static string GetErrorStrings(this ModelStateDictionary modelState)

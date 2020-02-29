@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace JudgeWeb.Areas.Api.Models
 {
@@ -32,5 +31,13 @@ namespace JudgeWeb.Areas.Api.Models
         /// The ID of the judging that was being worked on
         /// </summary>
         public int? judgingid { get; set; }
+    }
+
+    public class InternalErrorDisable
+    {
+        public string kind { get; set; }
+        public string langid { get; set; }
+        public string hostname { get; set; }
+        public int? probid { get; set; }
     }
 }

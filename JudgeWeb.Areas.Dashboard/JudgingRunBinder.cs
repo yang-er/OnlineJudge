@@ -1,17 +1,13 @@
 ﻿using JudgeWeb.Areas.Api.Models;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Threading.Tasks;
 
 namespace JudgeWeb.Areas.Api
 {
     public class JudgingRunBinder : IModelBinder
     {
-        static readonly JsonSerializer jd = JsonSerializer.CreateDefault();
-
         public Task BindModelAsync(ModelBindingContext bindingContext)
         {
             var modelName = bindingContext.ModelName;
@@ -32,13 +28,9 @@ namespace JudgeWeb.Areas.Api
 
             try
             {
-                using (var sr = new StringReader(value))
-                using (var jtr = new JsonTextReader(sr))
-                {
-                    var result = jd.Deserialize<List<JudgingRunModel>>(jtr);
-                    if (result != null)
-                        bindingContext.Result = ModelBindingResult.Success(result);
-                }
+                var result = value.AsJson<List<JudgingRunModel>>();
+                if (result != null)
+                    bindingContext.Result = ModelBindingResult.Success(result);
             }
             catch (Exception ex)
             {

@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -18,6 +20,11 @@ namespace Microsoft.AspNetCore.Mvc
         {
             builder.Services.Replace(ServiceDescriptor.Scoped<IUserClaimsPrincipalFactory<TUser>, TFactory>());
             return builder;
+        }
+
+        public static IEndpointConventionBuilder RequireRoles(this IEndpointConventionBuilder builder, string roles)
+        {
+            return builder.RequireAuthorization(new AuthorizeAttribute { Roles = roles });
         }
     }
 }

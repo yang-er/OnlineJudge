@@ -3,7 +3,7 @@ using JudgeWeb.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Newtonsoft.Json.Linq;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -69,26 +69,26 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
 
                 if (ie.Status == InternalErrorStatus.Resolved)
                 {
-                    var toDisable = JObject.Parse(ie.Disabled);
-                    var kind = toDisable["kind"].Value<string>();
+                    var toDisable = ie.Disabled.AsJson<Api.Models.InternalErrorDisable>();
+                    var kind = toDisable.kind;
 
                     if (kind == "language")
                     {
-                        var langid = toDisable["langid"].Value<string>();
+                        var langid = toDisable.langid;
                         var lang = await DbContext.Languages
                             .Where(l => l.Id == langid)
                             .BatchUpdateAsync(l => new Language { AllowJudge = true });
                     }
                     else if (kind == "judgehost")
                     {
-                        var hostname = toDisable["hostname"].Value<string>();
+                        var hostname = toDisable.hostname;
                         var host = await DbContext.JudgeHosts
                             .Where(h => h.ServerName == hostname)
                             .BatchUpdateAsync(h => new JudgeHost { Active = true });
                     }
                     else if (kind == "problem")
                     {
-                        var probid = toDisable["probid"].Value<int>();
+                        var probid = toDisable.probid.Value;
                         var prob = await DbContext.Problems
                             .Where(p => p.ProblemId == probid)
                             .BatchUpdateAsync(p => new Problem { AllowJudge = true });

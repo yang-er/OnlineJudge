@@ -8,7 +8,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -670,12 +669,12 @@ namespace JudgeWeb.Areas.Api.Controllers
             if (!ModelState.IsValid)
                 return BadRequest();
 
-            var toDisable = JObject.Parse(model.disabled);
-            var kind = toDisable["kind"].Value<string>();
+            var toDisable = model.disabled.AsJson<InternalErrorDisable>();
+            var kind = toDisable.kind;
 
             if (kind == "language")
             {
-                var langid = toDisable["langid"].Value<string>();
+                var langid = toDisable.langid;
                 await DbContext.Languages
                     .Where(l => l.Id == langid)
                     .BatchUpdateAsync(l => new Language { AllowJudge = false });
@@ -699,7 +698,7 @@ namespace JudgeWeb.Areas.Api.Controllers
             }
             else if (kind == "judgehost")
             {
-                var hostname = toDisable["hostname"].Value<string>();
+                var hostname = toDisable.hostname;
                 await DbContext.JudgeHosts
                     .Where(h => h.ServerName == hostname)
                     .BatchUpdateAsync(h => new JudgeHost { Active = false });
@@ -723,7 +722,7 @@ namespace JudgeWeb.Areas.Api.Controllers
             }
             else if (kind == "problem")
             {
-                var probid = toDisable["probid"].Value<int>();
+                var probid = toDisable.probid.Value;
                 await DbContext.Problems
                     .Where(p => p.ProblemId == probid)
                     .BatchUpdateAsync(p => new Problem { AllowJudge = false });
