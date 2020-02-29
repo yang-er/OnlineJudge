@@ -1,6 +1,7 @@
 ﻿using JudgeWeb.Areas.Contest.Models;
 using JudgeWeb.Data;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
@@ -26,6 +27,8 @@ namespace JudgeWeb.Areas.Contest.Controllers
             ViewData["InJury"] = true;
             return base.OnActionExecutingAsync(context);
         }
+
+        protected new IActionResult NotFound() => ExplicitNotFound();
 
         protected async Task<IEnumerable<SubmissionViewModel>> ListSubmissionsByJuryAsync(
             int cid, int? teamid = null, bool all = true)

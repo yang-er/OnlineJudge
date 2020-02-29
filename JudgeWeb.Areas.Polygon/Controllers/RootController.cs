@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 namespace JudgeWeb.Areas.Polygon.Controllers
 {
     [Area("Polygon")]
-    [Route("[area]")]
+    [Route("/dashboard/problems")]
     [Authorize(Roles = "Administrator,Problem")]
     public class RootController : Controller2
     {
@@ -32,8 +32,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
         }
 
 
-        [HttpGet("/polygon")]
-        [HttpGet("/dashboard/problems")]
+        [HttpGet]
         public async Task<IActionResult> List(int page = 1)
         {
             IQueryable<Problem> problemSource;
@@ -240,5 +239,13 @@ namespace JudgeWeb.Areas.Polygon.Controllers
             ViewBag.Page = page;
             return View(model);
         }
+
+
+        [Route("[action]")]
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        public IActionResult NotFound2() => ExplicitNotFound();
+        [Route("[action]")]
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        public IActionResult Error() => StatusCodePage();
     }
 }

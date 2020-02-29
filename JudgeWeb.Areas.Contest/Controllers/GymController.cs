@@ -19,10 +19,12 @@ namespace JudgeWeb.Areas.Contest.Controllers
     {
         public bool TooEarly => Contest.GetState() < ContestState.Started;
 
+        private new IActionResult NotFound() => ExplicitNotFound();
+
         public override Task OnActionExecutingAsync(ActionExecutingContext context)
         {
             if (!Contest.Gym)
-                context.Result = NotFound();
+                context.Result = base.NotFound();
             return base.OnActionExecutingAsync(context);
         }
 
@@ -365,5 +367,13 @@ namespace JudgeWeb.Areas.Contest.Controllers
             ViewBag.ScoreboardData = Team == null ? null : board.Data.GetValueOrDefault(Team.TeamId);
             return View(model);
         }
+
+
+        [Route("[action]")]
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        public IActionResult NotFound2() => ExplicitNotFound();
+        [Route("[action]")]
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        public IActionResult Error() => StatusCodePage();
     }
 }

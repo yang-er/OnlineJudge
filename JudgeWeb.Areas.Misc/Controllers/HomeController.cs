@@ -84,12 +84,10 @@ namespace JudgeWeb.Areas.Misc.Controllers
             }
         }
 
-        [Route("/error")]
+
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
-        {
-            ControllerContext.ActionDescriptor.ControllerName = "";
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
-        }
+        public IActionResult NotFound2() => ExplicitNotFound();
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        public IActionResult Error() => StatusCodePage();
     }
 }

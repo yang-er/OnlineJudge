@@ -18,6 +18,7 @@ namespace JudgeWeb.Features.ApiExplorer
         private readonly bool _asV2;
         private readonly bool _asHtml;
         private List<Endpoint> _endpoints;
+        private readonly object _locker = new object();
         private readonly List<Action<EndpointBuilder>> _conventions;
 
         public SwaggerEndpointDataSource(IOptions<SwaggerGenOptions> options, string route, bool? asV2 = null)
@@ -55,11 +56,25 @@ namespace JudgeWeb.Features.ApiExplorer
             }
         }
 
+        private void EnsureCreated()
+        {
+            if (_endpoints == null)
+            {
+                lock (_locker)
+                {
+                    if (_endpoints == null)
+                    {
+                        Initialize();
+                    }
+                }
+            }
+        }
+
         public override IReadOnlyList<Endpoint> Endpoints
         {
             get
             {
-                if (_endpoints == null) Initialize();
+                EnsureCreated();
                 return _endpoints;
             }
         }

@@ -140,6 +140,7 @@ namespace JudgeWeb
                 app.UseDeveloperExceptionPage();
                 app.UseMiddleware<AjaxExceptionMiddleware>();
                 app.UseDatabaseErrorPage();
+                app.UseStatusCodePage();
             }
             else if (Environment.EnvironmentName == "Test")
             {
@@ -151,10 +152,13 @@ namespace JudgeWeb
                 app.UseDeveloperExceptionPage();
                 app.UseMiddleware<AjaxExceptionMiddleware>();
                 app.UseDatabaseErrorPage();
+                app.UseStatusCodePage();
             }
             else
             {
                 app.UseMiddleware<RealIpMiddleware>();
+                app.UseExceptionHandler("/error");
+                app.UseStatusCodePage();
                 app.UseExceptionHandler("/error");
                 app.UseHsts();
             }
@@ -162,6 +166,7 @@ namespace JudgeWeb
             //app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseCookiePolicy();
+
             app.UseRouting();
             app.UseAuthentication();
             app.UseAuthorization();
@@ -169,8 +174,42 @@ namespace JudgeWeb
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
+
                 endpoints.MapSwaggerUI("/api/doc")
                     .RequireRoles("Administrator");
+
+                endpoints.MapFallbackNotFound("/api/{**slug}");
+
+                endpoints.MapFallbackNotFound("/images/{**slug}");
+
+                endpoints.MapFallbackNotFound("/static/{**slug}");
+
+                endpoints.MapFallbackToAreaController(
+                    pattern: "/dashboard/problems/{**slug}",
+                    "NotFound2", "Root", "Polygon");
+
+                endpoints.MapFallbackToAreaController(
+                    pattern: "/dashboard/{**slug}",
+                    "NotFound2", "Root", "Dashboard");
+
+                endpoints.MapFallbackToAreaController(
+                    pattern: "/polygon/{pid}/{**slug}",
+                    "NotFound2", "Editor", "Polygon");
+
+                endpoints.MapFallbackToAreaController(
+                    pattern: "/gym/{cid}/{**slug}",
+                    "NotFound2", "Gym", "Contest");
+
+                endpoints.MapFallbackToAreaController(
+                    pattern: "/contest/{cid}/jury/{**slug}",
+                    "NotFound2", "Jury", "Contest");
+
+                endpoints.MapFallbackToAreaController(
+                    pattern: "/contest/{cid}/{**slug}",
+                    "NotFound2", "Public", "Contest");
+
+                endpoints.MapFallbackToAreaController(
+                    "NotFound2", "Home", "Misc");
             });
         }
     }

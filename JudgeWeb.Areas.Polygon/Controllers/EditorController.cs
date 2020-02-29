@@ -295,5 +295,11 @@ namespace JudgeWeb.Areas.Polygon.Controllers
             StatusMessage = $"Problem {pid} deleted successfully.";
             return RedirectToAction("List", "Root");
         }
+
+
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        public IActionResult NotFound2() => ExplicitNotFound();
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        public IActionResult Error() => StatusCodePage();
     }
 }

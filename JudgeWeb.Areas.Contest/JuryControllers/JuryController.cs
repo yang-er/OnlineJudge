@@ -706,6 +706,14 @@ namespace JudgeWeb.Areas.Contest.Controllers
         }
 
 
+        [Route("[action]")]
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        public IActionResult NotFound2() => ExplicitNotFound();
+        [Route("[action]")]
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        public IActionResult Error() => StatusCodePage();
+
+
         private bool InSequence(params DateTimeOffset?[] dateTimes)
         {
             if (dateTimes.Length == 0) return true;

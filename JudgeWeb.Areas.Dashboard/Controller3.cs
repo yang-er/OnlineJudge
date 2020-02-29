@@ -14,6 +14,8 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
         [TempData]
         public string StatusMessage { get; set; }
 
+        protected new IActionResult NotFound() => ExplicitNotFound();
+
         public override void OnActionExecuting(ActionExecutingContext context)
         {
             DbContext = HttpContext.RequestServices

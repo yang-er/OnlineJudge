@@ -98,5 +98,13 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
             StatusMessage = "Configurations saved successfully.";
             return RedirectToAction(nameof(Config));
         }
+
+
+        [Route("[action]")]
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        public IActionResult NotFound2() => ExplicitNotFound();
+        [Route("[action]")]
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        public IActionResult Error() => StatusCodePage();
     }
 }

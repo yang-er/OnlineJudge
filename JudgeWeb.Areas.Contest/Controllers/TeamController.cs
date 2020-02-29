@@ -20,11 +20,13 @@ namespace JudgeWeb.Areas.Contest.Controllers
     {
         public bool TooEarly => Contest.GetState() < ContestState.Started;
 
+        private new IActionResult NotFound() => ExplicitNotFound();
+
         public override async Task OnActionExecutingAsync(ActionExecutingContext context)
         {
             if (Contest.Gym)
             {
-                context.Result = NotFound();
+                context.Result = base.NotFound();
             }
 
             else if (Team == null || Team.Status != 1)
@@ -196,7 +198,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
         {
             var (cid, teamid) = (Contest.ContestId, Team.TeamId);
             int repl = 0;
-            if (op != "add" && !int.TryParse(op, out repl)) return BadRequest();
+            if (op != "add" && !int.TryParse(op, out repl)) return NotFound();
 
             var replit = await DbContext.Clarifications
                 .Where(c => c.ContestId == cid && c.ClarificationId == repl)

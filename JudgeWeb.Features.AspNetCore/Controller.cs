@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace Microsoft.AspNetCore.Mvc
@@ -125,5 +127,23 @@ namespace Microsoft.AspNetCore.Mvc
         public bool InAjax { get; private set; }
 
         public bool IsWindowAjax { get; private set; }
+        
+        protected IActionResult ExplicitNotFound()
+        {
+            Response.StatusCode = 404;
+            return StatusCodePage();
+        }
+
+        protected IActionResult StatusCodePage()
+        {
+            ViewBag.RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier;
+            ViewBag.StatusCode = Response.StatusCode;
+            
+            if (InAjax)
+                return Content("Sorry, an error has occured: " + Regex.Replace(((System.Net.HttpStatusCode)Response.StatusCode).ToString(), "([a-z])([A-Z])", "$1 $2") + ".\n" +
+                    "Please contact a staff member for assistance.", "text/plain");
+            else
+                return View("Error");
+        }
     }
 }

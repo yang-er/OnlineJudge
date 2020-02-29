@@ -23,6 +23,8 @@ namespace JudgeWeb.Areas.Polygon.Controllers
         [TempData]
         public string StatusMessage { get; set; }
 
+        protected new IActionResult NotFound() => ExplicitNotFound();
+
         private bool ProblemLoad { get; }
 
         public Controller3(AppDbContext db, bool load)
@@ -38,16 +40,16 @@ namespace JudgeWeb.Areas.Polygon.Controllers
             if (ProblemLoad)
             {
                 if (!RouteData.Values.TryGetValue("pid", out var pid))
-                    return BadRequest();
+                    return base.NotFound();
                 if (!User.IsInRoles("Administrator,AuthorOfProblem" + (string)pid))
                     return Forbid();
                 if (!int.TryParse((string)pid, out int ppid))
-                    return BadRequest();
+                    return base.NotFound();
                 Problem = await DbContext.Problems
                     .Where(p => p.ProblemId == ppid)
                     .FirstOrDefaultAsync();
                 return Problem == null
-                    ? NotFound() : null;
+                    ? base.NotFound() : null;
             }
             else
             {

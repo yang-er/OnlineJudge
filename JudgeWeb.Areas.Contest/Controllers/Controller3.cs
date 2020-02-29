@@ -167,14 +167,14 @@ namespace JudgeWeb.Areas.Contest.Controllers
         protected IActionResult PrintView()
         {
             if (!Contest.PrintingAvaliable)
-                return NotFound();
+                return ExplicitNotFound();
             return View(new Models.AddPrintModel());
         }
 
         protected async Task<IActionResult> PrintDo(int cid, Models.AddPrintModel model)
         {
             if (!Contest.PrintingAvaliable)
-                return NotFound();
+                return ExplicitNotFound();
 
             var p = DbContext.Printing.Add(new Printing
             {
@@ -239,7 +239,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
             if (!context.RouteData.Values.TryGetValue("cid", out var __cid)
                 || !int.TryParse(__cid.ToString(), out int cid))
             {
-                context.Result = BadRequest();
+                context.Result = NotFound();
                 return;
             }
 

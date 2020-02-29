@@ -1,0 +1,26 @@
+﻿@{
+    ViewData["Title"] = "Error";
+    if (ViewData.ContainsKey("InAjax")) { Layout = null; }
+    var code = (System.Net.HttpStatusCode)ViewBag.StatusCode;
+	var codename = System.Text.RegularExpressions.Regex.Replace(code.ToString(), "([a-z])([A-Z])", "$1 $2");
+}
+
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="error-template">
+                <h1>
+                    @((int)code) @codename
+                </h1>
+                <div class="error-details">
+                    Sorry, an error has occured: @(codename).
+                </div>
+                <div class="error-details">
+                    Please contact a staff member for assistance.
+                    <br />
+                    <code>@ViewBag.RequestId</code>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

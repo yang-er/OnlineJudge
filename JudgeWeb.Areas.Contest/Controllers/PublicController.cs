@@ -83,5 +83,11 @@ namespace JudgeWeb.Areas.Contest.Controllers
             StatusMessage = "Registration succeeded.";
             return RedirectToAction(nameof(Info));
         }
+
+
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        public IActionResult NotFound2() => ExplicitNotFound();
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        public IActionResult Error() => StatusCodePage();
     }
 }
