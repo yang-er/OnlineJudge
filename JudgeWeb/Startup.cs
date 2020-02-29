@@ -159,7 +159,7 @@ namespace JudgeWeb
                 app.UseMiddleware<RealIpMiddleware>();
                 app.UseExceptionHandler("/error");
                 app.UseStatusCodePage();
-                app.UseExceptionHandler("/error");
+                app.UseCatchException();
                 app.UseHsts();
             }
 

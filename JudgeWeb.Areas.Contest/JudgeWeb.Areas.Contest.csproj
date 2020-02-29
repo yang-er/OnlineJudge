@@ -19,8 +19,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="EFCore.BulkExtensions" Version="3.1.0" />
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="EFCore.BulkExtensions" Version="3.1.0-www" />
   </ItemGroup>
 
   <ItemGroup>

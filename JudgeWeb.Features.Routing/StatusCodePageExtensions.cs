@@ -2,10 +2,10 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.Logging;
 using System;
-using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Microsoft.AspNetCore.Builder
@@ -55,6 +55,62 @@ namespace Microsoft.AspNetCore.Builder
                 context.Response.StatusCode = 404;
                 return Task.CompletedTask;
             });
+        }
+
+        public class CatchExceptionMiddleware
+        {
+            private readonly RequestDelegate _next;
+            private readonly ILogger<CatchExceptionMiddleware> _logger;
+            private readonly DiagnosticSource _diagnosticSource;
+            private const string _une = "Microsoft.AspNetCore.Diagnostics.UnhandledException";
+
+            public CatchExceptionMiddleware(RequestDelegate next,
+                ILogger<CatchExceptionMiddleware> logger,
+                DiagnosticSource diagnosticSource)
+            {
+                _next = next;
+                _logger = logger;
+                _diagnosticSource = diagnosticSource;
+            }
+
+            public async Task Invoke(HttpContext context)
+            {
+                try
+                {
+                    await _next(context);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "An unhandled exception has occurred while executing the request.");
+
+                    if (context.Response.HasStarted)
+                    {
+                        _logger.LogWarning("Response has been started, rethrowing...");
+                        throw;
+                    }
+
+                    try
+                    {
+                        context.Response.Clear();
+                        context.Response.StatusCode = 500;
+                        if (_diagnosticSource.IsEnabled(_une))
+                            _diagnosticSource.Write(_une, new { httpContext = context, exception = ex });
+                        return;
+                    }
+                    catch (Exception ex2)
+                    {
+                        _logger.LogError(ex2, "Error generating responses.");
+                    }
+
+                    throw;
+                }
+            }
+        }
+
+        public static IApplicationBuilder UseCatchException(this IApplicationBuilder app)
+        {
+            app.UseMiddleware<CatchExceptionMiddleware>();
+            return app;
         }
 
         public static IApplicationBuilder UseStatusCodePage(this IApplicationBuilder app)
