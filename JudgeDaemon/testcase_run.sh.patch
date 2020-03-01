@@ -1,0 +1,12 @@
+--- testcase_run.sh-720	2020-03-01 21:00:38.000000000 +0800
++++ testcase_run.sh-mod	2020-03-01 20:59:52.000000000 +0800
+@@ -329,6 +329,9 @@
+ if [ "$program_exit" != "0" ]; then
+ 	echo "Non-zero exitcode $program_exit" >>system.out
+ 	echo "$resourceinfo" >>system.out
++	if [ $(($MEMLIMIT * 1024 - 100)) -le $memory_bytes ]; then
++		cleanexit ${E_MEMORY_LIMIT:-1}
++	fi
+ 	cleanexit ${E_RUN_ERROR:-1}
+ fi
+ 
