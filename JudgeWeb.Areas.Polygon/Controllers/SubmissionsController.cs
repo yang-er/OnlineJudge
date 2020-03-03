@@ -266,13 +266,19 @@ namespace JudgeWeb.Areas.Polygon.Controllers
         {
             var it = await SubmissionManager.Submissions
                 .Where(s => s.SubmissionId == sid && s.ProblemId == pid)
-                .Select(s => new { s.ExpectedResult })
+                .Select(s => new { s.ExpectedResult, s.Language })
                 .FirstOrDefaultAsync();
             if (it == null) return NotFound();
 
+            var langs = await SubmissionManager.Languages
+                .Select(l => new { l.Id, l.Name })
+                .ToListAsync();
+            ViewBag.Languages = langs.Select(a => (a.Id, a.Name));
+
             return Window(new ChangeExpectedModel
             {
-                Verdict = !it.ExpectedResult.HasValue ? -1 : (int)it.ExpectedResult.Value
+                Verdict = !it.ExpectedResult.HasValue ? -1 : (int)it.ExpectedResult.Value,
+                Language = it.Language,
             });
         }
 
@@ -287,6 +293,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
             if (it == null) return NotFound();
 
             it.ExpectedResult = model.Verdict == -1 ? default(Verdict?) : (Verdict)model.Verdict;
+            it.Language = model.Language;
             await SubmissionManager.UpdateAsync(it);
             return RedirectToAction(nameof(Detail));
         }
