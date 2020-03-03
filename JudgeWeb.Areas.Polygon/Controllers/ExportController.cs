@@ -87,16 +87,18 @@ namespace JudgeWeb.Areas.Polygon.Controllers
             zip.CreateEntryFromString(news, $"problem_statement/{mdname}.md");
         }
 
-        private Task AttachExecutable(ZipArchive zip, Executable exec)
+        private async Task AttachExecutable(ZipArchive zip, Executable exec)
         {
             var subdir = $"output_validators/p{Problem.ProblemId}{(exec.Type == "run" ? "run" : "cmp")}/";
-            using (var itt = new MemoryStream(exec.ZipFile))
-            using (var zpp = new ZipArchive(itt))
-                foreach (var ent in zpp.Entries)
-                    using (var rds = ent.Open())
-                    using (var wrs = zip.CreateEntry(Path.Combine(subdir, ent.Name)).Open())
-                        rds.CopyTo(wrs);
-            return Task.CompletedTask;
+            using var itt = new MemoryStream(exec.ZipFile);
+            using var zpp = new ZipArchive(itt);
+            
+            foreach (var ent in zpp.Entries)
+            {
+                using var rds = ent.Open();
+                var t = await zip.CreateEntryFromStream(rds, Path.Combine(subdir, ent.Name));
+                t.ExternalAttributes = ent.ExternalAttributes;
+            }
         }
 
         [HttpGet]

@@ -7,17 +7,22 @@ namespace JudgeWeb.Areas.Polygon.Services
 {
     public static class ZipArchiveExtensions
     {
+        const int LINUX644 = -2119958528;
+
         public static ZipArchiveEntry CreateEntryFromByteArray(this ZipArchive zip, byte[] content, string entry)
         {
             var f = zip.CreateEntry(entry);
             using (var fs = f.Open())
                 fs.Write(content, 0, content.Length);
+            f.ExternalAttributes = LINUX644;
             return f;
         }
 
         public static ZipArchiveEntry CreateEntryFromString(this ZipArchive zip, string content, string entry)
         {
-            return CreateEntryFromByteArray(zip, Encoding.UTF8.GetBytes(content), entry);
+            var ent = CreateEntryFromByteArray(zip, Encoding.UTF8.GetBytes(content), entry);
+            ent.ExternalAttributes = LINUX644;
+            return ent;
         }
 
         public static async Task<ZipArchiveEntry> CreateEntryFromStream(this ZipArchive zip, Stream source, string entry)
@@ -25,6 +30,7 @@ namespace JudgeWeb.Areas.Polygon.Services
             var f = zip.CreateEntry(entry);
             using (var fs = f.Open())
                 await source.CopyToAsync(fs);
+            f.ExternalAttributes = LINUX644;
             return f;
         }
     }

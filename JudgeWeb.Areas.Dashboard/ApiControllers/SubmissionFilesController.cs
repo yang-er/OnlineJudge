@@ -1,4 +1,5 @@
 ﻿using JudgeWeb.Areas.Api.Models;
+using JudgeWeb.Areas.Polygon.Services;
 using JudgeWeb.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -64,12 +65,7 @@ namespace JudgeWeb.Areas.Api.Controllers
             var memStream = new MemoryStream();
 
             using (var zip = new ZipArchive(memStream, ZipArchiveMode.Create, true))
-            {
-                var entry = zip.CreateEntry("Main." + src.FileExtension);
-                using (var fileStream = entry.Open())
-                    await fileStream.WriteAsync(srcDecoded, 0, srcDecoded.Length);
-            }
-
+                zip.CreateEntryFromByteArray(srcDecoded, "Main." + src.FileExtension);
             memStream.Position = 0;
             return File(memStream, "application/zip");
         }

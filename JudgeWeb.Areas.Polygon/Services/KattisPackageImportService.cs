@@ -118,6 +118,9 @@ namespace JudgeWeb.Areas.Polygon.Services
 
         #region Basic Definitions
 
+        const int LINUX755 = -2115174400;
+        const int LINUX644 = -2119958528;
+
         private readonly AppDbContext dbContext;
         private readonly SubmissionManager submissionManager;
         private readonly ILogger<KattisPackageImportService> logger;
@@ -209,9 +212,19 @@ namespace JudgeWeb.Areas.Polygon.Services
 
             var stream = new MemoryStream();
             using (var newzip = new ZipArchive(stream, ZipArchiveMode.Create, true))
+            {
                 foreach (var file in list)
-                    using (var fs = file.Open())
-                        await newzip.CreateEntryFromStream(fs, file.FullName.Substring(prefix.Length));
+                {
+                    using var fs = file.Open();
+                    var fileName = file.FullName.Substring(prefix.Length);
+                    var f = await newzip.CreateEntryFromStream(fs, fileName);
+                    if (fileName == "build" || fileName == "run")
+                        f.ExternalAttributes = LINUX755;
+                    else
+                        f.ExternalAttributes = LINUX644;
+                }
+            }
+            
             stream.Position = 0;
             var content = new byte[stream.Length];
             int pos = 0;
