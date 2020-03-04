@@ -11,9 +11,9 @@ namespace Markdig.Extensions.Math
         public void Setup(MarkdownPipelineBuilder pipeline)
         {
             // Adds the inline parser
-            if (!pipeline.InlineParsers.Contains<MathInlineParser>())
+            if (!pipeline.InlineParsers.Contains<MathInlineParser2>())
             {
-                pipeline.InlineParsers.Insert(0, new MathInlineParser
+                pipeline.InlineParsers.Insert(0, new MathInlineParser2
                 {
                     DefaultClass = "katex-src"
                 });

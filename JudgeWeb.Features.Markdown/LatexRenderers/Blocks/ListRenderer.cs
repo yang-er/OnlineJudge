@@ -7,7 +7,7 @@ namespace Markdig.Renderers.LaTeX
         protected override void Write(LatexRenderer renderer, ListBlock listBlock)
         {
             renderer.EnsureLine();
-            renderer.WriteLine(listBlock.IsOrdered ? "\\begin{enumerable}" : "\\begin{itemize}");
+            renderer.WriteLine(listBlock.IsOrdered ? "\\begin{enumerate}" : "\\begin{itemize}");
 
             foreach (var item in listBlock)
             {
@@ -22,7 +22,7 @@ namespace Markdig.Renderers.LaTeX
                 renderer.ImplicitParagraph = previousImplicit;
             }
 
-            renderer.Write(listBlock.IsOrdered ? "\\end{enumerable}" : "\\end{itemize}");
+            renderer.Write(listBlock.IsOrdered ? "\\end{enumerate}" : "\\end{itemize}");
             renderer.FinishBlock(true);
         }
     }

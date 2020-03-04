@@ -22,6 +22,7 @@ namespace Markdig
         {
             Pipeline = new MarkdownPipelineBuilder()
                 .Use<KatexExtension>()
+                .Use<SampCodeBlockExtension>()
                 .Use<HeadingIdExtension>()
                 .UseSoftlineBreakAsHardlineBreak()
                 .UseNoFollowLinks()
@@ -40,14 +41,12 @@ namespace Markdig
 
         public string RenderAsHtml(MarkdownDocument doc)
         {
-            using (var textWriter = new StringWriter())
-            {
-                var renderer = new HtmlRenderer(textWriter);
-                Pipeline.Setup(renderer);
-                renderer.Render(doc);
-                renderer.Writer.Flush();
-                return textWriter.ToString();
-            }
+            using var textWriter = new StringWriter();
+            var renderer = new HtmlRenderer(textWriter);
+            Pipeline.Setup(renderer);
+            renderer.Render(doc);
+            renderer.Writer.Flush();
+            return textWriter.ToString();
         }
 
         public async Task<string> SolveImagesAsync(string source, Func<string, Task<string>> converter)

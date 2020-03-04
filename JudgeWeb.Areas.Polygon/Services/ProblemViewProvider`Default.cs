@@ -3,6 +3,7 @@ using JudgeWeb.Areas.Polygon.Services;
 using JudgeWeb.Data;
 using JudgeWeb.Features;
 using Markdig.Renderers.LaTeX;
+using Markdig.Syntax;
 using Markdig.Syntax.Inlines;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -29,6 +30,14 @@ namespace JudgeWeb.Areas.Polygon.Services
             Encoder = encoder;
         }
 
+        private string Render(string source, Action<MarkdownDocument> options = null)
+        {
+            var document = Markdown.Parse(source);
+            options?.Invoke(document);
+            return Markdown.RenderAsHtml(document)
+                .Replace(" -- ", " — ");
+        }
+
         public StringBuilder BuildHtml(ProblemStatement statement)
         {
             var model = statement.Problem;
@@ -46,25 +55,25 @@ namespace JudgeWeb.Areas.Polygon.Services
             if (!string.IsNullOrEmpty(statement.Description))
             {
                 htmlBuilder.AppendLine("<h3>Description</h3>");
-                htmlBuilder.AppendLine(Markdown.Render(statement.Description));
+                htmlBuilder.AppendLine(Render(statement.Description));
             }
 
             if (!string.IsNullOrEmpty(statement.Input))
             {
                 htmlBuilder.AppendLine("<h3>Input</h3>");
-                htmlBuilder.AppendLine(Markdown.Render(statement.Input));
+                htmlBuilder.AppendLine(Render(statement.Input));
             }
 
             if (!string.IsNullOrEmpty(statement.Output))
             {
                 htmlBuilder.AppendLine("<h3>Output</h3>");
-                htmlBuilder.AppendLine(Markdown.Render(statement.Output));
+                htmlBuilder.AppendLine(Render(statement.Output));
             }
 
             if (!string.IsNullOrEmpty(statement.Interaction))
             {
                 htmlBuilder.AppendLine("<h3>Interaction Protocol</h3>");
-                htmlBuilder.AppendLine(Markdown.Render(statement.Interaction));
+                htmlBuilder.AppendLine(Render(statement.Interaction));
             }
 
             if (statement.Samples.Count > 0)
@@ -95,7 +104,7 @@ namespace JudgeWeb.Areas.Polygon.Services
             if (!string.IsNullOrEmpty(statement.Hint))
             {
                 htmlBuilder.AppendLine("<h3>Hint</h3>");
-                htmlBuilder.AppendLine(Markdown.Render(statement.Hint));
+                htmlBuilder.AppendLine(Render(statement.Hint));
                 htmlBuilder.AppendLine();
             }
 
