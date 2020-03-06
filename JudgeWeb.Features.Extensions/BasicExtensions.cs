@@ -88,6 +88,17 @@ namespace System
         }
 
         /// <summary>
+        /// 对 <see cref="byte[]" /> 进行MD5运算。
+        /// </summary>
+        /// <param name="source">源编码数组。</param>
+        /// <returns>加密后编码数组。</returns>
+        public static byte[] ToMD5(this Stream source)
+        {
+            using var MD5p = new MD5CryptoServiceProvider();
+            return MD5p.ComputeHash(source);
+        }
+
+        /// <summary>
         /// 对 <see cref="string" /> 进行MD5运算。
         /// </summary>
         /// <param name="source">源字符串。</param>

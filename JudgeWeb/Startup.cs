@@ -53,8 +53,11 @@ namespace JudgeWeb
                 options.MinimumSameSitePolicy = SameSiteMode.None;
             });
 
-            services.AddDbContext<AppDbContext>(options =>
-                options.UseSqlServer(Configuration.GetConnectionString("UserDbConnection")));
+            services.AddApplicationInsightsTelemetry();
+
+            services.AddDbContext<AppDbContext>(options => options
+                .UseSqlServer(Configuration.GetConnectionString("UserDbConnection"))
+                .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking));
 
             services.AddIdentity<User, Role>(
                 options =>
@@ -105,8 +108,8 @@ namespace JudgeWeb
                     UnicodeRanges.BasicLatin,
                     UnicodeRanges.CjkUnifiedIdeographs));
 
-            services.AddEmailSender(options =>
-                options.Bind(Configuration.GetSection("SendGrid")));
+            services.AddEmailSender()
+                .Bind(Configuration.GetSection("SendGrid"));
 
             services.AddOjUpdateService(
                 Environment.IsDevelopment() ? 24 * 7 * 60 : 3 * 24 * 60);

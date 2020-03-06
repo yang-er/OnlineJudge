@@ -19,8 +19,7 @@ namespace JudgeWeb
 
         public static IHostBuilder CreateWebHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
-                .ConfigureWebHostDefaults(builder => builder
-                    .UseApplicationInsights()
-                    .UseStartup<Startup>());
+                .ConfigureWebHostDefaults(builder =>
+                    builder.UseStartup<Startup>());
     }
 }
