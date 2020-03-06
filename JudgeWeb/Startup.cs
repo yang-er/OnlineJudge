@@ -123,7 +123,6 @@ namespace JudgeWeb
                 .AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new TimeSpanJsonConverter()))
                 .SetTokenTransform<SlugifyParameterTransformer>()
                 .ReplaceLinkGenerator()
-                .EnableContentFileResult()
                 .SetCompatibilityVersion(CompatibilityVersion.Version_3_0)
                 .UseAreaParts(AssemblyPrefix, EnabledAreas);
 

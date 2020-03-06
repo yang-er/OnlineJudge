@@ -1,4 +1,5 @@
 ﻿using JudgeWeb.Data;
+using JudgeWeb.Features.Storage;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -32,15 +33,15 @@ namespace JudgeWeb.Areas.Contest.Controllers
         [HttpGet]
         [Route("/[area]/{cid}")]
         public async Task<IActionResult> Info(int cid,
-            [FromServices] Features.Storage.IFileRepository io)
+            [FromServices] IProblemFileRepository io)
         {
             var affs = await DbContext.ListTeamAffiliationAsync(cid);
             ViewBag.Affiliations = affs.ToDictionary(a => a.AffiliationId);
             var cats = await DbContext.ListTeamCategoryAsync(cid);
             ViewBag.Categories = cats.ToDictionary(a => a.CategoryId);
 
-            io.SetContext("Problems");
-            ViewBag.Markdown = await io.ReadPartAsync("c" + Contest.ContestId, "readme.html");
+            var fileInfo = io.GetFileInfo($"c{cid}/readme.html");
+            ViewBag.Markdown = await fileInfo.ReadAsync();
             return View();
         }
 

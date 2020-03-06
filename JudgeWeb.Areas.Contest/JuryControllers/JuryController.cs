@@ -607,10 +607,10 @@ namespace JudgeWeb.Areas.Contest.Controllers
 
         [HttpGet("[action]")]
         public async Task<IActionResult> Description(int cid,
-            [FromServices] IFileRepository io)
+            [FromServices] IProblemFileRepository io)
         {
-            io.SetContext("Problems");
-            var content = await io.ReadPartAsync($"c{cid}", "readme.md");
+            var fileInfo = io.GetFileInfo($"c{cid}/readme.md");
+            var content = await fileInfo.ReadAsync();
             return View(new JuryMarkdownModel { Markdown = content });
         }
 
@@ -619,15 +619,14 @@ namespace JudgeWeb.Areas.Contest.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Description(
             int cid, JuryMarkdownModel model,
-            [FromServices] IFileRepository io,
+            [FromServices] IProblemFileRepository io,
             [FromServices] IMarkdownService md)
         {
-            io.SetContext("Problems");
-            model.Markdown = model.Markdown ?? "";
-            await io.WritePartAsync($"c{cid}", "readme.md", model.Markdown);
+            model.Markdown ??= "";
+            await io.WriteStringAsync($"c{cid}/readme.md", model.Markdown);
 
             var document = md.Parse(model.Markdown);
-            await io.WritePartAsync($"c{cid}", "readme.html", md.RenderAsHtml(document));
+            await io.WriteStringAsync($"c{cid}/readme.html", md.RenderAsHtml(document));
 
             InternalLog(AuditlogType.Contest, $"{cid}", "updated", "description");
             await DbContext.SaveChangesAsync();
@@ -637,7 +636,8 @@ namespace JudgeWeb.Areas.Contest.Controllers
 
         [HttpGet("[action]")]
         public async Task<IActionResult> GenerateStatement(int cid,
-            [FromServices] IProblemViewProvider generator)
+            [FromServices] IProblemViewProvider generator,
+            [FromServices] IStaticFileRepository io)
         {
             var probs =
                 from cp in DbContext.ContestProblem
@@ -653,8 +653,11 @@ namespace JudgeWeb.Areas.Contest.Controllers
             var memstream = new MemoryStream();
             using (var zip = new ZipArchive(memstream, ZipArchiveMode.Create, true))
             {
-                zip.CreateEntryFromFile("wwwroot/static/olymp.sty", "olymp.sty");
-                var documentStart = await System.IO.File.ReadAllTextAsync("wwwroot/static/contest.tex-begin");
+                var olymp = io.GetFileInfo("static/olymp.sty");
+                using (var olympStream = olymp.CreateReadStream())
+                    await zip.CreateEntryFromStream(olympStream, "olymp.sty");
+                var texBegin = io.GetFileInfo("static/contest.tex-begin");
+                var documentStart = await texBegin.ReadAsync();
                 var documentBuilder = new System.Text.StringBuilder(documentStart)
                     .Append("\\begin {document}\n\n")
                     .Append("\\contest\n{")

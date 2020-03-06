@@ -1,11 +1,9 @@
-﻿using System.IO;
-using System.IO.Compression;
-using System.Text;
+﻿using System.Text;
 using System.Threading.Tasks;
 
-namespace JudgeWeb.Areas.Polygon.Services
+namespace System.IO.Compression
 {
-    public static class ZipArchiveExtensions
+    public static class CreateZipArchiveEntryExtensions
     {
         const int LINUX644 = -2119958528;
 

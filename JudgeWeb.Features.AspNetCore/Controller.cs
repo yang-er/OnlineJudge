@@ -50,16 +50,6 @@ namespace Microsoft.AspNetCore.Mvc
         }
 
         [NonAction]
-        public ContentFileResult ContentFile(
-            string fileName, string contentType, string downloadName)
-        {
-            return new ContentFileResult(fileName, contentType)
-            {
-                FileDownloadName = downloadName
-            };
-        }
-
-        [NonAction]
         public ShowMessageResult Message(string title, string message, MessageType? type = null)
         {
             return new ShowMessageResult

@@ -1,21 +1,31 @@
-﻿using System.Threading.Tasks;
+﻿using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.Hosting;
+using System.IO;
 
 namespace JudgeWeb.Features.Storage
 {
-    public interface IFileRepository
+    public class ProblemFileRepository : PhysicalMutableFileProvider, IProblemFileRepository
     {
-        void SetContext(string context);
+        public ProblemFileRepository(IHostEnvironment root)
+            : base(Path.Combine(root.ContentRootPath, "Problems"))
+        {
+        }
+    }
 
-        Task<string> ReadPartAsync(string backstore, string targetFile);
+    public class RunFileRepository : PhysicalMutableFileProvider, IRunFileRepository
+    {
+        public RunFileRepository(IHostEnvironment root)
+            : base(Path.Combine(root.ContentRootPath, "Runs"))
+        {
+        }
+    }
 
-        Task<byte[]> ReadBinaryAsync(string backstore, string targetFile);
-
-        Task WritePartAsync(string backstore, string targetFile, string content);
-
-        Task WriteBinaryAsync(string backstore, string targetFile, byte[] content);
-
-        bool ExistPart(string backstore, string targetFile);
-
-        void RemovePart(string backstore, string targetFile);
+    public class StaticFileRepository : PhysicalMutableFileProvider, IStaticFileRepository
+    {
+        public StaticFileRepository(IWebHostEnvironment root)
+            : base(root.WebRootPath)
+        {
+        }
     }
 }

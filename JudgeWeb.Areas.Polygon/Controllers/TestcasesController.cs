@@ -16,13 +16,10 @@ namespace JudgeWeb.Areas.Polygon.Controllers
     [Route("[area]/{pid}/[controller]")]
     public class TestcasesController : Controller3
     {
-        private IFileRepository IoContext { get; }
+        private IProblemFileRepository IoContext { get; }
 
-        public TestcasesController(AppDbContext db, IFileRepository io) : base(db, true)
-        {
-            IoContext = io;
-            io.SetContext("Problems");
-        }
+        public TestcasesController(AppDbContext db, IProblemFileRepository io)
+            : base(db, true) => IoContext = io;
 
 
         [HttpGet]
@@ -87,14 +84,14 @@ namespace JudgeWeb.Areas.Polygon.Controllers
                 {
                     last.Md5sumInput = input.Value.Item2;
                     last.InputLength = input.Value.Item1.Length;
-                    await IoContext.WriteBinaryAsync($"p{pid}", $"t{tid}.in", input.Value.Item1);
+                    await IoContext.WriteBinaryAsync($"p{pid}/t{tid}.in", input.Value.Item1);
                 }
 
                 if (output.HasValue)
                 {
                     last.Md5sumOutput = output.Value.Item2;
                     last.OutputLength = output.Value.Item1.Length;
-                    await IoContext.WriteBinaryAsync($"p{pid}", $"t{tid}.out", output.Value.Item1);
+                    await IoContext.WriteBinaryAsync($"p{pid}/t{tid}.out", output.Value.Item1);
                 }
 
                 last.Description = model.Description ?? last.Description;
@@ -187,8 +184,8 @@ namespace JudgeWeb.Areas.Polygon.Controllers
                     Time = DateTimeOffset.Now,
                 });
 
-                await IoContext.WriteBinaryAsync($"p{pid}", $"t{tid}.in", input.Item1);
-                await IoContext.WriteBinaryAsync($"p{pid}", $"t{tid}.out", output.Item1);
+                await IoContext.WriteBinaryAsync($"p{pid}/t{tid}.in", input.Item1);
+                await IoContext.WriteBinaryAsync($"p{pid}/t{tid}.out", output.Item1);
                 await DbContext.SaveChangesAsync();
 
                 StatusMessage = $"Testcase t{tid} created successfully.";
@@ -289,13 +286,14 @@ namespace JudgeWeb.Areas.Polygon.Controllers
             else if (filetype == "output") filetype = "out";
             else return NotFound();
 
-            if (!IoContext.ExistPart($"p{pid}", $"t{tid}.{filetype}"))
+            var fileInfo = IoContext.GetFileInfo($"p{pid}/t{tid}.{filetype}");
+            if (!fileInfo.Exists)
                 return NotFound();
 
-            return ContentFile(
-                fileName: $"Problems/p{pid}/t{tid}.{filetype}",
+            return File(
+                fileStream: fileInfo.CreateReadStream(),
                 contentType: "application/octet-stream",
-                downloadName: $"p{pid}.t{tid}.{filetype}");
+                fileDownloadName: $"p{pid}.t{tid}.{filetype}");
         }
     }
 }

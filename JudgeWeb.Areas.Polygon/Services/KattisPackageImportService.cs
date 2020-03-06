@@ -1,6 +1,7 @@
 ﻿using JudgeWeb.Areas.Polygon.Services;
 using JudgeWeb.Data;
 using JudgeWeb.Features;
+using JudgeWeb.Features.Storage;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -125,21 +126,28 @@ namespace JudgeWeb.Areas.Polygon.Services
         private readonly SubmissionManager submissionManager;
         private readonly ILogger<KattisPackageImportService> logger;
         private readonly IMarkdownService markdown;
+        private readonly IProblemFileRepository io;
+        private readonly IStaticFileRepository io2;
 
         public StringBuilder LogBuffer { get; }
 
         public Problem Problem { get; private set; }
 
         public KattisPackageImportService(
-            AppDbContext db, SubmissionManager sub,
+            AppDbContext db,
+            SubmissionManager sub,
             ILogger<KattisPackageImportService> logger,
-            IMarkdownService markdownService)
+            IMarkdownService markdownService,
+            IProblemFileRepository io,
+            IStaticFileRepository io2)
         {
             dbContext = db;
             submissionManager = sub;
             this.logger = logger;
             LogBuffer = new StringBuilder();
             markdown = markdownService;
+            this.io = io;
+            this.io2 = io2;
         }
 
         private void Log(string log)
@@ -248,7 +256,21 @@ namespace JudgeWeb.Areas.Polygon.Services
                 .Select(z => Path.GetFileNameWithoutExtension(z.FullName.Substring(prefix.Length)))
                 .Distinct()
                 .ToList();
-            fileNames.Sort();
+
+            fileNames.Sort((x, y) =>
+            {
+                // check with prefix numbers
+                int lenA = 0, lenB = 0;
+                for (; lenA < x.Length; lenA++)
+                    if (x[lenA] > '9' || x[lenA] < '0') break;
+                for (; lenB < y.Length; lenB++)
+                    if (y[lenB] > '9' || y[lenB] < '0') break;
+                if (lenA == 0 || lenB == 0)
+                    return x.CompareTo(y);
+                if (lenA != lenB)
+                    return lenA.CompareTo(lenB);
+                return x.CompareTo(y);
+            });
 
             foreach (var file in fileNames)
             {
@@ -268,10 +290,6 @@ namespace JudgeWeb.Areas.Polygon.Services
                     Log($"Ignoring {prefix}{file}.*");
                     continue;
                 }
-
-                var guid = Guid.NewGuid();
-                inp.ExtractToFile($"{guid}.in", true);
-                outp.ExtractToFile($"{guid}.ans", true);
 
                 var tc = new Testcase
                 {
@@ -308,14 +326,18 @@ namespace JudgeWeb.Areas.Polygon.Services
                     usedParts += ",point";
                 }
 
-                var inp2 = await File.ReadAllBytesAsync($"{guid}.in");
-                tc.Md5sumInput = inp2.ToMD5().ToHexDigest(true);
-                inp2 = await File.ReadAllBytesAsync($"{guid}.ans");
-                tc.Md5sumOutput = inp2.ToMD5().ToHexDigest(true);
+                using (var ins = inp.Open())
+                    tc.Md5sumInput = ins.ToMD5().ToHexDigest(true);
+                using (var outs = outp.Open())
+                    tc.Md5sumOutput = outs.ToMD5().ToHexDigest(true);
+                
                 var t = dbContext.Testcases.Add(tc);
                 await dbContext.SaveChangesAsync();
-                File.Move($"{guid}.in", $"Problems/p{Problem.ProblemId}/t{t.Entity.TestcaseId}.in");
-                File.Move($"{guid}.ans", $"Problems/p{Problem.ProblemId}/t{t.Entity.TestcaseId}.out");
+
+                using (var ins = inp.Open())
+                    await io.WriteStreamAsync($"p{Problem.ProblemId}/t{t.Entity.TestcaseId}.in", ins);
+                using (var outs = outp.Open())
+                    await io.WriteStreamAsync($"p{Problem.ProblemId}/t{t.Entity.TestcaseId}.out", outs);
 
                 Log($"Adding testcase t{t.Entity.TestcaseId} 'data/{cat}/{file}.{{{usedParts}}}'.");
             }
@@ -387,8 +409,8 @@ namespace JudgeWeb.Areas.Polygon.Services
                 mdcontent = await sw.ReadToEndAsync();
 
             var tags = $"p{Problem.ProblemId}";
-            var content = await markdown.ImportWithImagesAsync(mdcontent, tags);
-            await File.WriteAllTextAsync($"Problems/{tags}/{mdfile}.md", content);
+            var content = await (markdown, io2).ImportWithImagesAsync(mdcontent, tags);
+            await io.WriteStringAsync($"{tags}/{mdfile}.md", content);
 
             Log($"Adding statement section 'problem_statement/{mdfile}.md'.");
         }

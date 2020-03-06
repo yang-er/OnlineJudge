@@ -559,8 +559,7 @@ namespace JudgeWeb.Areas.Api.Controllers
 
             await DbContext.SaveChangesAsync();
 
-            var io = HttpContext.RequestServices.GetRequiredService<IFileRepository>();
-            io.SetContext("Runs");
+            var io = HttpContext.RequestServices.GetRequiredService<IRunFileRepository>();
             foreach (var (b, e) in runEntities)
             {
                 if (b.output_error is null || b.output_run is null)
@@ -570,8 +569,8 @@ namespace JudgeWeb.Areas.Api.Controllers
 
                 try
                 {
-                    await io.WriteBinaryAsync($"j{jid}", $"r{e.Entity.TestId}.out", stdout);
-                    await io.WriteBinaryAsync($"j{jid}", $"r{e.Entity.TestId}.err", stderr);
+                    await io.WriteBinaryAsync($"j{jid}/r{e.Entity.TestId}.out", stdout);
+                    await io.WriteBinaryAsync($"j{jid}/r{e.Entity.TestId}.err", stderr);
                 }
                 catch (Exception ex)
                 {

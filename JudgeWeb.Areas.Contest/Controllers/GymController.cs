@@ -43,7 +43,8 @@ namespace JudgeWeb.Areas.Contest.Controllers
 
 
         [HttpGet]
-        public async Task<IActionResult> Home(int cid, [FromServices] IFileRepository io)
+        public async Task<IActionResult> Home(int cid,
+            [FromServices] IProblemFileRepository io)
         {
             var board = await DbContext.LoadScoreboardAsync(cid);
             ViewBag.ScoreboardData = Team == null ? null : board.Data.GetValueOrDefault(Team.TeamId);
@@ -55,8 +56,8 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 .Where(c => c.Sender == null && (c.Recipient == null || c.Recipient == teamid))
                 .ToListAsync();
 
-            io.SetContext("Problems");
-            ViewBag.Markdown = await io.ReadPartAsync("c" + Contest.ContestId, "readme.html");
+            var readme = io.GetFileInfo($"c{cid}/readme.html");
+            ViewBag.Markdown = await readme.ReadAsync();
             return View();
         }
 
@@ -124,15 +125,16 @@ namespace JudgeWeb.Areas.Contest.Controllers
 
 
         [HttpGet("problem/{prob}")]
-        public async Task<IActionResult> ProblemView(string prob, [FromServices] IFileRepository pe)
+        public async Task<IActionResult> ProblemView(string prob,
+            [FromServices] IProblemFileRepository io)
         {
             if (TooEarly && !ViewData.ContainsKey("IsJury")) return NotFound();
             var problem = Problems.Find(prob);
             if (problem == null) return NotFound();
             ViewBag.CurrentProblem = problem;
 
-            pe.SetContext("Problems");
-            var view = await pe.ReadPartAsync($"p{problem.ProblemId}", $"view.html");
+            var fileInfo = io.GetFileInfo($"p{problem.ProblemId}/view.html");
+            var view = await fileInfo.ReadAsync();
             if (string.IsNullOrEmpty(view)) return NotFound();
             ViewData["Content"] = view;
 
@@ -302,7 +304,9 @@ namespace JudgeWeb.Areas.Contest.Controllers
 
 
         [HttpGet("problem/{prob}/testcase/{tcid}/fetch/{filetype}")]
-        public async Task<IActionResult> FetchTestcase(string prob, int tcid, string filetype)
+        public async Task<IActionResult> FetchTestcase(
+            string prob, int tcid, string filetype,
+            [FromServices] IProblemFileRepository io)
         {
             if (filetype == "input") filetype = "in";
             else if (filetype == "output") filetype = "out";
@@ -318,13 +322,13 @@ namespace JudgeWeb.Areas.Contest.Controllers
             if (tc == null) return NotFound();
             if (tc.IsSecret && !problem.Shared) return NotFound();
 
-            if (!System.IO.File.Exists($"Problems/p{problem.ProblemId}/t{tcid}.{filetype}"))
-                return NotFound();
+            var file = io.GetFileInfo($"p{problem.ProblemId}/t{tcid}.{filetype}");
+            if (!file.Exists) return NotFound();
 
-            return ContentFile(
-                fileName: $"Problems/p{problem.ProblemId}/t{tcid}.{filetype}",
+            return File(
+                fileStream: file.CreateReadStream(),
                 contentType: "application/octet-stream",
-                downloadName: $"{problem.ShortName}.t{tcid}.{filetype}");
+                fileDownloadName: $"{problem.ShortName}.t{tcid}.{filetype}");
         }
 
 

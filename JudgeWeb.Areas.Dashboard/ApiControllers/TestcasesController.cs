@@ -5,8 +5,11 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.FileProviders;
 using System;
+using System.Buffers;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -112,12 +115,53 @@ namespace JudgeWeb.Areas.Api.Controllers
             else return BadRequest();
 
             var io = HttpContext.RequestServices
-                .GetRequiredService<IFileRepository>();
-            io.SetContext("Problems");
+                .GetRequiredService<IProblemFileRepository>();
+            var fileInfo = io.GetFileInfo($"p{tcq.pid}/t{id}.{type}");
+            if (!fileInfo.Exists) return NotFound();
 
-            var bytes = await io.ReadBinaryAsync($"p{tcq.pid}", $"t{id}.{type}");
-            if (bytes is null) return NotFound();
-            return Convert.ToBase64String(bytes);
+            // return Convert.ToBase64String(
+            //     await fileInfo.ReadBinaryAsync());
+            return new Base64StreamResult(fileInfo);
+        }
+
+
+        private class Base64StreamResult : ActionResult
+        {
+            public IFileInfo FileInfo { get; set; }
+
+            public Base64StreamResult(IFileInfo file) => FileInfo = file;
+
+            const int byteLen = 1024 * 3 * 256;
+            const int charLen = 1024 * 4 * 256;
+            private static readonly ArrayPool<byte> opts = ArrayPool<byte>.Create(byteLen, 16);
+            private static readonly ArrayPool<char> ress = ArrayPool<char>.Create(charLen, 16);
+
+            public override async Task ExecuteResultAsync(ActionContext context)
+            {
+                var response = context.HttpContext.Response;
+                response.StatusCode = 200;
+                response.ContentType = "application/json";
+                response.ContentLength = (FileInfo.Length + 2) / 3 * 4 + 2;
+                using var f1 = FileInfo.CreateReadStream();
+
+                byte[] opt = opts.Rent(byteLen);
+                char[] res = ress.Rent(charLen);
+                var sw = new StreamWriter(response.Body);
+                await sw.WriteAsync('"');
+
+                while (true)
+                {
+                    int len = await f1.ReadAsync(opt, 0, byteLen);
+                    if (len == 0) break;
+                    int len2 = Convert.ToBase64CharArray(opt, 0, len, res, 0);
+                    await sw.WriteAsync(res, 0, len2);
+                }
+
+                await sw.WriteAsync('"');
+                await sw.DisposeAsync();
+                opts.Return(opt);
+                ress.Return(res);
+            }
         }
     }
 }

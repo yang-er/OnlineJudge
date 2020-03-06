@@ -17,13 +17,10 @@ namespace JudgeWeb.Areas.Polygon.Controllers
     [Route("[area]/{pid}/[controller]/[action]")]
     public class DescriptionController : Controller3
     {
-        private IFileRepository IoContext { get; }
+        private IProblemFileRepository IoContext { get; }
 
-        public DescriptionController(AppDbContext db, IFileRepository io) : base(db, true)
-        {
-            IoContext = io;
-            io.SetContext("Problems");
-        }
+        public DescriptionController(AppDbContext db, IProblemFileRepository io)
+            : base(db, true) => IoContext = io;
 
 
         [NonAction]
@@ -48,7 +45,8 @@ namespace JudgeWeb.Areas.Polygon.Controllers
             else
             {
                 ViewData["Title"] = "View";
-                ViewData["Content"] = await IoContext.ReadPartAsync($"p{pid}", "view.html");
+                var fileInfo = IoContext.GetFileInfo($"p{pid}/view.html");
+                ViewData["Content"] = await fileInfo.ReadAsync() ?? "";
             }
 
             ViewData["Id"] = pid;
@@ -61,15 +59,14 @@ namespace JudgeWeb.Areas.Polygon.Controllers
         {
             if (!MarkdownFiles.Contains(target))
                 return NotFound();
-            var backstore = "p" + pid;
-            var lastVersion = await IoContext
-                .ReadPartAsync(backstore, target + ".md") ?? "";
+            var fileInfo = IoContext.GetFileInfo($"p{pid}/{target}.md");
+            var lastVersion = await fileInfo.ReadAsync() ?? "";
             ViewBag.ProblemId = pid;
 
             return View(new MarkdownModel
             {
                 Markdown = lastVersion,
-                BackingStore = backstore,
+                BackingStore = "p" + pid,
                 Target = target
             });
         }
@@ -82,11 +79,11 @@ namespace JudgeWeb.Areas.Polygon.Controllers
         {
             if (!MarkdownFiles.Contains(target))
                 return NotFound();
-            var backstore = "p" + pid;
-            if (target != model.Target || backstore != model.BackingStore)
+            if (target != model.Target || $"p{pid}" != model.BackingStore)
                 return BadRequest();
-            await IoContext.WritePartAsync(backstore, target + ".md", model.Markdown);
-            return View(model);
+            await IoContext.WriteStringAsync($"p{pid}/{target}.md", model.Markdown);
+            StatusMessage = "Description saved.";
+            return RedirectToAction();
         }
 
 
@@ -94,7 +91,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
         public async Task<IActionResult> Generate(int pid)
         {
             var content = await GenerateViewAsync();
-            await IoContext.WritePartAsync($"p{pid}", "view.html", content);
+            await IoContext.WriteStringAsync($"p{pid}/view.html", content);
             StatusMessage = "Problem description saved successfully.";
             return RedirectToAction(nameof(Preview), new { @new = false });
         }

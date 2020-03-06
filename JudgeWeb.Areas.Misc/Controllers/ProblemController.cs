@@ -94,7 +94,7 @@ namespace JudgeWeb.Areas.Misc.Controllers
         /// <param name="pid">题目编号</param>
         [HttpGet("{pid}")]
         public async Task<IActionResult> View(int pid,
-            [FromServices] IFileRepository ioContext)
+            [FromServices] IProblemFileRepository ioContext)
         {
             var probQuery =
                 from a in DbContext.Archives
@@ -105,8 +105,8 @@ namespace JudgeWeb.Areas.Misc.Controllers
             var prob = await probQuery.SingleOrDefaultAsync();
             if (prob == null) return NotFound();
 
-            ioContext.SetContext("Problems");
-            var view = await ioContext.ReadPartAsync($"p{prob.ProblemId}", "view.html");
+            var fileInfo = ioContext.GetFileInfo($"p{prob.ProblemId}/view.html");
+            var view = await fileInfo.ReadAsync();
 
             if (string.IsNullOrEmpty(view))
             {

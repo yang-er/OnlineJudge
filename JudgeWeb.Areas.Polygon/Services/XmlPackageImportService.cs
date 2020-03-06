@@ -2,6 +2,7 @@
 using JudgeWeb.Areas.Polygon.Services;
 using JudgeWeb.Data;
 using JudgeWeb.Features;
+using JudgeWeb.Features.Storage;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using System;
@@ -21,6 +22,8 @@ namespace JudgeWeb.Areas.Polygon.Services
         public IMarkdownService Markdown { get; }
         public Problem Problem { get; private set; }
         public ILogger<XmlPackageImportService> Logger { get; }
+        public IProblemFileRepository IoContext { get; }
+        private readonly IStaticFileRepository io2;
 
         static readonly Dictionary<string, string> nodes = new Dictionary<string, string>
         {
@@ -35,12 +38,16 @@ namespace JudgeWeb.Areas.Polygon.Services
         public XmlPackageImportService(
             AppDbContext adbc,
             ILogger<XmlPackageImportService> logger,
-            IMarkdownService markdownService)
+            IMarkdownService markdownService,
+            IProblemFileRepository io,
+            IStaticFileRepository io2)
         {
             LogBuffer = new StringBuilder();
             DbContext = adbc;
             Logger = logger;
             Markdown = markdownService;
+            IoContext = io;
+            this.io2 = io2;
         }
 
         private void Log(string log)
@@ -54,8 +61,8 @@ namespace JudgeWeb.Areas.Polygon.Services
             if (string.IsNullOrEmpty(element?.Value)) return;
             string mdcontent = element.Value;
             var tags = $"p{Problem.ProblemId}";
-            var content = await Markdown.ImportWithImagesAsync(mdcontent, tags);
-            await File.WriteAllTextAsync($"Problems/{tags}/{fileName}", content);
+            var content = await (Markdown, io2).ImportWithImagesAsync(mdcontent, tags);
+            await IoContext.WriteStringAsync($"{tags}/{fileName}", content);
         }
 
         public async Task<Problem> ImportAsync(IFormFile zipFile, string username)
@@ -126,12 +133,12 @@ namespace JudgeWeb.Areas.Polygon.Services
                     });
 
                     await DbContext.SaveChangesAsync();
-                    await File.WriteAllBytesAsync(
-                        path: $"Problems/p{Problem.ProblemId}/t{tcc.Entity.TestcaseId}.in", 
-                        bytes: input);
-                    await File.WriteAllBytesAsync(
-                        path: $"Problems/p{Problem.ProblemId}/t{tcc.Entity.TestcaseId}.out",
-                        bytes: output);
+                    await IoContext.WriteBinaryAsync(
+                        subpath: $"p{Problem.ProblemId}/t{tcc.Entity.TestcaseId}.in", 
+                        content: input);
+                    await IoContext.WriteBinaryAsync(
+                        subpath: $"p{Problem.ProblemId}/t{tcc.Entity.TestcaseId}.out",
+                        content: output);
                 }
             }
 

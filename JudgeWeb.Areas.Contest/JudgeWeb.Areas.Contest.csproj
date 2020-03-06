@@ -29,16 +29,6 @@
     <ProjectReference Include="..\JudgeWeb.Features.Extensions\JudgeWeb.Features.Extensions.csproj" />
     <ProjectReference Include="..\JudgeWeb.Features.Markdown\JudgeWeb.Features.Markdown.csproj" />
     <ProjectReference Include="..\JudgeWeb.Features.Scoreboard\JudgeWeb.Features.Scoreboard.csproj" />
-    <ProjectReference Include="..\JudgeWeb.Features.Storage\JudgeWeb.Features.Storage.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Update="Views\Shared\Scoreboard.cshtml">
-      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-    </Content>
-    <Content Update="Views\Shared\_NavLogo.cshtml">
-      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-    </Content>
   </ItemGroup>
 
 </Project>

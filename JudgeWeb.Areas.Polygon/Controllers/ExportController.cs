@@ -1,8 +1,7 @@
 ﻿using JudgeWeb.Areas.Polygon.Services;
 using JudgeWeb.Data;
 using JudgeWeb.Features;
-using Markdig;
-using Markdig.Syntax.Inlines;
+using JudgeWeb.Features.Storage;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -13,7 +12,6 @@ using System.IO.Compression;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using FileUtils = System.IO.File;
 
 namespace JudgeWeb.Areas.Polygon.Controllers
 {
@@ -21,11 +19,21 @@ namespace JudgeWeb.Areas.Polygon.Controllers
     [Route("[area]/{pid}/[controller]")]
     public class ExportController : Controller3
     {
-        IMarkdownService Markdown { get; set; }
+        IMarkdownService Markdown { get; }
 
-        public ExportController(AppDbContext db, IMarkdownService markdown) : base(db, true)
+        IProblemFileRepository IoContext { get; }
+
+        IStaticFileRepository StaticFile { get; }
+
+        public ExportController(
+            AppDbContext db,
+            IProblemFileRepository io,
+            IMarkdownService markdown,
+            IStaticFileRepository io2) : base(db, true)
         {
             Markdown = markdown;
+            IoContext = io;
+            StaticFile = io2;
         }
 
         private class ExportSubmission
@@ -65,25 +73,29 @@ namespace JudgeWeb.Areas.Polygon.Controllers
             return Task.CompletedTask;
         }
 
-        private Task AttachTestcase(ZipArchive zip, ExportTestcase tc)
+        private async Task AttachTestcase(ZipArchive zip, ExportTestcase tc)
         {
             var prefix = $"data/{(tc.IsSecret ? "secret" : "sample")}/{tc.Rank}";
-            var localPrefix = $"Problems/p{Problem.ProblemId}/t{tc.TestcaseId}";
-            zip.CreateEntryFromFile(localPrefix + ".in", prefix + ".in");
-            zip.CreateEntryFromFile(localPrefix + ".out", prefix + ".ans");
+            var localPrefix = $"p{Problem.ProblemId}/t{tc.TestcaseId}";
+
+            var inputFile = IoContext.GetFileInfo(localPrefix + ".in");
+            using (var inputFile2 = inputFile.CreateReadStream())
+                await zip.CreateEntryFromStream(inputFile2, prefix + ".in");
+            var outputFile = IoContext.GetFileInfo(localPrefix + ".out");
+            using (var outputFile2 = outputFile.CreateReadStream())
+                await zip.CreateEntryFromStream(outputFile2, prefix + ".ans");
             if (tc.Description != $"{tc.Rank}")
                 zip.CreateEntryFromString(tc.Description, prefix + ".desc");
             if (tc.Point != 0)
                 zip.CreateEntryFromString($"{tc.Point}", prefix + ".point");
-            return Task.CompletedTask;
         }
 
         private async Task AttachMarkdownFile(ZipArchive zip, string mdname)
         {
-            var markdownFile = $"Problems/p{Problem.ProblemId}/{mdname}.md";
-            if (!FileUtils.Exists(markdownFile)) return;
-            var mdContent = await FileUtils.ReadAllTextAsync(markdownFile);
-            var news = await Markdown.ExportWithImagesAsync(mdContent);
+            var file = IoContext.GetFileInfo($"p{Problem.ProblemId}/{mdname}.md");
+            if (!file.Exists) return;
+            var mdContent = await file.ReadAsync();
+            var news = await (Markdown, StaticFile).ExportWithImagesAsync(mdContent);
             zip.CreateEntryFromString(news, $"problem_statement/{mdname}.md");
         }
 

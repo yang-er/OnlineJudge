@@ -22,7 +22,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\JudgeWeb.Features.Extensions\JudgeWeb.Features.Extensions.csproj" />
-    <ProjectReference Include="..\JudgeWeb.Features.Storage\JudgeWeb.Features.Storage.csproj" />
   </ItemGroup>
 
 </Project>

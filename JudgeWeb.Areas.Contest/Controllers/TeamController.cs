@@ -139,14 +139,15 @@ namespace JudgeWeb.Areas.Contest.Controllers
 
 
         [HttpGet("problems/{prob}")]
-        public async Task<IActionResult> Problemset(string prob, [FromServices] IFileRepository pe)
+        public async Task<IActionResult> Problemset(string prob,
+            [FromServices] IProblemFileRepository io)
         {
             if (TooEarly && !ViewData.ContainsKey("IsJury")) return NotFound();
             var problem = Problems.Find(prob);
             if (problem == null) return NotFound();
 
-            pe.SetContext("Problems");
-            var view = await pe.ReadPartAsync($"p{problem.ProblemId}", $"view.html");
+            var viewFile = io.GetFileInfo($"p{problem.ProblemId}/view.html");
+            var view = await viewFile.ReadAsync();
             if (string.IsNullOrEmpty(view)) return NotFound();
 
             ViewData["Content"] = view;

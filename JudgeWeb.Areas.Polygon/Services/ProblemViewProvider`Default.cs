@@ -2,6 +2,7 @@
 using JudgeWeb.Areas.Polygon.Services;
 using JudgeWeb.Data;
 using JudgeWeb.Features;
+using JudgeWeb.Features.Storage;
 using Markdig.Renderers.LaTeX;
 using Markdig.Syntax;
 using Markdig.Syntax.Inlines;
@@ -24,10 +25,20 @@ namespace JudgeWeb.Areas.Polygon.Services
 
         private HtmlEncoder Encoder { get; }
 
-        public DefaultProblemViewProvider(IMarkdownService markdownService, HtmlEncoder encoder)
+        private IProblemFileRepository Files { get; }
+
+        private IStaticFileRepository StaticFiles { get; }
+
+        public DefaultProblemViewProvider(
+            IMarkdownService markdownService,
+            HtmlEncoder encoder,
+            IProblemFileRepository io,
+            IStaticFileRepository io2)
         {
             Markdown = markdownService;
             Encoder = encoder;
+            Files = io;
+            StaticFiles = io2;
         }
 
         private string Render(string source, Action<MarkdownDocument> options = null)
@@ -114,10 +125,12 @@ namespace JudgeWeb.Areas.Polygon.Services
 
         private string ExtendUrl(ZipArchive zip, string url, int pid, string localPrefix)
         {
-            if (url.StartsWith("/images/problem/") && File.Exists("wwwroot" + url))
+            if (url.StartsWith("/images/problem/"))
             {
                 var fileName = Path.GetFileName(url);
-                zip.CreateEntryFromFile("wwwroot" + url, localPrefix + fileName);
+                var file = StaticFiles.GetFileInfo(url.TrimStart('/'));
+                if (!file.Exists) return url;
+                zip.CreateEntryFromFile(file.PhysicalPath, localPrefix + fileName);
                 return "{" + Path.GetFileNameWithoutExtension(fileName) + "}" + Path.GetExtension(fileName);
             }
             else if (url.StartsWith("data:image/"))
@@ -145,95 +158,93 @@ namespace JudgeWeb.Areas.Polygon.Services
 
         public void BuildLatex(ZipArchive zip, ProblemStatement statement, string filePrefix = "")
         {
-            using (var texWriter = new StringWriter { NewLine = "\n" })
+            using var texWriter = new StringWriter { NewLine = "\n" };
+            var problem = statement.Problem;
+            texWriter.Write($"\\begin{{problem}}{{{problem.Title}}}");
+            texWriter.Write($"{{standard input}}{{standard output}}");
+            double timeLimit = problem.TimeLimit / 1000.0;
+            texWriter.Write($"{{{timeLimit} second{(timeLimit > 1 ? "s" : "")}}}");
+            texWriter.WriteLine($"{{{problem.MemoryLimit / 1024} megabytes}}");
+            texWriter.WriteLine();
+
+            var renderer = new LatexRenderer(texWriter);
+            Markdown.Pipeline.Setup(renderer);
+
+            void GoRender(string opt)
             {
-                var problem = statement.Problem;
-                texWriter.Write($"\\begin{{problem}}{{{problem.Title}}}");
-                texWriter.Write($"{{standard input}}{{standard output}}");
-                double timeLimit = problem.TimeLimit / 1000.0;
-                texWriter.Write($"{{{timeLimit} second{(timeLimit > 1 ? "s" : "")}}}");
-                texWriter.WriteLine($"{{{problem.MemoryLimit / 1024} megabytes}}");
-                texWriter.WriteLine();
+                var document = Markdown.Parse(opt);
 
-                var renderer = new LatexRenderer(texWriter);
-                Markdown.Pipeline.Setup(renderer);
-
-                void GoRender(string opt)
+                document.Transverse<LinkInline>(o =>
                 {
-                    var document = Markdown.Parse(opt);
+                    if (o.IsImage) o.Url = ExtendUrl(zip, o.Url, problem.ProblemId, filePrefix);
+                });
 
-                    document.Transverse<LinkInline>(o =>
-                    {
-                        if (o.IsImage) o.Url = ExtendUrl(zip, o.Url, problem.ProblemId, filePrefix);
-                    });
-
-                    renderer.Render(document);
-                    renderer.EnsureLine().WriteLine().WriteLine();
-                }
-
-                GoRender(statement.Description);
-
-                if (!string.IsNullOrWhiteSpace(statement.Input))
-                {
-                    renderer.WriteLine("\\InputFile").WriteLine();
-                    GoRender(statement.Input);
-                }
-
-                if (!string.IsNullOrWhiteSpace(statement.Output))
-                {
-                    renderer.WriteLine("\\OutputFile").WriteLine();
-                    GoRender(statement.Output);
-                }
-
-                if (!string.IsNullOrWhiteSpace(statement.Interaction))
-                {
-                    renderer.WriteLine("\\Interaction").WriteLine();
-                    GoRender(statement.Interaction);
-                }
-
-                if (statement.Samples.Count > 0)
-                {
-                    renderer.WriteLine("\\Example").WriteLine();
-                    renderer.WriteLine("\\begin{example}");
-
-                    for (int i = 0; i < statement.Samples.Count; i++)
-                    {
-                        zip.CreateEntryFromString(statement.Samples[i].Input, $"{filePrefix}example.{i + 1}.in");
-                        zip.CreateEntryFromString(statement.Samples[i].Output, $"{filePrefix}example.{i + 1}.ans");
-                        renderer.WriteLine($"\\exmpfile{{example.{i + 1}.in}}{{example.{i + 1}.ans}}%");
-                    }
-
-                    renderer.WriteLine("\\end{example}");
-                    renderer.WriteLine();
-                }
-
-                if (!string.IsNullOrWhiteSpace(statement.Hint))
-                {
-                    renderer.WriteLine("\\Notes").WriteLine();
-                    GoRender(statement.Hint);
-                }
-
-                texWriter.WriteLine("\\end{problem}");
-                zip.CreateEntryFromString(texWriter.ToString(), $"{filePrefix}problem.tex");
+                renderer.Render(document);
+                renderer.EnsureLine().WriteLine().WriteLine();
             }
+
+            GoRender(statement.Description);
+
+            if (!string.IsNullOrWhiteSpace(statement.Input))
+            {
+                renderer.WriteLine("\\InputFile").WriteLine();
+                GoRender(statement.Input);
+            }
+
+            if (!string.IsNullOrWhiteSpace(statement.Output))
+            {
+                renderer.WriteLine("\\OutputFile").WriteLine();
+                GoRender(statement.Output);
+            }
+
+            if (!string.IsNullOrWhiteSpace(statement.Interaction))
+            {
+                renderer.WriteLine("\\Interaction").WriteLine();
+                GoRender(statement.Interaction);
+            }
+
+            if (statement.Samples.Count > 0)
+            {
+                renderer.WriteLine("\\Example").WriteLine();
+                renderer.WriteLine("\\begin{example}");
+
+                for (int i = 0; i < statement.Samples.Count; i++)
+                {
+                    zip.CreateEntryFromString(statement.Samples[i].Input, $"{filePrefix}example.{i + 1}.in");
+                    zip.CreateEntryFromString(statement.Samples[i].Output, $"{filePrefix}example.{i + 1}.ans");
+                    renderer.WriteLine($"\\exmpfile{{example.{i + 1}.in}}{{example.{i + 1}.ans}}%");
+                }
+
+                renderer.WriteLine("\\end{example}");
+                renderer.WriteLine();
+            }
+
+            if (!string.IsNullOrWhiteSpace(statement.Hint))
+            {
+                renderer.WriteLine("\\Notes").WriteLine();
+                GoRender(statement.Hint);
+            }
+
+            texWriter.WriteLine("\\end{problem}");
+            zip.CreateEntryFromString(texWriter.ToString(), $"{filePrefix}problem.tex");
         }
 
-        private Task<string> TryRead(string prefix, string filename)
+        private Task<string> TryRead(string filename)
         {
-            if (!File.Exists(prefix + filename)) return Task.FromResult("");
-            return File.ReadAllTextAsync(prefix + filename);
+            var fileInfo = Files.GetFileInfo(filename);
+            if (!fileInfo.Exists) return Task.FromResult("");
+            return fileInfo.ReadAsync();
         }
 
         public async Task<ProblemStatement> LoadStatement(Problem problem, DbSet<Testcase> testc)
         {
             var pid = problem.ProblemId;
-            var folderPrefix = $"Problems/p{pid}/";
 
-            var description = await TryRead(folderPrefix, "description.md");
-            var inputdesc = await TryRead(folderPrefix, "inputdesc.md");
-            var outputdesc = await TryRead(folderPrefix, "outputdesc.md");
-            var hint = await TryRead(folderPrefix, "hint.md");
-            var interact = await TryRead(folderPrefix, "interact.md");
+            var description = await TryRead($"p{pid}/description.md");
+            var inputdesc = await TryRead($"p{pid}/inputdesc.md");
+            var outputdesc = await TryRead($"p{pid}/outputdesc.md");
+            var hint = await TryRead($"p{pid}/hint.md");
+            var interact = await TryRead($"p{pid}/interact.md");
 
             var testcases = await testc
                 .Where(t => t.ProblemId == pid && !t.IsSecret)
@@ -243,8 +254,8 @@ namespace JudgeWeb.Areas.Polygon.Services
 
             foreach (var item in testcases)
             {
-                var input = await TryRead(folderPrefix, $"t{item.TestcaseId}.in");
-                var output = await TryRead(folderPrefix, $"t{item.TestcaseId}.out");
+                var input = await TryRead($"p{pid}/t{item.TestcaseId}.in");
+                var output = await TryRead($"p{pid}/t{item.TestcaseId}.out");
                 samples.Add(new TestCase(item.Description, input, output, item.Point));
             }
 

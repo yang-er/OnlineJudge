@@ -217,17 +217,16 @@ namespace JudgeWeb.Areas.Polygon.Controllers
 
         [HttpGet("{jid}/{rid}/{type}")]
         public IActionResult RunDetails(int jid, int rid, string type,
-            [FromServices] IFileRepository io)
+            [FromServices] IRunFileRepository io)
         {
-            io.SetContext("Runs");
-
-            if (!io.ExistPart($"j{jid}", $"r{rid}.{type}"))
+            var fileInfo = io.GetFileInfo($"j{jid}/r{rid}.{type}");
+            if (!fileInfo.Exists)
                 return NotFound();
 
-            return ContentFile(
-                fileName: $"Runs/j{jid}/r{rid}.{type}",
+            return File(
+                fileStream: fileInfo.CreateReadStream(),
                 contentType: "application/octet-stream",
-                downloadName: $"j{jid}_r{rid}.{type}");
+                fileDownloadName: $"j{jid}_r{rid}.{type}");
         }
 
 

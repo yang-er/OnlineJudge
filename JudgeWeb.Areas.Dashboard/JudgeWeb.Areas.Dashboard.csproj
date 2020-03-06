@@ -30,7 +30,6 @@
     <ProjectReference Include="..\JudgeWeb.Data\JudgeWeb.Data.csproj" />
     <ProjectReference Include="..\JudgeWeb.Features.AspNetCore\JudgeWeb.Features.AspNetCore.csproj" />
     <ProjectReference Include="..\JudgeWeb.Features.Extensions\JudgeWeb.Features.Extensions.csproj" />
-    <ProjectReference Include="..\JudgeWeb.Features.Storage\JudgeWeb.Features.Storage.csproj" />
     <ProjectReference Include="..\JudgeWeb.Features.Markdown\JudgeWeb.Features.Markdown.csproj" />
   </ItemGroup>
 
