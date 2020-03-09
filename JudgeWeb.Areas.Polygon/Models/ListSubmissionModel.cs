@@ -20,7 +20,7 @@ namespace JudgeWeb.Areas.Polygon.Models
 
         public string Language { get; set; }
 
-        public int ExecutionTime { get; set; }
+        public int? ExecutionTime { get; set; }
 
         public Verdict? Expected { get; set; }
 

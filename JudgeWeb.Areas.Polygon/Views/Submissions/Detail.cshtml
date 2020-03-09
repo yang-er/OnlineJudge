@@ -97,8 +97,8 @@
                 </td>
                 <td use-a>j@(judging.JudgingId)</td>
                 <td use-a>@subTime?.ToString("HH:mm")</td>
-                <td use-a>@(judging.ExecuteTime)ms</td>
-                <td use-a>@(judging.ExecuteMemory)K</td>
+                <td use-a>@(judging.ExecuteTime.HasValue ? $"{judging.ExecuteTime.Value}ms" : "N/A")</td>
+                <td use-a>@(judging.ExecuteMemory.HasValue ? $"{judging.ExecuteMemory.Value}K" : "N/A")</td>
                 <td use-a><span class="hostname">@(judging.Server ?? "-")</span></td>
                 <td use-a><verdict3 value="@judging.Status" class="@(judging.Active ? "" : "disabled")" /></td>
             </tr>
@@ -113,7 +113,7 @@
     {
         <nvd3 id="maxruntime" title="Max Runtimes" key="Max Runtime"
               baseline="@timeLimit"
-              max-value="@(Model.AllJudgings.Max(j => j.ExecuteTime) / 1000.0)"
+              max-value="@(Model.AllJudgings.Max(j => j.ExecuteTime ?? 0) / 1000.0)"
               data="@Model.AllJudgings.Select(j => new { label = $"j{j.JudgingId}", value = j.ExecuteTime / 1000.0, color = ColorNvd3(j.Status) })"
               x-axis="Judging" y-axis="Runtime (in s)" />
     }

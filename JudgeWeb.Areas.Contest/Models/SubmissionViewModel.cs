@@ -29,8 +29,8 @@ namespace JudgeWeb.Areas.Contest.Models
 
         public int JudgingId { get; set; }
 
-        public int ExecuteTime { get; set; }
+        public int? ExecuteTime { get; set; }
 
-        public int ExecuteMemory { get; set; }
+        public int? ExecuteMemory { get; set; }
     }
 }

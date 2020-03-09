@@ -8,8 +8,8 @@ namespace JudgeWeb.Areas.Polygon.Models
         public DateTimeOffset Time { get; set; }
         public Verdict Verdict { get; set; }
         public int ProblemId { get; set; }
-        public int ExecutionTime { get; set; }
-        public int ExecutionMemory { get; set; }
+        public int? ExecutionTime { get; set; }
+        public int? ExecutionMemory { get; set; }
         public int CodeLength { get; set; }
         public string Language { get; set; }
         public int ContestId { get; set; }

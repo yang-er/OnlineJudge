@@ -110,7 +110,7 @@
                 <td use-a>@Html.CstTime(sub.Time)</td>
                 <td use-a><verdict3 value="@grade.Status" /></td>
                 <td use-a>@(sub.CodeLength)B</td>
-                <td use-a>@(grade.ExecuteTime)ms, @(grade.ExecuteMemory)kb</td>
+                <td use-a><if cond="grade.ExecuteTime.HasValue">@(grade.ExecuteTime)ms, @(grade.ExecuteMemory)kb</if><if cond="!grade.ExecuteTime.HasValue">N/A</if></td>
                 <td use-a>@sub.Ip</td>
             </tr>
         }

@@ -82,6 +82,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
                     CompilerOutput = j.CompileError,
                     Language = Languages[s.Language],
                     SourceCode = s.SourceCode,
+                    Grade = j.TotalScore ?? 0,
                     TeamName = t.TeamName,
                     JudgingId = j.JudgingId,
                     ExecuteMemory = j.ExecuteMemory,

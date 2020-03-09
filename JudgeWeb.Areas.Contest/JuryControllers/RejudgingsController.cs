@@ -1,8 +1,6 @@
-﻿using EFCore.BulkExtensions;
-using JudgeWeb.Areas.Contest.Models;
+﻿using JudgeWeb.Areas.Contest.Models;
 using JudgeWeb.Data;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -177,13 +175,25 @@ namespace JudgeWeb.Areas.Contest.Controllers
             }
             else
             {
-                int tok = await DbContext.Database.ExecuteSqlRawAsync(
-                    "INSERT INTO [Judgings] ([Active], [SubmissionId], [FullTest], [Status], [TotalScore], [ExecuteTime], [ExecuteMemory], [RejudgeId], [PreviousJudgingId])\n      " +
-                    "SELECT 0 AS [Active], [s].[SubmissionId], [j].[FullTest], 8 AS [Status], 0 AS [TotalScore], 0 AS [ExecuteTime], 0 AS [ExecuteMemory], @__rejid_0 AS [RejudgeId], [j].[JudgingId] AS [PreviousJudgingId]\n      " +
-                    "FROM [Submissions] AS [s]\n      " +
-                    "INNER JOIN [Judgings] AS [j] ON ([s].[SubmissionId] = [j].[SubmissionId]) AND ([j].[Active] = 1)\n      " +
-                    "WHERE [s].[RejudgeId] = @__rejid_0",
-                    new SqlParameter("__rejid_0", rejid));
+                var newJudgings =
+                    from s in DbContext.Submissions
+                    where s.RejudgeId == rejid
+                    join j in DbContext.Judgings
+                        on new { s.SubmissionId, Active = true }
+                        equals new { j.SubmissionId, j.Active }
+                    select new Judging
+                    {
+                        Active = false,
+                        SubmissionId = s.SubmissionId,
+                        FullTest = j.FullTest,
+                        Status = Verdict.Pending,
+                        RejudgeId = rejid,
+                        PreviousJudgingId = j.JudgingId,
+                    };
+
+                var tok = await newJudgings
+                    .BatchInsertIntoAsync(DbContext.Judgings);
+
                 StatusMessage = $"{tok} submissions will be rejudged.";
 
                 InternalLog(AuditlogType.Rejudging, $"{rejid}", "added", $"with {tok} submissions");
@@ -247,13 +257,24 @@ namespace JudgeWeb.Areas.Contest.Controllers
             }
             else
             {
-                int tok = await DbContext.Database.ExecuteSqlRawAsync(
-                    "INSERT INTO [Judgings] ([Active], [SubmissionId], [FullTest], [Status], [TotalScore], [ExecuteTime], [ExecuteMemory], [RejudgeId], [PreviousJudgingId])\n      " +
-                    "SELECT 0 AS [Active], [s].[SubmissionId], [j].[FullTest], 8 AS [Status], 0 AS [TotalScore], 0 AS [ExecuteTime], 0 AS [ExecuteMemory], @__rejid_0 AS [RejudgeId], [j].[JudgingId] AS [PreviousJudgingId]\n      " +
-                    "FROM [Submissions] AS [s]\n      " +
-                    "INNER JOIN [Judgings] AS [j] ON ([s].[SubmissionId] = [j].[SubmissionId]) AND ([j].[Active] = 1)\n      " +
-                    "WHERE [s].[RejudgeId] = @__rejid_0",
-                    new SqlParameter("__rejid_0", rejid));
+                var newJudgings =
+                    from s in DbContext.Submissions
+                    where s.RejudgeId == rejid
+                    join j in DbContext.Judgings
+                        on new { s.SubmissionId, Active = true }
+                        equals new { j.SubmissionId, j.Active }
+                    select new Judging
+                    {
+                        Active = false,
+                        SubmissionId = s.SubmissionId,
+                        FullTest = j.FullTest,
+                        Status = Verdict.Pending,
+                        RejudgeId = rejid,
+                        PreviousJudgingId = j.JudgingId,
+                    };
+
+                var tok = await newJudgings
+                    .BatchInsertIntoAsync(DbContext.Judgings);
                 StatusMessage = $"{tok} submissions will be rejudged.";
                 return RedirectToAction(nameof(Detail), new { rid = rejid });
             }

@@ -27,8 +27,8 @@
                     <div class="d-flex flex-row mb-3">
                         <div class="p-2">Run result: <verdict3 value="@Model.Verdict" /></div>
                         <div class="p-2">Language: <b>@Model.Language.Name</b></div>
-                        <div class="p-2">Time: @(Model.ExecuteTime / 1000.0)s</div>
-                        <div class="p-2">Memory: @(Model.ExecuteMemory / 1024)MB</div>
+                        <div class="p-2">Time: @(Model.ExecuteTime.HasValue ? $"{Model.ExecuteTime.Value / 1000.0}s" : "N/A")</div>
+                        <div class="p-2">Memory: @(Model.ExecuteMemory.HasValue ? $"{Model.ExecuteMemory.Value / 1024}MB" : "N/A")</div>
                     </div>
 
                     <ace value="@Model.SourceCode.UnBase64()" file="Main.@Model.Language.FileExtension" />

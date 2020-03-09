@@ -52,12 +52,12 @@ namespace JudgeWeb.Data
         /// <summary>
         /// 执行时间，以ms为单位
         /// </summary>
-        public int ExecuteTime { get; set; }
+        public int? ExecuteTime { get; set; }
 
         /// <summary>
         /// 执行内存，以kb为单位
         /// </summary>
-        public int ExecuteMemory { get; set; }
+        public int? ExecuteMemory { get; set; }
 
         /// <summary>
         /// 编译错误内容，以BASE64编码
@@ -77,7 +77,7 @@ namespace JudgeWeb.Data
         /// <summary>
         /// 评测点分数总和
         /// </summary>
-        public int TotalScore { get; set; }
+        public int? TotalScore { get; set; }
     }
 
     public partial class AppDbContext : IEntityTypeConfiguration<Judging>

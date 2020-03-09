@@ -45,8 +45,8 @@
                     <td><a asp-action="ProblemView" asp-route-prob="@prob.ShortName">@(prob.ShortName)<span class="d-none d-sm-inline">. @prob.Title</span></a></td>
                     <td class="d-none d-lg-table-cell text-variant" use-a>@stat.Language</td>
                     <td use-a><verdict3 value="@stat.Verdict" /></td>
-                    <td class="d-none d-lg-table-cell" use-a>@(stat.Verdict == Verdict.CompileError ? "N/A" : $"{stat.ExecutionTime / 1000.0:F3}")</td>
-                    <td class="d-none d-lg-table-cell" use-a>@(stat.Verdict == Verdict.CompileError ? "N/A" : $"{stat.ExecutionMemory / 1024.0:F1}")</td>
+                    <td class="d-none d-lg-table-cell" use-a>@(stat.ExecutionTime.HasValue ? $"{stat.ExecutionTime.Value / 1000.0:F3}" : "N/A")</td>
+                    <td class="d-none d-lg-table-cell" use-a>@(stat.ExecutionMemory.HasValue ? $"{stat.ExecutionMemory / 1024.0:F1}" : "N/A")</td>
                 </tr>
             }
         </tbody>

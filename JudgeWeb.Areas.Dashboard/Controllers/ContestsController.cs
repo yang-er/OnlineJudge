@@ -62,7 +62,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
 
             int cid = c.Entity.ContestId;
             var roleName = $"JuryOfContest{cid}";
-            var result = await roleManager.CreateAsync(new Role(roleName));
+            var result = await roleManager.CreateAsync(new Role(roleName) { ContestId = cid });
             if (!result.Succeeded) return Json(result);
 
             var firstUser = await userManager.GetUserAsync(User);

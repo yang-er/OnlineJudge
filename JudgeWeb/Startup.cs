@@ -123,8 +123,11 @@ namespace JudgeWeb
                 .AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new TimeSpanJsonConverter()))
                 .SetTokenTransform<SlugifyParameterTransformer>()
                 .ReplaceLinkGenerator()
+                .AddSessionStateTempDataProvider()
                 .SetCompatibilityVersion(CompatibilityVersion.Version_3_0)
                 .UseAreaParts(AssemblyPrefix, EnabledAreas);
+
+            services.AddSession(options => options.Cookie.IsEssential = true);
 
             services.AddDefaultManagers();
 
@@ -168,6 +171,7 @@ namespace JudgeWeb
             //app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseCookiePolicy();
+            app.UseSession();
 
             app.UseRouting();
             app.UseAuthentication();

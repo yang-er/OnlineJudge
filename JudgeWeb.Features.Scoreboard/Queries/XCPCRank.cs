@@ -66,7 +66,7 @@ namespace JudgeWeb.Features.Scoreboard
             }
 
             int count = await db.Score(args)
-                .Where(s => !s.IsCorrectRestricted)
+                .Where(s => s.PendingRestricted > 0)
                 .BatchUpdateAsync(scp);
 
             if (count == 0) return;
@@ -138,7 +138,7 @@ namespace JudgeWeb.Features.Scoreboard
             }
 
             return db.Score(args)
-                .Where(s => !s.IsCorrectRestricted)
+                .Where(s => s.PendingRestricted > 0)
                 .BatchUpdateAsync(scp);
         }
 
@@ -161,7 +161,7 @@ namespace JudgeWeb.Features.Scoreboard
             else
             {
                 await db.Score(args)
-                    .Where(s => !s.IsCorrectRestricted)
+                    .Where(s => s.PendingRestricted > 0)
                     .BatchUpdateAsync(s => new ScoreCache
                     {
                         PendingPublic = s.PendingPublic + 1,
@@ -197,7 +197,7 @@ namespace JudgeWeb.Features.Scoreboard
             int cid = args.ContestId, pid = args.ProblemId, tid = args.TeamId;
             return db.ScoreCache
                 .Where(s => s.ContestId == cid && s.ProblemId == pid && s.TeamId == tid)
-                .Where(s => !s.IsCorrectRestricted)
+                .Where(s => s.PendingRestricted > 0)
                 .BatchUpdateAsync(scp);
         }
 

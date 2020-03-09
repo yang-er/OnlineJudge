@@ -9,8 +9,8 @@ namespace JudgeWeb.Areas.Misc.Models
         public CodeViewModel() { }
 
         public Verdict Status { get; set; }
-        public int ExecuteTime { get; set; }
-        public int ExecuteMemory { get; set; }
+        public int? ExecuteTime { get; set; }
+        public int? ExecuteMemory { get; set; }
         public string CompileError { get; set; }
         public int CodeLength { get; set; }
         public string Code { get; set; }

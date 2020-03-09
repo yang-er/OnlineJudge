@@ -186,7 +186,7 @@ namespace JudgeWeb.Features.Scoreboard
 
                 sc.SubmissionRestricted++;
                 sc.IsCorrectRestricted = s.TotalScore != 0;
-                sc.SolveTimeRestricted = s.TotalScore * 60;
+                sc.SolveTimeRestricted = s.TotalScore.Value * 60;
                 sc.FirstToSolve = s.TotalScore == full.GetValueOrDefault(s.ProblemId);
                 if (lastop2.ContainsKey(s.TeamId))
                     lastop2[s.TeamId] = (int)(s.Time - args.ContestTime).TotalMinutes;

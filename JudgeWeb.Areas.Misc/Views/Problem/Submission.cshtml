@@ -19,7 +19,7 @@
                 <p>
                     Language: @Model.LanguageName, <br />
                     Verdict: <verdict3 value="@Model.Status" />,<br />
-                    Runtime: @(Model.ExecuteTime)ms, @(Model.ExecuteMemory)kB, <br />
+                    Runtime: <if cond="Model.ExecuteTime.HasValue">@(Model.ExecuteTime)ms, @(Model.ExecuteMemory)kB</if><if cond="!Model.ExecuteTime.HasValue">N/A</if>, <br />
                     Sent Time: @Html.CstTime(Model.DateTime)
                 </p>
                 <if cond="Model.Status != Verdict.CompileError">
