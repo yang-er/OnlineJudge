@@ -2,10 +2,10 @@
 <html>
     <head>
         <meta charset="UTF-8">
-        <title></title>
+        <title><%TITLE%></title>
         <link rel="stylesheet" href="/static/nelmioapidoc/swagger-ui/swagger-ui.css">
         <link rel="stylesheet" href="/static/nelmioapidoc/style.css">
-        <script id="swagger-data" type="application/json">{"spec":}</script>
+        <script id="swagger-data" type="application/json">{"spec":<%SPEC%>}</script>
     </head>
     <body>
         <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="position:absolute;width:0;height:0">

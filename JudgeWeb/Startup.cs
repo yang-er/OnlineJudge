@@ -55,9 +55,10 @@ namespace JudgeWeb
 
             services.AddApplicationInsightsTelemetry();
 
+            services.AddMemoryCache();
+
             services.AddDbContext<AppDbContext>(options => options
-                .UseSqlServer(Configuration.GetConnectionString("UserDbConnection"))
-                .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking));
+                .UseSqlServer(Configuration.GetConnectionString("UserDbConnection")));
 
             services.AddIdentity<User, Role>(
                 options =>
@@ -132,9 +133,11 @@ namespace JudgeWeb
             services.AddDefaultManagers();
 
             services.AddApiExplorer()
+                .AddHtmlTemplate(Environment.WebRootFileProvider.GetFileInfo("static/nelmioapidoc/index.html.src"))
                 .AddDocument("DOMjudge", "DOMjudge compact API v4", "7.2.0")
                 .AddSecurityScheme("basic", Microsoft.OpenApi.Models.SecuritySchemeType.Http)
-                .IncludeXmlComments(EnabledAreas.Select(item => System.IO.Path.Combine(AppContext.BaseDirectory, $"{AssemblyPrefix}{item}.xml")));
+                .IncludeXmlComments(EnabledAreas.Select(item => System.IO.Path.Combine(AppContext.BaseDirectory, $"{AssemblyPrefix}{item}.xml")))
+                .FilterByRouteArea();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
