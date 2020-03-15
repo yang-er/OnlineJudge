@@ -1,5 +1,4 @@
-﻿using EFCore.BulkExtensions;
-using JudgeWeb.Areas.Dashboard.Models;
+﻿using JudgeWeb.Areas.Dashboard.Models;
 using JudgeWeb.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -149,8 +148,13 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
                 ModelState.AddModelError("xys::parseError", $"Student {stuId} not found.");
             }
 
-            await DbContext.BulkInsertOrUpdateAsync(
-                intersects.Select(a => new ClassStudent { ClassId = gid, StudentId = a }).ToList());
+            await DbContext.ClassStudent.MergeAsync(
+                sourceTable: intersects.Select(a => new { gid, a }),
+                targetKey: f => new { gid = f.ClassId, sid = f.StudentId },
+                sourceKey: f => new { f.gid, sid = f.a },
+                updateExpression: null,
+                insertExpression: s => new ClassStudent { ClassId = s.gid, StudentId = s.a },
+                delete: false);
 
             if (ModelState.IsValid)
             {

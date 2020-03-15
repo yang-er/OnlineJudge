@@ -1,5 +1,4 @@
-﻿using EFCore.BulkExtensions;
-using JudgeWeb.Areas.Polygon.Models;
+﻿using JudgeWeb.Areas.Polygon.Models;
 using JudgeWeb.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;

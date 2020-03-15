@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using System;
+using System.Collections.Generic;
 
 namespace JudgeWeb.Data
 {
@@ -48,6 +49,21 @@ namespace JudgeWeb.Data
         /// 队伍位置
         /// </summary>
         public string Location { get; set; }
+
+        /// <summary>
+        /// 归属组织
+        /// </summary>
+        public TeamAffiliation Affiliation { get; }
+
+        /// <summary>
+        /// 排名缓存
+        /// </summary>
+        public ICollection<RankCache> RankCache { get; set; }
+
+        /// <summary>
+        /// 分数缓存
+        /// </summary>
+        public ICollection<ScoreCache> ScoreCache { get; set; }
     }
 
     public partial class AppDbContext : IEntityTypeConfiguration<Team>
@@ -65,7 +81,7 @@ namespace JudgeWeb.Data
                 .IsRequired()
                 .HasMaxLength(128);
 
-            entity.HasOne<TeamAffiliation>()
+            entity.HasOne<TeamAffiliation>(e => e.Affiliation)
                 .WithMany()
                 .HasForeignKey(e => e.AffiliationId)
                 .OnDelete(DeleteBehavior.Restrict);
@@ -74,6 +90,16 @@ namespace JudgeWeb.Data
                 .WithMany()
                 .HasForeignKey(e => e.CategoryId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasMany(e => e.ScoreCache)
+                .WithOne()
+                .HasForeignKey(sc => new { sc.ContestId, sc.TeamId })
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasMany(e => e.RankCache)
+                .WithOne()
+                .HasForeignKey(rc => new { rc.ContestId, rc.TeamId })
+                .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasIndex(e => e.Status);
         }

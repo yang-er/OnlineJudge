@@ -5,6 +5,7 @@ using JudgeWeb.Features.Storage;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.FileProviders;
 using System;
 using System.IO;
 using System.IO.Compression;

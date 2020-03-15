@@ -1,5 +1,4 @@
-﻿using EFCore.BulkExtensions;
-using JudgeWeb.Areas.Contest.Models;
+﻿using JudgeWeb.Areas.Contest.Models;
 using JudgeWeb.Areas.Polygon.Services;
 using JudgeWeb.Data;
 using JudgeWeb.Features;
@@ -8,11 +7,13 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.FileProviders;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 
 namespace JudgeWeb.Areas.Contest.Controllers
@@ -21,9 +22,9 @@ namespace JudgeWeb.Areas.Contest.Controllers
     [Route("[area]/{cid}/[controller]")]
     public class JuryController : JuryControllerBase
     {
-        private async Task UpdateContestAsync(Data.Contest template, params string[] contents)
+        private async Task UpdateContestAsync(Expression<Func<Data.Contest, Data.Contest>> template)
         {
-            await DbContext.UpdateContestAsync(Contest.ContestId, template, contents);
+            await DbContext.UpdateContestAsync(Contest.ContestId, template);
 
             var newcont = await DbContext.GetContestAsync(Contest.ContestId);
 
@@ -270,11 +271,13 @@ namespace JudgeWeb.Areas.Contest.Controllers
                     newcont.UnfreezeTime = DateTimeOffset.UnixEpoch + (newcont.UnfreezeTime.Value - old);
             }
 
-            await UpdateContestAsync(newcont,
-                nameof(Contest.StartTime),
-                nameof(Contest.EndTime),
-                nameof(Contest.FreezeTime),
-                nameof(Contest.UnfreezeTime));
+            await UpdateContestAsync(c => new Data.Contest
+            {
+                StartTime = newcont.StartTime,
+                EndTime = newcont.EndTime,
+                FreezeTime = newcont.FreezeTime,
+                UnfreezeTime = newcont.UnfreezeTime,
+            });
 
             InternalLog(AuditlogType.Contest, $"{Contest.ContestId}", "changed time");
             await DbContext.SaveChangesAsync();
@@ -531,7 +534,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 || unfreezeTime != cst.UnfreezeTime)
                 contestTimeChanged = true;
 
-            var update = new Data.Contest
+            await UpdateContestAsync(c => new Data.Contest
             {
                 ShortName = model.ShortName,
                 Name = model.Name,
@@ -545,21 +548,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 BalloonAvaliable = model.UseBalloon,
                 PrintingAvaliable = model.UsePrintings,
                 StatusAvaliable = model.StatusAvailable,
-            };
-
-            await UpdateContestAsync(update,
-                nameof(update.ShortName),
-                nameof(update.Name),
-                nameof(update.RankingStrategy),
-                nameof(update.IsPublic),
-                nameof(update.StartTime),
-                nameof(update.FreezeTime),
-                nameof(update.EndTime),
-                nameof(update.UnfreezeTime),
-                nameof(update.StatusAvaliable),
-                nameof(update.RegisterDefaultCategory),
-                nameof(update.PrintingAvaliable),
-                nameof(update.BalloonAvaliable));
+            });
 
             InternalLog(AuditlogType.Contest, $"{cid}", "updated", "via edit-page");
             await DbContext.SaveChangesAsync();

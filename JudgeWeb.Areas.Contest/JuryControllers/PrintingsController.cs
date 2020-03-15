@@ -1,8 +1,6 @@
-﻿using EFCore.BulkExtensions;
-using JudgeWeb.Data;
+﻿using JudgeWeb.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -59,7 +57,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
             int cnt = await DbContext.Printing
                 .Where(p => p.ContestId == cid && p.Id == fid)
                 .Where(p => p.Done == true)
-                .BatchUpdateAsync(new Printing(), new List<string> { "Done" });
+                .BatchUpdateAsync(p => new Printing { Done = null });
             if (cnt == 0) return NotFound();
             return RedirectToAction(nameof(List));
         }

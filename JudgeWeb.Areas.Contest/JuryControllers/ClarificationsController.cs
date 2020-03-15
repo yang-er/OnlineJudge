@@ -1,5 +1,4 @@
-﻿using EFCore.BulkExtensions;
-using JudgeWeb.Areas.Contest.Models;
+﻿using JudgeWeb.Areas.Contest.Models;
 using JudgeWeb.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -167,10 +166,10 @@ namespace JudgeWeb.Areas.Contest.Controllers
             var result = await (claim
                 ? QueryOf(cid, clarid)
                     .Where(c => c.JuryMember == null)
-                    .BatchUpdateAsync(new Clarification { JuryMember = admin }, new List<string> { nameof(Clarification.JuryMember) })
+                    .BatchUpdateAsync(c => new Clarification { JuryMember = admin })
                 : QueryOf(cid, clarid)
                     .Where(c => c.JuryMember == admin)
-                    .BatchUpdateAsync(new Clarification { JuryMember = null }, new List<string> { nameof(Clarification.JuryMember) }));
+                    .BatchUpdateAsync(c => new Clarification { JuryMember = null }));
 
             if (result == 1 && claim == true)
                 return RedirectToAction(nameof(Detail));

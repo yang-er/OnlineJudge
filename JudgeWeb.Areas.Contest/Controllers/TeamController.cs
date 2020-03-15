@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -25,9 +26,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
         public override async Task OnActionExecutingAsync(ActionExecutingContext context)
         {
             if (Contest.Gym)
-            {
-                context.Result = base.NotFound();
-            }
+                context.Result = RedirectToAction("Home", "Gym");
 
             else if (Team == null || Team.Status != 1)
             {

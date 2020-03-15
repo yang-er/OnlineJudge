@@ -47,6 +47,15 @@ namespace Microsoft.AspNetCore.Mvc
             base.OnActionExecuted(context);
             if (context.Result is RedirectToActionResult rtas)
                 context.Result = new RedirectToActionWithAjaxSupportResult(rtas, InAjax);
+
+            if (context.Result is ForbidResult && InAjax)
+            {
+                Response.StatusCode = 403;
+                if (IsWindowAjax)
+                    context.Result = Message("Access denined", "You do not have access to this resource.", MessageType.Danger);
+                else
+                    context.Result = new EmptyResult();
+            }
         }
 
         [NonAction]

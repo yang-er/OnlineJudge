@@ -1,5 +1,4 @@
-﻿using EFCore.BulkExtensions;
-using JudgeWeb.Areas.Dashboard.Models;
+﻿using JudgeWeb.Areas.Dashboard.Models;
 using JudgeWeb.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -195,7 +194,15 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
             }
 
             if (!ModelState.IsValid) return Window(model);
-            await DbContext.BulkInsertOrUpdateAsync(adds);
+
+            await DbContext.Students.MergeAsync(
+                sourceTable: adds.Select(a => new { a.Id, a.Name }),
+                targetKey: a => a.Id,
+                sourceKey: a => a.Id,
+                updateExpression: (t, s) => new Student { Name = s.Name },
+                insertExpression: s => new Student { Id = s.Id, Name = s.Name },
+                delete: false);
+
             return RedirectToAction(nameof(List), new { page = 1 });
         }
     }

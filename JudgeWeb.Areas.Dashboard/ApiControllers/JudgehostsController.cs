@@ -1,5 +1,4 @@
-﻿using EFCore.BulkExtensions;
-using JudgeWeb.Areas.Api.Models;
+﻿using JudgeWeb.Areas.Api.Models;
 using JudgeWeb.Data;
 using JudgeWeb.Features.Storage;
 using Microsoft.ApplicationInsights;

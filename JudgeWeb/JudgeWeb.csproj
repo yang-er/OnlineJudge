@@ -48,7 +48,6 @@
     <ProjectReference Include="..\JudgeWeb.Features.OjUpdate\JudgeWeb.Features.OjUpdate.csproj" />
     <ProjectReference Include="..\JudgeWeb.Features.Routing\JudgeWeb.Features.Routing.csproj" />
     <ProjectReference Include="..\JudgeWeb.Features.Security\JudgeWeb.Features.Security.csproj" />
-    <ProjectReference Include="..\JudgeWeb.Features.Storage\JudgeWeb.Features.Storage.csproj" />
   </ItemGroup>
 
 

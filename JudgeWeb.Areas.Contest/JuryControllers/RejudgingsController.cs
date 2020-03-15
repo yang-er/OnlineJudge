@@ -296,9 +296,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
 
             var resetSubmits = await DbContext.Submissions
                 .Where(s => s.RejudgeId == rid)
-                .BatchUpdateAsync(
-                    updateValues: new Submission(),
-                    updateColumns: new List<string> { nameof(Submission.RejudgeId) });
+                .BatchUpdateAsync(s => new Submission { RejudgeId = null });
 
             rej.EndTime = DateTimeOffset.Now;
             rej.Applied = false;
@@ -345,7 +343,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 .Select(j => j.SubmissionId);
             var resetSubmit = await DbContext.Submissions
                 .Where(s => oldSubmissions.Contains(s.SubmissionId))
-                .BatchUpdateAsync(new Submission(), new List<string> { nameof(Submission.RejudgeId) });
+                .BatchUpdateAsync(s => new Submission { RejudgeId = null });
 
             rej.Applied = true;
             rej.EndTime = DateTimeOffset.Now;

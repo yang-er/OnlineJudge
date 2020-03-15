@@ -50,15 +50,15 @@ namespace JudgeWeb.Features.Scoreboard
 
                 try
                 {
-                    using (var scope = _servicesProvider.CreateScope())
-                    using (var db = scope.ServiceProvider.GetRequiredService<AppDbContext>())
+                    using var scope = _servicesProvider.CreateScope();
+                    using var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                    db.ChangeTracker.AutoDetectChangesEnabled = false;
+
+                    while (inner.Count > 0)
                     {
-                        while (inner.Count > 0)
-                        {
-                            var item = inner.Dequeue();
-                            var sc = ScoreboardService.SC[item.RankStrategy];
-                            await sc.Redistribute(db, item);
-                        }
+                        var item = inner.Dequeue();
+                        var sc = ScoreboardService.SC[item.RankStrategy];
+                        await sc.Redistribute(db, item);
                     }
                 }
                 catch (Exception ex)

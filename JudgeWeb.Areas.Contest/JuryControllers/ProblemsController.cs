@@ -1,5 +1,4 @@
-﻿using EFCore.BulkExtensions;
-using JudgeWeb.Data;
+﻿using JudgeWeb.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
@@ -14,7 +13,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
     {
         private void MarkChanged()
         {
-            Cache.Remove($"`c{Contest.ContestId}`probs");
+            DbContext.RemoveCacheEntry($"`c{Contest.ContestId}`probs");
         }
 
 
@@ -62,23 +61,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 var oldprobs = Problems;
                 model.Color = "#" + model.Color.TrimStart('#');
                 model.ContestId = cid;
-                items.Add(model);
-                items.Sort((cp1, cp2) => cp1.ShortName.CompareTo(cp2.ShortName));
-
-                for (int i = 0; i < items.Count; i++)
-                {
-                    if (items[i] == model)
-                    {
-                        items[i].Rank = i + 1;
-                        DbContext.ContestProblem.Add(model);
-                    }
-                    else if (items[i].Rank != i + 1)
-                    {
-                        items[i].Rank = i + 1;
-                        DbContext.ContestProblem.Update(items[i]);
-                    }
-                }
-
+                DbContext.ContestProblem.Add(model);
                 await DbContext.SaveChangesAsync();
                 MarkChanged();
 
@@ -140,17 +123,6 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 prob.AllowJudge = model.AllowJudge;
                 prob.ShortName = model.ShortName;
                 DbContext.ContestProblem.Update(prob);
-
-                items.Sort((cp1, cp2) => cp1.ShortName.CompareTo(cp2.ShortName));
-                for (int i = 0; i < items.Count; i++)
-                {
-                    if (items[i].Rank != i + 1)
-                    {
-                        items[i].Rank = i + 1;
-                        DbContext.ContestProblem.Update(items[i]);
-                    }
-                }
-
                 await DbContext.SaveChangesAsync();
                 MarkChanged();
 
@@ -196,7 +168,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 .BatchDeleteAsync();
             DbContext.Events.AddDelete(cid, new Data.Api.ContestProblem2(prob));
             await DbContext.SaveChangesAsync();
-
+            MarkChanged();
             var newprobs = await DbContext.GetProblemsAsync(cid);
             foreach (var @new in newprobs)
                 DbContext.Events.AddUpdate(cid, new Data.Api.ContestProblem2(@new));

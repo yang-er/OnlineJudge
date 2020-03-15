@@ -58,7 +58,8 @@ namespace JudgeWeb
             services.AddMemoryCache();
 
             services.AddDbContext<AppDbContext>(options => options
-                .UseSqlServer(Configuration.GetConnectionString("UserDbConnection")));
+                .UseSqlServer(Configuration.GetConnectionString("UserDbConnection"))
+                .UseBulkExtensions());
 
             services.AddIdentity<User, Role>(
                 options =>

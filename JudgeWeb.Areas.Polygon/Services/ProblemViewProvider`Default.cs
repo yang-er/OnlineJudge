@@ -7,6 +7,7 @@ using Markdig.Renderers.LaTeX;
 using Markdig.Syntax;
 using Markdig.Syntax.Inlines;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 using System;
 using System.Collections.Generic;
 using System.IO;

@@ -24,7 +24,7 @@ namespace JudgeWeb.Data
         public string ShortName { get; set; }
 
         /// <summary>
-        /// 题目顺序
+        /// [Ignore] 题目顺序
         /// </summary>
         public int Rank { get; set; }
 
@@ -125,11 +125,10 @@ namespace JudgeWeb.Data
                 .HasMaxLength(10)
                 .IsUnicode(false);
 
-            entity.HasIndex(e => e.Rank);
-
             entity.Property(e => e.Color)
                 .IsRequired();
 
+            entity.Ignore(e => e.Rank);
             entity.Ignore(e => e.Title);
             entity.Ignore(e => e.TimeLimit);
             entity.Ignore(e => e.MemoryLimit);

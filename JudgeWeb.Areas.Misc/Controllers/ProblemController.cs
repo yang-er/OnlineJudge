@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.FileProviders;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -36,30 +36,21 @@ namespace JudgeWeb.Areas.Misc.Controllers
 
         private Task<List<SelectListItem>> LanguagesAsync()
         {
-            return GlobalCache.Instance.GetOrCreateAsync("prob::oklang", async key =>
-            {
-                var langs = await DbContext.Languages
-                    .Where(t => t.AllowSubmit)
-                    .Select(l => new SelectListItem(l.Name, l.Id))
-                    .ToListAsync();
-
-                key.AbsoluteExpirationRelativeToNow = System.TimeSpan.FromMinutes(5);
-                return langs;
-            });
+            return DbContext.Languages
+                .Where(t => t.AllowSubmit)
+                .Select(l => new SelectListItem(l.Name, l.Id))
+                .CachedToListAsync("prob::oklang", System.TimeSpan.FromMinutes(5));
         }
 
         private Task<int> MaxPageAsync()
         {
-            return GlobalCache.Instance.GetOrCreateAsync("prob::totcount", async key =>
+            return DbContext.CachedGetAsync("prob::totcount", System.TimeSpan.FromMinutes(10), async () =>
             {
                 var pid = await DbContext.Archives
                     .OrderByDescending(p => p.PublicId)
                     .Select(p => new { p.PublicId })
                     .FirstOrDefaultAsync();
-                int tot2 = pid?.PublicId ?? 1000;
-                tot2 = (tot2 - 1000) / ItemsPerPage + 1;
-                key.AbsoluteExpirationRelativeToNow = System.TimeSpan.FromMinutes(10);
-                return tot2;
+                return ((pid?.PublicId ?? 1000) - 1000) / ItemsPerPage + 1;
             });
         }
 

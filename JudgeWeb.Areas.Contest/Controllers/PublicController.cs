@@ -3,6 +3,7 @@ using JudgeWeb.Features.Storage;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.Extensions.FileProviders;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -15,7 +16,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
         public override Task OnActionExecutingAsync(ActionExecutingContext context)
         {
             if (Contest.Gym)
-                context.Result = NotFound();
+                context.Result = RedirectToAction("Home", "Gym");
             return base.OnActionExecutingAsync(context);
         }
 

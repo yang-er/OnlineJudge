@@ -1,11 +1,10 @@
-﻿using EFCore.BulkExtensions;
-using JudgeWeb.Areas.Contest.Models;
+﻿using JudgeWeb.Areas.Contest.Models;
 using JudgeWeb.Data;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 
 namespace JudgeWeb
@@ -21,12 +20,11 @@ namespace JudgeWeb
 
         public static Task<ContestProblem[]> GetProblemsAsync(this AppDbContext db, int cid)
         {
-            return ContestCache._cache.GetOrCreateAsync($"`c{cid}`probs", async entry =>
+            return db.CachedGetAsync($"`c{cid}`probs", TimeSpan.FromMinutes(5), async () =>
             {
                 var query1 =
                     from cp in db.ContestProblem
                     where cp.ContestId == cid
-                    orderby cp.Rank ascending
                     join p in db.Problems on cp.ProblemId equals p.ProblemId
                     select new ContestProblem(cp, p.Title, p.TimeLimit, p.MemoryLimit, p.CombinedRunCompare, p.Shared);
 
@@ -35,14 +33,21 @@ namespace JudgeWeb
                     where cp.ContestId == cid
                     join t in db.Testcases on cp.ProblemId equals t.ProblemId
                     group t by cp.ProblemId into g
-                    select new { g.Key, Count = g.Count() };
+                    select new { g.Key, Count = g.Count(), Score = g.Sum(t => t.Point) };
 
                 var result = await query1.ToArrayAsync();
-                var result2 = await query2.ToDictionaryAsync(k => k.Key, v => v.Count);
-                foreach (var item in result)
-                    item.TestcaseCount = result2.GetValueOrDefault(item.ProblemId);
+                Array.Sort(result, (a, b) => a.ShortName.CompareTo(b.ShortName));
+                for (int i = 0; i < result.Length; i++)
+                    result[i].Rank = i + 1;
+                var result2 = await query2.ToDictionaryAsync(k => k.Key);
 
-                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5);
+                foreach (var item in result)
+                {
+                    var res = result2.GetValueOrDefault(item.ProblemId) ?? new { Key = 0, Count = 0, Score = 0 };
+                    item.TestcaseCount = res.Count;
+                    if (item.Score == 0) item.Score = res.Score;
+                }
+
                 return result;
             });
         }
@@ -67,14 +72,14 @@ namespace JudgeWeb
                     timeSpan: TimeSpan.FromMinutes(5));
         }
 
-        public static async Task UpdateContestAsync(this AppDbContext db, int cid, Contest template, params string[] contents)
+        public static async Task UpdateContestAsync(this AppDbContext db, int cid, Expression<Func<Contest, Contest>> expression)
         {
             int solved = await db.Contests
                 .Where(c => c.ContestId == cid)
-                .BatchUpdateAsync(template, contents.ToList());
+                .BatchUpdateAsync(expression);
 
-            ContestCache._cache.Remove($"`c{cid}`info");
-            ContestCache._cache.Remove($"`c{cid}`internal_state");
+            db.RemoveCacheEntry($"`c{cid}`info");
+            db.RemoveCacheEntry($"`c{cid}`internal_state");
         }
 
         public static Task<List<TeamCategory>> ListTeamCategoryAsync(this AppDbContext db, int cid, bool? requirePublic = null)
@@ -128,30 +133,21 @@ namespace JudgeWeb
         {
             var aff = await db.ListTeamAffiliationAsync(cid);
 
-            return await ContestCache._cache.GetOrCreateAsync($"`c{cid}`scoreboard", async entry =>
+            return await db.CachedGetAsync($"`c{cid}`scoreboard", TimeSpan.FromSeconds(3), async () =>
             {
-                var query =
-                    from t in db.Teams
-                    where t.ContestId == cid && t.Status == 1
-                    join a in db.TeamAffiliations on t.AffiliationId equals a.AffiliationId
-                    join rc in db.RankCache on new { t.TeamId, t.ContestId } equals new { rc.TeamId, rc.ContestId } into rcs
-                    from rc in rcs.DefaultIfEmpty()
-                    join sc in db.ScoreCache on new { t.TeamId, t.ContestId } equals new { sc.TeamId, sc.ContestId } into scs
-                    from sc in scs.DefaultIfEmpty()
-                    select new { t = new { t, a, rc }, sc };
-
-                var value = (await query.ToListAsync())
-                    .GroupBy(
-                        keySelector: a => a.t,
-                        elementSelector: a => a.sc)
-                    .ToDictionary(
-                        keySelector: a => a.Key.t.TeamId,
-                        elementSelector: g => new Features.Scoreboard.BoardQuery
+                var value = await db.Teams
+                    .Where(t => t.ContestId == cid && t.Status == 1)
+                    .Include(t => t.Affiliation)
+                    .Include(t => t.RankCache)
+                    .Include(t => t.ScoreCache)
+                    .ToDictionaryAsync(
+                        keySelector: a => a.TeamId,
+                        elementSelector: a => new Features.Scoreboard.BoardQuery
                         {
-                            Rank = g.Key.rc ?? new RankCache(),
-                            Score = g.Where(a => a != null).ToList(),
-                            Team = g.Key.t,
-                            Affiliation = g.Key.a
+                            Rank = a.RankCache.SingleOrDefault() ?? new RankCache(),
+                            Score = a.ScoreCache,
+                            Team = a,
+                            Affiliation = a.Affiliation
                         });
 
                 var result = new ScoreboardDataModel
@@ -171,14 +167,13 @@ namespace JudgeWeb
                     }
                 }
 
-                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(3);
                 return result;
             });
         }
 
         public static Task<Dictionary<int, IGrouping<int, string>>> ListTeamMembersAsync(this AppDbContext db, int cid)
         {
-            return ContestCache._cache.GetOrCreateAsync($"`c{cid}`teams`members", async entry =>
+            return db.CachedGetAsync($"`c{cid}`teams`members", TimeSpan.FromMinutes(5), async () =>
             {
                 var query =
                     from tu in db.TeamMembers
@@ -186,11 +181,9 @@ namespace JudgeWeb
                     join u in db.Users on tu.UserId equals u.Id
                     select new { tu.TeamId, u.UserName };
 
-                var result = (await query.ToListAsync())
+                return (await query.ToListAsync())
                     .GroupBy(a => a.TeamId, a => a.UserName)
                     .ToDictionary(g => g.Key);
-                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5);
-                return result;
             });
         }
     }

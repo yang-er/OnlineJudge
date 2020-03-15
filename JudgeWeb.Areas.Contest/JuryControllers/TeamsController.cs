@@ -1,5 +1,4 @@
-﻿using EFCore.BulkExtensions;
-using JudgeWeb.Areas.Contest.Models;
+﻿using JudgeWeb.Areas.Contest.Models;
 using JudgeWeb.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -38,13 +37,13 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 .Where(tu => tu.ContestId == team.ContestId && tu.TeamId == team.TeamId)
                 .ToListAsync();
 
-            Cache.Remove($"`c{team.ContestId}`teams`t{team.TeamId}");
+            DbContext.RemoveCacheEntry($"`c{team.ContestId}`teams`t{team.TeamId}");
             foreach (var uu in list)
-                Cache.Remove($"`c{team.ContestId}`teams`u{uu.UserId}");
-            Cache.Remove($"`c{team.ContestId}`teams`list_jury");
-            Cache.Remove($"`c{team.ContestId}`teams`aff0");
-            Cache.Remove($"`c{team.ContestId}`teams`cat`1");
-            Cache.Remove($"`c{team.ContestId}`teams`cat`2");
+                DbContext.RemoveCacheEntry($"`c{team.ContestId}`teams`u{uu.UserId}");
+            DbContext.RemoveCacheEntry($"`c{team.ContestId}`teams`list_jury");
+            DbContext.RemoveCacheEntry($"`c{team.ContestId}`teams`aff0");
+            DbContext.RemoveCacheEntry($"`c{team.ContestId}`teams`cat`1");
+            DbContext.RemoveCacheEntry($"`c{team.ContestId}`teams`cat`2");
         }
 
 
@@ -72,14 +71,14 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 .Where(tu => tu.ContestId == team.ContestId && tu.TeamId == team.TeamId)
                 .BatchDeleteAsync();
 
-            Cache.Remove($"`c{team.ContestId}`teams`t{team.TeamId}");
+            DbContext.RemoveCacheEntry($"`c{team.ContestId}`teams`t{team.TeamId}");
             foreach (var uu in list)
-                Cache.Remove($"`c{team.ContestId}`teams`u{uu.UserId}");
-            Cache.Remove($"`c{team.ContestId}`teams`list_jury");
-            Cache.Remove($"`c{team.ContestId}`teams`aff0");
-            Cache.Remove($"`c{team.ContestId}`teams`cat`1");
-            Cache.Remove($"`c{team.ContestId}`teams`cat`2");
-            Cache.Remove($"`c{team.ContestId}`teams`members");
+                DbContext.RemoveCacheEntry($"`c{team.ContestId}`teams`u{uu.UserId}");
+            DbContext.RemoveCacheEntry($"`c{team.ContestId}`teams`list_jury");
+            DbContext.RemoveCacheEntry($"`c{team.ContestId}`teams`aff0");
+            DbContext.RemoveCacheEntry($"`c{team.ContestId}`teams`cat`1");
+            DbContext.RemoveCacheEntry($"`c{team.ContestId}`teams`cat`2");
+            DbContext.RemoveCacheEntry($"`c{team.ContestId}`teams`members");
         }
 
 

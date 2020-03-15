@@ -1,5 +1,4 @@
-﻿using EFCore.BulkExtensions;
-using JudgeWeb.Data;
+﻿using JudgeWeb.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -54,14 +53,12 @@ namespace JudgeWeb.Areas.Account.Controllers
         [HttpGet("{teamid}")]
         public async Task<IActionResult> Detail(int teamid)
         {
-            var tquery =
-                from t in UserManager.TrainingTeams
-                where t.TrainingTeamId == teamid
-                join a in UserManager.TeamAffiliations on t.AffiliationId equals a.AffiliationId
-                select new { t, a };
-            var team = await tquery.SingleOrDefaultAsync();
+            var team = await UserManager.TrainingTeams
+                .Where(tt => tt.TrainingTeamId == teamid)
+                .Include(tt => tt.Affiliation)
+                .SingleOrDefaultAsync();
             if (team == null) return NotFound();
-            ViewBag.Affil = team.a;
+            ViewBag.Affil = team.Affiliation;
 
             var uquery =
                 from tu in UserManager.TrainingTeamUsers
@@ -70,7 +67,7 @@ namespace JudgeWeb.Areas.Account.Controllers
                 select new TrainingTeamUser(tu, u.UserName, u.Email);
             var users = await uquery.ToListAsync();
             ViewBag.Users = users;
-            return View(team.t);
+            return View(team);
         }
 
 

@@ -44,7 +44,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 .Prepend(("tech", ClarificationCategory.Technical, null))
                 .Prepend(("general", ClarificationCategory.General, null));
 
-        protected IMemoryCache Cache => ContestCache._cache;
+        protected IMemoryCache Cache => CachedQueryable.Cache;
 
         protected Task<Team> FindTeamByIdAsync(int teamid)
         {
@@ -123,13 +123,13 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 }
 
                 await DbContext.SaveChangesAsync();
-                Cache.Remove($"`c{cid}`teams`list_jury");
-                Cache.Remove($"`c{cid}`teams`t{team.TeamId}");
-                Cache.Remove($"`c{cid}`teams`members");
+                DbContext.RemoveCacheEntry($"`c{cid}`teams`list_jury");
+                DbContext.RemoveCacheEntry($"`c{cid}`teams`t{team.TeamId}");
+                DbContext.RemoveCacheEntry($"`c{cid}`teams`members");
 
                 if (uids != null)
                     foreach (var uid in uids)
-                        Cache.Remove($"`c{cid}`teams`u{uid}");
+                        DbContext.RemoveCacheEntry($"`c{cid}`teams`u{uid}");
                 return team.TeamId;
             }
         }

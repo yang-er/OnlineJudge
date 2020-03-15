@@ -52,19 +52,14 @@ namespace JudgeWeb.Areas.Api.Controllers
                 return StatusCode(403); // left time
 
             var delta = newTime - oldtime;
-            var it = new Data.Contest
+
+            await DbContext.UpdateContestAsync(cid, c => new Data.Contest
             {
                 StartTime = newTime,
                 EndTime = Contest.EndTime + delta,
                 FreezeTime = Contest.FreezeTime + delta,
                 UnfreezeTime = Contest.UnfreezeTime + delta,
-            };
-
-            await DbContext.UpdateContestAsync(cid, it,
-                nameof(it.StartTime),
-                nameof(it.EndTime),
-                nameof(it.FreezeTime),
-                nameof(it.UnfreezeTime));
+            });
 
             var newcont = await DbContext.GetContestAsync(Contest.ContestId);
 

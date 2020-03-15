@@ -16,10 +16,13 @@ namespace JudgeWeb.Areas.Misc.Controllers
 
         private UserManager UserManager { get; }
 
-        public ContestController(AppDbContext db, UserManager um)
+        private IMemoryCache Cache { get; }
+
+        public ContestController(AppDbContext db, UserManager um, IMemoryCache cache)
         {
             DbContext = db;
             UserManager = um;
+            Cache = cache;
         }
 
         [HttpGet("/contests")]
@@ -27,7 +30,7 @@ namespace JudgeWeb.Areas.Misc.Controllers
         {
             int.TryParse(UserManager.GetUserId(User), out int uid);
 
-            var cts = await GlobalCache.Instance.GetOrCreateAsync("cont::list", async key =>
+            var cts = await Cache.GetOrCreateAsync("cont::list", async key =>
             {
                 var contests = await DbContext.Contests
                     .Where(c => !c.Gym)
@@ -70,7 +73,7 @@ namespace JudgeWeb.Areas.Misc.Controllers
         {
             int.TryParse(UserManager.GetUserId(User), out int uid);
 
-            var cts = await GlobalCache.Instance.GetOrCreateAsync("gym::list", async key =>
+            var cts = await Cache.GetOrCreateAsync("gym::list", async key =>
             {
                 var contests = await DbContext.Contests
                     .Where(c => c.Gym)

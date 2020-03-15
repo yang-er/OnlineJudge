@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,7 +25,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
         public override Task OnActionExecutingAsync(ActionExecutingContext context)
         {
             if (!Contest.Gym)
-                context.Result = base.NotFound();
+                context.Result = RedirectToAction("Info", "Public");
             return base.OnActionExecutingAsync(context);
         }
 
@@ -84,6 +85,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
                     SourceCode = s.SourceCode,
                     Grade = j.TotalScore ?? 0,
                     TeamName = t.TeamName,
+                    TeamId = t.TeamId,
                     JudgingId = j.JudgingId,
                     ExecuteMemory = j.ExecuteMemory,
                     ExecuteTime = j.ExecuteTime
@@ -92,7 +94,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
             var model = await modelQuery.SingleOrDefaultAsync();
             if (model == null) return NotFound();
 
-            if (model.TeamId != Team?.TeamId)
+            if (model.TeamId != Team.TeamId)
             {
                 if (Contest.StatusAvaliable == 2)
                 {

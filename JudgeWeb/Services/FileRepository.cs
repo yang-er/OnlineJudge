@@ -1,13 +1,13 @@
 ﻿using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
-using Microsoft.Extensions.Hosting;
 using System.IO;
 
 namespace JudgeWeb.Features.Storage
 {
     public class ProblemFileRepository : PhysicalMutableFileProvider, IProblemFileRepository
     {
-        public ProblemFileRepository(IHostEnvironment root)
+        public ProblemFileRepository(IWebHostEnvironment root)
             : base(Path.Combine(root.ContentRootPath, "Problems"))
         {
         }
@@ -15,7 +15,7 @@ namespace JudgeWeb.Features.Storage
 
     public class RunFileRepository : PhysicalMutableFileProvider, IRunFileRepository
     {
-        public RunFileRepository(IHostEnvironment root)
+        public RunFileRepository(IWebHostEnvironment root)
             : base(Path.Combine(root.ContentRootPath, "Runs"))
         {
         }
@@ -26,6 +26,17 @@ namespace JudgeWeb.Features.Storage
         public StaticFileRepository(IWebHostEnvironment root)
             : base(root.WebRootPath)
         {
+        }
+    }
+
+    public static class ProblemRepositoryExtensions
+    {
+        public static IServiceCollection AddProblemRepository(this IServiceCollection services)
+        {
+            services.AddSingleton<IProblemFileRepository, ProblemFileRepository>();
+            services.AddSingleton<IRunFileRepository, RunFileRepository>();
+            services.AddSingleton<IStaticFileRepository, StaticFileRepository>();
+            return services;
         }
     }
 }

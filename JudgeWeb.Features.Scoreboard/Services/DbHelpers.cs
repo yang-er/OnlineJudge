@@ -1,8 +1,6 @@
-﻿using EFCore.BulkExtensions;
-using JudgeWeb.Data;
+﻿using JudgeWeb.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -10,14 +8,6 @@ namespace JudgeWeb.Features.Scoreboard
 {
     public static class Extensions
     {
-        internal static Task InsertAsync<T>(this DbContext db, T item) where T : class
-        {
-            return db.BulkInsertAsync(new List<T>
-            {
-                item
-            });
-        }
-
         internal static IQueryable<ScoreCache> Score(this DbContext db, int cid, int probid, int teamid)
         {
             return db.Set<ScoreCache>()

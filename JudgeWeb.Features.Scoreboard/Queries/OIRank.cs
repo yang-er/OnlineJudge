@@ -1,5 +1,4 @@
-﻿using EFCore.BulkExtensions;
-using JudgeWeb.Data;
+﻿using JudgeWeb.Data;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -56,7 +55,7 @@ namespace JudgeWeb.Features.Scoreboard
 
             if (sc == 0)
             {
-                await db.InsertAsync(new ScoreCache
+                db.ScoreCache.Add(new ScoreCache
                 {
                     ContestId = args.ContestId,
                     TeamId = args.TeamId,
@@ -64,6 +63,8 @@ namespace JudgeWeb.Features.Scoreboard
                     PendingPublic = 1,
                     PendingRestricted = 1,
                 });
+
+                await db.SaveChangesAsync();
             }
             else
             {
@@ -116,12 +117,8 @@ namespace JudgeWeb.Features.Scoreboard
                 db.RankCache.Update(rc);
             }
 
-            // first blood
             rc.PointsRestricted -= (int)sc.SolveTimeRestricted / 60;
-            var allScore = await (from t in db.Testcases
-                                  where t.ProblemId == args.ProblemId
-                                  select t.Point).SumAsync();
-            sc.FirstToSolve = allScore == args.TotalScore;
+            sc.FirstToSolve = args.Verdict == Verdict.Accepted;
             sc.SolveTimeRestricted = args.TotalScore * 60;
             sc.IsCorrectRestricted = args.TotalScore > 0;
             sc.PendingRestricted--;
@@ -187,7 +184,7 @@ namespace JudgeWeb.Features.Scoreboard
                 sc.SubmissionRestricted++;
                 sc.IsCorrectRestricted = s.TotalScore != 0;
                 sc.SolveTimeRestricted = s.TotalScore.Value * 60;
-                sc.FirstToSolve = s.TotalScore == full.GetValueOrDefault(s.ProblemId);
+                sc.FirstToSolve = s.Status == Verdict.Accepted;
                 if (lastop2.ContainsKey(s.TeamId))
                     lastop2[s.TeamId] = (int)(s.Time - args.ContestTime).TotalMinutes;
                 else
@@ -234,8 +231,9 @@ namespace JudgeWeb.Features.Scoreboard
             await db.RankCache
                 .Where(t => t.ContestId == cid)
                 .BatchDeleteAsync();
-            await db.BulkInsertAsync(rcc.Values.ToList());
-            await db.BulkInsertAsync(scc.Values.ToList());
+            db.RankCache.AddRange(rcc.Values);
+            db.ScoreCache.AddRange(scc.Values);
+            await db.SaveChangesAsync();
         }
     }
 }

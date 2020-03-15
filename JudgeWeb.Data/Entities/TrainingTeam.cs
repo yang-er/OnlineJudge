@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using System;
+using System.Collections.Generic;
 
 namespace JudgeWeb.Data
 {
@@ -33,6 +34,11 @@ namespace JudgeWeb.Data
         /// 成立时间
         /// </summary>
         public DateTimeOffset Time { get; set; }
+
+        /// <summary>
+        /// 导航属性
+        /// </summary>
+        public TeamAffiliation Affiliation { get; set; }
     }
 
     public partial class AppDbContext : IEntityTypeConfiguration<TrainingTeam>
@@ -45,7 +51,7 @@ namespace JudgeWeb.Data
                 .IsRequired()
                 .HasMaxLength(128);
 
-            entity.HasOne<TeamAffiliation>()
+            entity.HasOne<TeamAffiliation>(e => e.Affiliation)
                 .WithMany()
                 .HasForeignKey(e => e.AffiliationId)
                 .OnDelete(DeleteBehavior.Restrict);

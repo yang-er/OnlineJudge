@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -35,7 +34,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
         {
             var teamNames = await DbContext.GetTeamNameAsync(cid);
 
-            return await Cache.GetOrCreateAsync($"`c{cid}`t{teamid ?? -1}`sub_jury`{all}", async entry =>
+            return await DbContext.CachedGetAsync($"`c{cid}`t{teamid ?? -1}`sub_jury`{all}", TimeSpan.FromSeconds(3), async () =>
             {
                 var submissions = DbContext.Submissions
                     .Where(s => s.ContestId == cid);
@@ -52,8 +51,6 @@ namespace JudgeWeb.Areas.Contest.Controllers
                     from d in dd.DefaultIfEmpty()
                     select new { s.SubmissionId, s.Time, j.Status, s.ProblemId, s.Author, s.Language, d = (Verdict?)d.Status, s.Ip };
                 var result = await query.ToListAsync();
-
-                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(3);
 
                 return result
                     .GroupBy(a => new { a.Status, a.SubmissionId, a.Time, a.ProblemId, a.Author, a.Language, a.Ip }, a => a.d)
