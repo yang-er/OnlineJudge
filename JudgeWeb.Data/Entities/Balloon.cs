@@ -96,6 +96,9 @@ namespace JudgeWeb.Data
                 .HasForeignKey(e => e.SubmissionId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            entity.Property(e => e.Done)
+                .HasDefaultValue(false);
+
             entity.Ignore(e => e.BalloonColor);
             entity.Ignore(e => e.ProblemShortName);
             entity.Ignore(e => e.ProblemId);

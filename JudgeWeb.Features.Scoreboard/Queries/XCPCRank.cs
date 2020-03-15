@@ -1,5 +1,4 @@
-﻿using EFCore.BulkExtensions;
-using JudgeWeb.Data;
+﻿using JudgeWeb.Data;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -34,10 +33,9 @@ namespace JudgeWeb.Features.Scoreboard
                        join c in db.TeamCategories on t.CategoryId equals c.CategoryId
                        select c.SortOrder).Contains(c.SortOrder)
                 select new { tid = sc.TeamId };
-            var it = await fbQuery.CountAsync();
-            bool firstBlood = it == 0;
+            bool firstBlood = !await fbQuery.AnyAsync();
             double time = (args.SubmitTime - args.ContestTime).TotalSeconds;
-            
+
             if (args.Frozen)
             {
                 scp = s => new ScoreCache
@@ -76,43 +74,67 @@ namespace JudgeWeb.Features.Scoreboard
                 .Select(s => new { t = s.SolveTimeRestricted, s = s.SubmissionRestricted })
                 .SingleOrDefaultAsync();
 
-            Expression<Func<RankCache, RankCache>> rcp;
-
             int penalty = (tries.s - 1) * 20;
             penalty += tries.t < 0 ? -(((int)(-tries.t)) / 60) : ((int)(tries.t)) / 60;
 
             if (args.Frozen)
             {
-                rcp = r => new RankCache
-                {
-                    PointsRestricted = r.PointsRestricted + 1,
-                    TotalTimeRestricted = r.TotalTimeRestricted + penalty,
-                };
+                await db.RankCache.MergeAsync(
+                    sourceTable: new[] { new { args.ContestId, args.TeamId, penalty } },
+                    targetKey: rc => new { rc.ContestId, rc.TeamId },
+                    sourceKey: rc => new { rc.ContestId, rc.TeamId },
+                    delete: false,
+
+                    updateExpression: (r, s) => new RankCache
+                    {
+                        PointsRestricted = r.PointsRestricted + 1,
+                        TotalTimeRestricted = r.TotalTimeRestricted + s.penalty,
+                    },
+
+                    insertExpression: s => new RankCache
+                    {
+                        PointsRestricted = 1,
+                        TotalTimeRestricted = s.penalty,
+                        TeamId = s.TeamId,
+                        ContestId = s.ContestId,
+                    });
             }
             else
             {
-                rcp = r => new RankCache
-                {
-                    PointsRestricted = r.PointsRestricted + 1,
-                    TotalTimeRestricted = r.TotalTimeRestricted + penalty,
-                    PointsPublic = r.PointsPublic + 1,
-                    TotalTimePublic = r.TotalTimePublic + penalty,
-                };
-            }
+                await db.RankCache.MergeAsync(
+                    sourceTable: new[] { new { args.ContestId, args.TeamId, penalty } },
+                    targetKey: rc => new { rc.ContestId, rc.TeamId },
+                    sourceKey: rc => new { rc.ContestId, rc.TeamId },
+                    delete: false,
 
-            int cnt = await db.Rank(args).BatchUpdateAsync(rcp);
+                    updateExpression: (r, s) => new RankCache
+                    {
+                        PointsRestricted = r.PointsRestricted + 1,
+                        TotalTimeRestricted = r.TotalTimeRestricted + s.penalty,
+                        PointsPublic = r.PointsPublic + 1,
+                        TotalTimePublic = r.TotalTimePublic + s.penalty,
+                    },
 
-            if (cnt == 0)
-            {
-                var rc = rcp.Compile().Invoke(new RankCache());
-                rc.ContestId = args.ContestId;
-                rc.TeamId = args.TeamId;
-                await db.InsertAsync(rc);
+                    insertExpression: s => new RankCache
+                    {
+                        PointsRestricted = 1,
+                        TotalTimeRestricted = s.penalty,
+                        PointsPublic = 1,
+                        TotalTimePublic = s.penalty,
+                        TeamId = s.TeamId,
+                        ContestId = s.ContestId,
+                    });
             }
 
             if (!args.Frozen && args.Balloon)
             {
-                await db.InsertAsync(new Balloon { SubmissionId = args.SubmissionId });
+                await db.Balloon.MergeAsync(
+                    sourceTable: new[] { new { args.SubmissionId } },
+                    targetKey: s => s.SubmissionId,
+                    sourceKey: s => s.SubmissionId,
+                    updateExpression: null,
+                    insertExpression: s => new Balloon { SubmissionId = s.SubmissionId },
+                    delete: false);
             }
         }
 
@@ -137,37 +159,35 @@ namespace JudgeWeb.Features.Scoreboard
                 };
             }
 
-            return db.Score(args)
+            return db.Score(args.ContestId, args.ProblemId, args.TeamId)
                 .Where(s => s.PendingRestricted > 0)
                 .BatchUpdateAsync(scp);
         }
 
 
-        public async Task Pending(AppDbContext db, ScoreboardEventArgs args)
+        public Task Pending(AppDbContext db, ScoreboardEventArgs args)
         {
-            var sc = await db.Score(args).CountAsync();
-            
-            if (sc == 0)
-            {
-                await db.InsertAsync(new ScoreCache
+            return db.ScoreCache.MergeAsync(
+                sourceTable: new[] { new { args.ContestId, args.TeamId, args.ProblemId } },
+                targetKey: sc => new { sc.ContestId, sc.TeamId, sc.ProblemId },
+                sourceKey: sc => new { sc.ContestId, sc.TeamId, sc.ProblemId },
+
+                updateExpression: (t, s) => new ScoreCache
                 {
-                    ContestId = args.ContestId,
-                    TeamId = args.TeamId,
-                    ProblemId = args.ProblemId,
+                    PendingPublic = t.IsCorrectRestricted ? t.PendingPublic : t.PendingPublic + 1,
+                    PendingRestricted = t.IsCorrectRestricted ? t.PendingRestricted : t.PendingRestricted + 1,
+                },
+
+                insertExpression: s => new ScoreCache
+                {
+                    ContestId = s.ContestId,
+                    TeamId = s.TeamId,
+                    ProblemId = s.ProblemId,
                     PendingPublic = 1,
                     PendingRestricted = 1,
-                });
-            }
-            else
-            {
-                await db.Score(args)
-                    .Where(s => s.PendingRestricted > 0)
-                    .BatchUpdateAsync(s => new ScoreCache
-                    {
-                        PendingPublic = s.PendingPublic + 1,
-                        PendingRestricted = s.PendingRestricted + 1,
-                    });
-            }
+                },
+
+                delete: false);
         }
 
 
@@ -194,9 +214,7 @@ namespace JudgeWeb.Features.Scoreboard
                 };
             }
 
-            int cid = args.ContestId, pid = args.ProblemId, tid = args.TeamId;
-            return db.ScoreCache
-                .Where(s => s.ContestId == cid && s.ProblemId == pid && s.TeamId == tid)
+            return db.Score(args.ContestId, args.ProblemId, args.TeamId)
                 .Where(s => s.PendingRestricted > 0)
                 .BatchUpdateAsync(scp);
         }
@@ -286,8 +304,8 @@ namespace JudgeWeb.Features.Scoreboard
             await db.RankCache
                 .Where(t => t.ContestId == cid)
                 .BatchDeleteAsync();
-            await db.BulkInsertAsync(rcc.Values.ToList());
-            await db.BulkInsertAsync(scc.Values.ToList());
+            db.RankCache.AddRange(rcc.Values);
+            db.ScoreCache.AddRange(scc.Values);
 
             if (args.Balloon)
             {
@@ -297,8 +315,10 @@ namespace JudgeWeb.Features.Scoreboard
                 var balloons = oks.Except(createdBalloons)
                     .Select(s => new Balloon { SubmissionId = s })
                     .ToList();
-                await db.BulkInsertAsync(balloons);
+                db.Balloon.AddRange(balloons);
             }
+
+            await db.SaveChangesAsync();
         }
     }
 }
