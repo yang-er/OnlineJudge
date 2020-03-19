@@ -1,4 +1,4 @@
-﻿@model IEnumerable<(Problem, int?, string)>
+﻿@model IEnumerable<Problem>
 @{
     ViewData["Title"] = "Problems";
     int curPage = ViewBag.Page;
@@ -29,11 +29,12 @@
             </tr>
         </thead>
         <tbody>
-            @foreach (var (prob, extid, tags) in Model)
+            @foreach (var prob in Model)
             {
+                var extid = prob.Archive?.PublicId;
                 <tr asp-action="Overview" asp-route-pid="@prob.ProblemId" asp-controller="Editor" role="row" data-toggle="gotoUrl">
                     <td use-a>@prob.ProblemId</td>
-                    <td class="@(extid.HasValue ? "" : "disabled")" title="@tags" use-a>@(extid.HasValue ? $"{extid.Value}" : "none")</td>
+                    <td class="@(extid.HasValue ? "" : "disabled")" title="@prob.Archive?.TagName" use-a>@(extid.HasValue ? $"{extid.Value}" : "none")</td>
                     <td class="@(prob.AllowJudge ? "" : "disabled") @(prob.AllowSubmit ? "" : "text-decoration-del")" use-a>@prob.Title</td>
                     <td use-a>@(prob.TimeLimit / 1000.0)s</td>
                     <td class="@(prob.MemoryLimit == 524288 ? "disabled" : "")" use-a>@(prob.MemoryLimit == 524288 ? "default" : $"{prob.MemoryLimit / 1024} MB")</td>

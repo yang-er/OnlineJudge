@@ -1,4 +1,5 @@
-﻿@model IEnumerable<ListSubmissionModel>
+﻿@using JudgeWeb.Domains.Judgements
+@model IEnumerable<ListSubmissionModel>
 @{
     ViewData["Title"] = "Submissions";
     List<Testcase> tc = ViewBag.Testcase;
@@ -34,21 +35,20 @@
                     <td data-sort="@(sub.SubmissionId)" use-a>s@(sub.SubmissionId)</td>
                     <td use-a>@Html.CstTime(sub.Time)</td>
                     <td use-a><verdict3 value="@(sub.Expected ?? Verdict.Unknown)" too-late="@(!sub.Expected.HasValue)" /></td>
-                    <td use-a>@sub.UserName</td>
+                    <td use-a>@sub.AuthorName</td>
                     <td use-a class="langid">@sub.Language</td>
                     <td use-a>@(sub.ExecutionTime)ms</td>
-                    <td use-a><verdict3 value="@sub.Result" /></td>
+                    <td use-a><verdict3 value="@sub.Verdict" /></td>
                     <td class="testcase-results">
                         @{
                             int t = 0;
-                            bool jp = sub.Result == Verdict.Pending || sub.Result == Verdict.Running;
+                            bool jp = sub.Verdict == Verdict.Pending || sub.Verdict == Verdict.Running;
                             foreach (var item in tc)
                             {
                                 t++;
-                                if (sub.Details.TryGetValue(item.TestcaseId, out var de))
-                                {<verdict6 value="@de.Result" tooltip="#@item.Rank, desc: @item.Description, runtime: @(de.ExecutionTime)ms." />}
-                                else
-                                {<verdict6 value="Pending" judging-pending="jp" tooltip="#@item.Rank, desc: @item.Description, not used." />}
+                                var de = sub.Details.SingleOrDefault(d => d.TestcaseId == item.TestcaseId);
+                                if (de != null) {<verdict6 value="@de.Status" tooltip="#@item.Rank, desc: @item.Description, runtime: @(de.ExecuteTime)ms." />}
+                                else {<verdict6 value="Pending" judging-pending="jp" tooltip="#@item.Rank, desc: @item.Description, not used." />}
                             }
                         }
                     </td>

@@ -1,9 +1,7 @@
 ﻿using JudgeWeb.Areas.Polygon.Models;
-using JudgeWeb.Areas.Polygon.Services;
-using JudgeWeb.Data;
+using JudgeWeb.Domains.Problems;
 using JudgeWeb.Features.Storage;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using System;
@@ -18,10 +16,10 @@ namespace JudgeWeb.Areas.Polygon.Controllers
     [Route("[area]/{pid}/[controller]/[action]")]
     public class DescriptionController : Controller3
     {
-        private IProblemFileRepository IoContext { get; }
+        private IProblemFileRepository Files { get; }
 
-        public DescriptionController(AppDbContext db, IProblemFileRepository io)
-            : base(db, true) => IoContext = io;
+        public DescriptionController(IProblemStore db, IProblemFileRepository io)
+            : base(db) => Files = io;
 
 
         [NonAction]
@@ -29,8 +27,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
         {
             var generator = HttpContext.RequestServices
                 .GetRequiredService<IProblemViewProvider>();
-            var statement = await generator
-                .LoadStatement(Problem, DbContext.Testcases);
+            var statement = await generator.LoadStatement(Problem);
            return generator.BuildHtml(statement).ToString();
         }
 
@@ -46,7 +43,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
             else
             {
                 ViewData["Title"] = "View";
-                var fileInfo = IoContext.GetFileInfo($"p{pid}/view.html");
+                var fileInfo = Files.GetFileInfo($"p{pid}/view.html");
                 ViewData["Content"] = await fileInfo.ReadAsync() ?? "";
             }
 
@@ -58,9 +55,9 @@ namespace JudgeWeb.Areas.Polygon.Controllers
         [HttpGet("{target}")]
         public async Task<IActionResult> Markdown(string target, int pid)
         {
-            if (!MarkdownFiles.Contains(target))
+            if (!IProblemStore.MarkdownFiles.Contains(target))
                 return NotFound();
-            var fileInfo = IoContext.GetFileInfo($"p{pid}/{target}.md");
+            var fileInfo = Files.GetFileInfo($"p{pid}/{target}.md");
             var lastVersion = await fileInfo.ReadAsync() ?? "";
             ViewBag.ProblemId = pid;
 
@@ -78,11 +75,11 @@ namespace JudgeWeb.Areas.Polygon.Controllers
         public async Task<IActionResult> Markdown(
             string target, int pid, MarkdownModel model)
         {
-            if (!MarkdownFiles.Contains(target))
+            if (!IProblemStore.MarkdownFiles.Contains(target))
                 return NotFound();
             if (target != model.Target || $"p{pid}" != model.BackingStore)
                 return BadRequest();
-            await IoContext.WriteStringAsync($"p{pid}/{target}.md", model.Markdown);
+            await Files.WriteStringAsync($"p{pid}/{target}.md", model.Markdown);
             StatusMessage = "Description saved.";
             return RedirectToAction();
         }
@@ -92,7 +89,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
         public async Task<IActionResult> Generate(int pid)
         {
             var content = await GenerateViewAsync();
-            await IoContext.WriteStringAsync($"p{pid}/view.html", content);
+            await Files.WriteStringAsync($"p{pid}/view.html", content);
             StatusMessage = "Problem description saved successfully.";
             return RedirectToAction(nameof(Preview), new { @new = false });
         }
@@ -102,7 +99,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
         public async Task<IActionResult> GenerateLatex(int pid,
             [FromServices] IProblemViewProvider generator)
         {
-            var statement = await generator.LoadStatement(Problem, DbContext.Testcases);
+            var statement = await generator.LoadStatement(Problem);
             var memstream = new MemoryStream();
             using (var zip = new ZipArchive(memstream, ZipArchiveMode.Create, true))
                 generator.BuildLatex(zip, statement);

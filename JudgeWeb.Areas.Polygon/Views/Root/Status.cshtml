@@ -1,4 +1,5 @@
-﻿@model IEnumerable<StatusListModel>
+﻿@using JudgeWeb.Domains.Judgements
+@model IEnumerable<ListSubmissionModel>
 @{
     ViewData["Title"] = "Status";
     int curPage = ViewBag.Page;
@@ -37,7 +38,7 @@
                     <td use-a>@(stat.ExecutionMemory.HasValue ? $"{stat.ExecutionMemory.Value}kb" : "N/A")</td>
                     <td use-a>@(stat.CodeLength)B</td>
                     <td class="text-variant" use-a>@stat.Language</td>
-                    <td use-a>@(stat.ContestId == 0 ? $"u{stat.Author}" : $"c{stat.ContestId}t{stat.Author}")</td>
+                    <td use-a>@(stat.AuthorName)</td>
                 </tr>
             }
         </tbody>

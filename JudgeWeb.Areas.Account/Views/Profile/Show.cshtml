@@ -3,7 +3,6 @@
     User user = ViewBag.User;
     IEnumerable<SubmissionStatistics> stat = ViewBag.Stat;
 }
-@inject UserManager UserManager
 
 <h4>Statistics</h4>
 <table>
@@ -43,7 +42,7 @@
     </div>
 }
 
-<if cond="UserManager.GetUserName(User) == user.UserName">
+<if cond="User.GetUserName() == user.UserName">
     <p class="mb-0 mt-3">
         <a asp-action="Edit" class="btn btn-primary mb-1">Edit profile</a>
         <a asp-action="ChangePassword" class="btn btn-secondary mb-1">Change password</a>

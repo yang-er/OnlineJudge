@@ -14,7 +14,7 @@ namespace JudgeWeb.Areas.Misc.Controllers
 {
     [Area("Misc")]
     [Route("[controller]")]
-    public partial class ProblemController : Controller2
+    public class ProblemController : Controller2
     {
         const int ItemsPerPage = 50;
 

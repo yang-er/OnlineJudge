@@ -191,6 +191,7 @@ namespace JudgeWeb.Data
                 Status = Verdict.Pending,
             });
 
+            /*
             if (cid != null)
             {
                 var cs = new Api.ContestSubmission(
@@ -203,7 +204,7 @@ namespace JudgeWeb.Data
                     diff: (s.Entity.Time - cid.StartTime) ?? TimeSpan.Zero);
 
                 DbContext.Events.Add(cs.ToEvent("create", cid.ContestId));
-            }
+            }*/
 
             await DbContext.SaveChangesAsync();
             return s.Entity;

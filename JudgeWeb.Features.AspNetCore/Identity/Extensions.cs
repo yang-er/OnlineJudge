@@ -17,6 +17,21 @@ namespace Microsoft.AspNetCore.Mvc
             return roles.Split(',').Any(role => user.IsInRole(role));
         }
 
+        public static string GetUserName(this ClaimsPrincipal principal)
+        {
+            return principal.FindFirstValue(ClaimTypes.Name);
+        }
+
+        public static string GetUserId(this ClaimsPrincipal principal)
+        {
+            return principal.FindFirstValue(ClaimTypes.NameIdentifier);
+        }
+
+        public static string GetNickName(this ClaimsPrincipal principal)
+        {
+            return principal.FindFirstValue("XYS.NickName");
+        }
+
         public static T Deserialize<T>(this IJsonHelper jsonHelper, string content)
         {
             return JsonSerializer.Deserialize<T>(content);

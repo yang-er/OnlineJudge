@@ -1,9 +1,9 @@
 ﻿using JudgeWeb.Areas.Polygon.Models;
 using JudgeWeb.Data;
+using JudgeWeb.Domains.Problems;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -18,20 +18,17 @@ namespace JudgeWeb.Areas.Polygon.Controllers
     [Route("[area]/{pid}/[action]")]
     public class EditorController : Controller3
     {
-        public EditorController(AppDbContext db) : base(db, true) { }
+        public EditorController(IProblemStore store)
+            : base(store)
+        {
+        }
 
 
         [HttpGet("/[area]/{pid}")]
         public async Task<IActionResult> Overview(int pid)
         {
-            ViewData["TestcaseCount"] =
-                await DbContext.Testcases
-                    .Where(t => t.ProblemId == pid)
-                    .CountAsync();
-            var arch = await DbContext.Archives
-                .Where(a => a.ProblemId == pid)
-                .SingleOrDefaultAsync();
-            ViewBag.Archive = arch;
+            ViewBag.TestcaseCount = await Store.CountTestcaseAsync(Problem);
+            ViewBag.Archive = await Store.FindArchiveByInternalAsync(pid);
             return View(Problem);
         }
 
@@ -41,9 +38,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
         {
             if (execid != Problem.CompareScript && execid != Problem.RunScript)
                 return NotFound();
-            var bytes = await DbContext.Executable
-                .Where(e => e.ExecId == execid)
-                .FirstOrDefaultAsync();
+            var bytes = await Store.FindExecutableAsync(execid);
             if (bytes is null) return NotFound();
 
             ViewBag.Executable = bytes;
@@ -80,9 +75,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
         [Authorize(Roles = "Administrator,Problem")]
         public async Task<IActionResult> Archive(int pid)
         {
-            var arch = await DbContext.Archives
-                .Where(a => a.ProblemId == pid)
-                .SingleOrDefaultAsync();
+            var arch = await Store.FindArchiveByInternalAsync(pid);
             return Window(arch ?? new ProblemArchive { ProblemId = pid });
         }
 
@@ -92,42 +85,26 @@ namespace JudgeWeb.Areas.Polygon.Controllers
         [Authorize(Roles = "Administrator,Problem")]
         public async Task<IActionResult> Archive(int pid, ProblemArchive model)
         {
-            if (!await DbContext.Archives.AnyAsync(a => a.ProblemId == pid))
+            var arch = await Store.FindArchiveByInternalAsync(pid);
+
+            if (arch == null)
             {
-                if (model.PublicId == 0)
+                try
                 {
-                    model.PublicId = await DbContext.Archives
-                        .MaxAsync(p => p.PublicId);
-                    if (model.PublicId == 0) model.PublicId = 1001;
-                    else model.PublicId++;
-                }
-
-                model.ProblemId = pid;
-                var existed = await DbContext.Archives
-                    .Where(a => a.PublicId == model.PublicId)
-                    .AnyAsync();
-
-                if (existed)
-                {
-                    StatusMessage = "Error public id was set.";
-                }
-                else
-                {
-                    model.TagName = model.TagName ?? "";
-                    DbContext.Archives.Add(model);
-                    await DbContext.SaveChangesAsync();
+                    model.TagName ??= "";
+                    model.ProblemId = pid;
+                    await Store.CreateAsync(model);
                     StatusMessage = $"Problem published as {model.PublicId}.";
+                }
+                catch (Exception ex)
+                {
+                    StatusMessage = ex.Message;
                 }
             }
             else
             {
-                var item = await DbContext.Archives
-                    .Where(a => a.ProblemId == pid)
-                    .FirstOrDefaultAsync();
-                if (item == null) return BadRequest();
-                item.TagName = model.TagName;
-                DbContext.Archives.Update(item);
-                await DbContext.SaveChangesAsync();
+                arch.TagName = model.TagName;
+                await Store.UpdateAsync(arch);
                 StatusMessage = "Problem tag updated.";
             }
 
@@ -183,11 +160,9 @@ namespace JudgeWeb.Areas.Polygon.Controllers
                 var cont = await model.UploadedRun.ReadAsync();
                 var execid = $"p{pid}run";
 
-                var exec = await DbContext.Executable
-                    .Where(e => e.ExecId == execid)
-                    .FirstOrDefaultAsync();
+                var exec = await Store.FindExecutableAsync(execid);
                 bool newone = exec == null;
-                exec = exec ?? new Executable();
+                exec ??= new Executable();
                 exec.ExecId = execid;
                 exec.Description = $"run pipe for p{pid}";
                 exec.Md5sum = cont.Item2;
@@ -195,9 +170,8 @@ namespace JudgeWeb.Areas.Polygon.Controllers
                 exec.Type = "run";
                 exec.ZipSize = cont.Item1.Length;
 
-                if (newone) DbContext.Executable.Add(exec);
-                else DbContext.Executable.Update(exec);
-                await DbContext.SaveChangesAsync();
+                if (newone) await Store.CreateAsync(exec);
+                else await Store.UpdateAsync(exec);
                 model.RunScript = execid;
             }
 
@@ -206,11 +180,9 @@ namespace JudgeWeb.Areas.Polygon.Controllers
                 var cont = await model.UploadedCompare.ReadAsync();
                 var execid = $"p{pid}cmp";
 
-                var exec = await DbContext.Executable
-                    .Where(e => e.ExecId == execid)
-                    .FirstOrDefaultAsync();
+                var exec = await Store.FindExecutableAsync(execid);
                 bool newone = exec == null;
-                exec = exec ?? new Executable();
+                exec ??= new Executable();
                 exec.ExecId = execid;
                 exec.Description = $"output validator for p{pid}";
                 exec.Md5sum = cont.Item2;
@@ -218,9 +190,8 @@ namespace JudgeWeb.Areas.Polygon.Controllers
                 exec.Type = "compare";
                 exec.ZipSize = cont.Item1.Length;
 
-                if (newone) DbContext.Executable.Add(exec);
-                else DbContext.Executable.Update(exec);
-                await DbContext.SaveChangesAsync();
+                if (newone) await Store.CreateAsync(exec);
+                else await Store.UpdateAsync(exec);
                 model.CompareScript = execid;
             }
 
@@ -233,8 +204,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
             Problem.Title = model.Title;
             Problem.Source = model.Source ?? "";
             Problem.CombinedRunCompare = model.RunAsCompare;
-            DbContext.Problems.Update(Problem);
-            await DbContext.SaveChangesAsync();
+            await Store.UpdateAsync(Problem);
 
             return RedirectToAction(nameof(Overview));
         }
@@ -257,15 +227,20 @@ namespace JudgeWeb.Areas.Polygon.Controllers
         }
 
 
+        [HttpGet]
+        [Authorize(Roles = "Administrator,Problem")]
+        public async Task<IActionResult> Export(IExportProvider export)
+        {
+            var (stream, mimeType, fileName) = await export.ExportAsync(Problem);
+            return File(stream, mimeType, fileName, false);
+        }
+
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ToggleSubmit(int pid)
         {
-            await DbContext.Problems
-                .Where(p => p.ProblemId == pid)
-                .BatchUpdateAsync(p =>
-                    new Problem { AllowSubmit = !p.AllowSubmit });
-
+            await Store.ToggleProblemAsync(Problem, p => p.AllowSubmit);
             return RedirectToAction(nameof(Overview));
         }
 
@@ -274,11 +249,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ToggleJudge(int pid)
         {
-            await DbContext.Problems
-                .Where(p => p.ProblemId == pid)
-                .BatchUpdateAsync(p =>
-                    new Problem { AllowJudge = !p.AllowJudge });
-
+            await Store.ToggleProblemAsync(Problem, p => p.AllowJudge);
             return RedirectToAction(nameof(Overview));
         }
 
@@ -288,8 +259,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
         [Authorize(Roles = "Administrator,Problem")]
         public async Task<IActionResult> Delete(int pid)
         {
-            DbContext.Problems.Remove(Problem);
-            await DbContext.SaveChangesAsync();
+            await Store.DeleteAsync(Problem);
             StatusMessage = $"Problem {pid} deleted successfully.";
             return RedirectToAction("List", "Root");
         }

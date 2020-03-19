@@ -1,8 +1,8 @@
 ﻿@model CodeSubmitModel
 @{
     Layout = null;
-    var lang = (Dictionary<string,string>)ViewData["Language"];
-    var lang2 = lang.Select(k => new SelectListItem(k.Value, k.Key));
+    var lang = (List<Language>)ViewBag.Language;
+    var lang2 = lang.Select(k => new SelectListItem(k.Name, k.Id));
 }
 
 <form asp-action="Submit" method="post" name="submit_problem">

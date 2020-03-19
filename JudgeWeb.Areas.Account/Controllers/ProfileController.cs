@@ -1,10 +1,11 @@
 ﻿using JudgeWeb.Areas.Account.Models;
 using JudgeWeb.Data;
+using JudgeWeb.Domains.Identity;
+using JudgeWeb.Domains.Judgements;
 using JudgeWeb.Features.Mailing;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Linq;
@@ -51,14 +52,11 @@ namespace JudgeWeb.Areas.Account.Controllers
                 $"Unable to load user with ID '{userId}'.");
         }
 
-        [TempData]
-        public string StatusMessage { get; set; }
-
 
         [HttpGet("{username}")]
         [AllowAnonymous]
         public async Task<IActionResult> Show(string username,
-            [FromServices] SubmissionManager subMgr)
+            [FromServices] ISubmissionRepository subMgr)
         {
             var user = await UserManager.FindByNameAsync(username);
             if (user is null) return NotFound();
@@ -207,9 +205,7 @@ namespace JudgeWeb.Areas.Account.Controllers
 
             Student student = null;
             if (user.StudentId.HasValue)
-                student = await UserManager.Students
-                    .Where(s => s.Id == user.StudentId.Value)
-                    .SingleOrDefaultAsync();
+                student = await UserManager.FindStudentAsync(user.StudentId.Value);
 
             return View(new StudentVerifyModel
             {
@@ -246,11 +242,9 @@ namespace JudgeWeb.Areas.Account.Controllers
                 return RedirectToAction(nameof(StudentVerify));
             }
 
-            var users = await UserManager.Users
-                .Where(u => u.StudentId == model.StudentId)
-                .ToListAsync();
+            var users = await UserManager.FindByStudentIdAsync(model.StudentId);
 
-            if (users.Count >= 1 && users.First().Id != user.Id)
+            if (users != null && users.Id != user.Id)
             {
                 ModelState.AddModelError("XYS.VerifyCount",
                     "Your student has been verified by other account. " +
@@ -265,9 +259,7 @@ namespace JudgeWeb.Areas.Account.Controllers
             }
 
             var studId = model.StudentId;
-            var student = await UserManager.Students
-                .Where(s => s.Id == studId)
-                .SingleOrDefaultAsync();
+            var student = await UserManager.FindStudentAsync(studId);
             
             if (student == null || student.Name != model.StudentName.Trim())
             {

@@ -14,7 +14,6 @@ namespace JudgeWeb.Areas.Misc.Controllers
     /// </summary>
     [Area("Misc")]
     [Authorize(Roles = "Student,Administrator")]
-    [Route("[]")]
     public class TeamController : Controller2
     {
         private AppDbContext DbContext { get; }

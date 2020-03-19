@@ -8,6 +8,9 @@ namespace Microsoft.AspNetCore.Mvc
 {
     public abstract class Controller2 : Controller
     {
+        [TempData]
+        public string StatusMessage { get; set; }
+
         public override void OnActionExecuting(ActionExecutingContext context)
         {
             base.OnActionExecuting(context);
@@ -89,6 +92,37 @@ namespace Microsoft.AspNetCore.Mvc
                 ControllerName = ctrl,
                 ActionName = act,
                 RouteValues = routeValues,
+            };
+        }
+
+        [NonAction]
+        public ShowMessage2Result AskPost(
+            string title, string message,
+            string area, string ctrl, string act,
+            object routeValues,
+            MessageType? type = null)
+        {
+            if (!(routeValues is Dictionary<string, string> rvd))
+            {
+                var vtype = routeValues.GetType();
+                if (!vtype.FullName.StartsWith("<>f__AnonymousType"))
+                    throw new System.ArgumentException(nameof(routeValues));
+                rvd = vtype.GetProperties().ToDictionary(
+                    keySelector: p => p.Name,
+                    elementSelector: p => p.GetValue(routeValues).ToString());
+            }
+
+            return new ShowMessage2Result
+            {
+                ViewData = ViewData,
+                TempData = TempData,
+                Title = title,
+                Content = message,
+                Type = type,
+                AreaName = area,
+                ControllerName = ctrl,
+                ActionName = act,
+                RouteValues = rvd,
             };
         }
 

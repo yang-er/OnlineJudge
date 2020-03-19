@@ -1,10 +1,12 @@
 ﻿using JudgeWeb.Areas.Polygon.Models;
 using JudgeWeb.Data;
-using JudgeWeb.Features.Storage;
+using JudgeWeb.Domains.Judgements;
+using JudgeWeb.Domains.Problems;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 
 namespace JudgeWeb.Areas.Polygon.Controllers
@@ -13,157 +15,75 @@ namespace JudgeWeb.Areas.Polygon.Controllers
     [Route("[area]/{pid}/[controller]")]
     public class SubmissionsController : Controller3
     {
-        private SubmissionManager SubmissionManager { get; }
+        private ISubmissionRepository Submissions { get; }
 
-        public SubmissionsController(AppDbContext db, SubmissionManager sm) : base(db, true)
-        {
-            SubmissionManager = sm;
-        }
+        public SubmissionsController(IProblemStore db, ISubmissionRepository sm)
+            : base(db) => Submissions = sm;
 
 
         [HttpGet]
         public async Task<IActionResult> List(int pid, int page = 1, bool all = false)
         {
-            IQueryable<Submission> baseQuery;
+            if (page < 0) return NotFound();
 
-            if (!all)
-            {
-                baseQuery = DbContext.Submissions
-                    .Where(s => s.ExpectedResult != null && s.ProblemId == pid);
-            }
-            else
-            {
-                baseQuery = DbContext.Submissions
-                    .Where(s => s.ProblemId == pid);
-            }
+            Expression<Func<Submission, bool>> predicate;
+            if (all) predicate = s => s.ProblemId == pid;
+            else predicate = s => s.ExpectedResult != null && s.ProblemId == pid;
 
-            var query =
-                from s in baseQuery
-                join u in DbContext.Users on s.Author equals u.Id into uu
-                from u in uu.DefaultIfEmpty()
-                join j in DbContext.Judgings
-                    on new { s.SubmissionId, Active = true }
-                    equals new { j.SubmissionId, j.Active }
-                select new ListSubmissionModel
-                {
-                    SubmissionId = s.SubmissionId,
-                    JudgingId = j.JudgingId,
-                    Language = s.Language,
-                    Result = j.Status,
-                    Time = s.Time,
-                    UserName = s.ContestId != 0 ? "CONTEST" : u.UserName ?? "SYSTEM",
-                    Expected = s.ExpectedResult,
-                    ExecutionTime = j.ExecuteTime,
-                };
+            var (result, totPage) = await Submissions.ListWithJudgingAsync(
+                predicate: s => s.ProblemId == pid,
+                includeDetails: true,
+                pagination: (page, 30));
+            var names = await Submissions.GetAuthorNamesAsync(
+                result.Select(l => l.AuthorId).ToArray());
+            foreach (var item in result)
+                item.AuthorName = names.GetValueOrDefault(item.AuthorId, "SYSTEM");
 
-            if (all) query = query.OrderByDescending(s => s.SubmissionId);
-            else query = query.OrderBy(s => s.SubmissionId);
-
-            int tot = await baseQuery.CountAsync();
-            tot = (tot - 1) / 30 + 1;
-            ViewBag.TotalPage = tot;
-            if (page < 1) page = 1;
-            if (page > tot) page = tot;
+            ViewBag.TotalPage = totPage;
             ViewBag.Page = page;
             ViewBag.AllSub = all;
-
-            var result = await query
-                .Skip((page - 1) * 30)
-                .Take(30)
-                .ToListAsync();
-
-            var tcs = await DbContext.Testcases
-                .Where(t => t.ProblemId == pid)
-                .OrderBy(t => t.Rank)
-                .ToListAsync();
-
-            foreach (var item in result)
-            {
-                int jid = item.JudgingId;
-                item.Details = await DbContext.Details
-                    .Where(d => d.JudgingId == jid)
-                    .Select(d => new JudgingDetailModel
-                    {
-                        Result = d.Status,
-                        ExecutionTime = d.ExecuteTime,
-                        TestcaseId = d.TestcaseId
-                    })
-                    .ToDictionaryAsync(k => k.TestcaseId);
-            }
-
-            ViewBag.Testcase = tcs;
-            return View("List", result);
-        }
-
-
-        [HttpGet("all")]
-        public Task<IActionResult> ListAll(int pid, int page = 1)
-        {
-            return List(pid, page, true);
+            ViewBag.Testcase = await Store.ListTestcasesAsync(pid);
+            return View(result);
         }
 
 
         [HttpGet("{sid}")]
         public async Task<IActionResult> Detail(int pid, int sid, int? jid)
         {
-            var judging = DbContext.Judgings
-                .Where(j => j.SubmissionId == sid);
-            if (jid.HasValue)
-                judging = judging.Where(j => j.JudgingId == jid);
-            else
-                judging = judging.Where(j => j.Active);
-            
-            var query =
-                from j in judging
-                join s in DbContext.Submissions on new { j.SubmissionId, ProblemId = pid } equals new { s.SubmissionId, s.ProblemId }
-                join l in DbContext.Languages on s.Language equals l.Id
-                join p in DbContext.Problems on s.ProblemId equals p.ProblemId
-                select new ViewSubmissionModel
-                {
-                    SubmissionId = s.SubmissionId,
-                    ContestId = s.ContestId,
-                    Status = j.Status,
-                    ExecuteMemory = j.ExecuteMemory,
-                    ExecuteTime = j.ExecuteTime,
-                    Judging = j,
-                    Expected = s.ExpectedResult,
-                    JudgingId = j.JudgingId,
-                    LanguageId = s.Language,
-                    Time = s.Time,
-                    SourceCode = s.SourceCode,
-                    CompileError = j.CompileError,
-                    CombinedRunCompare = p.CombinedRunCompare,
-                    Author = s.Author,
-                    ServerName = j.Server ?? "UNKNOWN",
-                    LanguageName = l.Name,
-                    LanguageExternalId = l.Id,
-                    TimeFactor = l.TimeFactor,
-                };
+            var s = await Submissions.FindAsync(sid, true);
+            if (s == null || s.ProblemId != pid) return NotFound();
+            var j = s.Judgings.SingleOrDefault(jj => jid.HasValue ? jj.JudgingId == jid : jj.Active);
+            if (j == null) return NotFound();
+            var l = await Store.FindLanguageAsync(s.Language);
+            var det = await Submissions.GetDetailsAsync(j.JudgingId);
+            var uname = await Submissions.GetAuthorNameAsync(sid);
 
-            var model = await query.FirstOrDefaultAsync();
-            if (model == null) return NotFound();
-            model.TimeLimit = Problem.TimeLimit;
-
-            model.AllJudgings = await DbContext.Judgings
-                .Where(j => j.SubmissionId == sid)
-                .ToListAsync();
-
-            int gid = model.JudgingId;
-            var details =
-                from t in DbContext.Testcases
-                where t.ProblemId == pid
-                join d in DbContext.Details on new { JudgingId = gid, t.TestcaseId } equals new { d.JudgingId, d.TestcaseId } into dd
-                from d in dd.DefaultIfEmpty()
-                select new { t, d };
-            var dets = await details.ToListAsync();
-            dets.Sort((a, b) => a.t.Rank.CompareTo(b.t.Rank));
-            model.Details = dets.Select(a => (a.d, a.t));
-            int uid = model.Author;
-            model.UserName = await DbContext.Users
-                .Where(u => u.Id == uid)
-                .Select(u => u.UserName)
-                .FirstOrDefaultAsync();
-            return View(model);
+            return View(new ViewSubmissionModel
+            {
+                SubmissionId = s.SubmissionId,
+                ContestId = s.ContestId,
+                Status = j.Status,
+                ExecuteMemory = j.ExecuteMemory,
+                ExecuteTime = j.ExecuteTime,
+                Judging = j,
+                Expected = s.ExpectedResult,
+                JudgingId = j.JudgingId,
+                LanguageId = s.Language,
+                Time = s.Time,
+                SourceCode = s.SourceCode,
+                CompileError = j.CompileError,
+                CombinedRunCompare = Problem.CombinedRunCompare,
+                TimeLimit = Problem.TimeLimit,
+                AllJudgings = s.Judgings,
+                UserName = uname ?? "SYSTEM",
+                Details = det,
+                TestcaseNumber = det.Count(),
+                Author = s.Author,
+                ServerName = j.Server ?? "UNKNOWN",
+                LanguageName = l.Name,
+                LanguageExternalId = l.Id,
+                TimeFactor = l.TimeFactor,
+            });
         }
 
 
@@ -171,30 +91,27 @@ namespace JudgeWeb.Areas.Polygon.Controllers
         [ValidateInAjax]
         public async Task<IActionResult> Submit()
         {
-            ViewData["Language"] = await DbContext.Languages
-                .ToDictionaryAsync(k => k.Id, v => v.Name);
+            ViewBag.Language = await Store.ListLanguagesAsync();
             return Window(new CodeSubmitModel());
         }
 
 
         [HttpPost("[action]")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Submit(CodeSubmitModel model,
-            [FromServices] UserManager userManager)
+        public async Task<IActionResult> Submit(CodeSubmitModel model)
         {
-            var lang = await DbContext.Languages
-                .Where(l => l.Id == model.Language)
-                .SingleOrDefaultAsync();
+            var lang = await Store.FindLanguageAsync(model.Language);
+            if (lang == null) return BadRequest();
 
-            var sub = await SubmissionManager.CreateAsync(
+            var sub = await Submissions.CreateAsync(
                 code: model.Code,
-                langid: lang,
+                langid: lang.Id,
                 probid: Problem.ProblemId,
-                cid: null,
-                uid: int.Parse(userManager.GetUserId(User)),
+                contest: null,
+                uid: int.Parse(User.GetUserId()),
                 ipAddr: HttpContext.Connection.RemoteIpAddress,
                 via: "polygon-page",
-                username: userManager.GetUserName(User),
+                username: User.GetUserName(),
                 expected: Verdict.Unknown);
 
             return RedirectToAction(nameof(Detail), new { sid = sub.SubmissionId });
@@ -204,24 +121,23 @@ namespace JudgeWeb.Areas.Polygon.Controllers
         [HttpGet("{sid}/[action]")]
         public async Task<IActionResult> RejudgeOne(int pid, int sid)
         {
-            var sub = await SubmissionManager.FindAsync(sid, pid: pid);
-            if (sub == null) return NotFound();
+            var sub = await Submissions.FindAsync(sid);
+            if (sub == null || sub.ProblemId != pid)
+                return NotFound();
 
             if (sub.ContestId != 0)
                 StatusMessage = "Error : contest submissions should be rejudged by jury.";
             else
-                await SubmissionManager.RejudgeAsync(sub, fullTest: true);
+                await Submissions.RejudgeAsync(sub, fullTest: true);
             return RedirectToAction(nameof(Detail));
         }
 
 
-        [HttpGet("{jid}/{rid}/{type}")]
-        public IActionResult RunDetails(int jid, int rid, string type,
-            [FromServices] IRunFileRepository io)
+        [HttpGet("{sid}/[action]/{jid}/{rid}/{type}")]
+        public async Task<IActionResult> RunDetails(int pid, int sid, int jid, int rid, string type)
         {
-            var fileInfo = io.GetFileInfo($"j{jid}/r{rid}.{type}");
-            if (!fileInfo.Exists)
-                return NotFound();
+            var fileInfo = await Submissions.GetRunFileAsync(jid, rid, type, sid, pid);
+            if (!fileInfo.Exists) return NotFound();
 
             return File(
                 fileStream: fileInfo.CreateReadStream(),
@@ -236,11 +152,10 @@ namespace JudgeWeb.Areas.Polygon.Controllers
         {
             return AskPost(
                 title: "Rejudge all",
-                message: "Do you want to rejudge all polygon submissions? This may take time and cause server load.",
-                area: "Polygon",
-                ctrl: "Submissions",
-                act: "Rejudge",
-                routeValues: new Dictionary<string, string> { ["pid"] = $"{Problem.ProblemId}" },
+                message: "Do you want to rejudge all polygon submissions? " +
+                    "This may take time and cause server load.",
+                area: "Polygon", ctrl: "Submissions", act: "Rejudge",
+                routeValues: new { pid = Problem.ProblemId },
                 type: MessageType.Warning);
         }
 
@@ -249,11 +164,10 @@ namespace JudgeWeb.Areas.Polygon.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Rejudge(int pid)
         {
-            var subs = await SubmissionManager.Submissions
-                .Where(s => s.ExpectedResult != null && s.ProblemId == pid && s.ContestId == 0)
-                .ToListAsync();
+            var subs = await Submissions.ListAsync(
+                s => s.ExpectedResult != null && s.ProblemId == pid && s.ContestId == 0);
             foreach (var sub in subs)
-                await SubmissionManager.RejudgeAsync(sub);
+                await Submissions.RejudgeAsync(sub);
             StatusMessage = "All submissions are being rejudged.";
             return RedirectToAction(nameof(List));
         }
@@ -263,21 +177,14 @@ namespace JudgeWeb.Areas.Polygon.Controllers
         [ValidateInAjax]
         public async Task<IActionResult> ChangeExpected(int pid, int sid)
         {
-            var it = await SubmissionManager.Submissions
-                .Where(s => s.SubmissionId == sid && s.ProblemId == pid)
-                .Select(s => new { s.ExpectedResult, s.Language })
-                .FirstOrDefaultAsync();
-            if (it == null) return NotFound();
-
-            var langs = await SubmissionManager.Languages
-                .Select(l => new { l.Id, l.Name })
-                .ToListAsync();
-            ViewBag.Languages = langs.Select(a => (a.Id, a.Name));
+            var sub = await Submissions.FindAsync(sid);
+            if (sub == null || sub.ProblemId != pid) return NotFound();
+            ViewBag.Languages = await Store.ListLanguagesAsync();
 
             return Window(new ChangeExpectedModel
             {
-                Verdict = !it.ExpectedResult.HasValue ? -1 : (int)it.ExpectedResult.Value,
-                Language = it.Language,
+                Verdict = !sub.ExpectedResult.HasValue ? -1 : (int)sub.ExpectedResult.Value,
+                Language = sub.Language,
             });
         }
 
@@ -286,14 +193,12 @@ namespace JudgeWeb.Areas.Polygon.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ChangeExpected(int pid, int sid, ChangeExpectedModel model)
         {
-            var it = await SubmissionManager.Submissions
-                .Where(s => s.SubmissionId == sid && s.ProblemId == pid)
-                .FirstOrDefaultAsync();
-            if (it == null) return NotFound();
+            var it = await Submissions.FindAsync(sid);
+            if (it == null || it.ProblemId == pid) return NotFound();
 
             it.ExpectedResult = model.Verdict == -1 ? default(Verdict?) : (Verdict)model.Verdict;
             it.Language = model.Language;
-            await SubmissionManager.UpdateAsync(it);
+            await Submissions.UpdateAsync(it);
             return RedirectToAction(nameof(Detail));
         }
     }

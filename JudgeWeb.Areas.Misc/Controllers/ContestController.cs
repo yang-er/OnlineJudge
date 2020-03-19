@@ -2,7 +2,7 @@
 using JudgeWeb.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -16,13 +16,10 @@ namespace JudgeWeb.Areas.Misc.Controllers
 
         private UserManager UserManager { get; }
 
-        private IMemoryCache Cache { get; }
-
-        public ContestController(AppDbContext db, UserManager um, IMemoryCache cache)
+        public ContestController(AppDbContext db, UserManager um)
         {
             DbContext = db;
             UserManager = um;
-            Cache = cache;
         }
 
         [HttpGet("/contests")]
@@ -30,7 +27,7 @@ namespace JudgeWeb.Areas.Misc.Controllers
         {
             int.TryParse(UserManager.GetUserId(User), out int uid);
 
-            var cts = await Cache.GetOrCreateAsync("cont::list", async key =>
+            var cts = await DbContext.CachedGetAsync("cont::list", TimeSpan.FromMinutes(5), async () =>
             {
                 var contests = await DbContext.Contests
                     .Where(c => !c.Gym)
@@ -56,7 +53,6 @@ namespace JudgeWeb.Areas.Misc.Controllers
                 contests.ForEach(c => c.TeamCount = results.GetValueOrDefault(c.ContestId));
 
                 contests.Sort();
-                key.AbsoluteExpirationRelativeToNow = System.TimeSpan.FromMinutes(5);
                 return contests;
             });
 
@@ -73,7 +69,7 @@ namespace JudgeWeb.Areas.Misc.Controllers
         {
             int.TryParse(UserManager.GetUserId(User), out int uid);
 
-            var cts = await Cache.GetOrCreateAsync("gym::list", async key =>
+            var cts = await DbContext.CachedGetAsync("gym::list", TimeSpan.FromMinutes(5), async () =>
             {
                 var contests = await DbContext.Contests
                     .Where(c => c.Gym)
@@ -99,7 +95,6 @@ namespace JudgeWeb.Areas.Misc.Controllers
                 contests.ForEach(c => c.TeamCount = results.GetValueOrDefault(c.ContestId));
 
                 contests.Sort();
-                key.AbsoluteExpirationRelativeToNow = System.TimeSpan.FromMinutes(5);
                 return contests;
             });
 

@@ -1,0 +1,30 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <OutputPath>..\bin\Debug</OutputPath>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <OutputPath>..\bin\Release</OutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Bulk" Version="3.1.9" />
+    <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="3.1.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="3.1.0" />
+    <PackageReference Include="idunno.Authentication.Basic" Version="2.2.2-g1f1e46bf22" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\JudgeWeb.Domains.Contest.Abstraction\JudgeWeb.Domains.Contests.Abstraction.csproj" />
+    <ProjectReference Include="..\JudgeWeb.Domains.Identity.Abstraction\JudgeWeb.Domains.Identity.Abstraction.csproj" />
+    <ProjectReference Include="..\JudgeWeb.Domains.Judgements.Abstraction\JudgeWeb.Domains.Judgements.Abstraction.csproj" />
+    <ProjectReference Include="..\JudgeWeb.Domains.Problem.Abstraction\JudgeWeb.Domains.Problems.Abstraction.csproj" />
+  </ItemGroup>
+
+</Project>

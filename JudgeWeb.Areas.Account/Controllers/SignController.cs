@@ -1,5 +1,6 @@
 ﻿using JudgeWeb.Areas.Account.Models;
 using JudgeWeb.Data;
+using JudgeWeb.Domains.Identity;
 using JudgeWeb.Features.Mailing;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;

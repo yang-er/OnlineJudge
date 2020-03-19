@@ -1,12 +1,10 @@
 ﻿using JudgeWeb.Data;
+using JudgeWeb.Domains.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
-using Microsoft.EntityFrameworkCore;
 using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace JudgeWeb.Areas.Account.Controllers
@@ -18,12 +16,15 @@ namespace JudgeWeb.Areas.Account.Controllers
     {
         UserManager UserManager { get; }
 
+        TeamManager TeamManager { get; }
+
         User User2 { get; set; }
 
-        [TempData]
-        public string StatusMessage { get; set; }
-
-        public TrainingTeamController(UserManager um) => UserManager = um;
+        public TrainingTeamController(UserManager um, TeamManager teamStore)
+        {
+            UserManager = um;
+            TeamManager = teamStore;
+        }
 
         public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
         {
@@ -38,35 +39,17 @@ namespace JudgeWeb.Areas.Account.Controllers
         [HttpGet]
         public async Task<IActionResult> List()
         {
-            var query =
-                from ttu in UserManager.TrainingTeamUsers
-                where ttu.UserId == User2.Id && ttu.Accepted == true
-                join t in UserManager.TrainingTeams on ttu.TrainingTeamId equals t.TrainingTeamId
-                join tu in UserManager.TrainingTeamUsers on t.TrainingTeamId equals tu.TrainingTeamId
-                join u in UserManager.Users on tu.UserId equals u.Id
-                select new { t, tuu = new TrainingTeamUser(tu, u.UserName, u.Email) };
-            var results = await query.ToListAsync();
-            return View(results.GroupBy(k => k.t, v => v.tuu));
+            return View(await TeamManager.ListAsync(User2));
         }
 
 
         [HttpGet("{teamid}")]
         public async Task<IActionResult> Detail(int teamid)
         {
-            var team = await UserManager.TrainingTeams
-                .Where(tt => tt.TrainingTeamId == teamid)
-                .Include(tt => tt.Affiliation)
-                .SingleOrDefaultAsync();
+            var team = await TeamManager.FindTeamByIdAsync(teamid);
             if (team == null) return NotFound();
             ViewBag.Affil = team.Affiliation;
-
-            var uquery =
-                from tu in UserManager.TrainingTeamUsers
-                where tu.TrainingTeamId == teamid
-                join u in UserManager.Users on tu.UserId equals u.Id
-                select new TrainingTeamUser(tu, u.UserName, u.Email);
-            var users = await uquery.ToListAsync();
-            ViewBag.Users = users;
+            ViewBag.Users = await TeamManager.ListMembersAsync(team);
             return View(team);
         }
 
@@ -74,19 +57,10 @@ namespace JudgeWeb.Areas.Account.Controllers
         [HttpGet("{teamid}/[action]")]
         public async Task<IActionResult> Edit(int teamid)
         {
-            var team = await UserManager.TrainingTeams
-                .Where(t => t.TrainingTeamId == teamid && t.UserId == User2.Id)
-                .SingleOrDefaultAsync();
-            if (team == null) return NotFound();
-            ViewBag.Affils = await UserManager.TeamAffiliations.ToListAsync();
-
-            var uquery =
-                from tu in UserManager.TrainingTeamUsers
-                where tu.TrainingTeamId == teamid
-                join u in UserManager.Users on tu.UserId equals u.Id
-                select new TrainingTeamUser(tu, u.UserName, u.Email);
-            var users = await uquery.ToListAsync();
-            ViewBag.Users = users;
+            var team = await TeamManager.FindTeamByIdAsync(teamid);
+            if (team == null || team.UserId != User2.Id) return NotFound();
+            ViewBag.Affils = await TeamManager.ListAffiliationsAsync();
+            ViewBag.Users = await TeamManager.ListMembersAsync(team);
             return View(team);
         }
 
@@ -95,15 +69,11 @@ namespace JudgeWeb.Areas.Account.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int teamid, TrainingTeam model)
         {
-            var team = await UserManager.TrainingTeams
-                .Where(t => t.TrainingTeamId == teamid && t.UserId == User2.Id)
-                .SingleOrDefaultAsync();
-            if (team == null) return NotFound();
-            var affcheck = await UserManager.TeamAffiliations
-                .Where(a => a.AffiliationId == model.AffiliationId)
-                .CountAsync();
+            var team = await TeamManager.FindTeamByIdAsync(teamid);
+            if (team == null || team.UserId != User2.Id) return NotFound();
 
-            if (affcheck == 0)
+            var aff = await TeamManager.FindAffiliationAsync(model.AffiliationId);
+            if (null == aff)
             {
                 StatusMessage = "Error affiliation not found.";
                 return RedirectToAction(nameof(Edit));
@@ -115,9 +85,10 @@ namespace JudgeWeb.Areas.Account.Controllers
                 return RedirectToAction(nameof(Edit));
             }
 
-            await UserManager.TrainingTeams
-                .Where(t => t.TrainingTeamId == teamid)
-                .BatchUpdateAsync(t => new TrainingTeam { TeamName = model.TeamName, AffiliationId = model.AffiliationId });
+            team.Affiliation = aff;
+            team.AffiliationId = aff.AffiliationId;
+            team.TeamName = model.TeamName;
+            await TeamManager.UpdateAsync(team);
             StatusMessage = "Team info updated.";
             return RedirectToAction(nameof(Edit));
         }
@@ -127,51 +98,44 @@ namespace JudgeWeb.Areas.Account.Controllers
         [ValidateInAjax]
         public async Task<IActionResult> Create()
         {
-            var team = await UserManager.TrainingTeams
-                .Where(t => t.UserId == User2.Id)
-                .CountAsync();
-            if (team >= 10)
+            if (!await TeamManager.CheckCreateAsync(User2))
                 return Message("Create team", "Team count limit exceeded.", MessageType.Danger);
-            ViewBag.Affils = await UserManager.TeamAffiliations.ToListAsync();
+            ViewBag.Affils = await TeamManager.ListAffiliationsAsync();
             return Window();
         }
 
 
         [HttpPost("[action]")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([FromForm, Required] string teamName, [FromForm] int affilId)
+        public async Task<IActionResult> Create(
+            [FromForm, Required] string teamName,
+            [FromForm] int affilId)
         {
-            var team = await UserManager.TrainingTeams
-                .Where(t => t.UserId == User2.Id)
-                .CountAsync();
-            if (team >= 10)
+            if (null == await TeamManager.FindAffiliationAsync(affilId))
             {
-                StatusMessage = "Error team count limit exceeded.";
+                StatusMessage = "Error no such affiliation.";
                 return RedirectToAction(nameof(List));
             }
 
-            var aff = await UserManager.TeamAffiliations
-                .Where(a => a.AffiliationId == affilId)
-                .CountAsync();
-            if (aff == 0)
+            if (!await TeamManager.CheckCreateAsync(User2))
             {
-                StatusMessage = "Error team affiliation.";
+                StatusMessage = "Error max team count exceeded.";
                 return RedirectToAction(nameof(List));
             }
 
-            var teamid = await UserManager.CreateTeamAsync(teamName, User2, affilId);
+            var teamid = await TeamManager.CreateTeamAsync(teamName, User2, affilId);
             return RedirectToAction(nameof(Detail), new { teamid });
         }
 
 
         [HttpPost("{teamid}/[action]")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Invite(int teamid, [FromForm, Required] string username)
+        public async Task<IActionResult> Invite(
+            int teamid,
+            [FromForm, Required] string username)
         {
-            var team = await UserManager.TrainingTeams
-                .Where(t => t.TrainingTeamId == teamid && t.UserId == User2.Id)
-                .SingleOrDefaultAsync();
-            if (team == null) return NotFound();
+            var team = await TeamManager.FindTeamByIdAsync(teamid);
+            if (team == null || team.UserId != User2.Id) return NotFound();
 
             var user = await UserManager.FindByNameAsync(username);
 
@@ -181,25 +145,15 @@ namespace JudgeWeb.Areas.Account.Controllers
                 return RedirectToAction(nameof(Edit));
             }
 
-            var users = await UserManager.TrainingTeamUsers
-                .Where(tu => tu.TrainingTeamId == teamid)
-                .Select(tu => tu.UserId)
-                .ToListAsync();
-
-            if (users.Count >= 5)
+            if (!await TeamManager.CheckCreateAsync(team))
             {
-                StatusMessage = "Error team member count limit exceeded.";
+                StatusMessage = "Error team member count limitation exceeded.";
                 return RedirectToAction(nameof(Edit));
             }
 
-            if (users.Any(i => i == user.Id))
-            {
-                StatusMessage = "Invitee has been a team member.";
-                return RedirectToAction(nameof(Edit));
-            }
-
-            await UserManager.AddTeamMemberAsync(team, user);
+            await TeamManager.AddTeamMemberAsync(team, user);
             StatusMessage = "Invitition sent. The invitee should open this team page to accept your invitation.";
+
             return RedirectToAction(nameof(Edit));
         }
 
@@ -208,18 +162,13 @@ namespace JudgeWeb.Areas.Account.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Accept(int teamid)
         {
-            var query =
-                from tu in UserManager.TrainingTeamUsers
-                where tu.UserId == User2.Id && tu.TrainingTeamId == teamid
-                join t in UserManager.TrainingTeams on tu.TrainingTeamId equals t.TrainingTeamId
-                where t.UserId != User2.Id
-                select new { t, tu };
-            var res = await query.SingleOrDefaultAsync();
-            if (res == null) return NotFound();
+            var team = await TeamManager.FindTeamByIdAsync(teamid);
+            if (team == null || team.UserId == User2.Id) return NotFound();
+            var user = await TeamManager.IsInTeamAsync(User2, team);
+            if (user == null) return NotFound();
 
-            await UserManager.TrainingTeamUsers
-                .Where(tu => tu.UserId == User2.Id && tu.TrainingTeamId == teamid)
-                .BatchUpdateAsync(t => new TrainingTeamUser { Accepted = true });
+            user.Accepted = true;
+            await TeamManager.UpdateAsync(user);
             StatusMessage = "Team invitation accepted.";
             return RedirectToAction(nameof(Detail));
         }
@@ -229,18 +178,13 @@ namespace JudgeWeb.Areas.Account.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Reject(int teamid)
         {
-            var query =
-                from tu in UserManager.TrainingTeamUsers
-                where tu.UserId == User2.Id && tu.TrainingTeamId == teamid
-                join t in UserManager.TrainingTeams on tu.TrainingTeamId equals t.TrainingTeamId
-                where t.UserId != User2.Id
-                select new { t, tu };
-            var res = await query.SingleOrDefaultAsync();
-            if (res == null) return NotFound();
+            var team = await TeamManager.FindTeamByIdAsync(teamid);
+            if (team == null || team.UserId == User2.Id) return NotFound();
+            var user = await TeamManager.IsInTeamAsync(User2, team);
+            if (user == null) return NotFound();
 
-            await UserManager.TrainingTeamUsers
-                .Where(tu => tu.UserId == User2.Id && tu.TrainingTeamId == teamid)
-                .BatchUpdateAsync(t => new TrainingTeamUser { Accepted = false });
+            user.Accepted = false;
+            await TeamManager.UpdateAsync(user);
             StatusMessage = "Team invitation rejected.";
             return RedirectToAction(nameof(Detail));
         }
@@ -250,10 +194,8 @@ namespace JudgeWeb.Areas.Account.Controllers
         [ValidateInAjax]
         public async Task<IActionResult> Dismiss(int teamid)
         {
-            var team = await UserManager.TrainingTeams
-                .Where(t => t.TrainingTeamId == teamid && t.UserId == User2.Id)
-                .SingleOrDefaultAsync();
-            if (team == null) return NotFound();
+            var team = await TeamManager.FindTeamByIdAsync(teamid);
+            if (team == null || team.UserId != User2.Id) return NotFound();
             return AskPost(
                 title: "Dismiss team",
                 message: $"Are you sure to dismiss team {team.TeamName}?",
@@ -265,13 +207,9 @@ namespace JudgeWeb.Areas.Account.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Dismiss(int teamid, bool post = true)
         {
-            var team = await UserManager.TrainingTeams
-                .Where(t => t.TrainingTeamId == teamid && t.UserId == User2.Id)
-                .SingleOrDefaultAsync();
-            if (team == null) return NotFound();
-            await UserManager.TrainingTeams
-                .Where(t => t.TrainingTeamId == teamid)
-                .BatchDeleteAsync();
+            var team = await TeamManager.FindTeamByIdAsync(teamid);
+            if (team == null || team.UserId != User2.Id) return NotFound();
+            await TeamManager.DismissAsync(team);
             StatusMessage = "Team dismissed.";
             return RedirectToAction(nameof(List));
         }
@@ -281,20 +219,17 @@ namespace JudgeWeb.Areas.Account.Controllers
         [ValidateInAjax]
         public async Task<IActionResult> Delete(int teamid, string username)
         {
-            var teamPermission = await UserManager.TrainingTeams
-                .Where(t => t.TrainingTeamId == teamid && t.UserId == User2.Id)
-                .CountAsync();
-            if (teamPermission == 0) return NotFound();
+            var team = await TeamManager.FindTeamByIdAsync(teamid);
+            if (team == null || team.UserId != User2.Id) return NotFound();
+
             var user = await UserManager.FindByNameAsync(username);
             if (user == null) return NotFound();
             
             if (user.Id == User2.Id)
                 return Message("Delete team member", "You can't remove yourself out of team.", MessageType.Warning);
 
-            var teamMemberExisitence = await UserManager.TrainingTeamUsers
-                .Where(tu => tu.UserId == user.Id && tu.TrainingTeamId == teamid)
-                .CountAsync();
-            if (teamMemberExisitence == 0) return NotFound();
+            var tu = await TeamManager.IsInTeamAsync(user, team);
+            if (tu == null) return NotFound();
 
             return AskPost(
                 title: "Delete team member",
@@ -307,10 +242,9 @@ namespace JudgeWeb.Areas.Account.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(string username, int teamid)
         {
-            var teamPermission = await UserManager.TrainingTeams
-                .Where(t => t.TrainingTeamId == teamid && t.UserId == User2.Id)
-                .CountAsync();
-            if (teamPermission == 0) return NotFound();
+            var team = await TeamManager.FindTeamByIdAsync(teamid);
+            if (team == null || team.UserId != User2.Id) return NotFound();
+
             var user = await UserManager.FindByNameAsync(username);
             if (user == null) return NotFound();
 
@@ -320,11 +254,9 @@ namespace JudgeWeb.Areas.Account.Controllers
                 return RedirectToAction(nameof(Edit));
             }
 
-            var teamMemberExisitence = await UserManager.TrainingTeamUsers
-                .Where(tu => tu.UserId == user.Id && tu.TrainingTeamId == teamid)
-                .BatchDeleteAsync();
-            if (teamMemberExisitence == 0) return NotFound();
-
+            var tu = await TeamManager.IsInTeamAsync(user, team);
+            if (tu == null) return NotFound();
+            await TeamManager.RemoveAsync(tu);
             StatusMessage = "Team member deleted.";
             return RedirectToAction(nameof(Edit));
         }

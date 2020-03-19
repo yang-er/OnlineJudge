@@ -1,6 +1,4 @@
-﻿@inject UserManager UserManager
-
-<ul class="navbar-nav mr-auto">
+﻿<ul class="navbar-nav mr-auto">
     <viewmodule roles="Administrator">
         <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownJudgehosts" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -50,10 +48,10 @@
     </li>
     <li class="nav-item dropdown">
         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-            <i class="fas fa-user"></i> @UserManager.GetUserName(User)
+            <i class="fas fa-user"></i> @User.GetUserName()
         </a>
         <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown">
-            <a class="dropdown-item disabled" href="#">@(UserManager.GetNickName(User) ?? UserManager.GetUserName(User))</a>
+            <a class="dropdown-item disabled" href="#">@User.GetNickName()</a>
 
             <viewmodule key="RefreshSpan">
                 <a class="dropdown-item" href="#" id="refresh-navitem">

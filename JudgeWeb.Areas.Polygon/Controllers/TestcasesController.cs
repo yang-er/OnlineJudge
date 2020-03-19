@@ -1,12 +1,10 @@
 ﻿using JudgeWeb.Areas.Polygon.Models;
 using JudgeWeb.Data;
+using JudgeWeb.Domains.Problems;
 using JudgeWeb.Features.Storage;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace JudgeWeb.Areas.Polygon.Controllers
@@ -15,19 +13,16 @@ namespace JudgeWeb.Areas.Polygon.Controllers
     [Route("[area]/{pid}/[controller]")]
     public class TestcasesController : Controller3
     {
-        private IProblemFileRepository IoContext { get; }
+        private IProblemFileRepository Files { get; }
 
-        public TestcasesController(AppDbContext db, IProblemFileRepository io)
-            : base(db, true) => IoContext = io;
+        public TestcasesController(IProblemStore db, IProblemFileRepository io)
+            : base(db) => Files = io;
 
 
         [HttpGet]
         public async Task<IActionResult> Testcases(int pid)
         {
-            ViewBag.Testcases = await DbContext.Testcases
-                .Where(t => t.ProblemId == pid)
-                .OrderBy(t => t.Rank)
-                .ToListAsync();
+            ViewBag.Testcases = await Store.ListTestcasesAsync(pid);
             return View(Problem);
         }
 
@@ -36,9 +31,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
         [ValidateInAjax]
         public async Task<IActionResult> Edit(int pid, int tid)
         {
-            var tc = await DbContext.Testcases
-                .Where(t => t.TestcaseId == tid && t.ProblemId == pid)
-                .FirstOrDefaultAsync();
+            var tc = await Store.FindTestcaseAsync(pid, tid);
             if (tc == null) return NotFound();
 
             ViewData["pid"] = pid;
@@ -58,19 +51,12 @@ namespace JudgeWeb.Areas.Polygon.Controllers
         [ValidateAntiForgeryToken]
         [ValidateInAjax]
         [RequestSizeLimit(1 << 30)]
-        [RequestFormLimits(MultipartBodyLengthLimit = 1 << 30, KeyLengthLimit = 1 << 30,
-            MultipartBoundaryLengthLimit = 1 << 30, MultipartHeadersCountLimit = 1 << 30,
-            MultipartHeadersLengthLimit = 1 << 30, BufferBodyLengthLimit = 1 << 30,
-            ValueCountLimit = 1 << 30, ValueLengthLimit = 1 << 30)]
-        public async Task<IActionResult> Edit(
-            int pid, int tid, TestcaseUploadModel model,
-            [FromServices] UserManager userManager)
+        [RequestFormLimits2(1 << 30)]
+        public async Task<IActionResult> Edit(int pid, int tid, TestcaseUploadModel model)
         {
             try
             {
-                var last = await DbContext.Testcases
-                    .Where(t => t.TestcaseId == tid && t.ProblemId == pid)
-                    .FirstOrDefaultAsync();
+                var last = await Store.FindTestcaseAsync(pid, tid);
                 if (last == null) return NotFound();
 
                 (byte[], string)? input = null, output = null;
@@ -83,31 +69,31 @@ namespace JudgeWeb.Areas.Polygon.Controllers
                 {
                     last.Md5sumInput = input.Value.Item2;
                     last.InputLength = input.Value.Item1.Length;
-                    await IoContext.WriteBinaryAsync($"p{pid}/t{tid}.in", input.Value.Item1);
+                    await Files.WriteBinaryAsync($"p{pid}/t{tid}.in", input.Value.Item1);
                 }
 
                 if (output.HasValue)
                 {
                     last.Md5sumOutput = output.Value.Item2;
                     last.OutputLength = output.Value.Item1.Length;
-                    await IoContext.WriteBinaryAsync($"p{pid}/t{tid}.out", output.Value.Item1);
+                    await Files.WriteBinaryAsync($"p{pid}/t{tid}.out", output.Value.Item1);
                 }
 
                 last.Description = model.Description ?? last.Description;
                 last.IsSecret = model.IsSecret;
                 last.Point = model.Point;
-                DbContext.Testcases.Update(last);
-
+                await Store.UpdateAsync(last);
+                
+                /*
                 DbContext.Auditlogs.Add(new Auditlog
                 {
-                    UserName = userManager.GetUserName(User),
+                    UserName = User.GetUserName(),
                     Time = DateTimeOffset.Now,
                     DataId = $"{last.TestcaseId}",
                     Action = "modified",
                     DataType = AuditlogType.Testcase,
                 });
-
-                await DbContext.SaveChangesAsync();
+                */
 
                 StatusMessage = $"Testcase t{tid} updated successfully.";
                 return RedirectToAction(nameof(Testcases));
@@ -136,13 +122,8 @@ namespace JudgeWeb.Areas.Polygon.Controllers
         [ValidateAntiForgeryToken]
         [ValidateInAjax]
         [RequestSizeLimit(1 << 30)]
-        [RequestFormLimits(MultipartBodyLengthLimit = 1 << 30, KeyLengthLimit = 1 << 30,
-            MultipartBoundaryLengthLimit = 1 << 30, MultipartHeadersCountLimit = 1 << 30,
-            MultipartHeadersLengthLimit = 1 << 30, BufferBodyLengthLimit = 1 << 30,
-            ValueCountLimit = 1 << 30, ValueLengthLimit = 1 << 30)]
-        public async Task<IActionResult> Create(
-            int pid, TestcaseUploadModel model,
-            [FromServices] UserManager userManager)
+        [RequestFormLimits2(1 << 30)]
+        public async Task<IActionResult> Create(int pid, TestcaseUploadModel model)
         {
             if (model.InputContent == null)
                 return Message("Create testcase", "No input file specified.", MessageType.Danger);
@@ -153,11 +134,9 @@ namespace JudgeWeb.Areas.Polygon.Controllers
             {
                 var input = await model.InputContent.ReadAsync();
                 var output = await model.OutputContent.ReadAsync();
-                int rk = await DbContext.Testcases
-                    .Where(p => p.ProblemId == pid)
-                    .CountAsync();
+                int rk = await Store.CountTestcaseAsync(Problem);
 
-                var e = DbContext.Testcases.Add(new Testcase
+                var e = await Store.CreateAsync(new Testcase
                 {
                     Description = model.Description ?? "1",
                     IsSecret = model.IsSecret,
@@ -170,23 +149,21 @@ namespace JudgeWeb.Areas.Polygon.Controllers
                     Rank = rk + 1
                 });
 
-                await DbContext.SaveChangesAsync();
+                int tid = e.TestcaseId;
 
-                int tid = e.Entity.TestcaseId;
-
+                /*
                 DbContext.Auditlogs.Add(new Auditlog
                 {
-                    UserName = userManager.GetUserName(User),
+                    UserName = User.GetUserName(),
                     DataType = AuditlogType.Testcase,
-                    DataId = $"{tid}",
+                    DataId = $"{e.TestcaseId}",
                     Action = "modified",
                     Time = DateTimeOffset.Now,
                 });
+                */
 
-                await IoContext.WriteBinaryAsync($"p{pid}/t{tid}.in", input.Item1);
-                await IoContext.WriteBinaryAsync($"p{pid}/t{tid}.out", output.Item1);
-                await DbContext.SaveChangesAsync();
-
+                await Files.WriteBinaryAsync($"p{pid}/t{tid}.in", input.Item1);
+                await Files.WriteBinaryAsync($"p{pid}/t{tid}.out", output.Item1);
                 StatusMessage = $"Testcase t{tid} created successfully.";
                 return RedirectToAction(nameof(Testcases));
             }
@@ -208,15 +185,8 @@ namespace JudgeWeb.Areas.Polygon.Controllers
                 title: "Delete testcase t" + tid,
                 message: "You're about to delete testcase t" + tid + ". Are you sure? " +
                     "This operation is irreversible, and will make heavy load and data loss.",
-                area: "Polygon",
-                ctrl: "Testcases",
-                act: "Delete",
-                routeValues:
-                    new Dictionary<string, string>
-                    {
-                        ["pid"] = $"{Problem.ProblemId}",
-                        ["tid"] = $"{tid}"
-                    },
+                area: "Polygon", ctrl: "Testcases", act: "Delete",
+                routeValues: new { pid = Problem.ProblemId, tid },
                 type: MessageType.Danger);
         }
 
@@ -225,26 +195,13 @@ namespace JudgeWeb.Areas.Polygon.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int pid, int tid)
         {
-            var tc = await DbContext.Testcases
-                .Where(t => t.ProblemId == pid && t.TestcaseId == tid)
-                .FirstOrDefaultAsync();
+            var tc = await Store.FindTestcaseAsync(pid, tid);
             if (tc == null) return NotFound();
 
-            int dts = await DbContext.Details
-                .Where(d => d.TestcaseId == tid)
-                .BatchDeleteAsync();
-            DbContext.Testcases.Remove(tc);
-            await DbContext.SaveChangesAsync();
-
-            var tcs = await DbContext.Testcases
-                .Where(t => t.ProblemId == pid)
-                .ToListAsync();
-            int tot = 0;
-            foreach (var tc2 in tcs) tc2.Rank = ++tot;
-            DbContext.Testcases.UpdateRange(tcs);
-            await DbContext.SaveChangesAsync();
-
-            StatusMessage = $"Testcase {tid} with {dts} runs deleted.";
+            int dts = await Store.DeleteAsync(tc);
+            StatusMessage = dts < 0
+                ? "Error occurred during the deletion."
+                : $"Testcase {tid} with {dts} runs deleted.";
             return RedirectToAction(nameof(Testcases));
         }
 
@@ -255,25 +212,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
             bool up = false;
             if (direction == "up") up = true;
             else if (direction != "down") return NotFound();
-
-            var tc = await DbContext.Testcases
-                .Where(t => t.ProblemId == pid && t.TestcaseId == tid)
-                .FirstOrDefaultAsync();
-            if (tc == null) return NotFound();
-
-            int rk2 = tc.Rank + (up ? -1 : 1);
-            var tc2 = await DbContext.Testcases
-                .Where(t => t.ProblemId == pid && t.Rank == rk2)
-                .FirstOrDefaultAsync();
-
-            if (tc2 != null)
-            {
-                tc2.Rank = tc.Rank;
-                tc.Rank = rk2;
-                DbContext.Testcases.UpdateRange(tc, tc2);
-                await DbContext.SaveChangesAsync();
-            }
-
+            await Store.ChangeTestcaseRankAsync(pid, tid, up);
             return RedirectToAction(nameof(Testcases));
         }
 
@@ -285,7 +224,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
             else if (filetype == "output") filetype = "out";
             else return NotFound();
 
-            var fileInfo = IoContext.GetFileInfo($"p{pid}/t{tid}.{filetype}");
+            var fileInfo = Files.GetFileInfo($"p{pid}/t{tid}.{filetype}");
             if (!fileInfo.Exists)
                 return NotFound();
 

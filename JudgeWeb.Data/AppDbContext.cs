@@ -50,7 +50,7 @@ namespace JudgeWeb.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-
+            
             // Users and permissions
             modelBuilder.ApplyConfiguration<User>(this);
             modelBuilder.ApplyConfiguration<Role>(this);
