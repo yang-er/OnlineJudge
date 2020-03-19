@@ -20,6 +20,6 @@ namespace JudgeWeb.Areas.Misc.Models
         public string ProblemTitle { get; set; }
         public string LanguageName { get; set; }
         public DateTimeOffset DateTime { get; set; }
-        public IEnumerable<(Testcase, Detail)> Details { get; set; }
+        public IEnumerable<(Detail, Testcase)> Details { get; set; }
     }
 }

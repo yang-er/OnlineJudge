@@ -51,41 +51,70 @@ namespace JudgeWeb.Features.OjUpdate
             Logger.LogDebug("Fetch service stopped.");
         }
 
+        private static async Task UpdateStatistics(IDbContextHolder store)
+        {
+            var source = store.Statistics.FromSqlRaw(
+                "SELECT COUNT(*) AS [TotalSubmission], [s].[ProblemId], [s].[Author], [s].[ContestId]," +
+                      " SUM(CASE WHEN [j].[Status] = 11 THEN 1 ELSE 0 END) AS [AcceptedSubmission]\r\n" +
+                "FROM [Submissions] AS [s]\r\n" +
+                "INNER JOIN [Judgings] AS [j] ON ([s].[SubmissionId] = [j].[SubmissionId]) AND ([j].[Active] = 1)\r\n" +
+                "GROUP BY [s].[ProblemId], [s].[ContestId], [s].[Author]");
+
+            await store.Statistics.MergeAsync(
+                sourceTable: source,
+                targetKey: ss => new { ss.Author, ss.ContestId, ss.ProblemId },
+                sourceKey: ss => new { ss.Author, ss.ContestId, ss.ProblemId },
+                delete: true,
+
+                updateExpression: (_, ss) => new SubmissionStatistics
+                {
+                    AcceptedSubmission = ss.AcceptedSubmission,
+                    TotalSubmission = ss.TotalSubmission
+                },
+
+                insertExpression: ss => new SubmissionStatistics
+                {
+                    Author = ss.Author,
+                    ContestId = ss.ContestId,
+                    ProblemId = ss.ProblemId,
+                    AcceptedSubmission = ss.AcceptedSubmission,
+                    TotalSubmission = ss.TotalSubmission
+                });
+        }
+
+        private static async Task UpdateArchive(IDbContextHolder store)
+        {
+            var source = store.Statistics
+                .Where(ss => ss.ContestId == 0)
+                .GroupBy(ss => ss.ProblemId)
+
+                .Select(g => new
+                {
+                    ProblemId = g.Key,
+                    Accepted = g.Sum(ss => ss.AcceptedSubmission),
+                    Total = g.Sum(ss => ss.TotalSubmission),
+                });
+
+            await store.Archives.MergeAsync(
+                sourceTable: source,
+                targetKey: a => a.ProblemId,
+                sourceKey: a => a.ProblemId,
+                insertExpression: null, delete: false,
+
+                updateExpression: (a, s) => new ProblemArchive
+                {
+                    Accepted = s.Accepted,
+                    Total = s.Total,
+                });
+        }
+
         private async Task UpdateAsync(CancellationToken stoppingToken)
         {
-            using (var scope = ServiceProvider.CreateScope())
-            {
-                var dbContext = scope.ServiceProvider
-                    .GetRequiredService<AppDbContext>();
-                var arch = await dbContext.Archives.ToListAsync();
+            using var scope = ServiceProvider.CreateScope();
+            using var store = scope.ServiceProvider.GetRequiredService<IDbContextHolder>();
 
-                foreach (var item in arch)
-                {
-                    if (stoppingToken.IsCancellationRequested) break;
-
-                    var statQuery =
-                        from s in dbContext.Submissions
-                        where s.ContestId == 0 && s.ProblemId == item.ProblemId
-                        join j in dbContext.Judgings on new { s.SubmissionId, Active = true } equals new { j.SubmissionId, j.Active }
-                        group 1 by j.Status into g
-                        select new { g.Key, Count = g.Count() };
-
-                    var result = await statQuery.ToListAsync();
-                    result.Add(new { Key = Verdict.Accepted, Count = 0 });
-                    var tot = result.Sum(a => a.Count);
-                    var ac = result.Where(a => a.Key == Verdict.Accepted).Sum(a => a.Count);
-                    int pid = item.PublicId;
-
-                    await dbContext.Archives
-                        .Where(a => a.PublicId == pid)
-                        .BatchUpdateAsync(
-                            updateExpression: a => new ProblemArchive
-                            {
-                                Total = tot,
-                                Accepted = ac
-                            });
-                }
-            }
+            await UpdateStatistics(store);
+            await UpdateArchive(store);
         }
     }
 }

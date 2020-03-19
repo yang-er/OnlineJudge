@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace JudgeWeb.Areas.Misc.Models
+namespace JudgeWeb.Domains.Contests
 {
     public class ContestListModel : IComparable<ContestListModel>
     {

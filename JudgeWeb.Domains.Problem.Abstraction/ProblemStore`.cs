@@ -9,6 +9,9 @@ namespace JudgeWeb.Domains.Problems
 {
     public interface IProblemStore
     {
+        protected const int ArchivePerPage = 50;
+        protected const int StartId = 1000;
+
         public static readonly string[] MarkdownFiles = new[]
         {
             "description",
@@ -24,11 +27,17 @@ namespace JudgeWeb.Domains.Problems
 
         Task<ProblemArchive> FindArchiveByInternalAsync(int pid);
 
+        Task<ProblemArchive> FindArchiveAsync(int pid);
+
         Task<Language> FindLanguageAsync(string langid);
 
         Task<Executable> FindExecutableAsync(string execid);
 
         Task<Testcase> FindTestcaseAsync(int pid, int tid);
+
+        Task<IEnumerable<ProblemArchive>> ListByArchiveAsync(int page, int uid);
+
+        Task<int> CountArchivePageAsync();
 
         Task<IEnumerable<Language>> ListLanguagesAsync(bool? active = null);
 

@@ -2,6 +2,7 @@
 using Microsoft.Extensions.FileProviders;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Net;
 using System.Threading.Tasks;
@@ -20,15 +21,12 @@ namespace JudgeWeb.Domains.Judgements
             string via,
             string username,
             Verdict? expected = null,
-            DateTimeOffset? time = null);
+            DateTimeOffset? time = null,
+            bool fullJudge = false);
 
-        Task RejudgeAsync(
-            Submission sub,
-            Rejudge rejudge = null,
-            bool fullTest = false,
-            Action<Judging> oldSolve = null);
+        Task RejudgeAsync(Submission sub, bool fullTest = false);
 
-        Task<IEnumerable<(Detail, Testcase)>> GetDetailsAsync(int jid);
+        Task<IEnumerable<(Detail, Testcase)>> GetDetailsAsync(int pid, int jid);
 
         Task<Submission> FindAsync(int sid, bool includeJudgings = false);
 
@@ -49,10 +47,58 @@ namespace JudgeWeb.Domains.Judgements
 
         Task<string> GetAuthorNameAsync(int sid);
 
-        ValueTask<(IEnumerable<ListSubmissionModel> list, int totPage)> ListWithJudgingAsync(
+        ValueTask<(IEnumerable<T> list, int totPage)> ListWithJudgingAsync<T>(
+            (int Page, int PageCount) pagination,
+            Expression<Func<Submission, Judging, T>> selector,
+            Expression<Func<Submission, bool>> predicate = null);
+
+        Task<IEnumerable<T>> ListWithJudgingAsync<T>(
+            Expression<Func<Submission, Judging, T>> selector,
+            Expression<Func<Submission, bool>> predicate = null);
+
+        private Expression<Func<Submission, Judging, ListSubmissionModel>> CreateSelector(bool includeDetails)
+        {
+            Expression<Func<Submission, Judging, ListSubmissionModel>> res =
+            (s, j) => new ListSubmissionModel
+            {
+                SubmissionId = s.SubmissionId,
+                JudgingId = j.JudgingId,
+                Language = s.Language,
+                AuthorId = s.Author,
+                CodeLength = s.CodeLength,
+                ContestId = s.ContestId,
+                Verdict = j.Status,
+                Time = s.Time,
+                Ip = s.Ip,
+                ProblemId = s.ProblemId,
+                ExecutionMemory = j.ExecuteMemory,
+                Expected = s.ExpectedResult,
+                ExecutionTime = j.ExecuteTime,
+                Details = j.Details,
+            };
+
+            if (includeDetails) return res;
+            var body = res.Body as MemberInitExpression;
+            body = body.Update(
+                newExpression: body.NewExpression,
+                bindings: body.Bindings.Where(b => b.Member.Name != "Details"));
+            return res.Update(body, res.Parameters);
+        }
+
+        public ValueTask<(IEnumerable<ListSubmissionModel> list, int totPage)> ListWithJudgingAsync(
+            (int Page, int PageCount) pagination,
             Expression<Func<Submission, bool>> predicate = null,
-            bool includeDetails = false,
-            (int Page, int PageCount)? pagination = null);
+            bool includeDetails = false)
+        {
+            return ListWithJudgingAsync(pagination, CreateSelector(includeDetails), predicate);
+        }
+
+        public Task<IEnumerable<ListSubmissionModel>> ListWithJudgingAsync(
+            Expression<Func<Submission, bool>> predicate = null,
+            bool includeDetails = false)
+        {
+            return ListWithJudgingAsync(CreateSelector(includeDetails), predicate);
+        }
 
         Task<Submission> FindByJudgingAsync(int jid);
 

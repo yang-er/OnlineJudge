@@ -1,10 +1,10 @@
 ﻿using JudgeWeb.Areas.Misc.Models;
-using JudgeWeb.Data;
+using JudgeWeb.Domains.Judgements;
+using JudgeWeb.Domains.Problems;
 using JudgeWeb.Features.Storage;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,84 +16,40 @@ namespace JudgeWeb.Areas.Misc.Controllers
     [Route("[controller]")]
     public class ProblemController : Controller2
     {
-        const int ItemsPerPage = 50;
+        private IProblemStore Problems { get; }
 
-        private SubmissionManager SubmissionManager { get; }
+        private ISubmissionRepository Submits { get; }
 
-        private UserManager UserManager { get; }
-
-        private AppDbContext DbContext { get; }
-
-        [TempData]
-        public string StatusMessage { get; set; }
-
-        public ProblemController(AppDbContext db, SubmissionManager sm, UserManager um)
+        public ProblemController(IProblemStore probs, ISubmissionRepository submits)
         {
-            SubmissionManager = sm;
-            DbContext = db;
-            UserManager = um;
+            Problems = probs;
+            Submits = submits;
         }
 
-        private Task<List<SelectListItem>> LanguagesAsync()
+        private async Task<IEnumerable<SelectListItem>> LanguagesAsync()
         {
-            return DbContext.Languages
-                .Where(t => t.AllowSubmit)
-                .Select(l => new SelectListItem(l.Name, l.Id))
-                .CachedToListAsync("prob::oklang", System.TimeSpan.FromMinutes(5));
-        }
-
-        private Task<int> MaxPageAsync()
-        {
-            return DbContext.CachedGetAsync("prob::totcount", System.TimeSpan.FromMinutes(10), async () =>
-            {
-                var pid = await DbContext.Archives
-                    .OrderByDescending(p => p.PublicId)
-                    .Select(p => new { p.PublicId })
-                    .FirstOrDefaultAsync();
-                return ((pid?.PublicId ?? 1000) - 1000) / ItemsPerPage + 1;
-            });
+            var lst = await Problems.ListLanguagesAsync(true);
+            return lst.Select(l => new SelectListItem(l.Name, l.Id));
         }
 
 
-        /// <summary>
-        /// 题目列表的页面。
-        /// </summary>
-        /// <param name="pg">页面编号</param>
         [HttpGet("/[controller]s")]
         public async Task<IActionResult> List(int page = 1)
         {
             if (page < 1) page = 1;
             ViewBag.Page = page;
-            ViewBag.TotalPage = await MaxPageAsync();
-
-            var probsQuery =
-                from a in DbContext.Archives
-                where a.PublicId <= 1000 + page * ItemsPerPage
-                    && a.PublicId > 1000 + (page - 1) * ItemsPerPage
-                join p in DbContext.Problems on a.ProblemId equals p.ProblemId
-                select new ProblemArchive(a, p.Title, p.Source);
-
-            ViewBag.Stat = await SubmissionManager
-                .StatisticsByUserAsync(int.Parse(UserManager.GetUserId(User) ?? "-100"));
-            return View(await probsQuery.ToListAsync());
+            ViewBag.TotalPage = await Problems.CountArchivePageAsync();
+            int uid = int.Parse(User.GetUserId() ?? "-100");
+            var model = await Problems.ListByArchiveAsync(page, uid);
+            return View(model);
         }
 
 
-        /// <summary>
-        /// 展示某一个题目。
-        /// </summary>
-        /// <param name="pid">题目编号</param>
         [HttpGet("{pid}")]
         public async Task<IActionResult> View(int pid,
             [FromServices] IProblemFileRepository ioContext)
         {
-            var probQuery =
-                from a in DbContext.Archives
-                where a.PublicId == pid
-                join p in DbContext.Problems on a.ProblemId equals p.ProblemId
-                select new { p.Title, p.Source, p.ProblemId, a.TagName };
-
-            var prob = await probQuery.SingleOrDefaultAsync();
+            var prob = await Problems.FindArchiveAsync(pid);
             if (prob == null) return NotFound();
 
             var fileInfo = ioContext.GetFileInfo($"p{prob.ProblemId}/view.html");
@@ -110,22 +66,7 @@ namespace JudgeWeb.Areas.Misc.Controllers
             ViewData["Source"] = prob.Source;
             ViewData["Tag"] = prob.TagName;
             ViewData["ReadId"] = prob.ProblemId;
-            var uid = int.Parse(UserManager.GetUserId(User) ?? "-100");
-
-            var subQuery =
-                from s in SubmissionManager.Submissions
-                where s.ProblemId == prob.ProblemId
-                where s.Author == uid && s.ContestId == 0
-                join j in SubmissionManager.Judgings
-                    on new { s.SubmissionId, Active = true }
-                    equals new { j.SubmissionId, j.Active }
-                select new { s, j };
-            var subs = await subQuery
-                .OrderByDescending(a => a.s.SubmissionId)
-                .Take(9)
-                .ToListAsync();
-            ViewBag.Subs = subs.Select(a => (a.s, a.j));
-
+            var uid = int.Parse(User.GetUserId() ?? "-100");
             return View();
         }
 
@@ -133,32 +74,18 @@ namespace JudgeWeb.Areas.Misc.Controllers
         [HttpGet("{pid}/[action]")]
         [ValidateInAjax]
         [Authorize]
-        public async Task<IActionResult> Submissions(int pid)
+        public async Task<IActionResult> Submissions(int pid, int page)
         {
-            var probQuery =
-                from a in DbContext.Archives
-                where a.PublicId == pid
-                join p in DbContext.Problems on a.ProblemId equals p.ProblemId
-                select new { p.Title, p.Source, p.ProblemId, a.TagName };
-
-            var prob = await probQuery.SingleOrDefaultAsync();
+            var prob = await Problems.FindArchiveAsync(pid);
             if (prob == null) return NotFound();
-            var uid = int.Parse(UserManager.GetUserId(User) ?? "-100");
+            var uid = int.Parse(User.GetUserId() ?? "-100");
+            if (page <= 0) page = 1;
 
-            var subQuery =
-                from s in SubmissionManager.Submissions
-                where s.ProblemId == prob.ProblemId
-                where s.Author == uid && s.ContestId == 0
-                join j in SubmissionManager.Judgings
-                    on new { s.SubmissionId, Active = true }
-                    equals new { j.SubmissionId, j.Active }
-                select new { s, j };
-            var subs = await subQuery
-                .OrderByDescending(a => a.s.SubmissionId)
-                .ToListAsync();
-            ViewBag.Lang = await DbContext.Languages
-                .ToDictionaryAsync(k => k.Id, v => v.Id);
-            return View(subs.Select(a => (a.s, a.j)));
+            var subs = await Submits.ListWithJudgingAsync(
+                selector: (s, j) => new { Id = s.SubmissionId, s.Time, s.Language, j.Status },
+                pagination: (page, 15),
+                predicate: s => s.ProblemId == prob.ProblemId && s.Author == uid && s.ContestId == 0);
+            return Json(subs);
         }
 
 
@@ -167,79 +94,47 @@ namespace JudgeWeb.Areas.Misc.Controllers
         [Authorize]
         public async Task<IActionResult> Submission(int pid, int sid)
         {
-            var probQuery =
-                from a in DbContext.Archives
-                where a.PublicId == pid
-                join p in DbContext.Problems on a.ProblemId equals p.ProblemId
-                select new { p.Title, p.Source, p.ProblemId, a.TagName };
-
-            var prob = await probQuery.SingleOrDefaultAsync();
+            var prob = await Problems.FindArchiveAsync(pid);
             if (prob == null) return NotFound();
-            var uid = int.Parse(UserManager.GetUserId(User) ?? "-100");
+            var uid = int.Parse(User.GetUserId() ?? "-100");
 
-            var subQuery =
-                from s in DbContext.Submissions
-                where s.ProblemId == prob.ProblemId
-                where s.ContestId == 0 && s.Author == uid
-                where s.SubmissionId == sid
-                join j in DbContext.Judgings
-                    on new { s.SubmissionId, Active = true }
-                    equals new { j.SubmissionId, j.Active }
-                join l in DbContext.Languages
-                    on s.Language equals l.Id
-                select new CodeViewModel
+            var subs = await Submits.ListWithJudgingAsync(
+                predicate: s => s.ProblemId == prob.ProblemId && s.ContestId == 0
+                             && s.Author == uid && s.SubmissionId == sid,
+                selector: (s, j) => new CodeViewModel
                 {
                     CompileError = j.CompileError,
                     CodeLength = s.CodeLength,
                     ExecuteMemory = j.ExecuteMemory,
                     ExecuteTime = j.ExecuteTime,
                     Code = s.SourceCode,
-                    FileExtensions = l.FileExtension,
-                    LanguageName = l.Name,
+                    LanguageName = s.Language,
                     Status = j.Status,
                     JudgingId = j.JudgingId,
                     SubmissionId = s.SubmissionId,
                     DateTime = s.Time,
-                };
+                });
 
-            var sub = await subQuery.SingleOrDefaultAsync();
+            var sub = subs.SingleOrDefault();
             if (sub == null) return NotFound();
+            var lang = await Problems.FindLanguageAsync(sub.LanguageName);
+            sub.LanguageName = lang.Name;
+            sub.FileExtensions = lang.FileExtension;
             sub.ProblemTitle = prob.Title;
-
-            var detailQuery =
-                from t in DbContext.Testcases
-                where t.ProblemId == prob.ProblemId
-                join d in DbContext.Details
-                    on new { t.TestcaseId, sub.JudgingId }
-                    equals new { d.TestcaseId, d.JudgingId }
-                    into dd
-                from d in dd.DefaultIfEmpty()
-                select new { t, d };
-            var details = await detailQuery.ToListAsync();
-            sub.Details = details.Select(a => (a.t, a.d));
+            sub.Details = await Submits.GetDetailsAsync(prob.ProblemId, sub.JudgingId);
             return Window(sub);
         }
 
 
-        /// <summary>
-        /// 展示提交代码的页面。
-        /// </summary>
-        /// <param name="pid">题目编号</param>
         [HttpGet("{pid}/[action]")]
         [ValidateInAjax]
         [Authorize]
         public async Task<IActionResult> Submit(int pid)
         {
-            var probQuery =
-                from a in DbContext.Archives
-                where a.PublicId == pid
-                join p in DbContext.Problems on a.ProblemId equals p.ProblemId
-                select new { p.Title, p.AllowSubmit };
-
-            var prob = await probQuery.SingleOrDefaultAsync();
+            var prob = await Problems.FindArchiveAsync(pid);
             if (prob == null) return NotFound();
 
-            if (!prob.AllowSubmit)
+            if (!prob.AllowSubmit.Value)
                 return Message(
                     title: $"Submit Problem {pid}",
                     message: $"Problem {pid} is not allowed for submitting.",
@@ -257,17 +152,10 @@ namespace JudgeWeb.Areas.Misc.Controllers
         }
 
 
-        /// <summary>
-        /// 提交代码并存入数据库。
-        /// </summary>
-        /// <param name="pid">问题编号</param>
-        /// <param name="model">代码视图模型</param>
         [HttpPost("{pid}/[action]")]
         [Authorize]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Submit(
-            int pid, CodeSubmitModel model,
-            [FromServices] SubmissionManager subMgr)
+        public async Task<IActionResult> Submit(int pid, CodeSubmitModel model)
         {
             if (model.ProblemId != pid) return BadRequest();
 
@@ -277,48 +165,38 @@ namespace JudgeWeb.Areas.Misc.Controllers
                     "You are not permitted to submit code.");
 
             // check problem submit
-            var probQuery =
-                from a in DbContext.Archives
-                where a.PublicId == pid
-                join p in DbContext.Problems on a.ProblemId equals p.ProblemId
-                select new { p.Title, p.Source, p.ProblemId, p.AllowSubmit };
-            var prob = await probQuery.SingleOrDefaultAsync();
+            var prob = await Problems.FindArchiveAsync(pid);
             if (prob == null) return NotFound();
 
-            if (!prob.AllowSubmit)
+            if (!prob.AllowSubmit.Value)
             {
                 StatusMessage = $"Problem {pid} is not allowed for submitting.";
                 return RedirectToAction(nameof(View));
             }
 
             // check language blocking
-            var lang = await DbContext.Languages
-                .Where(l => l.Id == model.Language)
-                .SingleOrDefaultAsync();
-            if (lang == null)
-                ModelState.AddModelError("lang::notfound",
-                    "Language is not found.");
-            else if (!lang.AllowSubmit)
+            var langs = await LanguagesAsync();
+            if (!langs.Any(a => a.Value == model.Language))
                 ModelState.AddModelError("lang::notallow",
                     "You can't submit solutions with this language.");
 
             if (ModelState.ErrorCount > 0)
             {
                 ViewBag.ProblemTitle = prob.Title;
-                ViewBag.Language = await LanguagesAsync();
+                ViewBag.Language = langs;
                 return View(model);
             }
             else
             {
-                var sub = await subMgr.CreateAsync(
+                var sub = await Submits.CreateAsync(
                     code: model.Code,
-                    langid: lang,
+                    langid: model.Language,
                     probid: prob.ProblemId,
-                    cid: null,
-                    uid: int.Parse(UserManager.GetUserId(User)),
+                    contest: null,
+                    uid: int.Parse(User.GetUserId()),
                     ipAddr: HttpContext.Connection.RemoteIpAddress,
                     via: "problem-list",
-                    username: UserManager.GetUserName(User));
+                    username: User.GetUserName());
 
                 int id = sub.SubmissionId;
 

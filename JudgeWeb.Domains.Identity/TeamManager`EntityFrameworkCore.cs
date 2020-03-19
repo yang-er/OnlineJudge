@@ -19,7 +19,7 @@ namespace JudgeWeb.Domains.Identity
     public class EntityFrameworkCoreTeamManager : TeamManager
     {
         public DbContext Context { get; }
-        public EntityFrameworkCoreTeamManager(DbContext context) => Context = context;
+        protected EntityFrameworkCoreTeamManager(DbContext context) => Context = context;
 
         DbSet<TrainingTeam> TrainingTeams => Context.Set<TrainingTeam>();
         DbSet<TrainingTeamUser> TrainingTeamUsers => Context.Set<TrainingTeamUser>();

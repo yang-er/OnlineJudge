@@ -211,5 +211,42 @@ namespace JudgeWeb.Domains.Problems
                 await Context.SaveChangesAsync();
             }
         }
+
+        public async Task<IEnumerable<ProblemArchive>> ListByArchiveAsync(int page, int uid)
+        {
+            var query =
+                from a in Archives
+                where a.PublicId <= IProblemStore.StartId + page * IProblemStore.ArchivePerPage
+                    && a.PublicId > IProblemStore.StartId + (page - 1) * IProblemStore.ArchivePerPage
+                join p in Problems on a.ProblemId equals p.ProblemId
+                join ss in Context.Set<SubmissionStatistics>()
+                    on new { p.ProblemId, ContestId = 0, Author = uid }
+                    equals new { ss.ProblemId, ss.ContestId, ss.Author }
+                orderby a.PublicId ascending
+                select new ProblemArchive(a, p.Title, p.Source, ss.AcceptedSubmission, ss.TotalSubmission);
+            return await query.ToListAsync();
+        }
+
+        public Task<int> CountArchivePageAsync()
+        {
+            return Context.CachedGetAsync("prob::totcount", TimeSpan.FromMinutes(10), async () =>
+            {
+                var pid = await Archives
+                    .OrderByDescending(p => p.PublicId)
+                    .Select(p => new { p.PublicId })
+                    .FirstOrDefaultAsync();
+                return ((pid?.PublicId ?? IProblemStore.StartId) - 1 - IProblemStore.StartId) / IProblemStore.ArchivePerPage + 1;
+            });
+        }
+
+        public Task<ProblemArchive> FindArchiveAsync(int pid)
+        {
+            var query =
+                from a in Archives
+                where a.PublicId == pid
+                join p in Problems on a.ProblemId equals p.ProblemId
+                select new ProblemArchive(a, p.Title, p.Source, p.AllowSubmit);
+            return query.SingleOrDefaultAsync();
+        }
     }
 }

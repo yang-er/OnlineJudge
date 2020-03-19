@@ -1,11 +1,10 @@
-﻿using JudgeWeb.Features.OjUpdate;
-using JudgeWeb.Areas.Misc.Models;
-using Microsoft.AspNetCore.Mvc;
+﻿using JudgeWeb.Areas.Misc.Models;
+using JudgeWeb.Domains.Identity;
+using JudgeWeb.Features.OjUpdate;
 using Microsoft.AspNetCore.Authorization;
-using System.Threading.Tasks;
-using JudgeWeb.Data;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Mvc;
 using System;
+using System.Threading.Tasks;
 
 namespace JudgeWeb.Areas.Misc.Controllers
 {
@@ -16,16 +15,10 @@ namespace JudgeWeb.Areas.Misc.Controllers
     [Authorize(Roles = "Student,Administrator")]
     public class TeamController : Controller2
     {
-        private AppDbContext DbContext { get; }
-
-        public TeamController(AppDbContext db)
-        {
-            DbContext = db;
-        }
-
-
         [HttpGet("/ranklist/{name}/{year?}")]
-        public async Task<IActionResult> Ranklist(string name, int year = -1)
+        public async Task<IActionResult> Ranklist(
+            [FromServices] UserManager userManager,
+            string name, int year = -1)
         {
             if (!OjUpdateService.OjList.ContainsKey(name))
                 return NotFound();
@@ -34,11 +27,7 @@ namespace JudgeWeb.Areas.Misc.Controllers
             if (year != -1) title += " " + year;
             ViewData["Title"] = title;
 
-            var ojac = await oj
-                .GetAccounts(DbContext.PersonRanks, year)
-                .ToListAsync();
-            ojac.Sort();
-
+            var ojac = await userManager.GetRanklistAsync(oj.CategoryId, year);
             return View(new RanklistViewModel
             {
                 OjName = name,

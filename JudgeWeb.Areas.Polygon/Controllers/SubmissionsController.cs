@@ -55,7 +55,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
             var j = s.Judgings.SingleOrDefault(jj => jid.HasValue ? jj.JudgingId == jid : jj.Active);
             if (j == null) return NotFound();
             var l = await Store.FindLanguageAsync(s.Language);
-            var det = await Submissions.GetDetailsAsync(j.JudgingId);
+            var det = await Submissions.GetDetailsAsync(pid, j.JudgingId);
             var uname = await Submissions.GetAuthorNameAsync(sid);
 
             return View(new ViewSubmissionModel

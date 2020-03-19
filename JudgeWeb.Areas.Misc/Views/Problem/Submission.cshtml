@@ -24,7 +24,7 @@
                 </p>
                 <if cond="Model.Status != Verdict.CompileError">
                     <h5>Testcase runs</h5>
-                    <p>@foreach (var (t, d) in Model.Details) {<a title="#@t.Rank, @(d == null ? "unknown" : $"runtime: {d.ExecuteTime}ms, result: {d.Status}")"><verdict6 value="@(d?.Status ?? Verdict.Pending)" judging-pending="Model.Status == Verdict.Running || Model.Status == Verdict.Pending" /></a>}</p>
+                    <p>@foreach (var (d, t) in Model.Details) {<a title="#@t.Rank, @(d == null ? "unknown" : $"runtime: {d.ExecuteTime}ms, result: {d.Status}")"><verdict6 value="@(d?.Status ?? Verdict.Pending)" judging-pending="Model.Status == Verdict.Running || Model.Status == Verdict.Pending" /></a>}</p>
                 </if>
                 <h5>Compiler output</h5>
                 <snippet base64="@Model.CompileError" class="mb-3" nodata="There were no compiler errors or warnings." />

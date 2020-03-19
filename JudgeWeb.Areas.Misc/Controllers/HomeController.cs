@@ -1,10 +1,7 @@
 ﻿using JudgeWeb.Areas.Misc.Models;
-using JudgeWeb.Data;
+using JudgeWeb.Domains.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using System;
-using System.Diagnostics;
-using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -14,52 +11,37 @@ namespace JudgeWeb.Areas.Misc.Controllers
     [Route("[action]")]
     public class HomeController : Controller2
     {
-        private AppDbContext DbContext { get; }
+        private INewsStore Store { get; }
 
         private static string[] PhotoList { get; } = new[] { "2018qingdao", "2018xian", "2018final" };
 
-        public HomeController(AppDbContext adbc)
-        {
-            DbContext = adbc;
-        }
+        public HomeController(INewsStore adbc) => Store = adbc;
+
 
         [Route("/")]
         public async Task<IActionResult> Index()
         {
-            var news = await DbContext.News
-                .Where(n => n.Active)
-                .OrderByDescending(n => n.NewsId)
-                .Select(n => new { n.Title, n.NewsId })
-                .Take(10)
-                .ToListAsync();
-
             ViewData["Photo"] = PhotoList[DateTimeOffset.Now.Millisecond % PhotoList.Length];
-            return View(news.Select(a => (a.NewsId, a.Title)));
+            return View(await Store.ListActiveAsync(10));
         }
+
 
         public IActionResult About()
         {
             return View();
         }
 
+
         [HttpGet("{nid}")]
         public async Task<IActionResult> News(int nid)
         {
-            var news = await DbContext.News
-                .Where(n => n.NewsId == nid)
-                .FirstOrDefaultAsync();
-
-            var list = await DbContext.News
-                .Where(n => n.Active)
-                .Select(n => new { n.NewsId, n.Title })
-                .OrderByDescending(n => n.NewsId)
-                .Take(100)
-                .ToListAsync();
-
-            var newsList = list.Select(a => (a.NewsId, a.Title));
+            var news = await Store.FindAsync(nid);
+            var newsList = await Store.ListActiveAsync(100);
 
             if (news is null || !news.Active && !User.IsInRoles("Administrator"))
             {
+                Response.StatusCode = 404;
+
                 return View(new NewsViewModel
                 {
                     NewsList = newsList,

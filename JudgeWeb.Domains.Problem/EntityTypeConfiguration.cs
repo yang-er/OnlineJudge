@@ -136,6 +136,8 @@ namespace JudgeWeb.Domains.Problems
                 entity.Ignore(e => e.Title);
 
                 entity.Ignore(e => e.Source);
+
+                entity.Ignore(e => e.Submitted);
             });
 
             modelBuilder.Entity<Testcase>(entity =>

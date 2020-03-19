@@ -1,4 +1,5 @@
 ﻿using JudgeWeb.Data;
+using JudgeWeb.Features.OjUpdate;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -73,6 +74,13 @@ namespace JudgeWeb.Domains.Identity
             var result = await base.AddToRolesAsync(user, roles);
             if (result.Succeeded) await SlideExpirationAsync(user);
             return result;
+        }
+
+        public async Task<List<OjAccount>> GetRanklistAsync(int cid, int year)
+        {
+            var list = await studentStore.GetRanklistAsync(cid, year);
+            list.Sort();
+            return list;
         }
 
         public override async Task<IdentityResult> RemoveFromRoleAsync(User user, string role)

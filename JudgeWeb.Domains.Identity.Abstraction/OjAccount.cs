@@ -1,4 +1,5 @@
-﻿using System;
+﻿using JudgeWeb.Data;
+using System;
 
 namespace JudgeWeb.Features.OjUpdate
 {
@@ -8,6 +9,18 @@ namespace JudgeWeb.Features.OjUpdate
         public string Account { get; set; }
         public string NickName { get; set; }
         public int Solved { get; set; } = -1;
+
+        public OjAccount()
+        {
+        }
+
+        public OjAccount(PersonRank p)
+        {
+            Account = p.Account;
+            NickName = p.ACMer;
+            Solved = p.Result;
+            Grade = p.Grade;
+        }
 
         public int CompareTo(OjAccount other)
         {

@@ -1,8 +1,10 @@
 ﻿using JudgeWeb.Data;
+using JudgeWeb.Features.OjUpdate;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -20,7 +22,7 @@ namespace JudgeWeb.Domains.Identity
     public class EntityFrameworkCoreStudentStore : IStudentStore
     {
         public DbContext Context { get; }
-        public EntityFrameworkCoreStudentStore(DbContext context) => Context = context;
+        protected EntityFrameworkCoreStudentStore(DbContext context) => Context = context;
 
         IQueryable<Student> IStudentStore.Students => Context.Set<Student>();
         IQueryable<TeachingClass> IStudentStore.Classes => Context.Set<TeachingClass>();
@@ -51,6 +53,15 @@ namespace JudgeWeb.Domains.Identity
                 value: DateTimeOffset.UtcNow,
                 absoluteExpirationRelativeToNow: TimeSpan.FromMinutes(20));
             return Task.FromResult(IdentityResult.Success);
+        }
+
+        public Task<List<OjAccount>> GetRanklistAsync(int cid, int year)
+        {
+            var query = Context.Set<PersonRank>()
+                .Where(p => p.Category == cid);
+            if (year != -1)
+                query = query.Where(p => p.Grade == year);
+            return query.Select(p => new OjAccount(p)).ToListAsync();
         }
     }
 }

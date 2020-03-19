@@ -110,27 +110,6 @@ namespace JudgeWeb.Features.OjUpdate
         }
 
         /// <summary>
-        /// 获取每年对应的账户。
-        /// </summary>
-        /// <param name="year">年份</param>
-        /// <returns>账户列表</returns>
-        public IQueryable<OjAccount> GetAccounts(IQueryable<PersonRank> query, int year = -1)
-        {
-            int cid = CategoryId;
-            query = query.Where(p => p.Category == cid);
-            if (year != -1) query = query.Where(p => p.Grade == year);
-
-            return query
-                .Select(p => new OjAccount
-                {
-                    Account = p.Account,
-                    NickName = p.ACMer,
-                    Solved = p.Result,
-                    Grade = p.Grade,
-                });
-        }
-
-        /// <summary>
         /// 初始化HttpClient，例如设置超时和基地址。
         /// </summary>
         /// <param name="httpClient">HttpClient实例</param>
@@ -180,32 +159,30 @@ namespace JudgeWeb.Features.OjUpdate
         {
             await base.StartAsync(cancellationToken);
 
-            using (var scope = ServiceProvider.CreateScope())
-            using (var db = scope.ServiceProvider.GetRequiredService<AppDbContext>())
+            using var scope = ServiceProvider.CreateScope();
+            using var db = scope.ServiceProvider.GetRequiredService<IDbContextHolder>();
+            var confName = $"oj_{CategoryId}_update_time";
+            var conf = await db.Configures
+                .Where(c => c.Name == confName)
+                .FirstOrDefaultAsync();
+
+            if (conf == null)
             {
-                var confName = $"oj_{CategoryId}_update_time";
-                var conf = await db.Configures
-                    .Where(c => c.Name == confName)
-                    .FirstOrDefaultAsync();
-
-                if (conf == null)
+                var cnf = db.Configures.Add(new Configure
                 {
-                    var cnf = db.Configures.Add(new Configure
-                    {
-                        Name = confName,
-                        Description = $"The last update time of {SiteName}.",
-                        Public = -1,
-                        Value = "null",
-                        Type = "datetime",
-                        Category = "Internal",
-                    });
+                    Name = confName,
+                    Description = $"The last update time of {SiteName}.",
+                    Public = -1,
+                    Value = "null",
+                    Type = "datetime",
+                    Category = "Internal",
+                });
 
-                    await db.SaveChangesAsync();
-                    conf = cnf.Entity;
-                }
-
-                LastUpdate = conf.Value.AsJson<DateTimeOffset?>();
+                await db.SaveChangesAsync();
+                conf = cnf.Entity;
             }
+
+            LastUpdate = conf.Value.AsJson<DateTimeOffset?>();
         }
 
         /// <summary>
@@ -215,15 +192,13 @@ namespace JudgeWeb.Features.OjUpdate
         {
             await base.StopAsync(cancellationToken);
 
-            using (var scope = ServiceProvider.CreateScope())
-            using (var db = scope.ServiceProvider.GetRequiredService<AppDbContext>())
-            {
-                var confName = $"oj_{CategoryId}_update_time";
-                var confValue = LastUpdate.ToJson();
-                var conf = await db.Configures
-                    .Where(c => c.Name == confName)
-                    .BatchUpdateAsync(c => new Configure { Value = confValue });
-            }
+            using var scope = ServiceProvider.CreateScope();
+            using var db = scope.ServiceProvider.GetRequiredService<IDbContextHolder>();
+            var confName = $"oj_{CategoryId}_update_time";
+            var confValue = LastUpdate.ToJson();
+            var conf = await db.Configures
+                .Where(c => c.Name == confName)
+                .BatchUpdateAsync(c => new Configure { Value = confValue });
         }
 
         /// <summary>
@@ -244,7 +219,7 @@ namespace JudgeWeb.Features.OjUpdate
                 using (var scope = ServiceProvider.CreateScope())
                 {
                     var dbContext = scope.ServiceProvider
-                        .GetRequiredService<AppDbContext>();
+                        .GetRequiredService<IDbContextHolder>();
                     int category = CategoryId;
 
                     var names = await dbContext.PersonRanks

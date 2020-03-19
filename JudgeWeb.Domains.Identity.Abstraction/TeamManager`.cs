@@ -38,7 +38,7 @@ namespace JudgeWeb.Domains.Identity
         public abstract Task UpdateAsync(TrainingTeam team);
 
         public abstract Task UpdateAsync(TrainingTeamUser user);
-
+        
         public Task AddTeamMemberAsync(TrainingTeam team, User user)
         {
             return CreateAsync(new TrainingTeamUser

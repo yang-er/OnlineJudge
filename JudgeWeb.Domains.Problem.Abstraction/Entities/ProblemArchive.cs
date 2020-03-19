@@ -40,9 +40,19 @@
         /// </summary>
         public string Source { get; set; }
 
+        /// <summary>
+        /// [Ignore] 提交后是否AC
+        /// </summary>
+        public bool? Submitted { get; set; }
+
+        /// <summary>
+        /// [Ignore] 是否允许提交
+        /// </summary>
+        public bool? AllowSubmit { get; set; }
+
         public ProblemArchive() { }
 
-        public ProblemArchive(ProblemArchive src, string title, string source)
+        public ProblemArchive(ProblemArchive src, string title, string source, int? ac, int? su)
         {
             Title = title;
             Source = source;
@@ -51,6 +61,19 @@
             Accepted = src.Accepted;
             Total = src.Total;
             ProblemId = src.ProblemId;
+            if (su.HasValue) Submitted = (ac ?? 0) > 0;
+        }
+
+        public ProblemArchive(ProblemArchive src, string title, string source, bool allowSubmit)
+        {
+            Title = title;
+            Source = source;
+            TagName = src.TagName;
+            PublicId = src.PublicId;
+            Accepted = src.Accepted;
+            Total = src.Total;
+            ProblemId = src.ProblemId;
+            AllowSubmit = allowSubmit;
         }
     }
 }
