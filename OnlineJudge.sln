@@ -43,22 +43,19 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "JudgeWeb.Database", "JudgeW
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{910E8B11-93DC-4F7B-BAED-64299288E85A}"
 	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
 		NuGet.config = NuGet.config
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JudgeWeb.Domains.Contests", "JudgeWeb.Domains.Contest\JudgeWeb.Domains.Contests.csproj", "{8D44B6A8-78E9-4182-9084-C0098FE47C95}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JudgeWeb.Domains.Problems", "JudgeWeb.Domains.Problem\JudgeWeb.Domains.Problems.csproj", "{690C3DE8-7C19-4AD5-AA8D-24104DAF0F7D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JudgeWeb.Domains.Problems", "JudgeWeb.Domains.Problem\JudgeWeb.Domains.Problems.csproj", "{690C3DE8-7C19-4AD5-AA8D-24104DAF0F7D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JudgeWeb.Domains.Problems.Abstraction", "JudgeWeb.Domains.Problem.Abstraction\JudgeWeb.Domains.Problems.Abstraction.csproj", "{C5978E2D-81B7-408B-93C9-84C1DA4B46C7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JudgeWeb.Domains.Problems.Abstraction", "JudgeWeb.Domains.Problem.Abstraction\JudgeWeb.Domains.Problems.Abstraction.csproj", "{C5978E2D-81B7-408B-93C9-84C1DA4B46C7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JudgeWeb.Domains.Judgements.Abstraction", "JudgeWeb.Domains.Judgements.Abstraction\JudgeWeb.Domains.Judgements.Abstraction.csproj", "{3995D3CA-6DE7-4067-9C13-FE3D2AF66CC7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JudgeWeb.Domains.Contests.Abstraction", "JudgeWeb.Domains.Contest.Abstraction\JudgeWeb.Domains.Contests.Abstraction.csproj", "{11A81BC0-489E-43CA-B806-6947F512C53B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JudgeWeb.Domains.Judgements", "JudgeWeb.Domains.Judgements\JudgeWeb.Domains.Judgements.csproj", "{5DA81DF8-8ED4-49CB-9E21-8A4BFBB13BE5}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JudgeWeb.Domains.Contests.Abstraction", "JudgeWeb.Domains.Contest.Abstraction\JudgeWeb.Domains.Contests.Abstraction.csproj", "{11A81BC0-489E-43CA-B806-6947F512C53B}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JudgeWeb.Domains.Identity.Abstraction", "JudgeWeb.Domains.Identity.Abstraction\JudgeWeb.Domains.Identity.Abstraction.csproj", "{538E4E8C-DBE9-4638-B87A-58B08B489DCA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JudgeWeb.Domains.Identity.Abstraction", "JudgeWeb.Domains.Identity.Abstraction\JudgeWeb.Domains.Identity.Abstraction.csproj", "{538E4E8C-DBE9-4638-B87A-58B08B489DCA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -142,14 +139,6 @@ Global
 		{C5978E2D-81B7-408B-93C9-84C1DA4B46C7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C5978E2D-81B7-408B-93C9-84C1DA4B46C7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C5978E2D-81B7-408B-93C9-84C1DA4B46C7}.Release|Any CPU.Build.0 = Release|Any CPU
-		{3995D3CA-6DE7-4067-9C13-FE3D2AF66CC7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{3995D3CA-6DE7-4067-9C13-FE3D2AF66CC7}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{3995D3CA-6DE7-4067-9C13-FE3D2AF66CC7}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{3995D3CA-6DE7-4067-9C13-FE3D2AF66CC7}.Release|Any CPU.Build.0 = Release|Any CPU
-		{5DA81DF8-8ED4-49CB-9E21-8A4BFBB13BE5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{5DA81DF8-8ED4-49CB-9E21-8A4BFBB13BE5}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{5DA81DF8-8ED4-49CB-9E21-8A4BFBB13BE5}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{5DA81DF8-8ED4-49CB-9E21-8A4BFBB13BE5}.Release|Any CPU.Build.0 = Release|Any CPU
 		{11A81BC0-489E-43CA-B806-6947F512C53B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{11A81BC0-489E-43CA-B806-6947F512C53B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{11A81BC0-489E-43CA-B806-6947F512C53B}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -181,8 +170,6 @@ Global
 		{8D44B6A8-78E9-4182-9084-C0098FE47C95} = {57D1FDFB-07CC-42A5-89DD-1D178BACDE90}
 		{690C3DE8-7C19-4AD5-AA8D-24104DAF0F7D} = {57D1FDFB-07CC-42A5-89DD-1D178BACDE90}
 		{C5978E2D-81B7-408B-93C9-84C1DA4B46C7} = {57D1FDFB-07CC-42A5-89DD-1D178BACDE90}
-		{3995D3CA-6DE7-4067-9C13-FE3D2AF66CC7} = {57D1FDFB-07CC-42A5-89DD-1D178BACDE90}
-		{5DA81DF8-8ED4-49CB-9E21-8A4BFBB13BE5} = {57D1FDFB-07CC-42A5-89DD-1D178BACDE90}
 		{11A81BC0-489E-43CA-B806-6947F512C53B} = {57D1FDFB-07CC-42A5-89DD-1D178BACDE90}
 		{538E4E8C-DBE9-4638-B87A-58B08B489DCA} = {57D1FDFB-07CC-42A5-89DD-1D178BACDE90}
 	EndGlobalSection

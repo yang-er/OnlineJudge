@@ -1,5 +1,4 @@
 ﻿using JudgeWeb.Areas.Misc.Models;
-using JudgeWeb.Domains.Judgements;
 using JudgeWeb.Domains.Problems;
 using JudgeWeb.Features.Storage;
 using Microsoft.AspNetCore.Authorization;
@@ -16,19 +15,22 @@ namespace JudgeWeb.Areas.Misc.Controllers
     [Route("[controller]")]
     public class ProblemController : Controller2
     {
-        private IProblemStore Problems { get; }
+        private IProblemFacade Facade { get; }
 
-        private ISubmissionRepository Submits { get; }
+        private IJudgingStore Judgings { get; }
 
-        public ProblemController(IProblemStore probs, ISubmissionRepository submits)
+        private ISubmissionStore Submits { get; }
+
+        public ProblemController(IProblemFacade probs, IJudgementFacade submits)
         {
-            Problems = probs;
-            Submits = submits;
+            Facade = probs;
+            Submits = submits.SubmissionStore;
+            Judgings = submits.JudgingStore;
         }
 
         private async Task<IEnumerable<SelectListItem>> LanguagesAsync()
         {
-            var lst = await Problems.ListLanguagesAsync(true);
+            var lst = await Facade.Languages.ListAsync(true);
             return lst.Select(l => new SelectListItem(l.Name, l.Id));
         }
 
@@ -38,9 +40,9 @@ namespace JudgeWeb.Areas.Misc.Controllers
         {
             if (page < 1) page = 1;
             ViewBag.Page = page;
-            ViewBag.TotalPage = await Problems.CountArchivePageAsync();
+            ViewBag.TotalPage = await Facade.Archives.MaxPageAsync();
             int uid = int.Parse(User.GetUserId() ?? "-100");
-            var model = await Problems.ListByArchiveAsync(page, uid);
+            var model = await Facade.Archives.ListAsync(page, uid);
             return View(model);
         }
 
@@ -49,10 +51,10 @@ namespace JudgeWeb.Areas.Misc.Controllers
         public async Task<IActionResult> View(int pid,
             [FromServices] IProblemFileRepository ioContext)
         {
-            var prob = await Problems.FindArchiveAsync(pid);
+            var prob = await Facade.Archives.FindAsync(pid);
             if (prob == null) return NotFound();
 
-            var fileInfo = ioContext.GetFileInfo($"p{prob.ProblemId}/view.html");
+            var fileInfo = Facade.GetFile(prob, "view.html");
             var view = await fileInfo.ReadAsync();
 
             if (string.IsNullOrEmpty(view))
@@ -76,7 +78,7 @@ namespace JudgeWeb.Areas.Misc.Controllers
         [Authorize]
         public async Task<IActionResult> Submissions(int pid, int page)
         {
-            var prob = await Problems.FindArchiveAsync(pid);
+            var prob = await Facade.Archives.FindAsync(pid);
             if (prob == null) return NotFound();
             var uid = int.Parse(User.GetUserId() ?? "-100");
             if (page <= 0) page = 1;
@@ -94,7 +96,7 @@ namespace JudgeWeb.Areas.Misc.Controllers
         [Authorize]
         public async Task<IActionResult> Submission(int pid, int sid)
         {
-            var prob = await Problems.FindArchiveAsync(pid);
+            var prob = await Facade.Archives.FindAsync(pid);
             if (prob == null) return NotFound();
             var uid = int.Parse(User.GetUserId() ?? "-100");
 
@@ -117,11 +119,11 @@ namespace JudgeWeb.Areas.Misc.Controllers
 
             var sub = subs.SingleOrDefault();
             if (sub == null) return NotFound();
-            var lang = await Problems.FindLanguageAsync(sub.LanguageName);
+            var lang = await Facade.Languages.FindAsync(sub.LanguageName);
             sub.LanguageName = lang.Name;
             sub.FileExtensions = lang.FileExtension;
             sub.ProblemTitle = prob.Title;
-            sub.Details = await Submits.GetDetailsAsync(prob.ProblemId, sub.JudgingId);
+            sub.Details = await Judgings.GetDetailsAsync(prob.ProblemId, sub.JudgingId);
             return Window(sub);
         }
 
@@ -131,7 +133,7 @@ namespace JudgeWeb.Areas.Misc.Controllers
         [Authorize]
         public async Task<IActionResult> Submit(int pid)
         {
-            var prob = await Problems.FindArchiveAsync(pid);
+            var prob = await Facade.Archives.FindAsync(pid);
             if (prob == null) return NotFound();
 
             if (!prob.AllowSubmit.Value)
@@ -165,7 +167,7 @@ namespace JudgeWeb.Areas.Misc.Controllers
                     "You are not permitted to submit code.");
 
             // check problem submit
-            var prob = await Problems.FindArchiveAsync(pid);
+            var prob = await Facade.Archives.FindAsync(pid);
             if (prob == null) return NotFound();
 
             if (!prob.AllowSubmit.Value)
@@ -190,10 +192,10 @@ namespace JudgeWeb.Areas.Misc.Controllers
             {
                 var sub = await Submits.CreateAsync(
                     code: model.Code,
-                    langid: model.Language,
-                    probid: prob.ProblemId,
-                    contest: null,
-                    uid: int.Parse(User.GetUserId()),
+                    language: model.Language,
+                    problemId: prob.ProblemId,
+                    contestId: null,
+                    userId: int.Parse(User.GetUserId()),
                     ipAddr: HttpContext.Connection.RemoteIpAddress,
                     via: "problem-list",
                     username: User.GetUserName());

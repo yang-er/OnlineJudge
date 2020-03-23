@@ -1,5 +1,6 @@
 ﻿using JudgeWeb.Data;
 using JudgeWeb.Data.Api;
+using JudgeWeb.Domains.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;

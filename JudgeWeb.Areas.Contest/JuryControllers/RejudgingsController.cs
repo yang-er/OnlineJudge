@@ -1,5 +1,6 @@
 ﻿using JudgeWeb.Areas.Contest.Models;
 using JudgeWeb.Data;
+using JudgeWeb.Domains.Contests;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;

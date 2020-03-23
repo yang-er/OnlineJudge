@@ -1,5 +1,4 @@
 ﻿using JudgeWeb.Data;
-using JudgeWeb.Domains.Judgements;
 using JudgeWeb.Domains.Problems;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -17,12 +16,14 @@ namespace JudgeWeb.Areas.Polygon.Controllers
     {
         private UserManager<User> UserManager { get; }
 
-        private IProblemStore Store { get; }
+        private IProblemFacade Facade { get; }
 
-        public RootController(UserManager<User> um, IProblemStore db)
+        private IProblemStore Store => Facade.Problems;
+
+        public RootController(UserManager<User> um, IProblemFacade db)
         {
             UserManager = um;
-            Store = db;
+            Facade = db;
         }
 
 
@@ -33,7 +34,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
             var uid = User.IsInRole("Administrator")
                 ? (int?)null
                 : int.Parse(UserManager.GetUserId(User));
-            var (model, totPage) = await Store.ListProblemsAsync(uid, page, 50);
+            var (model, totPage) = await Store.ListAsync(uid, page, 50);
 
             ViewBag.Page = page;
             ViewBag.TotalPage = totPage;
@@ -93,7 +94,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
         [HttpGet("[action]/{jid}")]
         public async Task<IActionResult> ByJudgingId(
             [FromRoute] int jid,
-            [FromServices] ISubmissionRepository submission)
+            [FromServices] ISubmissionStore submission)
         {
             var item = await submission.FindByJudgingAsync(jid);
             if (item == null) return NotFound();
@@ -168,7 +169,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
 
         [HttpGet("/dashboard/status")]
         public async Task<IActionResult> Status(
-            [FromServices] ISubmissionRepository submissions,
+            [FromServices] ISubmissionStore submissions,
             [FromQuery] int page = 1)
         {
             if (page <= 0) return BadRequest();

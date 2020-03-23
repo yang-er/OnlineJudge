@@ -16,7 +16,12 @@ namespace JudgeWeb.Domains.Identity
         }
     }
 
-    public class EntityFrameworkCoreTeamManager : TeamManager
+    public class EntityFrameworkCoreTeamManager :
+        ITeamManager,
+        ICrudRepositoryImpl<TrainingTeam>,
+        ICrudRepositoryImpl<TrainingTeamUser>,
+        ICrudRepositoryImpl<TeamAffiliation>,
+        ICrudRepositoryImpl<TeamCategory>
     {
         public DbContext Context { get; }
         protected EntityFrameworkCoreTeamManager(DbContext context) => Context = context;
@@ -24,38 +29,22 @@ namespace JudgeWeb.Domains.Identity
         DbSet<TrainingTeam> TrainingTeams => Context.Set<TrainingTeam>();
         DbSet<TrainingTeamUser> TrainingTeamUsers => Context.Set<TrainingTeamUser>();
         DbSet<TeamAffiliation> TeamAffiliations => Context.Set<TeamAffiliation>();
+        DbSet<TeamCategory> TeamCategories => Context.Set<TeamCategory>();
 
-        protected override async Task CreateAsync(TrainingTeamUser teamUser)
-        {
-            int count = await TrainingTeamUsers.MergeAsync(
-                sourceTable: new[] { new { teamUser.UserId, teamUser.TrainingTeamId } },
-                targetKey: ttu => new { ttu.UserId, ttu.TrainingTeamId },
-                sourceKey: ttu => new { ttu.UserId, ttu.TrainingTeamId },
-                insertExpression: t => new TrainingTeamUser { UserId = t.UserId, TrainingTeamId = t.TrainingTeamId, Accepted = teamUser.Accepted },
-                updateExpression: null, delete: false);
-        }
-
-        public override async Task<bool> CheckCreateAsync(User user)
+        public async Task<bool> CheckCreateAsync(User user)
         {
             var count = await TrainingTeams.CountAsync(t => t.UserId == user.Id);
-            return count < MaxTeams;
+            return count < ITeamManager.MaxTeams;
         }
 
-        public override async Task<bool> CheckCreateAsync(TrainingTeam team)
+        public async Task<bool> CheckCreateAsync(TrainingTeam team)
         {
             var item = await TrainingTeamUsers
                 .CountAsync(a => a.TrainingTeamId == team.TrainingTeamId);
-            return item < MaxMembers;
+            return item < ITeamManager.MaxMembers;
         }
 
-        protected override async Task<TrainingTeam> CreateAsync(TrainingTeam team)
-        {
-            TrainingTeams.Add(team);
-            await Context.SaveChangesAsync();
-            return team;
-        }
-
-        public override Task<TrainingTeam> FindTeamByIdAsync(int teamid)
+        public Task<TrainingTeam> FindTeamByIdAsync(int teamid)
         {
             return TrainingTeams
                 .Include(t => t.Affiliation)
@@ -63,38 +52,38 @@ namespace JudgeWeb.Domains.Identity
                 .SingleOrDefaultAsync();
         }
 
-        public override Task<TeamAffiliation> FindAffiliationAsync(int affId)
+        public Task<TeamAffiliation> FindAffiliationAsync(int affId)
         {
             return TeamAffiliations
                 .Where(a => a.AffiliationId == affId)
                 .SingleOrDefaultAsync();
         }
 
-        public override async Task<IEnumerable<TeamAffiliation>> ListAffiliationsAsync()
+        public Task<TeamCategory> FindCategoryAsync(int catId)
+        {
+            return TeamCategories
+                .Where(a => a.CategoryId == catId)
+                .SingleOrDefaultAsync();
+        }
+
+        public async Task<IEnumerable<TeamAffiliation>> ListAffiliationsAsync()
         {
             return await TeamAffiliations.ToListAsync();
         }
 
-        public override Task<TrainingTeamUser> IsInTeamAsync(User user, TrainingTeam team)
+        public async Task<IEnumerable<TeamCategory>> ListCategoriesAsync()
+        {
+            return await TeamCategories.ToListAsync();
+        }
+
+        public Task<TrainingTeamUser> IsInTeamAsync(User user, TrainingTeam team)
         {
             return TrainingTeamUsers
                 .Where(tu => tu.UserId == user.Id && tu.TrainingTeamId == team.TrainingTeamId)
                 .SingleOrDefaultAsync();
         }
 
-        public override Task DismissAsync(TrainingTeam team)
-        {
-            TrainingTeams.Remove(team);
-            return Context.SaveChangesAsync();
-        }
-
-        public override Task RemoveAsync(TrainingTeamUser user)
-        {
-            TrainingTeamUsers.Remove(user);
-            return Context.SaveChangesAsync();
-        }
-
-        public override async Task<IEnumerable<IGrouping<TrainingTeam, TrainingTeamUser>>> ListAsync(User user)
+        public async Task<IEnumerable<IGrouping<TrainingTeam, TrainingTeamUser>>> ListAsync(User user)
         {
             var query =
                 from ttu in TrainingTeamUsers
@@ -107,7 +96,7 @@ namespace JudgeWeb.Domains.Identity
             return results.GroupBy(k => k.t, v => v.tuu);
         }
 
-        public override Task<List<TrainingTeamUser>> ListMembersAsync(TrainingTeam team)
+        public Task<List<TrainingTeamUser>> ListMembersAsync(TrainingTeam team)
         {
             var uquery =
                 from tu in TrainingTeamUsers
@@ -117,16 +106,5 @@ namespace JudgeWeb.Domains.Identity
             return uquery.ToListAsync();
         }
 
-        public override Task UpdateAsync(TrainingTeam team)
-        {
-            TrainingTeams.Update(team);
-            return Context.SaveChangesAsync();
-        }
-
-        public override Task UpdateAsync(TrainingTeamUser user)
-        {
-            TrainingTeamUsers.Update(user);
-            return Context.SaveChangesAsync();
-        }
     }
 }

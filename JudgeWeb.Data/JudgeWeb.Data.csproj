@@ -22,6 +22,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\JudgeWeb.Domains.Contest.Abstraction\JudgeWeb.Domains.Contests.Abstraction.csproj" />
+    <ProjectReference Include="..\JudgeWeb.Domains.Contest\JudgeWeb.Domains.Contests.csproj" />
+    <ProjectReference Include="..\JudgeWeb.Domains.Identity.Abstraction\JudgeWeb.Domains.Identity.Abstraction.csproj" />
+    <ProjectReference Include="..\JudgeWeb.Domains.Identity\JudgeWeb.Domains.Identity.csproj" />
+    <ProjectReference Include="..\JudgeWeb.Domains.Problem.Abstraction\JudgeWeb.Domains.Problems.Abstraction.csproj" />
+    <ProjectReference Include="..\JudgeWeb.Domains.Problem\JudgeWeb.Domains.Problems.csproj" />
     <ProjectReference Include="..\JudgeWeb.Features.Extensions\JudgeWeb.Features.Extensions.csproj" />
   </ItemGroup>
 

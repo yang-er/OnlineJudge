@@ -14,12 +14,11 @@ namespace JudgeWeb.Domains.Problems.Portion
     public class XmlImportProvider : IImportProvider
     {
         public StringBuilder LogBuffer { get; }
-        public IProblemStore Store { get; }
+        public IProblemFacade Facade { get; }
         public IMarkdownService Markdown { get; }
         public Problem Problem { get; private set; }
         public ILogger<XmlImportProvider> Logger { get; }
-        public IProblemFileRepository IoContext { get; }
-        private readonly IStaticFileRepository io2;
+        public IStaticFileRepository StaticFiles { get; }
 
         static readonly Dictionary<string, string> nodes = new Dictionary<string, string>
         {
@@ -32,18 +31,16 @@ namespace JudgeWeb.Domains.Problems.Portion
         static readonly (string, bool)[] testcaseGroups = new[] { ("samples", false), ("test_cases", true) };
 
         public XmlImportProvider(
-            IProblemStore store,
+            IProblemFacade store,
             ILogger<XmlImportProvider> logger,
             IMarkdownService markdownService,
-            IProblemFileRepository io,
             IStaticFileRepository io2)
         {
             LogBuffer = new StringBuilder();
-            Store = store;
+            Facade = store;
             Logger = logger;
             Markdown = markdownService;
-            IoContext = io;
-            this.io2 = io2;
+            StaticFiles = io2;
         }
 
         private void Log(string log)
@@ -57,8 +54,8 @@ namespace JudgeWeb.Domains.Problems.Portion
             if (string.IsNullOrEmpty(element?.Value)) return;
             string mdcontent = element.Value;
             var tags = $"p{Problem.ProblemId}";
-            var content = await (Markdown, io2).ImportWithImagesAsync(mdcontent, tags);
-            await IoContext.WriteStringAsync($"{tags}/{fileName}", content);
+            var content = await (Markdown, StaticFiles).ImportWithImagesAsync(mdcontent, tags);
+            await Facade.WriteFileAsync(Problem, fileName, content);
         }
 
         public async Task<Problem> ImportAsync(Stream stream, string uploadFileName, string username)
@@ -73,7 +70,7 @@ namespace JudgeWeb.Domains.Problems.Portion
 
             var doc = document.Root;
 
-            Problem = await Store.CreateAsync(new Problem
+            Problem = await Facade.Problems.CreateAsync(new Problem
             {
                 Title = doc.Element("title").Value,
                 MemoryLimit = int.Parse(doc.Element("memory_limit").Value),
@@ -111,7 +108,7 @@ namespace JudgeWeb.Domains.Problems.Portion
                     var output = Encoding.UTF8.GetBytes(test.Output);
                     var outputHash = output.ToMD5().ToHexDigest(true);
 
-                    var tc = await Store.CreateAsync(new Testcase
+                    var tc = await Facade.Testcases.CreateAsync(new Testcase
                     {
                         InputLength = input.Length,
                         OutputLength = output.Length,
@@ -124,12 +121,8 @@ namespace JudgeWeb.Domains.Problems.Portion
                         Md5sumOutput = outputHash,
                     });
 
-                    await IoContext.WriteBinaryAsync(
-                        subpath: $"p{Problem.ProblemId}/t{tc.TestcaseId}.in", 
-                        content: input);
-                    await IoContext.WriteBinaryAsync(
-                        subpath: $"p{Problem.ProblemId}/t{tc.TestcaseId}.out",
-                        content: output);
+                    await Facade.WriteFileAsync(Problem, $"t{tc.TestcaseId}.in", input);
+                    await Facade.WriteFileAsync(Problem, $"t{tc.TestcaseId}.out", output);
                 }
             }
 

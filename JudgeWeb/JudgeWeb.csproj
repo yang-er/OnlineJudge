@@ -47,7 +47,6 @@
     <ProjectReference Include="..\JudgeWeb.Features.Markdown\JudgeWeb.Features.Markdown.csproj" />
     <ProjectReference Include="..\JudgeWeb.Features.OjUpdate\JudgeWeb.Features.OjUpdate.csproj" />
     <ProjectReference Include="..\JudgeWeb.Features.Routing\JudgeWeb.Features.Routing.csproj" />
-    <ProjectReference Include="..\JudgeWeb.Domains.Identity\JudgeWeb.Domains.Identity.csproj" />
   </ItemGroup>
 
 

@@ -1,6 +1,7 @@
 ﻿using JudgeWeb.Areas.Contest.Models;
-using JudgeWeb.Areas.Polygon.Services;
 using JudgeWeb.Data;
+using JudgeWeb.Domains.Contests;
+using JudgeWeb.Domains.Problems;
 using JudgeWeb.Features;
 using JudgeWeb.Features.Storage;
 using Microsoft.AspNetCore.Authorization;
@@ -359,7 +360,6 @@ namespace JudgeWeb.Areas.Contest.Controllers
 
                 if (result.Succeeded)
                 {
-                    await UserManager.SlideExpirationAsync(user);
                     StatusMessage = $"Jury role of user {user.UserName} assigned.";
                     InternalLog(AuditlogType.User, $"{user.Id}", "assigned jury");
                     await DbContext.SaveChangesAsync();
@@ -402,7 +402,6 @@ namespace JudgeWeb.Areas.Contest.Controllers
             if (result.Succeeded)
             {
                 StatusMessage = $"Jury role of user {user.UserName} unassigned.";
-                await UserManager.SlideExpirationAsync(user);
                 InternalLog(AuditlogType.User, $"{uid}", "unassigned jury");
                 await DbContext.SaveChangesAsync();
             }
@@ -661,8 +660,8 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 foreach (var item in probs)
                 {
                     var folderPrefix = $"{item.ShortName}/";
-                    var statement = await generator
-                        .LoadStatement(item.p, DbContext.Testcases);
+                    var statement = new ProblemStatement();// await generator
+                        //.LoadStatement(item.p, DbContext.Testcases);
                     generator.BuildLatex(zip, statement, folderPrefix);
 
                     documentBuilder

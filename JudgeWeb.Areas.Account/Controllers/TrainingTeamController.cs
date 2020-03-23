@@ -16,11 +16,11 @@ namespace JudgeWeb.Areas.Account.Controllers
     {
         UserManager UserManager { get; }
 
-        TeamManager TeamManager { get; }
+        ITeamManager TeamManager { get; }
 
         User User2 { get; set; }
 
-        public TrainingTeamController(UserManager um, TeamManager teamStore)
+        public TrainingTeamController(UserManager um, ITeamManager teamStore)
         {
             UserManager = um;
             TeamManager = teamStore;
@@ -209,7 +209,7 @@ namespace JudgeWeb.Areas.Account.Controllers
         {
             var team = await TeamManager.FindTeamByIdAsync(teamid);
             if (team == null || team.UserId != User2.Id) return NotFound();
-            await TeamManager.DismissAsync(team);
+            await TeamManager.DeleteAsync(team);
             StatusMessage = "Team dismissed.";
             return RedirectToAction(nameof(List));
         }
@@ -256,7 +256,7 @@ namespace JudgeWeb.Areas.Account.Controllers
 
             var tu = await TeamManager.IsInTeamAsync(user, team);
             if (tu == null) return NotFound();
-            await TeamManager.RemoveAsync(tu);
+            await TeamManager.DeleteAsync(tu);
             StatusMessage = "Team member deleted.";
             return RedirectToAction(nameof(Edit));
         }

@@ -2,15 +2,14 @@
 using JudgeWeb.Domains.Problems;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.Extensions.DependencyInjection;
 using System.Threading.Tasks;
 
 namespace JudgeWeb.Areas.Polygon.Controllers
 {
     public abstract class Controller3 : Controller2
     {
-        protected Controller3(IProblemStore store) => Store = store;
-
-        protected IProblemStore Store { get; private set; }
+        protected IProblemFacade Facade { get; private set; }
 
         public new Problem Problem { get; set; }
 
@@ -24,7 +23,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
                 return Forbid();
             if (!int.TryParse((string)pid, out int ppid))
                 return base.NotFound();
-            Problem = await Store.FindProblemAsync(ppid);
+            Problem = await Facade.Problems.FindAsync(ppid);
             return Problem == null
                 ? base.NotFound() : null;
         }
@@ -33,6 +32,8 @@ namespace JudgeWeb.Areas.Polygon.Controllers
             ActionExecutingContext context,
             ActionExecutionDelegate next)
         {
+            Facade = context.HttpContext.RequestServices
+                .GetRequiredService<IProblemFacade>();
             context.Result = await ValidateAsync();
             await base.OnActionExecutionAsync(context, next);
         }

@@ -1,6 +1,5 @@
 ﻿using JudgeWeb.Areas.Polygon.Models;
 using JudgeWeb.Data;
-using JudgeWeb.Domains.Judgements;
 using JudgeWeb.Domains.Problems;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -15,10 +14,18 @@ namespace JudgeWeb.Areas.Polygon.Controllers
     [Route("[area]/{pid}/[controller]")]
     public class SubmissionsController : Controller3
     {
-        private ISubmissionRepository Submissions { get; }
+        private ISubmissionStore Submissions { get; }
 
-        public SubmissionsController(IProblemStore db, ISubmissionRepository sm)
-            : base(db) => Submissions = sm;
+        private IRejudgingStore Rejudgings { get; }
+
+        private IJudgingStore Judgings { get; }
+
+        public SubmissionsController(IJudgementFacade facade)
+        {
+            Submissions = facade.SubmissionStore;
+            Rejudgings = facade.Rejudgings;
+            Judgings = facade.JudgingStore;
+        }
 
 
         [HttpGet]
@@ -42,7 +49,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
             ViewBag.TotalPage = totPage;
             ViewBag.Page = page;
             ViewBag.AllSub = all;
-            ViewBag.Testcase = await Store.ListTestcasesAsync(pid);
+            ViewBag.Testcase = await Facade.Testcases.ListAsync(pid);
             return View(result);
         }
 
@@ -54,8 +61,8 @@ namespace JudgeWeb.Areas.Polygon.Controllers
             if (s == null || s.ProblemId != pid) return NotFound();
             var j = s.Judgings.SingleOrDefault(jj => jid.HasValue ? jj.JudgingId == jid : jj.Active);
             if (j == null) return NotFound();
-            var l = await Store.FindLanguageAsync(s.Language);
-            var det = await Submissions.GetDetailsAsync(pid, j.JudgingId);
+            var l = await Facade.Languages.FindAsync(s.Language);
+            var det = await Judgings.GetDetailsAsync(pid, j.JudgingId);
             var uname = await Submissions.GetAuthorNameAsync(sid);
 
             return View(new ViewSubmissionModel
@@ -91,7 +98,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
         [ValidateInAjax]
         public async Task<IActionResult> Submit()
         {
-            ViewBag.Language = await Store.ListLanguagesAsync();
+            ViewBag.Language = await Facade.Languages.ListAsync();
             return Window(new CodeSubmitModel());
         }
 
@@ -100,15 +107,15 @@ namespace JudgeWeb.Areas.Polygon.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Submit(CodeSubmitModel model)
         {
-            var lang = await Store.FindLanguageAsync(model.Language);
+            var lang = await Facade.Languages.FindAsync(model.Language);
             if (lang == null) return BadRequest();
 
             var sub = await Submissions.CreateAsync(
                 code: model.Code,
-                langid: lang.Id,
-                probid: Problem.ProblemId,
-                contest: null,
-                uid: int.Parse(User.GetUserId()),
+                language: lang.Id,
+                problemId: Problem.ProblemId,
+                contestId: null,
+                userId: int.Parse(User.GetUserId()),
                 ipAddr: HttpContext.Connection.RemoteIpAddress,
                 via: "polygon-page",
                 username: User.GetUserName(),
@@ -128,7 +135,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
             if (sub.ContestId != 0)
                 StatusMessage = "Error : contest submissions should be rejudged by jury.";
             else
-                await Submissions.RejudgeAsync(sub, fullTest: true);
+                await Rejudgings.RejudgeAsync(sub, fullTest: true);
             return RedirectToAction(nameof(Detail));
         }
 
@@ -136,7 +143,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
         [HttpGet("{sid}/[action]/{jid}/{rid}/{type}")]
         public async Task<IActionResult> RunDetails(int pid, int sid, int jid, int rid, string type)
         {
-            var fileInfo = await Submissions.GetRunFileAsync(jid, rid, type, sid, pid);
+            var fileInfo = await Judgings.GetRunFileAsync(jid, rid, type, sid, pid);
             if (!fileInfo.Exists) return NotFound();
 
             return File(
@@ -164,10 +171,8 @@ namespace JudgeWeb.Areas.Polygon.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Rejudge(int pid)
         {
-            var subs = await Submissions.ListAsync(
-                s => s.ExpectedResult != null && s.ProblemId == pid && s.ContestId == 0);
-            foreach (var sub in subs)
-                await Submissions.RejudgeAsync(sub);
+            await Rejudgings.BatchRejudgeAsync(
+                (s, j) => s.ExpectedResult != null && s.ProblemId == pid && s.ContestId == 0);
             StatusMessage = "All submissions are being rejudged.";
             return RedirectToAction(nameof(List));
         }
@@ -179,7 +184,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
         {
             var sub = await Submissions.FindAsync(sid);
             if (sub == null || sub.ProblemId != pid) return NotFound();
-            ViewBag.Languages = await Store.ListLanguagesAsync();
+            ViewBag.Languages = await Facade.Languages.ListAsync();
 
             return Window(new ChangeExpectedModel
             {

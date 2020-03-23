@@ -1,5 +1,4 @@
-﻿@inject UserManager UserManager
-@{ Contest ctx = ViewBag.Contest; }
+﻿@{ Contest ctx = ViewBag.Contest; }
 
 <ul class="navbar-nav mr-auto">
     <li class="nav-item">
@@ -67,10 +66,10 @@
     </li>
     <li class="nav-item dropdown">
         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-            <i class="fas fa-user"></i> @UserManager.GetUserName(User)
+            <i class="fas fa-user"></i> @User.GetUserName()
         </a>
         <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown">
-            <a class="dropdown-item disabled" href="#">@UserManager.GetNickName(User)</a>
+            <a class="dropdown-item disabled" href="#">@User.GetNickName()</a>
             <viewmodule key="RefreshSpan">
                 <a class="dropdown-item" href="#" id="refresh-navitem">
                     <i class="fas fa-sync-alt fa-fw"></i>

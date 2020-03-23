@@ -1,15 +1,9 @@
 ﻿@model IEnumerable<TeachingClass>
 @{
     ViewData["Title"] = "Groups";
-    int curPage = ViewBag.Page;
-    int totPage = ViewBag.TotalPage;
 }
 
 <h2 class="mt-2 mb-3">@ViewData["Title"]</h2>
-
-<div class="d-none" id="paging">
-    <partial name="_Pagination" model="(curPage, totPage)" />
-</div>
 
 <div class="table-wrapper">
     <table class="data-table table table-sm table-striped" style="width:auto">
@@ -58,9 +52,6 @@
                 { aTargets: ['_all'], bSortable: false, bSearchable: false }
             ],
         });
-
-        $('.dataTables_wrapper .row:first-child .col-md-6:first-child').html($('#paging').html());
-        $('.dataTables_wrapper .pagination-sm').addClass('mb-0');
     });
 </script>
 

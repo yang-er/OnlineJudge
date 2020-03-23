@@ -26,5 +26,7 @@ namespace JudgeWeb.Areas.Api.Models
         public int judgingid { get; set; }
         public bool full_judge { get; set; }
         public Dictionary<string, TestcaseToJudge> testcases { get; set; }
+
+
     }
 }

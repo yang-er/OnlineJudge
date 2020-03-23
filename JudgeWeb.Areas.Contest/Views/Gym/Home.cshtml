@@ -3,7 +3,7 @@
     bool inajax = ViewData.ContainsKey("InAjax");
     Team team = ViewBag.Team;
     Contest ctx = ViewBag.Contest;
-    BoardQuery query = ViewBag.ScoreboardData;
+    Team query = ViewBag.ScoreboardData;
     Dictionary<int, int> stats = ViewBag.Statistics;
     ContestProblem[] probs = ViewBag.Problems;
     IEnumerable<Clarification> clars = ViewBag.Clarifications;
@@ -38,7 +38,7 @@ else
         <tbody>
             @foreach (var prob in probs)
             {
-                var ot = query?.Score?.FirstOrDefault(sc => sc.ProblemId == prob.ProblemId) ?? new ScoreCache();
+                var ot = query?.ScoreCache?.FirstOrDefault(sc => sc.ProblemId == prob.ProblemId) ?? new ScoreCache();
                 <tr class="@(ot.IsCorrectRestricted ? "accepted-problem" : ot.SubmissionRestricted > 0 ? "rejected-problem" : "")">
                     <td class="prob-short-name" style="font-weight:bold">@prob.ShortName</td>
                     <td class="text-left"><a asp-action="ProblemView" asp-route-prob="@prob.ShortName">@prob.Title</a></td>

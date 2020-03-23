@@ -17,7 +17,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\JudgeWeb.Domains.Judgements.Abstraction\JudgeWeb.Domains.Judgements.Abstraction.csproj" />
     <ProjectReference Include="..\JudgeWeb.Features.Extensions\JudgeWeb.Features.Extensions.csproj" />
   </ItemGroup>
 

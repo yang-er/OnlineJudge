@@ -140,15 +140,7 @@ namespace JudgeWeb
                     .Include(t => t.Affiliation)
                     .Include(t => t.RankCache)
                     .Include(t => t.ScoreCache)
-                    .ToDictionaryAsync(
-                        keySelector: a => a.TeamId,
-                        elementSelector: a => new Features.Scoreboard.BoardQuery
-                        {
-                            Rank = a.RankCache.SingleOrDefault() ?? new RankCache(),
-                            Score = a.ScoreCache,
-                            Team = a,
-                            Affiliation = a.Affiliation
-                        });
+                    .ToDictionaryAsync(a => a.TeamId);
 
                 var result = new ScoreboardDataModel
                 {
@@ -159,7 +151,7 @@ namespace JudgeWeb
 
                 foreach (var (_, item) in value)
                 {
-                    foreach (var ot in item.Score)
+                    foreach (var ot in item.ScoreCache)
                     {
                         var val = result.Statistics.GetValueOrDefault(ot.ProblemId);
                         if (ot.IsCorrectRestricted)

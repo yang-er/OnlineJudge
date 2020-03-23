@@ -1,13 +1,10 @@
 ﻿using JudgeWeb.Areas.Api.Models;
-using JudgeWeb.Data;
+using JudgeWeb.Domains.Problems;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace JudgeWeb.Areas.Api.Controllers
@@ -24,21 +21,6 @@ namespace JudgeWeb.Areas.Api.Controllers
     public class SubmissionFilesController : ControllerBase
     {
         /// <summary>
-        /// 数据库上下文
-        /// </summary>
-        AppDbContext DbContext { get; }
-
-        /// <summary>
-        /// 构建控制器。
-        /// </summary>
-        /// <param name="rdbc">数据库上下文</param>
-        public SubmissionFilesController(AppDbContext rdbc)
-        {
-            DbContext = rdbc;
-        }
-
-
-        /// <summary>
         /// Get the files for the given submission as a ZIP archive
         /// </summary>
         /// <param name="sid">The ID of the entity to get</param>
@@ -47,24 +29,17 @@ namespace JudgeWeb.Areas.Api.Controllers
         /// <response code="500">An error occurred while creating the ZIP file</response>
         [HttpGet("{sid}/[action]")]
         [Produces("application/zip")]
-        public async Task<IActionResult> Files(int cid, int sid)
+        public async Task<IActionResult> Files(int cid, int sid,
+            [FromServices] ISubmissionStore submissions)
         {
-            var src = await DbContext.Submissions
-                .Where(s => s.SubmissionId == sid && s.ContestId == cid)
-                .Join(
-                    inner: DbContext.Languages,
-                    outerKeySelector: s => s.Language,
-                    innerKeySelector: l => l.Id,
-                    resultSelector: (s, l) => new { s.SourceCode, l.FileExtension })
-                .FirstOrDefaultAsync();
+            var src = await submissions.GetFileAsync(sid);
+            if (src == null) return NotFound();
 
-            if (src is null) return NotFound();
-
-            var srcDecoded = Convert.FromBase64String(src.SourceCode);
+            var srcDecoded = Convert.FromBase64String(src.Value.src);
             var memStream = new MemoryStream();
 
             using (var zip = new ZipArchive(memStream, ZipArchiveMode.Create, true))
-                zip.CreateEntryFromByteArray(srcDecoded, "Main." + src.FileExtension);
+                zip.CreateEntryFromByteArray(srcDecoded, "Main." + src.Value.src);
             memStream.Position = 0;
             return File(memStream, "application/zip");
         }
@@ -77,18 +52,11 @@ namespace JudgeWeb.Areas.Api.Controllers
         /// <param name="sid">The ID of the entity to get</param>
         /// <response code="200">The files for the submission</response>
         [HttpGet("{sid}/[action]")]
-        public async Task<ActionResult<SubmissionFile[]>> SourceCode(int cid, int sid)
+        public async Task<ActionResult<SubmissionFile[]>> SourceCode(int cid, int sid,
+            [FromServices] ISubmissionStore submissions)
         {
-            var src = await DbContext.Submissions
-                .Where(s => s.SubmissionId == sid && s.ContestId == cid)
-                .Join(
-                    inner: DbContext.Languages,
-                    outerKeySelector: s => s.Language,
-                    innerKeySelector: l => l.Id,
-                    resultSelector: (s, l) => new { s.SourceCode, l.FileExtension })
-                .FirstOrDefaultAsync();
-
-            if (src is null) return NotFound();
+            var src = await submissions.GetFileAsync(sid);
+            if (src == null) return NotFound();
 
             return new[]
             {
@@ -96,8 +64,8 @@ namespace JudgeWeb.Areas.Api.Controllers
                 {
                     id = sid.ToString(),
                     submission_id = sid.ToString(),
-                    filename = "Main." + src.FileExtension,
-                    source = src.SourceCode
+                    filename = "Main." + src.Value.ext,
+                    source = src.Value.src
                 }
             };
         }

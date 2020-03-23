@@ -116,6 +116,21 @@ namespace JudgeWeb.Domains.Identity
             return result;
         }
 
+        public virtual Task<User> FindByIdAsync(int uid)
+        {
+            return FindByIdAsync($"{uid}");
+        }
+
+        public virtual Task<List<Role>> ListRolesAsync(User user)
+        {
+            return studentStore.ListRolesByUserIdAsync(user.Id);
+        }
+
+        public virtual Task<(List<User>, int)> ListUsersAsync(int page, int pageCount)
+        {
+            return studentStore.ListUsersAsync(page, pageCount);
+        }
+
         public virtual Task<Student> FindStudentAsync(int sid)
         {
             return studentStore.FindStudentAsync(sid);
@@ -124,6 +139,31 @@ namespace JudgeWeb.Domains.Identity
         public virtual Task<User> FindByStudentIdAsync(int sid)
         {
             return studentStore.FindByStudentIdAsync(sid);
+        }
+
+        public virtual Task<List<IdentityUserRole<int>>> ListUserRolesAsync(int minUid, int maxUid)
+        {
+            return studentStore.ListUserRolesAsync(minUid, maxUid);
+        }
+
+        public virtual Task<Dictionary<int, Role>> ListNamedRolesAsync()
+        {
+            return studentStore.ListNamedRolesAsync();
+        }
+
+        public virtual Task DeleteStudentAsync(Student student)
+        {
+            return studentStore.DeleteAsync(student);
+        }
+
+        public virtual Task<int> MergeStudentListAsync(List<Student> students)
+        {
+            return studentStore.MergeStudentListAsync(students);
+        }
+
+        public Task<(IEnumerable<Student>, int)> ListStudentsAsync(int page, int pageCount)
+        {
+            return studentStore.ListStudentsAsync(page, pageCount);
         }
     }
 }

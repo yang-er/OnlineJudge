@@ -1,6 +1,4 @@
-﻿@inject UserManager UserManager
-
-<ul class="navbar-nav mr-auto">
+﻿<ul class="navbar-nav mr-auto">
     <li class="nav-item">
         <a class="nav-link" active-act="Info" asp-controller="Public" asp-action="Info">
             <i class="fas fa-home"></i>
@@ -42,10 +40,10 @@
     </li>
     <li class="nav-item dropdown">
         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-            <i class="fas fa-user"></i> @(UserManager.GetUserName(User) ?? "tourist")
+            <i class="fas fa-user"></i> @(User.GetUserName() ?? "tourist")
         </a>
         <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown">
-            <a class="dropdown-item disabled" href="#">@(UserManager.GetNickName(User) ?? "Tourist")</a>
+            <a class="dropdown-item disabled" href="#">@(User.GetNickName() ?? "Tourist")</a>
 
             <a class="dropdown-item d-none" href="#" id="notify_disable">
                 <i class="fas fa-bell-slash fa-fw"></i> Disable Notifications

@@ -1,4 +1,6 @@
-﻿namespace JudgeWeb.Data
+﻿using System.Collections.Generic;
+
+namespace JudgeWeb.Data
 {
     /// <summary>
     /// 教学班信息
@@ -14,6 +16,11 @@
         /// 教学班名称
         /// </summary>
         public string Name { get; set; }
+
+        /// <summary>
+        /// 学生集合
+        /// </summary>
+        public ICollection<ClassStudent> Collection { get; set; }
 
         /// <summary>
         /// 教学班人数

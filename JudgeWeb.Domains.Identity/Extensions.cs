@@ -1,6 +1,8 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using JudgeWeb.Domains.Identity;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -25,6 +27,14 @@ namespace Microsoft.AspNetCore.Mvc
         public static IEndpointConventionBuilder RequireRoles(this IEndpointConventionBuilder builder, string roles)
         {
             return builder.RequireAuthorization(new AuthorizeAttribute { Roles = roles });
+        }
+
+        public static IdentityBuilder Fuck<TContext>(this IdentityBuilder builder) where TContext : DbContext
+        {
+            builder.Services.AddScoped<INewsStore, EntityFrameworkCoreNewsStore<TContext>>();
+            builder.Services.AddScoped<IStudentStore, EntityFrameworkCoreStudentStore<TContext>>();
+            builder.Services.AddScoped<ITeamManager, EntityFrameworkCoreTeamManager<TContext>>();
+            return builder;
         }
     }
 }

@@ -6,8 +6,8 @@
     ContestProblem[] probs = ViewBag.Problems;
     Dictionary<int, string> names = ViewBag.TeamsName;
     var dateFormat = System.Globalization.CultureInfo.GetCultureInfo(1033);
-    BoardQuery q = ViewBag.ScoreboardData; q = q ?? new BoardQuery();
-    var avp = q.Score?.Where(sc => sc.IsCorrectRestricted).Select(sc => sc.ProblemId).ToHashSet() ?? new HashSet<int>();
+    Team q = ViewBag.ScoreboardData; q = q ?? new Team();
+    var avp = q.ScoreCache?.Where(sc => sc.IsCorrectRestricted).Select(sc => sc.ProblemId).ToHashSet() ?? new HashSet<int>();
     Team team = ViewBag.Team; int? teamid = team?.TeamId;
 }
 

@@ -6,7 +6,7 @@ namespace JudgeWeb.Features.Scoreboard
 {
     public class SingleBoardViewModel : BoardViewModel
     {
-        public BoardQuery QueryInfo { get; set; }
+        public Team QueryInfo { get; set; }
 
         public TeamCategory Category { get; set; }
 
@@ -19,7 +19,7 @@ namespace JudgeWeb.Features.Scoreboard
         {
             var prob = new ScoreCellModel[Problems.Length];
 
-            foreach (var pp in QueryInfo.Score ?? Enumerable.Empty<ScoreCache>())
+            foreach (var pp in QueryInfo.ScoreCache ?? Enumerable.Empty<ScoreCache>())
             {
                 var p = Problems.FirstOrDefault(a => a.ProblemId == pp.ProblemId);
                 if (p == null) continue;
@@ -36,14 +36,14 @@ namespace JudgeWeb.Features.Scoreboard
 
             yield return new TeamModel
             {
-                TeamId = QueryInfo.Team.TeamId,
-                TeamName = QueryInfo.Team.TeamName,
+                TeamId = QueryInfo.TeamId,
+                TeamName = QueryInfo.TeamName,
                 Affiliation = QueryInfo.Affiliation.FormalName,
                 AffiliationId = QueryInfo.Affiliation.ExternalId,
                 Category = Category.Name,
                 CategoryColor = Category.Color,
-                Points = QueryInfo.Rank?.PointsRestricted ?? 0,
-                Penalty = QueryInfo.Rank?.TotalTimeRestricted ?? 0,
+                Points = QueryInfo.RankCache.SingleOrDefault()?.PointsRestricted ?? 0,
+                Penalty = QueryInfo.RankCache.SingleOrDefault()?.TotalTimeRestricted ?? 0,
                 ShowRank = true,
                 Problems = prob,
             };

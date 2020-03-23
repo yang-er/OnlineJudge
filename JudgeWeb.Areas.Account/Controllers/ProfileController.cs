@@ -1,7 +1,7 @@
 ﻿using JudgeWeb.Areas.Account.Models;
 using JudgeWeb.Data;
 using JudgeWeb.Domains.Identity;
-using JudgeWeb.Domains.Judgements;
+using JudgeWeb.Domains.Problems;
 using JudgeWeb.Features.Mailing;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -56,7 +56,7 @@ namespace JudgeWeb.Areas.Account.Controllers
         [HttpGet("{username}")]
         [AllowAnonymous]
         public async Task<IActionResult> Show(string username,
-            [FromServices] ISubmissionRepository subMgr)
+            [FromServices] ISubmissionStore subMgr)
         {
             var user = await UserManager.FindByNameAsync(username);
             if (user is null) return NotFound();

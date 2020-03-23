@@ -10,12 +10,12 @@ namespace JudgeWeb.Features.Scoreboard
 {
     public class XCPCRank : IRankingStrategy
     {
-        public IEnumerable<BoardQuery> SortByRule(IEnumerable<BoardQuery> source, bool isPublic)
+        public IEnumerable<Team> SortByRule(IEnumerable<Team> source, bool isPublic)
             => isPublic
-                ? source.OrderByDescending(a => a.Rank.PointsPublic)
-                    .ThenBy(a => a.Rank.TotalTimePublic)
-                : source.OrderByDescending(a => a.Rank.PointsRestricted)
-                    .ThenBy(a => a.Rank.TotalTimeRestricted);
+                ? source.OrderByDescending(a => a.RankCache.SingleOrDefault().PointsPublic)
+                    .ThenBy(a => a.RankCache.SingleOrDefault().TotalTimePublic)
+                : source.OrderByDescending(a => a.RankCache.SingleOrDefault().PointsRestricted)
+                    .ThenBy(a => a.RankCache.SingleOrDefault().TotalTimeRestricted);
 
 
         public async Task Accept(AppDbContext db, ScoreboardEventArgs args)

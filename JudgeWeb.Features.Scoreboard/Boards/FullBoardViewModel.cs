@@ -9,7 +9,7 @@ namespace JudgeWeb.Features.Scoreboard
     {
         public DateTimeOffset UpdateTime { get; set; }
 
-        public IEnumerable<BoardQuery> RankCache { get; set; }
+        public IEnumerable<Team> RankCache { get; set; }
 
         public IEnumerable<TeamAffiliation> Affiliations { get; set; }
 
@@ -24,8 +24,8 @@ namespace JudgeWeb.Features.Scoreboard
             cats2 = Categories.ToDictionary(t => t.CategoryId);
 
             var rt = RankCache
-                .Where(a => cats2.ContainsKey(a.Team.CategoryId))
-                .GroupBy(a => cats2[a.Team.CategoryId].SortOrder)
+                .Where(a => cats2.ContainsKey(a.CategoryId))
+                .GroupBy(a => cats2[a.CategoryId].SortOrder)
                 .OrderBy(g => g.Key);
 
             foreach (var g in rt)
@@ -39,7 +39,7 @@ namespace JudgeWeb.Features.Scoreboard
 
         private IEnumerable<TeamModel> GetViewModel(
             bool ispublic,
-            IEnumerable<BoardQuery> src,
+            IEnumerable<Team> src,
             ProblemStatisticsModel[] stat)
         {
             int rank = 0;
@@ -51,7 +51,7 @@ namespace JudgeWeb.Features.Scoreboard
 
             foreach (var item in src)
             {
-                int catid = item.Team.CategoryId;
+                int catid = item.CategoryId;
                 string catName = null;
                 if (!cats.Keys.Contains(catid))
                 {
@@ -59,8 +59,8 @@ namespace JudgeWeb.Features.Scoreboard
                     catName = cats2[catid].Name;
                 }
 
-                int point = ispublic ? item.Rank.PointsPublic : item.Rank.PointsRestricted;
-                int penalty = ispublic ? item.Rank.TotalTimePublic : item.Rank.TotalTimeRestricted;
+                int point = ispublic ? item.RankCache.SingleOrDefault().PointsPublic : item.RankCache.SingleOrDefault().PointsRestricted;
+                int penalty = ispublic ? item.RankCache.SingleOrDefault().TotalTimePublic : item.RankCache.SingleOrDefault().TotalTimeRestricted;
                 rank++;
                 if (last_point != point || last_penalty != penalty) last_rank = rank;
                 last_point = point;
@@ -68,7 +68,7 @@ namespace JudgeWeb.Features.Scoreboard
 
                 var prob = new ScoreCellModel[Problems.Length];
 
-                foreach (var pp in item.Score ?? Enumerable.Empty<ScoreCache>())
+                foreach (var pp in item.ScoreCache ?? Enumerable.Empty<ScoreCache>())
                 {
                     var p = Problems.FirstOrDefault(a => a.ProblemId == pp.ProblemId);
                     if (p == null) continue;
@@ -111,9 +111,9 @@ namespace JudgeWeb.Features.Scoreboard
 
                 yield return new TeamModel
                 {
-                    ContestId = IsPublic ? default(int?) : item.Team.ContestId,
-                    TeamId = item.Team.TeamId,
-                    TeamName = item.Team.TeamName,
+                    ContestId = IsPublic ? default(int?) : item.ContestId,
+                    TeamId = item.TeamId,
+                    TeamName = item.TeamName,
                     Affiliation = item.Affiliation.FormalName,
                     AffiliationId = item.Affiliation.ExternalId,
                     Category = catName,

@@ -1,11 +1,10 @@
 ﻿using JudgeWeb.Areas.Dashboard.Models;
 using JudgeWeb.Data;
+using JudgeWeb.Domains.Identity;
 using JudgeWeb.Features;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using System;
-using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -14,37 +13,17 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
     [Area("Dashboard")]
     [Authorize(Roles = "Administrator")]
     [Route("[area]/[controller]")]
+    [AuditPoint(AuditlogType.News)]
     public class NewsController : Controller3
     {
-        private Task AuditlogAsync(int nid, string act)
-        {
-            DbContext.Auditlogs.Add(new Auditlog
-            {
-                Action = act,
-                DataId = $"{nid}",
-                DataType = AuditlogType.News,
-                Time = DateTimeOffset.Now,
-                UserName = UserManager.GetUserName(User),
-            });
-
-            return DbContext.SaveChangesAsync();
-        }
+        private INewsStore Store { get; }
+        public NewsController(INewsStore store) => Store = store;
 
 
         [HttpGet]
         public async Task<IActionResult> List()
         {
-            var news = await DbContext.News
-                .Select(n => new News
-                {
-                    NewsId = n.NewsId,
-                    Title = n.Title,
-                    LastUpdate = n.LastUpdate,
-                    Active = n.Active,
-                })
-                .ToListAsync();
-
-            return View(news);
+            return View(await Store.ListAsync());
         }
 
 
@@ -52,15 +31,12 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
         [ValidateInAjax]
         public async Task<IActionResult> Delete(int nid)
         {
-            var desc = await DbContext.News
-                .Where(e => e.NewsId == nid)
-                .Select(e => e.Title)
-                .FirstOrDefaultAsync();
-            if (desc == null) return NotFound();
+            var news = await Store.FindAsync(nid);
+            if (news == null) return NotFound();
 
             return AskPost(
-                title: $"Delete news {nid} - \"{desc}\"",
-                message: $"You're about to delete news {nid} - \"{desc}\".\n" +
+                title: $"Delete news {nid} - \"{news.Title}\"",
+                message: $"You're about to delete news {nid} - \"{news.Title}\".\n" +
                     "Are you sure?",
                 area: "Dashboard", ctrl: "News", act: "Delete",
                 type: MessageType.Danger);
@@ -71,24 +47,12 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int nid, int inajax)
         {
-            var news = await DbContext.News
-                .Where(e => e.NewsId == nid)
-                .FirstOrDefaultAsync();
+            var news = await Store.FindAsync(nid);
             if (news == null) return NotFound();
 
-            DbContext.News.Remove(news);
-
-            try
-            {
-                await DbContext.SaveChangesAsync();
-                StatusMessage = $"News {nid} deleted successfully.";
-                await AuditlogAsync(nid, "deleted");
-            }
-            catch (DbUpdateException)
-            {
-                StatusMessage = $"Error deleting news {nid}.";
-            }
-
+            await Store.DeleteAsync(news);
+            StatusMessage = $"News {nid} deleted successfully.";
+            await HttpContext.AuditAsync("deleted", $"{nid}");
             return RedirectToAction(nameof(List));
         }
 
@@ -96,10 +60,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
         [HttpGet("{nid}/[action]")]
         public async Task<IActionResult> Edit(int nid)
         {
-            var news = await DbContext.News
-                .Where(n => n.NewsId == nid)
-                .Select(n => new { n.NewsId, n.Source, n.Active, n.Title })
-                .FirstOrDefaultAsync();
+            var news = await Store.FindAsync(nid);
             if (news is null) return NotFound();
 
             return View(new NewsEditModel
@@ -120,9 +81,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
         {
             if (model.NewsId != nid) return BadRequest();
 
-            var news = await DbContext.News
-                .Where(n => n.NewsId == nid)
-                .FirstOrDefaultAsync();
+            var news = await Store.FindAsync(nid);
             if (news is null) return NotFound();
 
             var document = markdownService.Parse(model.MarkdownSource);
@@ -136,9 +95,9 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
             news.Tree = Encoding.UTF8.GetBytes(tree);
             news.LastUpdate = DateTimeOffset.Now;
 
-            await DbContext.SaveChangesAsync();
+            await Store.UpdateAsync(news);
             StatusMessage = "News updated successfully.";
-            await AuditlogAsync(nid, "updated");
+            await HttpContext.AuditAsync("updated", $"{nid}");
             return RedirectToAction(nameof(Edit), new { nid });
         }
 
@@ -166,7 +125,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
             var html = markdownService.RenderAsHtml(document);
             var tree = markdownService.TocAsHtml(document);
 
-            var news = DbContext.News.Add(new News
+            var news = await Store.CreateAsync(new News
             {
                 Source = Encoding.UTF8.GetBytes(model.MarkdownSource),
                 Title = model.Title,
@@ -176,10 +135,9 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
                 Tree = Encoding.UTF8.GetBytes(tree),
             });
 
-            await DbContext.SaveChangesAsync();
             StatusMessage = "News created successfully.";
-            await AuditlogAsync(news.Entity.NewsId, "added");
-            return RedirectToAction("Edit", new { nid = news.Entity.NewsId });
+            await HttpContext.AuditAsync("added", $"{news.NewsId}");
+            return RedirectToAction("Edit", new { nid = news.NewsId });
         }
     }
 }

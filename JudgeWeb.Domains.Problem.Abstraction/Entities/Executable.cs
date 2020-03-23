@@ -34,5 +34,16 @@
         /// 可执行文件类型
         /// </summary>
         public string Type { get; set; }
+
+        public Executable() { }
+
+        public Executable(string id, string md5, int size, string description, string type)
+        {
+            ExecId = id;
+            Description = description;
+            Md5sum = md5;
+            Type = type;
+            ZipSize = size;
+        }
     }
 }

@@ -1,5 +1,4 @@
 ﻿using JudgeWeb.Data;
-using JudgeWeb.Domains.Judgements;
 using JudgeWeb.Features;
 using JudgeWeb.Features.Storage;
 using Microsoft.Extensions.FileProviders;
@@ -17,24 +16,22 @@ namespace JudgeWeb.Domains.Problems.Portion
     {
         private IMarkdownService Markdown { get; }
 
-        private IProblemFileRepository ProblemFile { get; }
-
         private IStaticFileRepository StaticFile { get; }
 
-        private IProblemStore Store { get; }
+        private IProblemFacade Facade { get; }
 
-        private ISubmissionRepository Submissions { get; }
+        private ISubmissionStore Submissions { get; }
 
         public KattisExportProvider(
-            IProblemStore store,
-            IProblemFileRepository io,
+            IProblemFacade facade,
+            IJudgementFacade submissions,
             IMarkdownService markdown,
             IStaticFileRepository io2)
         {
-            Store = store;
-            ProblemFile = io;
+            Facade = facade;
             StaticFile = io2;
             Markdown = markdown;
+            Submissions = submissions.Submissions;
         }
 
         private class ExportSubmission
@@ -65,15 +62,15 @@ namespace JudgeWeb.Domains.Problems.Portion
             return Task.CompletedTask;
         }
 
-        private async Task AttachTestcase(ZipArchive zip, int pid, Testcase tc)
+        private async Task AttachTestcase(ZipArchive zip, Problem prob, Testcase tc)
         {
             var prefix = $"data/{(tc.IsSecret ? "secret" : "sample")}/{tc.Rank}";
-            var localPrefix = $"p{pid}/t{tc.TestcaseId}";
+            var localPrefix = $"t{tc.TestcaseId}";
 
-            var inputFile = ProblemFile.GetFileInfo(localPrefix + ".in");
+            var inputFile = Facade.GetFile(prob, $"t{tc.TestcaseId}.in");
             using (var inputFile2 = inputFile.CreateReadStream())
                 await zip.CreateEntryFromStream(inputFile2, prefix + ".in");
-            var outputFile = ProblemFile.GetFileInfo(localPrefix + ".out");
+            var outputFile = Facade.GetFile(prob, $"t{tc.TestcaseId}.out");
             using (var outputFile2 = outputFile.CreateReadStream())
                 await zip.CreateEntryFromStream(outputFile2, prefix + ".ans");
             if (tc.Description != $"{tc.Rank}")
@@ -82,9 +79,9 @@ namespace JudgeWeb.Domains.Problems.Portion
                 zip.CreateEntryFromString($"{tc.Point}", prefix + ".point");
         }
 
-        private async Task AttachMarkdownFile(ZipArchive zip, int pid, string mdname)
+        private async Task AttachMarkdownFile(ZipArchive zip, Problem prob, string mdname)
         {
-            var file = ProblemFile.GetFileInfo($"p{pid}/{mdname}.md");
+            var file = Facade.GetFile(prob, $"{mdname}.md");
             if (!file.Exists) return;
             var mdContent = await file.ReadAsync();
             var news = await (Markdown, StaticFile).ExportWithImagesAsync(mdContent);
@@ -107,15 +104,15 @@ namespace JudgeWeb.Domains.Problems.Portion
 
         public async ValueTask<(Stream stream, string mime, string fileName)> ExportAsync(Problem problem)
         {
-            var testc = await Store.ListTestcasesAsync(problem.ProblemId);
+            var testc = await Facade.Testcases.ListAsync(problem.ProblemId);
 
             var execs = new List<Executable>();
             if (problem.CompareScript != "compare")
-                execs.Add(await Store.FindExecutableAsync(problem.CompareScript));
+                execs.Add(await Facade.Executables.FindAsync(problem.CompareScript));
             if (problem.RunScript != "run")
-                execs.Add(await Store.FindExecutableAsync(problem.RunScript));
+                execs.Add(await Facade.Executables.FindAsync(problem.RunScript));
 
-            var langs = (await Store.ListLanguagesAsync())
+            var langs = (await Facade.Languages.ListAsync())
                 .ToDictionary(l => l.Id, l => l.FileExtension);
 
             var subs = await Submissions.ListAsync(
@@ -133,11 +130,11 @@ namespace JudgeWeb.Domains.Problems.Portion
             using (var zip = new ZipArchive(memStream, ZipArchiveMode.Create, true))
             {
                 foreach (var tc in testc)
-                    await AttachTestcase(zip, problem.ProblemId, tc);
+                    await AttachTestcase(zip, problem, tc);
                 foreach (var sub in subs)
                     await AttachSubmission(zip, sub);
-                foreach (var st in IProblemStore.MarkdownFiles)
-                    await AttachMarkdownFile(zip, problem.ProblemId, st);
+                foreach (var st in IProblemFacade.MarkdownFiles)
+                    await AttachMarkdownFile(zip, problem, st);
                 foreach (var exec in execs)
                     await AttachExecutable(zip, problem.ProblemId, exec);
 

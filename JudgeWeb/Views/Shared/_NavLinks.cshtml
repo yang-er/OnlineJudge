@@ -2,27 +2,26 @@
 @using JudgeWeb.Data
 
 @inject SignInManager<User> SignInManager
-@inject UserManager UserManager
 
 <ul class="navbar-nav mr-auto">
     <li class="nav-item">
         <a class="nav-link" active-ctrl="Home" asp-area="Misc" asp-controller="Home" asp-action="Index">
-            <i class="fas fa-home d-md-none"></i> Home
+            <i class="fas fa-home"></i> Home
         </a>
     </li>
     <li class="nav-item">
         <a class="nav-link" active-ctrl="Problem" asp-area="Misc" asp-controller="Problem" asp-action="List" asp-route-pg="">
-            <i class="fas fa-book-open d-md-none"></i> Problems
+            <i class="fas fa-book-open"></i> Problems
         </a>
     </li>
     <li class="nav-item">
         <a class="nav-link" active-vd="Contest" asp-area="Misc" asp-controller="Contest" asp-action="List" asp-route-pg="">
-            <i class="fas fa-trophy d-md-none"></i> Contests
+            <i class="fas fa-trophy"></i> Contests
         </a>
     </li>
     <li class="nav-item">
         <a class="nav-link" active-vd="Gym" asp-area="Misc" asp-controller="Contest" asp-action="ListGyms" asp-route-pg="">
-            <i class="fas fa-rocket d-md-none"></i> Gyms
+            <i class="fas fa-rocket"></i> Gyms
         </a>
     </li>
 </ul>
@@ -37,10 +36,10 @@
     {
         <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" active-area="Account" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                <i class="fas fa-user d-md-none"></i> @UserManager.GetUserName(User)
+                <i class="fas fa-user d-md-none"></i> @User.GetUserName()
             </a>
             <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown">
-                <a class="dropdown-item disabled" href="#">@(UserManager.GetNickName(User) ?? UserManager.GetUserName(User))</a>
+                <a class="dropdown-item disabled" href="#">@User.GetNickName()</a>
 
                 <a class="dropdown-item d-none" href="#" id="notify_disable">
                     <i class="fas fa-bell-slash fa-fw"></i> Disable Notifications
@@ -50,7 +49,7 @@
                     <i class="fas fa-bell fa-fw"></i> Enable Notifications
                 </a>
 
-                <a class="dropdown-item" asp-area="Account" asp-controller="Profile" asp-action="Show" asp-route-username="@UserManager.GetUserName(User)">
+                <a class="dropdown-item" asp-area="Account" asp-controller="Profile" asp-action="Show" asp-route-username="@User.GetUserName()">
                     <i class="fas fa-address-card fa-fw"></i> Profile
                 </a>
 

@@ -15,7 +15,7 @@ namespace JudgeWeb.Features.Scoreboard
         /// <param name="source">原数据</param>
         /// <param name="isPublic">是否按公榜处理</param>
         /// <returns>排序后的结果</returns>
-        IEnumerable<BoardQuery> SortByRule(IEnumerable<BoardQuery> source, bool isPublic);
+        IEnumerable<Team> SortByRule(IEnumerable<Team> source, bool isPublic);
 
         /// <summary>
         /// 提交等待评测

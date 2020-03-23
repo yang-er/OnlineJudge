@@ -1,8 +1,9 @@
 ﻿using JudgeWeb.Areas.Dashboard.Models;
-using JudgeWeb.Data;
+using JudgeWeb.Domains.Contests;
+using JudgeWeb.Domains.Identity;
+using JudgeWeb.Domains.Problems;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -11,80 +12,61 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
     [Area("Dashboard")]
     [Authorize(Roles = "Administrator")]
     [Route("[area]/[controller]")]
+    [AuditPoint(AuditlogType.User)]
     public class UsersController : Controller3
     {
+        public UserManager UserManager { get; }
+
+        public UsersController(UserManager userManager)
+        {
+            UserManager = userManager;
+        }
+
+
         [HttpGet]
         public async Task<IActionResult> List(int page = 1)
         {
             if (page < 1) page = 1;
 
-            var users1 = await DbContext.Users
-                .OrderBy(u => u.Id)
-                .Skip((page - 1) * 100).Take(100)
-                .ToListAsync();
+            var (users1, total) = await UserManager.ListUsersAsync(page, 100);
             if (users1.Count == 0) return NotFound();
-
-            int min = users1.First().Id, max = users1.Last().Id;
-            var userRoles = await DbContext.UserRoles
-                .Where(ur => ur.UserId >= min && ur.UserId <= max)
-                .ToListAsync();
-
+            var userRoles = await UserManager.ListUserRolesAsync(users1.First().Id, users1.Last().Id);
             var users =
                 from u in users1
                 join ur in userRoles on u.Id equals ur.UserId into urs
                 select new { User = u, Roles = urs.ToArray() };
             
-            int total = await DbContext.Users.CountAsync();
-            var roles = await DbContext.Roles
-                .Where(r => r.ShortName != null)
-                .Select(r => new { r.Id, r.ShortName })
-                .ToDictionaryAsync(r => r.Id, r => r.ShortName);
-
+            var roles = await UserManager.ListNamedRolesAsync();
             ViewBag.CurrentPage = page;
-            ViewBag.TotalPage = (total + 99) / 100;
+            ViewBag.TotalPage = total;
 
             return View(users.Select(a => (
                 a.User,
                 a.Roles.Where(r => roles.ContainsKey(r.RoleId))
-                       .Select(ur => roles[ur.RoleId])
+                       .Select(ur => roles[ur.RoleId].Name)
                 )));
         }
 
 
         [HttpGet("{uid}")]
-        public async Task<IActionResult> Detail(int uid)
+        public async Task<IActionResult> Detail(int uid,
+            [FromServices] ISubmissionStore submissions,
+            [FromServices] IContestStore contests)
         {
-            var user = await DbContext.Users
-                .Where(u => u.Id == uid)
-                .FirstOrDefaultAsync();
+            var user = await UserManager.FindByIdAsync(uid);
             if (user == null) return NotFound();
 
-            var roleQuery =
-                from ur in DbContext.UserRoles
-                where ur.UserId == uid
-                join r in DbContext.Roles on ur.RoleId equals r.Id
-                select r;
+            ViewBag.Roles = await UserManager.ListRolesAsync(user);
 
-            var submitQuery =
-                from s in DbContext.Submissions
-                where s.ContestId == 0 && s.Author == uid
-                orderby s.SubmissionId descending
-                join j in DbContext.Judgings on new { s.SubmissionId, Active = true } equals new { j.SubmissionId, j.Active }
-                select new { s, j };
+            ViewBag.Submissions = await submissions.ListWithJudgingAsync(
+                pagination: (1, 100),
+                predicate: s => s.ContestId == 0 && s.Author == uid);
 
-            var teamQuery =
-                from tu in DbContext.TeamMembers
-                where tu.UserId == uid
-                join t in DbContext.Teams on new { tu.ContestId, tu.TeamId } equals new { t.ContestId, t.TeamId }
-                join c in DbContext.Contests on t.ContestId equals c.ContestId
-                join a in DbContext.TeamAffiliations on t.AffiliationId equals a.AffiliationId
-                join o in DbContext.TeamCategories on t.CategoryId equals o.CategoryId
-                select new { c, t, a, o };
+            ViewBag.Student = user.StudentId.HasValue
+                ? await UserManager.FindStudentAsync(user.StudentId.Value)
+                : null;
 
-            ViewBag.Roles = await roleQuery.ToListAsync();
-            ViewBag.Submissions = (await submitQuery.Take(100).ToListAsync()).Select(a => (a.s, a.j));
-            ViewBag.Teams = (await teamQuery.ToListAsync()).Select(a => (a.c, a.t, a.a, a.o));
-            ViewBag.Student = await DbContext.Students.Where(s => s.Id == user.StudentId).FirstOrDefaultAsync();
+            ViewBag.Teams = await contests.GetRegisteredContestWithDetailAsync(uid);
             return View(user);
         }
 
@@ -92,19 +74,11 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
         [HttpGet("{uid}/[action]")]
         public async Task<IActionResult> Edit(int uid)
         {
-            var user = await DbContext.Users
-                .Where(u => u.Id == uid)
-                .FirstOrDefaultAsync();
+            var user = await UserManager.FindByIdAsync(uid);
             if (user == null) return NotFound();
 
-            var hasRole = await DbContext.UserRoles
-                .Where(u => u.UserId == uid)
-                .Select(ur => ur.RoleId)
-                .ToArrayAsync();
-
-            var roles = await DbContext.Roles
-                .Where(r => r.ShortName != null)
-                .ToDictionaryAsync(r => r.Id);
+            var hasRole = await UserManager.ListUserRolesAsync(uid, uid);
+            var roles = await UserManager.ListNamedRolesAsync();
             ViewBag.Roles = roles;
 
             return View(new UserEditModel
@@ -113,7 +87,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
                 NickName = user.NickName,
                 UserId = user.Id,
                 UserName = user.UserName,
-                Roles = roles.Keys.Intersect(hasRole).ToArray()
+                Roles = hasRole.Select(ur => ur.RoleId).Intersect(roles.Keys).ToArray()
             });
         }
 
@@ -122,7 +96,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int uid, UserEditModel model)
         {
-            var user = await UserManager.FindByIdAsync($"{uid}");
+            var user = await UserManager.FindByIdAsync(uid);
             if (user == null) return NotFound();
 
             var msg = "";
@@ -148,14 +122,9 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
             }
 
             // checking roles
-            var hasRole = await DbContext.UserRoles
-                .Where(u => u.UserId == uid)
-                .Select(ur => ur.RoleId)
-                .ToArrayAsync();
-            var roles = await DbContext.Roles
-                .Where(r => r.ShortName != null)
-                .ToDictionaryAsync(r => r.Id);
-            hasRole = roles.Keys.Intersect(hasRole).ToArray();
+            var hasRoles = await UserManager.ListUserRolesAsync(uid, uid);
+            var roles = await UserManager.ListNamedRolesAsync();
+            var hasRole = hasRoles.Select(u => u.RoleId).Intersect(roles.Keys).ToArray();
             model.Roles = roles.Keys.Intersect(model.Roles ?? Enumerable.Empty<int>()).ToArray();
             if (UserManager.GetUserName(User) == user.UserName)
                 model.Roles = model.Roles.Append(-1).Distinct().ToArray();
@@ -163,22 +132,12 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
                 model.Roles.Except(hasRole).Select(i => roles[i].Name));
             var r2 = await UserManager.RemoveFromRolesAsync(user,
                 hasRole.Except(model.Roles).Select(i => roles[i].Name));
-            await UserManager.SlideExpirationAsync(user);
             if (!r1.Succeeded) msg += $"Error in adding roles: {r1.Errors.First().Description}.\n";
             if (!r2.Succeeded) msg += $"Error in removing roles: {r2.Errors.First().Description}.\n";
 
-            if (msg == "") msg = null;
+            if (string.IsNullOrWhiteSpace(msg)) msg = null;
             StatusMessage = msg ?? $"User u{uid} updated successfully.";
-
-            DbContext.Auditlogs.Add(new Auditlog
-            {
-                Action = "updated",
-                DataId = $"{uid}",
-                DataType = AuditlogType.User,
-                Time = System.DateTimeOffset.Now,
-                UserName = UserManager.GetUserName(User)
-            });
-
+            await HttpContext.AuditAsync("updated", $"{uid}");
             return RedirectToAction(nameof(Detail), new { uid });
         }
     }

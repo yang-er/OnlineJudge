@@ -1,4 +1,5 @@
 ﻿using JudgeWeb.Data;
+using JudgeWeb.Domains.Contests;
 using System;
 using System.Collections.Generic;
 
@@ -35,6 +36,11 @@ namespace JudgeWeb.Features.Scoreboard
             });
         }
 
+        public void JudgingFinished(int cid, DateTimeOffset time, int probid, int teamid, Judging judging)
+        {
+            throw new NotImplementedException();
+        }
+
         public void RefreshCache(Contest contest, DateTimeOffset now)
         {
             ScoreboardUpdateService.OnUpdateRequested(new ScoreboardEventArgs
@@ -51,7 +57,7 @@ namespace JudgeWeb.Features.Scoreboard
             });
         }
 
-        public IEnumerable<BoardQuery> SortBy(Contest contest, IEnumerable<BoardQuery> source, bool isPublic)
+        public IEnumerable<Team> SortBy(Contest contest, IEnumerable<Team> source, bool isPublic)
         {
             return SC[contest.RankingStrategy].SortByRule(source, isPublic);
         }
@@ -74,6 +80,11 @@ namespace JudgeWeb.Features.Scoreboard
                 SubmitTime = submission.Time,
                 TeamId = submission.Author,
             });
+        }
+
+        public void SubmissionCreated(int cid, Submission submission)
+        {
+            throw new NotImplementedException();
         }
     }
 }

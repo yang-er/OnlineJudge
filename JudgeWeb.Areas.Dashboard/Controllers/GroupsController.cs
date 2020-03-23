@@ -1,8 +1,8 @@
 ﻿using JudgeWeb.Areas.Dashboard.Models;
 using JudgeWeb.Data;
+using JudgeWeb.Domains.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,75 +17,28 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
     public class GroupsController : Controller3
     {
         private const int ItemPerPage = 50;
+        private IStudentStore Store { get; }
+        public GroupsController(IStudentStore store) => Store = store;
 
 
         [HttpGet]
-        public async Task<IActionResult> List(int page)
+        public async Task<IActionResult> List()
         {
-            if (page < 1) page = 1;
-            int total = await DbContext.Classes.CountAsync();
-            int totPage = (total - 1) / ItemPerPage + 1;
-            if (page > totPage) page = totPage;
-            ViewBag.Page = page;
-            ViewBag.TotalPage = totPage;
-
-            var model = await DbContext.Classes
-                .OrderBy(c => c.Id)
-                .Skip(ItemPerPage * (page - 1))
-                .Take(ItemPerPage)
-                .ToListAsync();
-
-            int start = model.FirstOrDefault()?.Id ?? 0;
-            int end = model.LastOrDefault()?.Id ?? 0;
-            var counting = await DbContext.ClassStudent
-                .Where(cs => cs.ClassId >= start && cs.ClassId <= end)
-                .GroupBy(cs => cs.ClassId)
-                .Select(g => new { g.Key, Count = g.Count() })
-                .ToDictionaryAsync(k => k.Key, v => v.Count);
-            model.ForEach(t => t.Count = counting.GetValueOrDefault(t.Id));
-
-            return View(model);
+            return View(await Store.ListClassAsync());
         }
 
 
         [HttpGet("{gid}")]
         public async Task<IActionResult> Detail(int gid, int page = 1)
         {
-            var model = await DbContext.Classes
-                .Where(tc => tc.Id == gid)
-                .FirstOrDefaultAsync();
+            var model = await Store.FindClassAsync(gid);
             if (model == null) return NotFound();
 
-            if (page < 1) page = 1;
-            int total = await DbContext.ClassStudent
-                .Where(c => c.ClassId == gid)
-                .CountAsync();
-            int totPage = (total - 1) / ItemPerPage + 1;
-            if (page > totPage) page = totPage;
+            if (page < 1) return BadRequest();
+            var (stus, totPage) = await Store.ListStudentsAsync(page, ItemPerPage);
             ViewBag.Page = page;
             ViewBag.TotalPage = totPage;
-
-            var stuQuery =
-                from gs in DbContext.ClassStudent
-                where gs.ClassId == gid
-                join s in DbContext.Students on gs.StudentId equals s.Id
-                join u in DbContext.Users on s.Id equals u.StudentId
-                into uu from u in uu.DefaultIfEmpty()
-                orderby s.Id ascending
-                select new Student
-                {
-                    Id = s.Id,
-                    IsVerified = u.StudentVerified,
-                    Name = s.Name,
-                    Email = u.StudentEmail,
-                    UserId = u.Id,
-                    UserName = u.UserName,
-                };
-
-            ViewBag.Students = await stuQuery
-                .Skip(ItemPerPage * (page - 1))
-                .Take(ItemPerPage)
-                .ToListAsync();
+            ViewBag.Students = stus;
             return View(model);
         }
 
@@ -102,9 +55,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
         [ValidateInAjax]
         public async Task<IActionResult> Add(int gid)
         {
-            var model = await DbContext.Classes
-                .Where(tc => tc.Id == gid)
-                .FirstOrDefaultAsync();
+            var model = await Store.FindClassAsync(gid);
             if (model == null) return NotFound();
             return Window(new AddStudentsBatchModel());
         }
@@ -115,9 +66,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Add(int gid, AddStudentsBatchModel model)
         {
-            var classes = await DbContext.Classes
-                .Where(tc => tc.Id == gid)
-                .FirstOrDefaultAsync();
+            var classes = await Store.FindClassAsync(gid);
             if (classes == null) return NotFound();
 
             var stus = model.Students.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
@@ -137,10 +86,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
                 }
             }
 
-            var intersects = await DbContext.Students
-                .Where(s => opts.Contains(s.Id))
-                .Select(s => s.Id)
-                .ToListAsync();
+            var intersects = await Store.CheckStudentIdAsync(opts);
 
             foreach (var stuId in opts.Except(intersects))
             {
@@ -148,24 +94,18 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
                 ModelState.AddModelError("xys::parseError", $"Student {stuId} not found.");
             }
 
-            await DbContext.ClassStudent.MergeAsync(
-                sourceTable: intersects.Select(a => new { gid, a }),
-                targetKey: f => new { gid = f.ClassId, sid = f.StudentId },
-                sourceKey: f => new { f.gid, sid = f.a },
-                updateExpression: null,
-                insertExpression: s => new ClassStudent { ClassId = s.gid, StudentId = s.a },
-                delete: false);
+            await Store.MergeClassStudentAsync(gid, intersects);
 
             if (ModelState.IsValid)
             {
-                StatusMessage = $"{intersects.Count} students has been added.";
+                StatusMessage = $"{intersects.Length} students has been added.";
                 return RedirectToAction(nameof(Detail));
             }
             else
             {
                 ModelState.SetModelValue("Students", sb.ToString(), sb.ToString());
                 model.Students = sb.ToString();
-                ModelState.AddModelError("xys::other", $"Other {intersects.Count} students has been added.");
+                ModelState.AddModelError("xys::other", $"Other {intersects.Length} students has been added.");
                 return Window(model);
             }
         }
@@ -181,8 +121,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
             if (!ModelState.IsValid) return Window(model);
 
             model.Id = 0;
-            DbContext.Classes.Add(model);
-            await DbContext.SaveChangesAsync();
+            await Store.CreateAsync(model);
             return RedirectToAction(nameof(Detail), new { gid = model.Id });
         }
 
@@ -191,9 +130,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
         [ValidateInAjax]
         public async Task<IActionResult> Delete(int gid)
         {
-            var model = await DbContext.Classes
-                .Where(s => s.Id == gid)
-                .FirstOrDefaultAsync();
+            var model = await Store.FindClassAsync(gid);
             if (model == null) return NotFound();
 
             return AskPost(
@@ -208,13 +145,10 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int gid, bool post = true)
         {
-            var group = await DbContext.Classes
-                .Where(s => s.Id == gid)
-                .FirstOrDefaultAsync();
+            var group = await Store.FindClassAsync(gid);
             if (group == null) return NotFound();
 
-            DbContext.Classes.Remove(group);
-            await DbContext.SaveChangesAsync();
+            await Store.DeleteAsync(group);
             return RedirectToAction(nameof(List));
         }
 
@@ -223,9 +157,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
         [ValidateInAjax]
         public async Task<IActionResult> Kick(int gid, int stuid)
         {
-            var model = await DbContext.Classes
-                .Where(s => s.Id == gid)
-                .FirstOrDefaultAsync();
+            var model = await Store.FindClassAsync(gid);
             if (model == null) return NotFound();
 
             return AskPost(
@@ -240,10 +172,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Kick(int gid, int stuid, bool post = true)
         {
-            int count = await DbContext.ClassStudent
-                .Where(cs => cs.ClassId == gid && cs.StudentId == stuid)
-                .BatchDeleteAsync();
-            if (count > 0)
+            if (await Store.ClassKickAsync(gid, stuid))
                 StatusMessage = $"Kicked student {stuid} from group g{gid}";
             return RedirectToAction(nameof(Detail));
         }

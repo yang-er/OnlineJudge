@@ -1,11 +1,10 @@
 ﻿using JudgeWeb.Areas.Dashboard.Models;
 using JudgeWeb.Data;
+using JudgeWeb.Domains.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace JudgeWeb.Areas.Dashboard.Controllers
@@ -13,8 +12,11 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
     [Area("Dashboard")]
     [Authorize(Roles = "Administrator")]
     [Route("[area]/[controller]")]
+    [AuditPoint(AuditlogType.User)]
     public class StudentsController : Controller3
     {
+        private UserManager UserManager { get; }
+        public StudentsController(UserManager um) => UserManager = um;
         const int ItemPerPage = 50;
 
 
@@ -22,31 +24,9 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
         public async Task<IActionResult> List(int page = 1)
         {
             if (page < 1) page = 1;
-            int total = await DbContext.Students.CountAsync();
-            int totPage = (total - 1) / ItemPerPage + 1;
-            if (page > totPage) page = totPage;
+            var (model, totPage) = await UserManager.ListStudentsAsync(page, ItemPerPage);
             ViewBag.Page = page;
             ViewBag.TotalPage = totPage;
-
-            var stuQuery =
-                from s in DbContext.Students
-                join u in DbContext.Users on s.Id equals u.StudentId
-                into uu from u in uu.DefaultIfEmpty()
-                orderby s.Id ascending
-                select new Student
-                {
-                    Id = s.Id,
-                    IsVerified = u.StudentVerified,
-                    Name = s.Name,
-                    Email = u.StudentEmail,
-                    UserId = u.Id,
-                    UserName = u.UserName,
-                };
-
-            var model = await stuQuery
-                .Skip(ItemPerPage * (page - 1))
-                .Take(ItemPerPage)
-                .ToListAsync();
             return View(model);
         }
 
@@ -55,18 +35,14 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
         [ValidateInAjax]
         public async Task<IActionResult> Unlink(int page, int stuid)
         {
-            var user = await DbContext.Users
-                .Where(u => u.StudentId == stuid)
-                .Select(u => new { u.Id, u.UserName })
-                .FirstOrDefaultAsync();
-
+            var user = await UserManager.FindByStudentIdAsync(stuid);
             if (user == null) return NotFound();
 
             return AskPost(
                 title: $"Unlink student {stuid}",
                 message: $"Are you sure to unlink student {stuid} with {user.UserName} (u{user.Id})?",
                 area: "Dashboard", ctrl: "Students", act: "Unlink",
-                routeValues: new Dictionary<string, string> { ["page"] = $"{page}" },
+                routeValues: new { page },
                 type: MessageType.Warning);
         }
 
@@ -75,9 +51,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Unlink(int page, int stuid, bool post = true)
         {
-            var user = await DbContext.Users
-                .Where(u => u.StudentId == stuid)
-                .FirstOrDefaultAsync();
+            var user = await UserManager.FindByStudentIdAsync(stuid);
             if (user == null) return NotFound();
 
             user.StudentEmail = null;
@@ -85,8 +59,8 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
             user.StudentVerified = false;
             await UserManager.UpdateAsync(user);
             await UserManager.RemoveFromRoleAsync(user, "Student");
-            await UserManager.SlideExpirationAsync(user);
             StatusMessage = $"Student ID {stuid} has been unlinked with u{user.Id}.";
+            await HttpContext.AuditAsync("unlinked", $"u{user.Id}", user == null ? null : $"student s{stuid}");
             return RedirectToAction(nameof(List), new { page });
         }
 
@@ -95,16 +69,14 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
         [ValidateInAjax]
         public async Task<IActionResult> Delete(int page, int stuid)
         {
-            var stuId = await DbContext.Students
-                .Where(s => s.Id == stuid)
-                .FirstOrDefaultAsync();
+            var stuId = await UserManager.FindStudentAsync(stuid);
             if (stuId == null) return NotFound();
 
             return AskPost(
                 title: $"Delete student {stuid}",
                 message: $"Are you sure to delete student {stuid}?",
                 area: "Dashboard", ctrl: "Students", act: "Delete",
-                routeValues: new Dictionary<string, string> { ["page"] = $"{page}" },
+                routeValues: new { page },
                 type: MessageType.Warning);
         }
 
@@ -113,14 +85,10 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int page, int stuid, bool post = true)
         {
-            var stuId = await DbContext.Students
-                .Where(s => s.Id == stuid)
-                .FirstOrDefaultAsync();
+            var stuId = await UserManager.FindStudentAsync(stuid);
             if (stuId == null) return NotFound();
 
-            var user = await DbContext.Users
-                .Where(u => u.StudentId == stuid)
-                .FirstOrDefaultAsync();
+            var user = await UserManager.FindByStudentIdAsync(stuid);
 
             if (user != null)
             {
@@ -129,11 +97,10 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
                 user.StudentVerified = false;
                 await UserManager.UpdateAsync(user);
                 await UserManager.RemoveFromRoleAsync(user, "Student");
-                await UserManager.SlideExpirationAsync(user);
             }
 
-            DbContext.Students.Remove(stuId);
-            await DbContext.SaveChangesAsync();
+            await UserManager.DeleteStudentAsync(stuId);
+            await HttpContext.AuditAsync("deleted", $"student s{stuid}", user == null ? null : $"unlink u{user.Id}");
             StatusMessage = $"Student ID {stuid} has been removed.";
             return RedirectToAction(nameof(List), new { page });
         }
@@ -143,14 +110,10 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
         [ValidateInAjax]
         public async Task<IActionResult> MarkVerified(int page, int stuid)
         {
-            var stuId = await DbContext.Students
-                .Where(s => s.Id == stuid)
-                .FirstOrDefaultAsync();
+            var stuId = await UserManager.FindStudentAsync(stuid);
             if (stuId == null) return NotFound();
 
-            var user = await DbContext.Users
-                .Where(u => u.StudentId == stuid)
-                .FirstOrDefaultAsync();
+            var user = await UserManager.FindByStudentIdAsync(stuid);
             if (user == null) return NotFound();
             
             if (!user.StudentVerified)
@@ -158,7 +121,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
                 user.StudentVerified = true;
                 await UserManager.UpdateAsync(user);
                 await UserManager.AddToRoleAsync(user, "Student");
-                await UserManager.SlideExpirationAsync(user);
+                await HttpContext.AuditAsync("verified", $"student s{stuid}", user == null ? null : $"to u{user.Id}");
             }
 
             StatusMessage = $"Marked {user.UserName} (u{user.Id}) as verified student.";
@@ -181,6 +144,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
         {
             var stus = model.Students.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
             var adds = new List<Student>();
+            var ints = new HashSet<int>();
 
             foreach (var item in stus)
             {
@@ -189,20 +153,17 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
                     ModelState.AddModelError("xys::parseError2", $"Unrecognized token {item.Trim()}.");
                 if (!int.TryParse(ofs[0], out int stuid))
                     ModelState.AddModelError("xys::parseError", $"Unrecognized number token {ofs[0]}.");
+                else if (ints.Contains(stuid))
+                    ModelState.AddModelError("xys::parseError3", $"Duplicate student id {stuid}.");
                 else
                     adds.Add(new Student { Id = stuid, Name = ofs[1] });
             }
 
             if (!ModelState.IsValid) return Window(model);
 
-            await DbContext.Students.MergeAsync(
-                sourceTable: adds.Select(a => new { a.Id, a.Name }),
-                targetKey: a => a.Id,
-                sourceKey: a => a.Id,
-                updateExpression: (t, s) => new Student { Name = s.Name },
-                insertExpression: s => new Student { Id = s.Id, Name = s.Name },
-                delete: false);
-
+            int rows = await UserManager.MergeStudentListAsync(adds);
+            await HttpContext.AuditAsync("merge", "students");
+            StatusMessage = $"{rows} students updated or added.";
             return RedirectToAction(nameof(List), new { page = 1 });
         }
     }

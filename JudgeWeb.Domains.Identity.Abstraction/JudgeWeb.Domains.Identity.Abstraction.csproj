@@ -17,4 +17,8 @@
     <PackageReference Include="Microsoft.Extensions.Identity.Stores" Version="3.1.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\JudgeWeb.Features.Extensions\JudgeWeb.Features.Extensions.csproj" />
+  </ItemGroup>
+
 </Project>

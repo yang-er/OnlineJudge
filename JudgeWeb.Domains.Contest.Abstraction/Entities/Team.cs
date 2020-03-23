@@ -49,9 +49,19 @@ namespace JudgeWeb.Data
         public string Location { get; set; }
 
         /// <summary>
-        /// 归属组织
+        /// 比赛导航属性
+        /// </summary>
+        public Contest Contest { get; }
+
+        /// <summary>
+        /// 归属组织导航属性
         /// </summary>
         public TeamAffiliation Affiliation { get; }
+
+        /// <summary>
+        /// 比赛类别导航属性
+        /// </summary>
+        public TeamCategory Category { get; }
 
         /// <summary>
         /// 排名缓存

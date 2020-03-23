@@ -1,6 +1,7 @@
 ﻿using JudgeWeb.Areas.Contest.Models;
 using JudgeWeb.Data;
 using JudgeWeb.Data.Api;
+using JudgeWeb.Domains.Contests;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;

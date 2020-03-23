@@ -1,5 +1,8 @@
 ﻿using idunno.Authentication.Basic;
 using JudgeWeb.Data;
+using JudgeWeb.Domains.Identity;
+using JudgeWeb.Domains.Identity.Providers;
+using JudgeWeb.Domains.Problems;
 using JudgeWeb.Features;
 using JudgeWeb.Features.Mailing;
 using JudgeWeb.Features.OjUpdate;
@@ -84,6 +87,7 @@ namespace JudgeWeb
                 .AddEntityFrameworkStores<AppDbContext>()
                 .AddUserManager<UserManager>()
                 .AddDefaultTokenProviders()
+                .Fuck<AppDbContext>()
                 .UseClaimsPrincipalFactory<UserWithNickNameClaimsPrincipalFactory, User>()
                 .AddTokenProvider<Email2TokenProvider>("Email2");
 
@@ -113,10 +117,12 @@ namespace JudgeWeb
             services.AddEmailSender()
                 .Bind(Configuration.GetSection("SendGrid"));
 
-            services.AddOjUpdateService(
+            services.AddOjUpdateService<AppDbContext>(
                 Environment.IsDevelopment() ? 24 * 7 * 60 : 3 * 24 * 60);
             services.AddHostedService<ArchiveCacheService>();
             services.AddScoreboard();
+
+            services.AddProblemDomain<AppDbContext>();
 
             services.AddProblemRepository();
             services.AddMarkdown();

@@ -1,7 +1,6 @@
 ﻿using JudgeWeb.Areas.Polygon.Models;
 using JudgeWeb.Data;
 using JudgeWeb.Domains.Problems;
-using JudgeWeb.Features.Storage;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -11,18 +10,13 @@ namespace JudgeWeb.Areas.Polygon.Controllers
 {
     [Area("Polygon")]
     [Route("[area]/{pid}/[controller]")]
+    [AuditPoint(AuditlogType.Testcase)]
     public class TestcasesController : Controller3
     {
-        private IProblemFileRepository Files { get; }
-
-        public TestcasesController(IProblemStore db, IProblemFileRepository io)
-            : base(db) => Files = io;
-
-
         [HttpGet]
         public async Task<IActionResult> Testcases(int pid)
         {
-            ViewBag.Testcases = await Store.ListTestcasesAsync(pid);
+            ViewBag.Testcases = await Facade.Testcases.ListAsync(pid);
             return View(Problem);
         }
 
@@ -31,7 +25,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
         [ValidateInAjax]
         public async Task<IActionResult> Edit(int pid, int tid)
         {
-            var tc = await Store.FindTestcaseAsync(pid, tid);
+            var tc = await Facade.Testcases.FindAsync(pid, tid);
             if (tc == null) return NotFound();
 
             ViewData["pid"] = pid;
@@ -56,7 +50,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
         {
             try
             {
-                var last = await Store.FindTestcaseAsync(pid, tid);
+                var last = await Facade.Testcases.FindAsync(pid, tid);
                 if (last == null) return NotFound();
 
                 (byte[], string)? input = null, output = null;
@@ -69,32 +63,22 @@ namespace JudgeWeb.Areas.Polygon.Controllers
                 {
                     last.Md5sumInput = input.Value.Item2;
                     last.InputLength = input.Value.Item1.Length;
-                    await Files.WriteBinaryAsync($"p{pid}/t{tid}.in", input.Value.Item1);
+                    await Facade.WriteFileAsync(Problem, $"t{tid}.in", input.Value.Item1);
                 }
 
                 if (output.HasValue)
                 {
                     last.Md5sumOutput = output.Value.Item2;
                     last.OutputLength = output.Value.Item1.Length;
-                    await Files.WriteBinaryAsync($"p{pid}/t{tid}.out", output.Value.Item1);
+                    await Facade.WriteFileAsync(Problem, $"t{tid}.out", output.Value.Item1);
                 }
 
                 last.Description = model.Description ?? last.Description;
                 last.IsSecret = model.IsSecret;
                 last.Point = model.Point;
-                await Store.UpdateAsync(last);
-                
-                /*
-                DbContext.Auditlogs.Add(new Auditlog
-                {
-                    UserName = User.GetUserName(),
-                    Time = DateTimeOffset.Now,
-                    DataId = $"{last.TestcaseId}",
-                    Action = "modified",
-                    DataType = AuditlogType.Testcase,
-                });
-                */
+                await Facade.Testcases.UpdateAsync(last);
 
+                await HttpContext.AuditAsync("modified", $"{last.TestcaseId}");
                 StatusMessage = $"Testcase t{tid} updated successfully.";
                 return RedirectToAction(nameof(Testcases));
             }
@@ -134,9 +118,9 @@ namespace JudgeWeb.Areas.Polygon.Controllers
             {
                 var input = await model.InputContent.ReadAsync();
                 var output = await model.OutputContent.ReadAsync();
-                int rk = await Store.CountTestcaseAsync(Problem);
+                int rk = await Facade.Testcases.CountAsync(Problem);
 
-                var e = await Store.CreateAsync(new Testcase
+                var e = await Facade.Testcases.CreateAsync(new Testcase
                 {
                     Description = model.Description ?? "1",
                     IsSecret = model.IsSecret,
@@ -151,19 +135,9 @@ namespace JudgeWeb.Areas.Polygon.Controllers
 
                 int tid = e.TestcaseId;
 
-                /*
-                DbContext.Auditlogs.Add(new Auditlog
-                {
-                    UserName = User.GetUserName(),
-                    DataType = AuditlogType.Testcase,
-                    DataId = $"{e.TestcaseId}",
-                    Action = "modified",
-                    Time = DateTimeOffset.Now,
-                });
-                */
-
-                await Files.WriteBinaryAsync($"p{pid}/t{tid}.in", input.Item1);
-                await Files.WriteBinaryAsync($"p{pid}/t{tid}.out", output.Item1);
+                await Facade.WriteFileAsync(Problem, $"t{tid}.in", input.Item1);
+                await Facade.WriteFileAsync(Problem, $"t{tid}.out", output.Item1);
+                await HttpContext.AuditAsync("modified", $"{tid}");
                 StatusMessage = $"Testcase t{tid} created successfully.";
                 return RedirectToAction(nameof(Testcases));
             }
@@ -195,10 +169,10 @@ namespace JudgeWeb.Areas.Polygon.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int pid, int tid)
         {
-            var tc = await Store.FindTestcaseAsync(pid, tid);
+            var tc = await Facade.Testcases.FindAsync(pid, tid);
             if (tc == null) return NotFound();
 
-            int dts = await Store.DeleteAsync(tc);
+            int dts = await Facade.Testcases.CascadeDeleteAsync(tc);
             StatusMessage = dts < 0
                 ? "Error occurred during the deletion."
                 : $"Testcase {tid} with {dts} runs deleted.";
@@ -212,7 +186,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
             bool up = false;
             if (direction == "up") up = true;
             else if (direction != "down") return NotFound();
-            await Store.ChangeTestcaseRankAsync(pid, tid, up);
+            await Facade.Testcases.ChangeRankAsync(pid, tid, up);
             return RedirectToAction(nameof(Testcases));
         }
 
@@ -224,7 +198,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
             else if (filetype == "output") filetype = "out";
             else return NotFound();
 
-            var fileInfo = Files.GetFileInfo($"p{pid}/t{tid}.{filetype}");
+            var fileInfo = Facade.GetFile(Problem, $"t{tid}.{filetype}");
             if (!fileInfo.Exists)
                 return NotFound();
 

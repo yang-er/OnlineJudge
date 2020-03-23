@@ -1,6 +1,6 @@
 ﻿@model SingleBoardViewModel
 @{
-    var team = Model.QueryInfo.Team;
+    var team = Model.QueryInfo;
     var org = Model.Category;
     var aff = Model.QueryInfo.Affiliation;
     IEnumerable<SubmissionViewModel> submissions = ViewBag.Submissions;

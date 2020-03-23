@@ -15,25 +15,12 @@ namespace JudgeWeb.Domains.Identity
         }
     }
 
-    public class EntityFrameworkCoreNewsStore : INewsStore
+    public class EntityFrameworkCoreNewsStore : INewsStore, ICrudRepositoryImpl<News>
     {
         public DbContext Context { get; }
         protected EntityFrameworkCoreNewsStore(DbContext context) => Context = context;
 
         public DbSet<News> News => Context.Set<News>();
-
-        public async Task<News> CreateAsync(News news)
-        {
-            News.Add(news);
-            await Context.SaveChangesAsync();
-            return news;
-        }
-
-        public Task DeleteAsync(News news)
-        {
-            News.Remove(news);
-            return Context.SaveChangesAsync();
-        }
 
         public Task<News> FindAsync(int newid)
         {
@@ -60,12 +47,6 @@ namespace JudgeWeb.Domains.Identity
                 LastUpdate = n.LastUpdate,
             })
             .ToListAsync();
-        }
-
-        public Task UpdateAsync(News news)
-        {
-            News.Update(news);
-            return Context.SaveChangesAsync();
         }
     }
 }

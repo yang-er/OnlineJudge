@@ -17,7 +17,7 @@ namespace JudgeWeb.Domains.Contests
         }
     }
 
-    public class EntityFrameworkCoreContestStore : IContestStore
+    public class EntityFrameworkCoreContestStore : IContestStore, ICrudRepositoryImpl<Contest>
     {
         public DbContext Context { get; }
 
@@ -73,6 +73,23 @@ namespace JudgeWeb.Domains.Contests
                 .Select(t => t.ContestId)
                 .ToArrayAsync();
             return members.ToHashSet();
+        }
+
+        public Task<List<TeamMember>> GetRegisteredContestWithDetailAsync(int uid)
+        {
+            return Members.Where(m => m.UserId == uid)
+                .Include(m => m.Team)
+                    .ThenInclude(m => m.Contest)
+                .Include(m => m.Team)
+                    .ThenInclude(m => m.Affiliation)
+                .Include(m => m.Team)
+                    .ThenInclude(m => m.Category)
+                .ToListAsync();
+        }
+
+        public Task<List<Contest>> ListAsync()
+        {
+            return Contests.ToListAsync();
         }
     }
 }

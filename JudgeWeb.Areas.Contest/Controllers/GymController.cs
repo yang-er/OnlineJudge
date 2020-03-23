@@ -1,5 +1,6 @@
 ﻿using JudgeWeb.Areas.Contest.Models;
 using JudgeWeb.Data;
+using JudgeWeb.Domains.Contests;
 using JudgeWeb.Features.Storage;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -100,7 +101,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 {
                     var board = await DbContext.LoadScoreboardAsync(cid);
                     var boardQuery = board.Data.GetValueOrDefault(Team.TeamId);
-                    if (!boardQuery.Score.Any(sc => sc.ProblemId == model.Problem.ProblemId && sc.IsCorrectRestricted))
+                    if (!boardQuery.ScoreCache.Any(sc => sc.ProblemId == model.Problem.ProblemId && sc.IsCorrectRestricted))
                         return Forbid();
                 }
                 else if (Contest.StatusAvaliable == 0)
@@ -167,10 +168,10 @@ namespace JudgeWeb.Areas.Contest.Controllers
             if (Team != null) return NotFound();
             int uid = int.Parse(UserManager.GetUserId(User));
             var teamQuery =
-                from ttu in UserManager.TrainingTeamUsers
+                from ttu in DbContext.TrainingTeamUsers
                 where ttu.UserId == uid && ttu.Accepted == true
-                join t in UserManager.TrainingTeams on ttu.TrainingTeamId equals t.TrainingTeamId
-                join tu in UserManager.TrainingTeamUsers on t.TrainingTeamId equals tu.TrainingTeamId
+                join t in DbContext.TrainingTeams on ttu.TrainingTeamId equals t.TrainingTeamId
+                join tu in DbContext.TrainingTeamUsers on t.TrainingTeamId equals tu.TrainingTeamId
                 where tu.Accepted == true
                 join u in UserManager.Users on tu.UserId equals u.Id
                 select new { t.TeamName, t.TrainingTeamId, tu.UserId, u.UserName };

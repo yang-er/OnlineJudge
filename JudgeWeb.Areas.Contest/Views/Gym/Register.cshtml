@@ -1,5 +1,4 @@
 ﻿@model GymRegisterModel
-@inject UserManager UserManager
 @{
     ViewData["Title"] = "Register";
     Contest ctx = ViewBag.Contest;
@@ -73,7 +72,7 @@ If you register as practice, the copyrights for shared codes belongs to its writ
                 }
             }
             $('.sel-user').attr('checked', true);
-            $('#sel-user@(UserManager.GetUserId(User))').attr('disabled', true);
+            $('#sel-user@(User.GetUserId())').attr('disabled', true);
         });
 
         $('#individual').change(function () { $('#team-selection').hide(); });

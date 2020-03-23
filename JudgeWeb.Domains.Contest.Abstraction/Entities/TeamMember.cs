@@ -21,5 +21,10 @@
         /// 是否为临时账号
         /// </summary>
         public bool Temporary { get; set; }
+
+        /// <summary>
+        /// 队伍信息导航属性
+        /// </summary>
+        public Team Team { get; set; }
     }
 }

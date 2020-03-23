@@ -12,6 +12,7 @@ namespace JudgeWeb.Areas.Api.Controllers
     [Authorize]
     [Route("api/[controller]/[action]")]
     [Produces("application/json")]
+    [AuditPoint(AuditlogType.Attachment)]
     public class StaticController : ControllerBase
     {
         [HttpPost]
@@ -31,18 +32,20 @@ namespace JudgeWeb.Areas.Api.Controllers
             if (!authorized) return new ObjectResult(new { success = 0, message = "无权限访问。" });
 
             // upload files
-            string fileName;
+            string fileName, fileNameFull;
             do
             {
                 var ext = Path.GetExtension(formFile.FileName);
                 var guid = Guid.NewGuid().ToString("N").Substring(0, 16);
-                fileName = $"images/problem/{type}{id}.{guid}{ext}";
+                fileName = $"{type}{id}.{guid}{ext}";
+                fileNameFull = "images/problem/" + fileName;
             }
-            while (io.GetFileInfo(fileName).Exists);
+            while (io.GetFileInfo(fileNameFull).Exists);
 
-            using (var dest = io.OpenWrite(fileName))
+            using (var dest = io.OpenWrite(fileNameFull))
                 await formFile.CopyToAsync(dest);
-            return new ObjectResult(new { success = 1, url = "/" + fileName });
+            await HttpContext.AuditAsync("upload", fileName);
+            return new ObjectResult(new { success = 1, url = "/" + fileNameFull });
         }
     }
 }

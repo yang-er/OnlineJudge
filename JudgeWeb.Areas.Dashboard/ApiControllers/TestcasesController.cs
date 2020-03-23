@@ -1,14 +1,10 @@
 ﻿using JudgeWeb.Areas.Api.Models;
-using JudgeWeb.Data;
-using JudgeWeb.Features.Storage;
+using JudgeWeb.Domains.Problems;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using System;
 using System.Buffers;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -25,24 +21,17 @@ namespace JudgeWeb.Areas.Api.Controllers
     [Produces("application/json")]
     public class TestcasesController : ControllerBase
     {
-        /// <summary>
-        /// 数据库上下文
-        /// </summary>
-        AppDbContext DbContext { get; }
+        private ITestcaseStore Testcases { get; }
 
-        /// <summary>
-        /// 构建控制器。
-        /// </summary>
-        /// <param name="rdbc">数据库上下文</param>
-        public TestcasesController(AppDbContext rdbc)
-        {
-            DbContext = rdbc;
-        }
+        private IJudgingStore Judgings { get; }
 
-        /// <summary>
-        /// Json返回空字符串
-        /// </summary>
         private JsonResult JsonEmpty() => new JsonResult("");
+
+        public TestcasesController(IProblemFacade facade, IJudgementFacade facade2)
+        {
+            Testcases = facade.Testcases;
+            Judgings = facade2.Judgings;
+        }
 
 
         /// <summary>
@@ -53,28 +42,23 @@ namespace JudgeWeb.Areas.Api.Controllers
         public async Task<ActionResult<TestcaseToJudge>> NextToJudge(int id)
         {
             // 先获取当前的评测信息
-            var statusQuery =
-                from j in DbContext.Judgings
-                where j.JudgingId == id && j.Status == Verdict.Running
-                join s in DbContext.Submissions on j.SubmissionId equals s.SubmissionId
-                join p in DbContext.Problems on s.ProblemId equals p.ProblemId
-                select new { j.JudgingId, s.ProblemId, j.FullTest, p.AllowJudge };
-            var stat = await statusQuery.FirstOrDefaultAsync();
+            var stats = await Judgings.ListAsync(
+                predicate: j => j.JudgingId == id && j.Status == Verdict.Running,
+                selector: j => new
+                {
+                    j.JudgingId,
+                    j.s.ProblemId,
+                    j.FullTest,
+                    j.s.p.AllowJudge
+                },
+                topCount: 1);
+
+            var stat = stats.SingleOrDefault();
             if (stat is null || !stat.AllowJudge) return JsonEmpty();
 
-            // 没有什么是一个join不能解决的，如果有，那就join两次
-            var testcasesQuery =
-                from t in DbContext.Testcases
-                where t.ProblemId == stat.ProblemId
-                join d in DbContext.Details
-                    on new { t.TestcaseId, JudgingId = id }
-                    equals new { d.TestcaseId, d.JudgingId }
-                    into ds
-                from d in ds.DefaultIfEmpty()
-                orderby t.Rank ascending
-                select new { Status = (Verdict?)d.Status, t.TestcaseId,
-                    t.Rank, t.Md5sumInput, t.Md5sumOutput };
-            var result = await testcasesQuery.ToListAsync();
+            var result = await Judgings.GetDetailsAsync(
+                problemId: stat.ProblemId, judgingId: id,
+                selector: (t, d) => new { Status = (Verdict?)d.Status, t });
 
             if (!stat.FullTest && result.Any(
                     s => s.Status.HasValue
@@ -84,14 +68,7 @@ namespace JudgeWeb.Areas.Api.Controllers
             var item = result.FirstOrDefault(a => !a.Status.HasValue);
             if (item == null) return JsonEmpty();
 
-            return new TestcaseToJudge
-            {
-                probid = stat.ProblemId,
-                rank = item.Rank,
-                md5sum_input = item.Md5sumInput,
-                md5sum_output = item.Md5sumOutput,
-                testcaseid = item.TestcaseId
-            };
+            return new TestcaseToJudge(item.t);
         }
 
 
@@ -104,27 +81,21 @@ namespace JudgeWeb.Areas.Api.Controllers
         [HttpGet("{id}/[action]/{type}")]
         public async Task<ActionResult<string>> File(int id, string type)
         {
-            var tcq = await DbContext.Testcases
-                .Where(tc => tc.TestcaseId == id)
-                .Select(tc => new { pid = tc.ProblemId })
-                .FirstOrDefaultAsync();
-            if (tcq is null) return NotFound();
-
             if (type == "input") type = "in";
             else if (type == "output") type = "out";
             else return BadRequest();
 
-            var io = HttpContext.RequestServices
-                .GetRequiredService<IProblemFileRepository>();
-            var fileInfo = io.GetFileInfo($"p{tcq.pid}/t{id}.{type}");
-            if (!fileInfo.Exists) return NotFound();
+            var tc = await Testcases.FindAsync(id);
+            if (tc is null) return NotFound();
 
+            var fileInfo = Testcases.GetFile(tc, type);
+            if (!fileInfo.Exists) return NotFound();
             // return Convert.ToBase64String(
             //     await fileInfo.ReadBinaryAsync());
             return new Base64StreamResult(fileInfo);
         }
 
-
+        
         private class Base64StreamResult : ActionResult
         {
             public IFileInfo FileInfo { get; set; }

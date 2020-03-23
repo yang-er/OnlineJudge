@@ -1,4 +1,6 @@
 ﻿using JudgeWeb.Data;
+using JudgeWeb.Domains.Contests;
+using JudgeWeb.Domains.Identity;
 using JudgeWeb.Features.Scoreboard;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -21,9 +23,6 @@ namespace JudgeWeb.Areas.Contest.Controllers
         protected UserManager UserManager { get; private set; }
 
         protected IScoreboardService ScoreboardService { get; private set; }
-
-        [TempData]
-        public string StatusMessage { get; set; }
 
         [ViewData]
         public Data.Contest Contest { get; set; }
@@ -160,7 +159,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 QueryInfo = bq,
                 Contest = Contest,
                 Problems = Problems,
-                Category = cats.FirstOrDefault(c => c.CategoryId == bq.Team.CategoryId),
+                Category = cats.FirstOrDefault(c => c.CategoryId == bq.CategoryId),
             };
         }
 
@@ -217,14 +216,14 @@ namespace JudgeWeb.Areas.Contest.Controllers
             if (aff.Length > 0)
             {
                 board.RankCache = board.RankCache
-                    .Where(t => aff.Contains(t.Team.AffiliationId));
+                    .Where(t => aff.Contains(t.AffiliationId));
                 ViewData["Filter_affiliations"] = aff.ToHashSet();
             }
 
             if (cat.Length > 0)
             {
                 board.RankCache = board.RankCache
-                    .Where(t => cat.Contains(t.Team.CategoryId));
+                    .Where(t => cat.Contains(t.CategoryId));
                 ViewData["Filter_categories"] = cat.ToHashSet();
             }
 

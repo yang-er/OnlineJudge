@@ -1,15 +1,12 @@
 ﻿using JudgeWeb.Areas.Dashboard.Models;
 using JudgeWeb.Data;
+using JudgeWeb.Domains.Problems;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using System;
-using System.Collections.Generic;
-using System.IO;
-using System.IO.Compression;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace JudgeWeb.Areas.Dashboard.Controllers
@@ -17,70 +14,32 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
     [Area("Dashboard")]
     [Authorize(Roles = "Administrator")]
     [Route("[area]/[controller]")]
+    [AuditPoint(AuditlogType.Executable)]
     public class ExecutablesController : Controller3
     {
-        private Task AuditlogAsync(string itemid, string act)
-        {
-            DbContext.Add(new Auditlog
-            {
-                Action = act + "d",
-                DataId = itemid,
-                DataType = AuditlogType.Executable,
-                UserName = UserManager.GetUserName(User),
-                Time = DateTimeOffset.Now,
-            });
+        private IExecutableStore Store { get; }
+        private ILogger<IProblemFacade> Logger { get; }
 
-            return DbContext.SaveChangesAsync();
+        public ExecutablesController(IProblemFacade facade)
+        {
+            Store = facade.ExecutableStore;
+            Logger = facade.Logger;
         }
 
 
         [HttpGet]
         public async Task<IActionResult> List()
         {
-            var execs = await DbContext.Executable
-                .Select(e => new Executable
-                {
-                    ExecId = e.ExecId,
-                    Description = e.Description,
-                    Md5sum = e.Md5sum,
-                    Type = e.Type,
-                    ZipSize = e.ZipSize,
-                })
-                .ToListAsync();
-
-            return View(execs);
+            return View(await Store.ListAsync());
         }
 
 
         [HttpGet("{execid}")]
         public async Task<IActionResult> Detail(string execid)
         {
-            var exec = await DbContext.Executable
-                .Where(e => e.ExecId == execid)
-                .Select(e => new Executable
-                {
-                    ExecId = e.ExecId,
-                    Description = e.Description,
-                    Md5sum = e.Md5sum,
-                    Type = e.Type,
-                    ZipSize = e.ZipSize,
-                })
-                .FirstOrDefaultAsync();
+            var exec = await Store.FindAsync(execid);
             if (exec == null) return NotFound();
-
-            ViewBag.AsCompile = await DbContext.Languages
-                .Where(l => l.CompileScript == execid)
-                .Select(l => l.Id)
-                .ToListAsync();
-            ViewBag.AsRun = await DbContext.Problems
-                .Where(p => p.RunScript == execid)
-                .Select(p => p.ProblemId)
-                .ToListAsync();
-            ViewBag.AsCompare = await DbContext.Problems
-                .Where(p => p.CompareScript == execid)
-                .Select(p => p.ProblemId)
-                .ToListAsync();
-
+            ViewBag.Usage = await Store.ListUsageAsync(exec);
             return View(exec);
         }
 
@@ -89,21 +48,16 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
         [ValidateInAjax]
         public async Task<IActionResult> Delete(string execid)
         {
-            var desc = await DbContext.Executable
-                .Where(e => e.ExecId == execid)
-                .Select(e => e.Description)
-                .FirstOrDefaultAsync();
-            if (desc == null) return NotFound();
+            var exec = await Store.FindAsync(execid);
+            if (exec == null) return NotFound();
 
             return AskPost(
-                title: $"Delete executable {execid} - \"{desc}\"",
-                message: $"You're about to delete executable {execid} - \"{desc}\".\n" +
+                title: $"Delete executable {execid} - \"{exec.Description}\"",
+                message: $"You're about to delete executable {execid} - \"{exec.Description}\".\n" +
                     "Warning, this will create dangling references in languages.\n" +
                     "Are you sure?",
-                area: "Dashboard",
-                ctrl: "Executables",
-                act: "Delete",
-                routeValues: new Dictionary<string, string> { { "execid", execid } },
+                area: "Dashboard", ctrl: "Executables", act: "Delete",
+                routeValues: new { execid },
                 type: MessageType.Danger);
         }
 
@@ -111,26 +65,22 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
         [HttpGet("{execid}/[action]")]
         public async Task<IActionResult> Edit(string execid)
         {
-            var exec = await DbContext.Executable
-                .Where(e => e.ExecId == execid)
-                .Select(e => new ExecutableEditModel
-                {
-                    ExecId = e.ExecId,
-                    Description = e.Description,
-                    Type = e.Type,
-                })
-                .FirstOrDefaultAsync();
+            var exec = await Store.FindAsync(execid);
             if (exec == null) return NotFound();
-            return View(exec);
+            
+            return View(new ExecutableEditModel
+            {
+                ExecId = exec.ExecId,
+                Description = exec.Description,
+                Type = exec.Type,
+            });
         }
 
 
         [HttpPost("{execid}/[action]")]
         public async Task<IActionResult> Edit(string execid, ExecutableEditModel model)
         {
-            var exec = await DbContext.Executable
-                .Where(e => e.ExecId == execid)
-                .FirstOrDefaultAsync();
+            var exec = await Store.FindAsync(execid);
             if (exec == null) return NotFound();
             if (!"compile,compare,run".Split(',').Contains(model.Type))
                 return BadRequest();
@@ -140,9 +90,8 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
             exec.ZipSize = exec.ZipFile.Length;
             exec.Description = model.Description ?? execid;
             exec.Type = model.Type;
-            DbContext.Executable.Update(exec);
-            await DbContext.SaveChangesAsync();
-            await AuditlogAsync(execid, "update");
+            await Store.UpdateAsync(exec);
+            await HttpContext.AuditAsync("updated", execid);
             return RedirectToAction(nameof(Detail), new { execid });
         }
 
@@ -151,52 +100,39 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Add(ExecutableEditModel model)
         {
-            string execid = null;
+            // Validations
+            string message = null;
             if (model.Archive == null || model.Archive.Length >= 1 << 20)
-            {
-                StatusMessage = "Error in executable uploading.";
-            }
+                message = "Error in executable uploading.";
             else if (model.ExecId == null)
-            {
-                StatusMessage = "Error no executable name specified.";
-            }
+                message = "No executable name specified.";
             else if (model.Description == null)
-            {
-                StatusMessage = "Error no description specified.";
-            }
+                message = "No description specified.";
             else if (!"compile,compare,run".Split(',').Contains(model.Type))
-            {
-                StatusMessage = "Error type specified.";
-            }
-            else
-            {
-                try
-                {
-                    var (zip, md5) = await model.Archive.ReadAsync();
+                message = "Error type specified.";
 
-                    var e = DbContext.Executable.Add(new Executable
-                    {
-                        Description = model.Description,
-                        ExecId = model.ExecId,
-                        Type = model.Type,
-                        ZipFile = zip,
-                        Md5sum = md5,
-                        ZipSize = zip.Length,
-                    });
-
-                    await DbContext.SaveChangesAsync();
-                    execid = e.Entity.ExecId;
-                    StatusMessage = $"Executable {execid} uploaded successfully.";
-                    await AuditlogAsync(execid, "create");
-                }
-                catch (DbUpdateException ex)
-                {
-                    StatusMessage = "Error: " + ex.Message;
-                }
+            if (message != null)
+            {
+                ModelState.AddModelError("EXEC", message);
+                return View(model);
             }
 
-            if (execid != null) return RedirectToAction("Detail", new { execid });
-            else return RedirectToAction("List");
+            // creation
+            var (zip, md5) = await model.Archive.ReadAsync();
+
+            var e = await Store.CreateAsync(new Executable
+            {
+                Description = model.Description,
+                ExecId = model.ExecId,
+                Type = model.Type,
+                ZipFile = zip,
+                Md5sum = md5,
+                ZipSize = zip.Length,
+            });
+
+            StatusMessage = $"Executable {e.ExecId} uploaded successfully.";
+            await HttpContext.AuditAsync("created", e.ExecId);
+            return RedirectToAction("Detail", new { execid = e.ExecId });
         }
 
 
@@ -204,36 +140,10 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
         [ActionName("Content")]
         public async Task<IActionResult> ViewContent(string execid)
         {
-            var bytes = await DbContext.Executable
-                .Where(e => e.ExecId == execid)
-                .FirstOrDefaultAsync();
-            if (bytes is null) return NotFound();
-
-            ViewBag.Executable = bytes;
-            var items = new List<ExecutableViewContentModel>();
-            using (var stream = new MemoryStream(bytes.ZipFile, false))
-            using (var zipArchive = new ZipArchive(stream))
-            {
-                foreach (var entry in zipArchive.Entries)
-                {
-                    var fileName = entry.FullName;
-                    var fileExt = Path.GetExtension(fileName);
-                    fileExt = string.IsNullOrEmpty(fileExt) ? "dummy.sh" : "dummy" + fileExt;
-                    var fileContent = new byte[entry.Length];
-
-                    using (var entryStream = entry.Open())
-                        await entryStream.ReadAsync(fileContent);
-                    var fileContent2 = Encoding.UTF8.GetString(fileContent);
-
-                    items.Add(new ExecutableViewContentModel
-                    {
-                        FileName = fileName,
-                        FileContent = fileContent2,
-                        Language = fileExt,
-                    });
-                }
-            }
-
+            var exec = await Store.FindAsync(execid);
+            if (exec is null) return NotFound();
+            ViewBag.Executable = exec;
+            var items = await Store.FetchContentAsync(exec);
             return View(items);
         }
 
@@ -242,20 +152,16 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(string execid, int inajax)
         {
-            var exec = await DbContext.Executable
-                .Where(e => e.ExecId == execid)
-                .FirstOrDefaultAsync();
+            var exec = await Store.FindAsync(execid);
             if (exec == null) return NotFound();
-
-            DbContext.Executable.Remove(exec);
 
             try
             {
-                await DbContext.SaveChangesAsync();
+                await Store.DeleteAsync(exec);
                 StatusMessage = $"Executable {execid} deleted successfully.";
-                await AuditlogAsync(execid, "delete");
+                await HttpContext.AuditAsync(execid, "delete");
             }
-            catch (DbUpdateException)
+            catch
             {
                 StatusMessage = $"Error deleting executable {execid}, foreign key constraints failed.";
             }
@@ -267,12 +173,9 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
         [HttpGet("{execid}/[action]")]
         public async Task<IActionResult> Download(string execid)
         {
-            var bytes = await DbContext.Executable
-                .Where(e => e.ExecId == execid)
-                .Select(e => e.ZipFile)
-                .FirstOrDefaultAsync();
+            var bytes = await Store.FindAsync(execid);
             if (bytes is null) return NotFound();
-            return File(bytes, "application/zip", $"{execid}.zip", false);
+            return File(bytes.ZipFile, "application/zip", $"{execid}.zip", false);
         }
     }
 }

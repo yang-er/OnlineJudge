@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using JudgeWeb.Domains.Contests;
+using JudgeWeb.Domains.Identity;
+using JudgeWeb.Domains.Problems;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -50,52 +52,10 @@ namespace JudgeWeb.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-            
-            // Users and permissions
-            modelBuilder.ApplyConfiguration<User>(this);
-            modelBuilder.ApplyConfiguration<Role>(this);
-            modelBuilder.ApplyConfiguration<Student>(this);
-            modelBuilder.ApplyConfiguration<TeachingClass>(this);
-            modelBuilder.ApplyConfiguration<ClassStudent>(this);
-            modelBuilder.ApplyConfiguration<PersonRank>(this);
-            modelBuilder.ApplyConfiguration<News>(this);
-            modelBuilder.ApplyConfiguration<Auditlog>(this);
-            modelBuilder.ApplyConfiguration<TrainingTeam>(this);
-            modelBuilder.ApplyConfiguration<TrainingTeamUser>(this);
-            modelBuilder.Entity<IdentityUserRole<int>>()
-                .HasData(new IdentityUserRole<int> { RoleId = -4, UserId = -1 });
-
-            // Judging basis
-            modelBuilder.ApplyConfiguration<Configure>(this);
-            modelBuilder.ApplyConfiguration<Executable>(this);
-            modelBuilder.ApplyConfiguration<InternalError>(this);
-            modelBuilder.ApplyConfiguration<Language>(this);
-            modelBuilder.ApplyConfiguration<JudgeHost>(this);
-
-            // Submissions and judgings
-            modelBuilder.ApplyConfiguration<Submission>(this);
-            modelBuilder.ApplyConfiguration<Problem>(this);
-            modelBuilder.ApplyConfiguration<ProblemArchive>(this);
-            modelBuilder.ApplyConfiguration<Testcase>(this);
-            modelBuilder.ApplyConfiguration<Rejudge>(this);
-            modelBuilder.ApplyConfiguration<Judging>(this);
-            modelBuilder.ApplyConfiguration<Detail>(this);
-
-            // Contests and its informations
-            modelBuilder.ApplyConfiguration<Contest>(this);
-            modelBuilder.ApplyConfiguration<ContestProblem>(this);
-            modelBuilder.ApplyConfiguration<Team>(this);
-            modelBuilder.ApplyConfiguration<TeamMember>(this);
-            modelBuilder.ApplyConfiguration<TeamAffiliation>(this);
-            modelBuilder.ApplyConfiguration<TeamCategory>(this);
-            modelBuilder.ApplyConfiguration<Clarification>(this);
-            modelBuilder.ApplyConfiguration<RankCache>(this);
-            modelBuilder.ApplyConfiguration<ScoreCache>(this);
-            modelBuilder.ApplyConfiguration<Event>(this);
-            modelBuilder.ApplyConfiguration<Balloon>(this);
-            modelBuilder.ApplyConfiguration<Printing>(this);
-
-            modelBuilder.Entity<SubmissionStatistics>().HasNoKey();
+            modelBuilder.Apply<IdentityEntityTypeConfiguration>();
+            modelBuilder.Apply<ProblemEntityTypeConfiguration>();
+            modelBuilder.Apply<JudgementEntityTypeConfiguration>();
+            modelBuilder.Apply<ContestEntityTypeConfiguration>();
         }
     }
 }

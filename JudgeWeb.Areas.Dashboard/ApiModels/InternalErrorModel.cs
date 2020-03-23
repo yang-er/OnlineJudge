@@ -32,12 +32,4 @@ namespace JudgeWeb.Areas.Api.Models
         /// </summary>
         public int? judgingid { get; set; }
     }
-
-    public class InternalErrorDisable
-    {
-        public string kind { get; set; }
-        public string langid { get; set; }
-        public string hostname { get; set; }
-        public int? probid { get; set; }
-    }
 }

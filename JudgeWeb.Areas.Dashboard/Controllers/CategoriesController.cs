@@ -1,8 +1,7 @@
 ﻿using JudgeWeb.Data;
+using JudgeWeb.Domains.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace JudgeWeb.Areas.Dashboard.Controllers
@@ -10,46 +9,24 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
     [Area("Dashboard")]
     [Authorize(Roles = "Administrator")]
     [Route("[area]/[controller]")]
+    [AuditPoint(AuditlogType.TeamCategory)]
     public class CategoriesController : Controller3
     {
-        private async Task AuditlogAsync(TeamCategory cat, string act)
-        {
-            // solve the events
-            var now = System.DateTimeOffset.Now;
-            var cts = await DbContext.Contests
-                .Where(c => c.EndTime == null || c.EndTime > now)
-                .Select(c => c.ContestId)
-                .ToArrayAsync();
-            DbContext.Events.AddRange(cts.Select(t =>
-                new Data.Api.ContestGroup(cat).ToEvent(act, t)));
-
-            // solve the auditlogs
-            DbContext.Auditlogs.Add(new Auditlog
-            {
-                Action = act + "d",
-                DataId = $"{cat.CategoryId}",
-                DataType = AuditlogType.TeamCategory,
-                UserName = UserManager.GetUserName(User),
-                Time = now,
-            });
-
-            await DbContext.SaveChangesAsync();
-        }
+        private ITeamManager Store { get; }
+        public CategoriesController(ITeamManager tm) => Store = tm;
 
 
         [HttpGet]
         public async Task<IActionResult> List()
         {
-            return View(await DbContext.TeamCategories.ToListAsync());
+            return View(await Store.ListCategoriesAsync());
         }
 
 
         [HttpGet("{catid}")]
         public async Task<IActionResult> Detail(int catid)
         {
-            var cat = await DbContext.TeamCategories
-                .Where(ccsu_cat => ccsu_cat.CategoryId == catid)
-                .FirstOrDefaultAsync();
+            var cat = await Store.FindCategoryAsync(catid);
             if (cat == null) return NotFound();
             return View(cat);
         }
@@ -62,9 +39,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
         [HttpGet("{catid}/[action]")]
         public async Task<IActionResult> Edit(int catid)
         {
-            var cat = await DbContext.TeamCategories
-                .Where(ccsu_cat => ccsu_cat.CategoryId == catid)
-                .FirstOrDefaultAsync();
+            var cat = await Store.FindCategoryAsync(catid);
             if (cat == null) return NotFound();
             return View(cat);
         }
@@ -75,11 +50,9 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
         public async Task<IActionResult> Add(TeamCategory model)
         {
             model.CategoryId = 0;
-            var e = DbContext.TeamCategories.Add(model);
-            await DbContext.SaveChangesAsync();
-            await AuditlogAsync(e.Entity, "create");
-
-            return RedirectToAction(nameof(Detail), new { catid = e.Entity.CategoryId });
+            await Store.CreateAsync(model);
+            await HttpContext.AuditAsync("created", $"{model.CategoryId}");
+            return RedirectToAction(nameof(Detail), new { catid = model.CategoryId });
         }
 
 
@@ -87,9 +60,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int catid, TeamCategory model)
         {
-            var cat = await DbContext.TeamCategories
-                .Where(ccsu_cat => ccsu_cat.CategoryId == catid)
-                .FirstOrDefaultAsync();
+            var cat = await Store.FindCategoryAsync(catid);
             if (cat == null) return NotFound();
 
             if (model.Name == null || model.Color == null)
@@ -99,10 +70,8 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
             cat.Name = model.Name;
             cat.SortOrder = model.SortOrder;
 
-            DbContext.TeamCategories.Update(cat);
-            await DbContext.SaveChangesAsync();
-            await AuditlogAsync(cat, "update");
-
+            await Store.UpdateAsync(cat);
+            await HttpContext.AuditAsync("updated", $"{catid}");
             return RedirectToAction(nameof(Detail), new { catid });
         }
 
@@ -111,9 +80,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
         [ValidateInAjax]
         public async Task<IActionResult> Delete(int catid)
         {
-            var desc = await DbContext.TeamCategories
-                .Where(e => e.CategoryId == catid)
-                .FirstOrDefaultAsync();
+            var desc = await Store.FindCategoryAsync(catid);
             if (desc == null) return NotFound();
 
             return AskPost(
@@ -129,19 +96,16 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int catid, int inajax)
         {
-            var desc = await DbContext.TeamCategories
-                .Where(e => e.CategoryId == catid)
-                .FirstOrDefaultAsync();
+            var desc = await Store.FindCategoryAsync(catid);
             if (desc == null) return NotFound();
 
             try
             {
-                DbContext.TeamCategories.Remove(desc);
-                await DbContext.SaveChangesAsync();
+                await Store.DeleteAsync(desc);
                 StatusMessage = $"Team category {catid} deleted successfully.";
-                await AuditlogAsync(desc, "delete");
+                await HttpContext.AuditAsync("deleted", $"{catid}");
             }
-            catch (DbUpdateException)
+            catch
             {
                 StatusMessage = $"Error deleting team category {catid}, foreign key constraints failed.";
             }

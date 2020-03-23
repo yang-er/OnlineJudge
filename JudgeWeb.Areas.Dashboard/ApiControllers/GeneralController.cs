@@ -1,13 +1,11 @@
 ﻿using JudgeWeb.Areas.Api.Models;
-using JudgeWeb.Data;
-using JudgeWeb.Data.Api;
+using JudgeWeb.Domains.Identity;
+using JudgeWeb.Domains.Problems;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -22,18 +20,11 @@ namespace JudgeWeb.Areas.Api.Controllers
     [Produces("application/json")]
     public class GeneralController : ControllerBase
     {
-        /// <summary>
-        /// 数据库上下文
-        /// </summary>
-        AppDbContext DbContext { get; }
+        private IJudgementFacade Facade { get; }
 
-        /// <summary>
-        /// 构造 DOMjudge API 的控制器。
-        /// </summary>
-        /// <param name="rdbc">数据库</param>
-        public GeneralController(AppDbContext rdbc)
+        public GeneralController(IJudgementFacade facade)
         {
-            DbContext = rdbc;
+            Facade = facade;
         }
 
 
@@ -73,36 +64,9 @@ namespace JudgeWeb.Areas.Api.Controllers
         /// <response code="200">General status information for the currently active contests</response>
         [HttpGet]
         [Authorize(Roles = "Judgehost,Administrator")]
-        public async Task<ActionResult<List<ServerStatus>>> Status(
-            [FromServices] SubmissionManager subManager)
+        public async Task<ActionResult<List<ServerStatus>>> Status()
         {
-            var judgingStatus = await subManager.Judgings
-                .Where(j => j.Active)
-                .Join(
-                    inner: subManager.Submissions,
-                    outerKeySelector: j => j.SubmissionId,
-                    innerKeySelector: s => s.SubmissionId,
-                    resultSelector: (j, s) => new { j.Status, s.ContestId })
-                .GroupBy(g => new { g.Status, g.ContestId })
-                .Select(g => new { g.Key.Status, Cid = g.Key.ContestId, Count = g.Count() })
-                .ToListAsync();
-
-            return judgingStatus
-                .GroupBy(a => a.Cid)
-                .Select(g => new ServerStatus
-                {
-                    cid = g.Key,
-                    num_submissions = g.Sum(a => a.Count),
-                    num_queued = g
-                        .Where(a => a.Status == Verdict.Pending)
-                        .Select(a => a.Count)
-                        .FirstOrDefault(),
-                    num_judging = g
-                        .Where(a => a.Status == Verdict.Running)
-                        .Select(a => a.Count)
-                        .FirstOrDefault(),
-                })
-                .ToList();
+            return await Facade.GetJudgeQueueAsync();
         }
         
 
@@ -139,12 +103,7 @@ namespace JudgeWeb.Areas.Api.Controllers
         [Authorize(Roles = "Judgehost,Administrator")]
         public async Task<IActionResult> Config(string name)
         {
-            var query = DbContext.Configures
-                .Select(c => new { c.Name, c.Value });
-            if (name != null)
-                query = query.Where(c => c.Name == name);
-            var value = await query.ToListAsync();
-
+            var value = await Facade.Configurations.GetAsync(name);
             var result = new StringBuilder();
             result.Append("{");
             for (int i = 0; i < value.Count; i++)

@@ -1,8 +1,6 @@
 ﻿using JudgeWeb.Areas.Polygon.Models;
 using JudgeWeb.Domains.Problems;
-using JudgeWeb.Features.Storage;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using System;
 using System.IO;
@@ -16,19 +14,19 @@ namespace JudgeWeb.Areas.Polygon.Controllers
     [Route("[area]/{pid}/[controller]/[action]")]
     public class DescriptionController : Controller3
     {
-        private IProblemFileRepository Files { get; }
+        public IProblemViewProvider Generator { get; }
 
-        public DescriptionController(IProblemStore db, IProblemFileRepository io)
-            : base(db) => Files = io;
+        public DescriptionController(IProblemViewProvider generator)
+        {
+            Generator = generator;
+        }
 
 
         [NonAction]
         public async Task<string> GenerateViewAsync()
         {
-            var generator = HttpContext.RequestServices
-                .GetRequiredService<IProblemViewProvider>();
-            var statement = await generator.LoadStatement(Problem);
-           return generator.BuildHtml(statement).ToString();
+            var statement = await Facade.StatementAsync(Problem);
+            return Generator.BuildHtml(statement).ToString();
         }
 
 
@@ -43,7 +41,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
             else
             {
                 ViewData["Title"] = "View";
-                var fileInfo = Files.GetFileInfo($"p{pid}/view.html");
+                var fileInfo = Facade.GetFile(Problem, "view.html");
                 ViewData["Content"] = await fileInfo.ReadAsync() ?? "";
             }
 
@@ -55,9 +53,9 @@ namespace JudgeWeb.Areas.Polygon.Controllers
         [HttpGet("{target}")]
         public async Task<IActionResult> Markdown(string target, int pid)
         {
-            if (!IProblemStore.MarkdownFiles.Contains(target))
+            if (!IProblemFacade.MarkdownFiles.Contains(target))
                 return NotFound();
-            var fileInfo = Files.GetFileInfo($"p{pid}/{target}.md");
+            var fileInfo = Facade.GetFile(Problem, $"{target}.md");
             var lastVersion = await fileInfo.ReadAsync() ?? "";
             ViewBag.ProblemId = pid;
 
@@ -75,11 +73,11 @@ namespace JudgeWeb.Areas.Polygon.Controllers
         public async Task<IActionResult> Markdown(
             string target, int pid, MarkdownModel model)
         {
-            if (!IProblemStore.MarkdownFiles.Contains(target))
+            if (!IProblemFacade.MarkdownFiles.Contains(target))
                 return NotFound();
             if (target != model.Target || $"p{pid}" != model.BackingStore)
                 return BadRequest();
-            await Files.WriteStringAsync($"p{pid}/{target}.md", model.Markdown);
+            await Facade.WriteFileAsync(Problem, $"{target}.md", model.Markdown);
             StatusMessage = "Description saved.";
             return RedirectToAction();
         }
@@ -89,20 +87,19 @@ namespace JudgeWeb.Areas.Polygon.Controllers
         public async Task<IActionResult> Generate(int pid)
         {
             var content = await GenerateViewAsync();
-            await Files.WriteStringAsync($"p{pid}/view.html", content);
+            await Facade.WriteFileAsync(Problem, "view.html", content);
             StatusMessage = "Problem description saved successfully.";
             return RedirectToAction(nameof(Preview), new { @new = false });
         }
 
 
         [HttpGet]
-        public async Task<IActionResult> GenerateLatex(int pid,
-            [FromServices] IProblemViewProvider generator)
+        public async Task<IActionResult> GenerateLatex(int pid)
         {
-            var statement = await generator.LoadStatement(Problem);
+            var statement = await Facade.StatementAsync(Problem);
             var memstream = new MemoryStream();
             using (var zip = new ZipArchive(memstream, ZipArchiveMode.Create, true))
-                generator.BuildLatex(zip, statement);
+                Generator.BuildLatex(zip, statement);
             memstream.Position = 0;
             return File(memstream, "application/zip", $"p{pid}-statements.zip");
         }

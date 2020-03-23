@@ -5,40 +5,35 @@ using System.Threading.Tasks;
 
 namespace JudgeWeb.Domains.Identity
 {
-    public abstract class TeamManager
+    public interface ITeamManager :
+        ICrudRepository<TrainingTeam>,
+        ICrudRepository<TrainingTeamUser>,
+        ICrudRepository<TeamAffiliation>,
+        ICrudRepository<TeamCategory>
     {
         public const int MaxTeams = 10;
-
         public const int MaxMembers = 5;
 
-        protected abstract Task<TrainingTeam> CreateAsync(TrainingTeam team);
+        Task<TeamAffiliation> FindAffiliationAsync(int affId);
 
-        protected abstract Task CreateAsync(TrainingTeamUser teamUser);
+        Task<IEnumerable<TeamAffiliation>> ListAffiliationsAsync();
 
-        public abstract Task<TeamAffiliation> FindAffiliationAsync(int affId);
+        Task<IEnumerable<TeamCategory>> ListCategoriesAsync();
 
-        public abstract Task<IEnumerable<TeamAffiliation>> ListAffiliationsAsync();
+        Task<TrainingTeam> FindTeamByIdAsync(int teamid);
 
-        public abstract Task<TrainingTeam> FindTeamByIdAsync(int teamid);
+        Task<List<TrainingTeamUser>> ListMembersAsync(TrainingTeam team);
 
-        public abstract Task<List<TrainingTeamUser>> ListMembersAsync(TrainingTeam team);
+        Task<TrainingTeamUser> IsInTeamAsync(User user, TrainingTeam team);
 
-        public abstract Task<TrainingTeamUser> IsInTeamAsync(User user, TrainingTeam team);
+        Task<IEnumerable<IGrouping<TrainingTeam, TrainingTeamUser>>> ListAsync(User user);
 
-        public abstract Task DismissAsync(TrainingTeam team);
+        Task<bool> CheckCreateAsync(User user);
 
-        public abstract Task RemoveAsync(TrainingTeamUser user);
+        Task<bool> CheckCreateAsync(TrainingTeam team);
 
-        public abstract Task<IEnumerable<IGrouping<TrainingTeam, TrainingTeamUser>>> ListAsync(User user);
+        Task<TeamCategory> FindCategoryAsync(int catId);
 
-        public abstract Task<bool> CheckCreateAsync(User user);
-
-        public abstract Task<bool> CheckCreateAsync(TrainingTeam team);
-
-        public abstract Task UpdateAsync(TrainingTeam team);
-
-        public abstract Task UpdateAsync(TrainingTeamUser user);
-        
         public Task AddTeamMemberAsync(TrainingTeam team, User user)
         {
             return CreateAsync(new TrainingTeamUser
