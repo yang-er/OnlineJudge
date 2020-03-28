@@ -12,14 +12,6 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
     [Route("[area]")]
     public class RootController : Controller3
     {
-        private IJudgementFacade Facade { get; }
-
-        public RootController(IJudgementFacade facade)
-        {
-            Facade = facade;
-        }
-
-
         public IActionResult Index()
         {
             return View();
@@ -27,10 +19,13 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
 
 
         [HttpGet("[action]")]
-        public async Task<IActionResult> Updates()
+        public async Task<IActionResult> Updates(
+            [FromServices] IJudgehostStore jh,
+            [FromServices] IInternalErrorStore ie)
         {
-            var stat = await Facade.GetJudgeStatusAsync();
-            return Json(new { stat.judgehosts, stat.internal_error });
+            var judgehosts = await jh.GetJudgeStatusAsync();
+            var internal_error = await ie.GetJudgeStatusAsync();
+            return Json(new { judgehosts, internal_error });
         }
 
 
@@ -46,18 +41,21 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
 
 
         [HttpGet("[action]")]
-        public async Task<IActionResult> Config()
+        public async Task<IActionResult> Config(
+            [FromServices] IConfigurationRegistry registry)
         {
-            return View(await Facade.Configurations.ListPublicAsync());
+            return View(await registry.ListPublicAsync());
         }
 
 
         [HttpPost("[action]")]
         [ValidateAntiForgeryToken]
         [AuditPoint(AuditlogType.Configuration)]
-        public async Task<IActionResult> Config(ConfigureEditModel models)
+        public async Task<IActionResult> Config(
+            ConfigureEditModel models,
+            [FromServices] IConfigurationRegistry registry)
         {
-            var items = await Facade.Configurations.ListPublicAsync();
+            var items = await registry.ListPublicAsync();
 
             foreach (var item in items)
             {
@@ -69,7 +67,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
                 if (item.Type == "string") newVal = newVal.ToJson();
                 if (newVal == item.Value) continue;
                 
-                await Facade.Configurations.UpdateValueAsync(item.Name, newVal);
+                await registry.UpdateValueAsync(item.Name, newVal);
                 await HttpContext.AuditAsync("updated", item.Name, "from " + item.Value);
             }
 

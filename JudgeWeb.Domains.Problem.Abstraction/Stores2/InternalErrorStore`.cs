@@ -1,7 +1,5 @@
 ﻿using JudgeWeb.Data;
-using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace JudgeWeb.Domains.Problems
@@ -13,6 +11,8 @@ namespace JudgeWeb.Domains.Problems
 
         Task<InternalErrorDisable> ResolveAsync(InternalError error, InternalErrorStatus status);
 
-        Task<List<InternalError>> ListAsync();
+        Task<int> GetJudgeStatusAsync();
+
+        Task<List<InternalError>> ListAsync(int page = 1, int count = 50);
     }
 }

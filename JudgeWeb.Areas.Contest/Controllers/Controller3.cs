@@ -18,8 +18,6 @@ namespace JudgeWeb.Areas.Contest.Controllers
 {
     public class Controller3 : Controller2
     {
-        protected AppDbContext DbContext { get; private set; }
-
         protected UserManager UserManager { get; private set; }
 
         protected IScoreboardService ScoreboardService { get; private set; }
@@ -37,6 +35,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
         public Team Team { get; set; }
 
 
+
         protected IEnumerable<(string, ClarificationCategory, int?)> ClarCategories =>
             Problems
                 .Select(cp => ($"prob-{cp.ShortName}", ClarificationCategory.Problem, (int?)cp.ProblemId))
@@ -47,90 +46,12 @@ namespace JudgeWeb.Areas.Contest.Controllers
 
         protected Task<Team> FindTeamByIdAsync(int teamid)
         {
-            int cid = Contest.ContestId;
-            return DbContext.Teams
-                .Where(t => t.ContestId == cid && t.TeamId == teamid)
-                .CachedSingleOrDefaultAsync($"`c{cid}`teams`t{teamid}", TimeSpan.FromMinutes(5));
+            return Facade.Teams.FindByIdAsync(Contest.ContestId, teamid);
         }
 
         protected Task<Team> FindTeamByUserAsync(int uid)
         {
-            int cid = Contest.ContestId;
-            return DbContext.TeamMembers
-                .Where(tu => tu.ContestId == cid && tu.UserId == uid)
-                .Join(
-                    inner: DbContext.Teams,
-                    outerKeySelector: tu => new { tu.ContestId, tu.TeamId },
-                    innerKeySelector: t => new { t.ContestId, t.TeamId },
-                    resultSelector: (tu, t) => t)
-                .CachedSingleOrDefaultAsync($"`c{cid}`teams`u{uid}", TimeSpan.FromMinutes(5));
-        }
-
-        protected async Task<int> SendClarificationAsync(Clarification clar, Clarification replyTo = null)
-        {
-            var cl = DbContext.Clarifications.Add(clar);
-
-            if (replyTo != null)
-            {
-                replyTo.Answered = true;
-                DbContext.Clarifications.Update(replyTo);
-            }
-
-            await DbContext.SaveChangesAsync();
-
-            var ct = new Data.Api.ContestClarification(
-                clar, Contest.StartTime ?? DateTimeOffset.Now);
-            if (ct.text.Length > 300)
-                ct.text = ct.text.Substring(0, 300) + "...";
-            DbContext.Events.Add(ct.ToEvent("create", Contest.ContestId));
-
-            InternalLog(AuditlogType.Clarification, $"{clar.ClarificationId}", "added");
-            await DbContext.SaveChangesAsync();
-            return cl.Entity.ClarificationId;
-        }
-
-        protected async Task<int> CreateTeamAsync(Team team, TeamAffiliation aff, int[] uids = null)
-        {
-            using (await ContestCache._locker.LockAsync())
-            {
-                int cid = team.ContestId;
-                
-                team.TeamId = 1 + await DbContext.Teams
-                    .CountAsync(tt => tt.ContestId == cid);
-                DbContext.Teams.Add(team);
-
-                if (uids != null)
-                {
-                    foreach (var uid in uids)
-                    {
-                        DbContext.TeamMembers.Add(new TeamMember
-                        {
-                            ContestId = team.ContestId,
-                            TeamId = team.TeamId,
-                            UserId = uid,
-                            Temporary = false
-                        });
-                    }
-                }
-
-                InternalLog(AuditlogType.Team, $"{team.TeamId}", "added");
-
-                if (team.Status == 1)
-                {
-                    var ct = new Data.Api.ContestTeam(team, aff);
-                    DbContext.Events.Add(ct.ToEvent("create", cid));
-                }
-
-                await DbContext.SaveChangesAsync();
-                DbContext.RemoveCacheEntry($"`c{cid}`teams`list_jury");
-                DbContext.RemoveCacheEntry($"`c{cid}`teams`t{team.TeamId}");
-                DbContext.RemoveCacheEntry($"`c{cid}`teams`members");
-
-                if (uids != null)
-                    foreach (var uid in uids)
-                        DbContext.RemoveCacheEntry($"`c{cid}`teams`u{uid}");
-                return team.TeamId;
-            }
+            return Facade.Teams.FindByUserAsync(Contest.ContestId, uid);
         }
 
         protected void InternalLog(AuditlogType type, string dataId, string action, string extraInfo = null)
@@ -138,7 +59,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
             DbContext.Auditlogs.Add(new Auditlog
             {
                 Time = DateTimeOffset.Now,
-                UserName = UserManager.GetUserName(User),
+                UserName = User.GetUserName(),
                 ContestId = Contest.ContestId,
                 Action = action,
                 ExtraInfo = extraInfo,
@@ -175,21 +96,18 @@ namespace JudgeWeb.Areas.Contest.Controllers
             if (!Contest.PrintingAvaliable)
                 return ExplicitNotFound();
 
-            var p = DbContext.Printing.Add(new Printing
+            var p = await Facade.Printings.CreateAsync(new Printing
             {
                 ContestId = cid,
                 LanguageId = model.Language ?? "plain",
                 FileName = System.IO.Path.GetFileName(model.SourceFile.FileName),
                 Time = DateTimeOffset.Now,
-                UserId = int.Parse(UserManager.GetUserId(User)),
+                UserId = int.Parse(User.GetUserId()),
                 SourceCode = (await model.SourceFile.ReadAsync()).Item1
             });
 
-            await DbContext.SaveChangesAsync();
-
-            InternalLog(AuditlogType.Printing, $"{p.Entity.Id}", "added", $"from {HttpContext.Connection.RemoteIpAddress}");
-            await DbContext.SaveChangesAsync();
-
+            await HttpContext.AuditAsync("added", $"{p.Id}",
+                $"from {HttpContext.Connection.RemoteIpAddress}");
             StatusMessage = "File has been printed. Please wait.";
             return RedirectToAction("Home");
         }
@@ -243,14 +161,11 @@ namespace JudgeWeb.Areas.Contest.Controllers
             }
 
             // parse the base service
-            UserManager = HttpContext.RequestServices
-                .GetRequiredService<UserManager>();
-            DbContext = HttpContext.RequestServices
-                .GetRequiredService<AppDbContext>();
-            DbContext.ChangeTracker.AutoDetectChangesEnabled = false;
+            var store = HttpContext.RequestServices
+                .GetRequiredService<IContestStore>();
 
             // check the existence
-            Contest = await DbContext.GetContestAsync(cid);
+            Contest = await store.FindAsync(cid);
             ViewBag.Contest = Contest;
             if (Contest == null)
             {
@@ -258,30 +173,34 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 return;
             }
 
-            Problems = await DbContext.GetProblemsAsync(cid);
-            Languages = await DbContext.GetLanguagesAsync(cid);
+            Problems = await store.ListProblemsAsync(cid);
+            Languages = await store.ListLanguageAsync(cid);
             ViewBag.Problems = Problems;
             ViewBag.Languages = Languages;
 
+            /*
             if (!Cache.TryGetValue($"`c{cid}`internal_state", out ContestState state)
                 || state != Contest.GetState())
             {
                 Cache.Set($"`c{cid}`internal_state", Contest.GetState(), TimeSpan.FromDays(365));
-                DbContext.Events.AddUpdate(cid, new Data.Api.ContestTime(Contest));
-                await DbContext.SaveChangesAsync();
-            }
+                
+                //DbContext.Events.AddUpdate(cid, new Data.Api.ContestTime(Contest));
+                //await DbContext.SaveChangesAsync();
+            }*/
 
             // check the permission
             if (User.IsInRoles($"Administrator,JuryOfContest{cid}"))
                 ViewData["IsJury"] = true;
 
-            if (int.TryParse(UserManager?.GetUserId(User) ?? "-1", out int uid) && uid > 0)
+            if (int.TryParse(User.GetUserId() ?? "-1", out int uid) && uid > 0)
             {
                 ViewBag.Team = Team = await FindTeamByUserAsync(uid);
                 if (Team != null) ViewData["HasTeam"] = true;
             }
 
-            if (!Contest.IsPublic && !ViewData.ContainsKey("IsJury") && !ViewData.ContainsKey("HasTeam"))
+            if (!Contest.IsPublic &&
+                !ViewData.ContainsKey("IsJury") &&
+                !ViewData.ContainsKey("HasTeam"))
             {
                 context.Result = NotFound();
                 return;

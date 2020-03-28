@@ -18,13 +18,13 @@ namespace JudgeWeb.Features.Scoreboard
                     .ThenBy(a => a.RankCache.SingleOrDefault().TotalTimeRestricted);
 
 
-        public Task Accept(AppDbContext db, ScoreboardEventArgs args)
+        public Task Accept(ScoreboardContext db, ScoreboardEventArgs args)
         {
             return Reject(db, args);
         }
 
 
-        public Task CompileError(AppDbContext db, ScoreboardEventArgs args)
+        public Task CompileError(ScoreboardContext db, ScoreboardEventArgs args)
         {
             Expression<Func<ScoreCache, ScoreCache>> scp;
 
@@ -49,7 +49,7 @@ namespace JudgeWeb.Features.Scoreboard
         }
 
 
-        public async Task Pending(AppDbContext db, ScoreboardEventArgs args)
+        public async Task Pending(ScoreboardContext db, ScoreboardEventArgs args)
         {
             var sc = await db.Score(args).CountAsync();
 
@@ -78,7 +78,7 @@ namespace JudgeWeb.Features.Scoreboard
         }
 
 
-        public async Task Reject(AppDbContext db, ScoreboardEventArgs args)
+        public async Task Reject(ScoreboardContext db, ScoreboardEventArgs args)
         {
             var sr = await (from t in db.Teams
                             where t.TeamId == args.TeamId && t.ContestId == args.ContestId
@@ -140,7 +140,7 @@ namespace JudgeWeb.Features.Scoreboard
         }
 
 
-        public async Task RefreshCache(AppDbContext db, ScoreboardEventArgs args)
+        public async Task RefreshCache(ScoreboardContext db, ScoreboardEventArgs args)
         {
             int cid = args.ContestId;
 
@@ -153,7 +153,7 @@ namespace JudgeWeb.Features.Scoreboard
             var results = await query.ToListAsync();
 
             var scrs =
-                from cp in db.ContestProblem
+                from cp in db.Problems
                 where cp.ContestId == cid
                 join t in db.Testcases on cp.ProblemId equals t.ProblemId
                 select new { cp.ProblemId, t.Point };

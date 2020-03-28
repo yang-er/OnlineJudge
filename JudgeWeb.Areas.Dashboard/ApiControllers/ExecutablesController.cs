@@ -19,14 +19,15 @@ namespace JudgeWeb.Areas.Api.Controllers
         /// Get the executable with the given ID
         /// </summary>
         /// <param name="target">The ID of the entity to get</param>
+        /// <param name="execs"></param>
         /// <response code="200">Base64-encoded executable contents</response>
         [HttpGet("{target}")]
         [Authorize(Roles = "Judgehost,Administrator")]
         public async Task<ActionResult<string>> OnGet(
             [FromRoute] string target,
-            [FromServices] IProblemFacade facade)
+            [FromServices] IExecutableStore execs)
         {
-            var exec = await facade.Executables.FindAsync(target);
+            var exec = await execs.FindAsync(target);
             if (exec is null) return NotFound();
             var base64encoded = Convert.ToBase64String(exec.ZipFile);
             return base64encoded;

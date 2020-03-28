@@ -16,14 +16,12 @@ namespace JudgeWeb.Areas.Polygon.Controllers
     {
         private UserManager<User> UserManager { get; }
 
-        private IProblemFacade Facade { get; }
+        private IProblemStore Store { get; }
 
-        private IProblemStore Store => Facade.Problems;
-
-        public RootController(UserManager<User> um, IProblemFacade db)
+        public RootController(UserManager<User> um, IProblemStore db)
         {
             UserManager = um;
-            Facade = db;
+            Store = db;
         }
 
 
@@ -33,7 +31,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
             if (page < 1) return NotFound();
             var uid = User.IsInRole("Administrator")
                 ? (int?)null
-                : int.Parse(UserManager.GetUserId(User));
+                : int.Parse(User.GetUserId());
             var (model, totPage) = await Store.ListAsync(uid, page, 50);
 
             ViewBag.Page = page;
@@ -140,7 +138,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
                     prob = await importer.ImportAsync(
                         stream: stream,
                         streamFileName: file.FileName,
-                        username: UserManager.GetUserName(User));
+                        username: User.GetUserName());
 
                 StatusMessage = importer.LogBuffer.ToString();
 

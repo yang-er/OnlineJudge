@@ -1,6 +1,5 @@
 ﻿using JudgeWeb.Data;
 using JudgeWeb.Domains.Contests;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using System.Linq;
 using System.Threading.Tasks;
@@ -9,25 +8,36 @@ namespace JudgeWeb.Features.Scoreboard
 {
     public static class Extensions
     {
-        internal static IQueryable<ScoreCache> Score(this DbContext db, int cid, int probid, int teamid)
+        internal static IQueryable<ScoreCache> Score(
+            this ScoreboardContext db,
+            int cid, int probid, int teamid)
         {
-            return db.Set<ScoreCache>()
-                .Where(sc => sc.ContestId == cid && sc.ProblemId == probid && sc.TeamId == teamid);
+            return db.ScoreCache.Where(sc
+                => sc.ContestId == cid
+                && sc.ProblemId == probid
+                && sc.TeamId == teamid);
         }
 
-        internal static IQueryable<ScoreCache> Score(this DbContext db, ScoreboardEventArgs args)
+        internal static IQueryable<ScoreCache> Score(
+            this ScoreboardContext db,
+            ScoreboardEventArgs args)
         {
             return Score(db, args.ContestId, args.ProblemId, args.TeamId);
         }
 
-        internal static IQueryable<RankCache> Rank(this DbContext db, ScoreboardEventArgs args)
+        internal static IQueryable<RankCache> Rank(
+            this ScoreboardContext db,
+            ScoreboardEventArgs args)
         {
             int cid = args.ContestId, teamid = args.TeamId;
-            return db.Set<RankCache>()
+            return db.RankCache
                 .Where(rc => rc.ContestId == cid && rc.TeamId == teamid);
         }
 
-        internal static Task Redistribute(this IRankingStrategy sc, AppDbContext db, ScoreboardEventArgs args)
+        internal static Task Redistribute(
+            this IRankingStrategy sc,
+            ScoreboardContext db,
+            ScoreboardEventArgs args)
         {
             switch (args.EventType)
             {
@@ -50,6 +60,7 @@ namespace JudgeWeb.Features.Scoreboard
         {
             services.AddHostedService<ScoreboardUpdateService>();
             services.AddSingleton<IScoreboardService, ScoreboardService>();
+            services.AddScoped<ScoreboardContext>();
             return services;
         }
     }

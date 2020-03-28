@@ -50,6 +50,11 @@
         /// </summary>
         public bool? AllowSubmit { get; set; }
 
+        /// <summary>
+        /// 导航属性
+        /// </summary>
+        public Problem p { get; set; }
+
         public ProblemArchive() { }
 
         public ProblemArchive(ProblemArchive src, string title, string source, int? ac, int? su)

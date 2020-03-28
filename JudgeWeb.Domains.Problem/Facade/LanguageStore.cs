@@ -6,20 +6,32 @@ using System.Threading.Tasks;
 
 namespace JudgeWeb.Domains.Problems
 {
-    public partial class ProblemFacade :
+    public class LanguageStore :
         ILanguageStore,
-        ICrudRepositoryImpl<Language>,
-        ICrudInstantUpdateImpl<Language>
+        ICrudRepositoryImpl<Language>
     {
-        public ILanguageStore LanguageStore => this;
-        public DbSet<Language> Languages { get; }
+        public DbContext Context { get; }
 
-        Task<Language> ILanguageStore.FindAsync(string langid)
+        public DbSet<Language> Languages => Context.Set<Language>();
+
+        public LanguageStore(DbContext context)
+        {
+            Context = context;
+        }
+
+        public Task ToggleJudgeAsync(string langid, bool tobe)
+        {
+            return Languages
+                .Where(l => l.Id == langid)
+                .BatchUpdateAsync(l => new Language { AllowJudge = tobe });
+        }
+
+        public Task<Language> FindAsync(string langid)
         {
             return Languages.SingleOrDefaultAsync(l => l.Id == langid);
         }
 
-        Task<List<Language>> ILanguageStore.ListAsync(bool? active)
+        public Task<List<Language>> ListAsync(bool? active)
         {
             IQueryable<Language> langs = Languages;
             if (active != null)
@@ -30,9 +42,11 @@ namespace JudgeWeb.Domains.Problems
             //     timeSpan: TimeSpan.FromMinutes(5));
         }
 
-        Task<List<Executable>> ILanguageStore.ListCompilersAsync()
+        public Task ToggleSubmitAsync(string langid, bool tobe)
         {
-            return ExecutableStore.ListAsync("compile");
+            return Languages
+                .Where(l => l.Id == langid)
+                .BatchUpdateAsync(l => new Language { AllowSubmit = tobe });
         }
     }
 }

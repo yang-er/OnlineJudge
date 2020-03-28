@@ -1,7 +1,5 @@
 ﻿using JudgeWeb.Data;
-using System;
-using System.Collections.Generic;
-using System.Text;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace JudgeWeb.Domains.Contests
@@ -11,5 +9,9 @@ namespace JudgeWeb.Domains.Contests
         Task Update(int cid, Judging judging);
 
         Task Create(int cid, Detail detail);
+
+        Task Update(int cid, Contest contest);
+
+        IQueryable<Event> Query(int cid);
     }
 }

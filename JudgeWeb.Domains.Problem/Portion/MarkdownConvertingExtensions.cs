@@ -1,18 +1,18 @@
-﻿using JudgeWeb.Features;
-using JudgeWeb.Features.Storage;
+﻿using JudgeWeb.Features.Storage;
+using Markdig;
 using Microsoft.Extensions.FileProviders;
 using System;
 using System.IO;
 using System.Threading.Tasks;
 
-namespace JudgeWeb.Domains.Problems.Portion
+namespace JudgeWeb.Domains.Problems
 {
     internal static class MarkdownConvertingExtensions
     {
         public static Task<string> ExportWithImagesAsync(this (IMarkdownService, IStaticFileRepository) v, string content)
         {
             (IMarkdownService markdown, IStaticFileRepository files) = v;
-            return markdown.SolveImagesAsync(content, async url =>
+            return markdown.SolveImagesUrlAsync(content, async url =>
             {
                 if (!url.StartsWith("/images/problem/")) return url;
                 var file = files.GetFileInfo(url);
@@ -26,7 +26,7 @@ namespace JudgeWeb.Domains.Problems.Portion
         public static Task<string> ImportWithImagesAsync(this (IMarkdownService, IStaticFileRepository) v, string content, string typeid)
         {
             (IMarkdownService markdown, IStaticFileRepository files) = v;
-            return markdown.SolveImagesAsync(content, async url =>
+            return markdown.SolveImagesUrlAsync(content, async url =>
             {
                 if (!url.StartsWith("data:image/")) return url;
                 var index = url.IndexOf(";base64,");

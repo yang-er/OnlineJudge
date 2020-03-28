@@ -23,11 +23,16 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\JudgeWeb.Data\JudgeWeb.Data.csproj" />
+    <PackageReference Include="Markdig.Service" Version="0.18.3.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\JudgeWeb.Domains.Contest.Abstraction\JudgeWeb.Domains.Contests.Abstraction.csproj" />
+    <ProjectReference Include="..\JudgeWeb.Domains.Identity.Abstraction\JudgeWeb.Domains.Identity.Abstraction.csproj" />
+    <ProjectReference Include="..\JudgeWeb.Domains.Problem.Abstraction\JudgeWeb.Domains.Problems.Abstraction.csproj" />
     <ProjectReference Include="..\JudgeWeb.Features.AspNetCore\JudgeWeb.Features.AspNetCore.csproj" />
     <ProjectReference Include="..\JudgeWeb.Features.Extensions\JudgeWeb.Features.Extensions.csproj" />
-    <ProjectReference Include="..\JudgeWeb.Features.Markdown\JudgeWeb.Features.Markdown.csproj" />
-    <ProjectReference Include="..\JudgeWeb.Features.Scoreboard\JudgeWeb.Features.Scoreboard.csproj" />
+    <ProjectReference Include="..\JudgeWeb.Features.Scoreboard\JudgeWeb.Domains.Contests.Scoreboard.csproj" />
   </ItemGroup>
 
 </Project>

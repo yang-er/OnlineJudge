@@ -1,6 +1,7 @@
 ﻿using JudgeWeb.Data;
-using JudgeWeb.Features;
+using JudgeWeb.Domains.Problems;
 using JudgeWeb.Features.Storage;
+using Markdig;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -10,7 +11,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace JudgeWeb.Domains.Problems.Portion
+[assembly: Inject(typeof(KattisImportProvider))]
+namespace JudgeWeb.Domains.Problems
 {
     public class KattisImportProvider : IImportProvider
     {
@@ -118,7 +120,9 @@ namespace JudgeWeb.Domains.Problems.Portion
         const int LINUX755 = -2115174400;
         const int LINUX644 = -2119958528;
 
-        private IProblemFacade Facade { get; }
+        private ILanguageStore Languages { get; }
+        private IExecutableStore Executables { get; }
+        private IProblemStore Store { get; }
         private ISubmissionStore Submissions { get; }
         private ILogger<KattisImportProvider> Logger { get; }
         private IMarkdownService Markdown { get; }
@@ -129,15 +133,19 @@ namespace JudgeWeb.Domains.Problems.Portion
         public Problem Problem { get; private set; }
 
         public KattisImportProvider(
-            IProblemFacade store,
-            IJudgementFacade sub,
+            IProblemStore store,
+            ILanguageStore languages,
+            IExecutableStore executables,
+            ISubmissionStore submissions,
             ILogger<KattisImportProvider> logger,
             IMarkdownService markdownService,
             IStaticFileRepository io2)
         {
-            Facade = store;
             Logger = logger;
-            Submissions = sub.Submissions;
+            Store = store;
+            Languages = languages;
+            Executables = executables;
+            Submissions = submissions;
             LogBuffer = new StringBuilder();
             Markdown = markdownService;
             StaticFiles = io2;
@@ -324,12 +332,12 @@ namespace JudgeWeb.Domains.Problems.Portion
                 using (var outs = outp.Open())
                     tc.Md5sumOutput = outs.ToMD5().ToHexDigest(true);
 
-                await Facade.Testcases.CreateAsync(tc);
+                await Store.CreateAsync(tc);
 
                 using (var ins = inp.Open())
-                    await Facade.WriteFileAsync(Problem, $"t{tc.TestcaseId}.in", ins);
+                    await Store.WriteFileAsync(Problem, $"t{tc.TestcaseId}.in", ins);
                 using (var outs = outp.Open())
-                    await Facade.WriteFileAsync(Problem, $"t{tc.TestcaseId}.out", outs);
+                    await Store.WriteFileAsync(Problem, $"t{tc.TestcaseId}.out", outs);
 
                 Log($"Adding testcase t{tc.TestcaseId} 'data/{cat}/{file}.{{{usedParts}}}'.");
             }
@@ -341,7 +349,7 @@ namespace JudgeWeb.Domains.Problems.Portion
             var files = zip.Entries
                 .Where(z => z.FullName.StartsWith(prefix) && !z.FullName.EndsWith('/'))
                 .ToList();
-            var langs = await Facade.Languages.ListAsync();
+            var langs = await Languages.ListAsync();
 
             foreach (var file in files)
             {
@@ -400,7 +408,7 @@ namespace JudgeWeb.Domains.Problems.Portion
 
             var tags = $"p{Problem.ProblemId}";
             var content = await (Markdown, StaticFiles).ImportWithImagesAsync(mdcontent, tags);
-            await Facade.WriteFileAsync(Problem, $"{mdfile}.md", content);
+            await Store.WriteFileAsync(Problem, $"{mdfile}.md", content);
 
             Log($"Adding statement section 'problem_statement/{mdfile}.md'.");
         }
@@ -409,7 +417,7 @@ namespace JudgeWeb.Domains.Problems.Portion
         {
             using var zipArchive = new ZipArchive(stream);
 
-            Problem = await Facade.Problems.CreateAsync(new Problem
+            Problem = await Store.CreateAsync(new Problem
             {
                 AllowJudge = false,
                 AllowSubmit = false,
@@ -444,7 +452,7 @@ namespace JudgeWeb.Domains.Problems.Portion
                 {
                     exec.ExecId = $"p{Problem.ProblemId}{(ValidationFlag == 1 ? "cmp" : "run")}";
                     exec.Type = ValidationFlag == 1 ? "compare" : "run";
-                    await Facade.Executables.CreateAsync(exec);
+                    await Executables.CreateAsync(exec);
 
                     if (ValidationFlag == 1)
                     {
@@ -458,9 +466,9 @@ namespace JudgeWeb.Domains.Problems.Portion
                 }
             }
 
-            await Facade.Problems.UpdateAsync(Problem);
+            await Store.UpdateAsync(Problem);
 
-            foreach (var mdfile in IProblemFacade.MarkdownFiles)
+            foreach (var mdfile in IProblemStore.MarkdownFiles)
                 await LoadStatementsAsync(zipArchive, mdfile);
 
             await CreateTestcasesAsync(zipArchive, "sample", false);
@@ -471,7 +479,7 @@ namespace JudgeWeb.Domains.Problems.Portion
             Log("All jury solutions has been added.");
 
             Problem.AllowJudge = true;
-            await Facade.Problems.UpdateAsync(Problem);
+            await Store.UpdateAsync(Problem);
             return Problem;
         }
     }

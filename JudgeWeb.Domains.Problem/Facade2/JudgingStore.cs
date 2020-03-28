@@ -1,4 +1,5 @@
 ﻿using JudgeWeb.Data;
+using JudgeWeb.Domains.Problems;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using System;
@@ -7,21 +8,32 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 
+[assembly: Inject(typeof(IJudgingStore), typeof(JudgingStore))]
 namespace JudgeWeb.Domains.Problems
 {
-    public partial class JudgementFacade :
+    public class JudgingStore :
         IJudgingStore,
         ICreateRepositoryImpl<Judging>,
         IUpdateRepositoryImpl<Judging>,
         ICreateRepositoryImpl<Detail>
     {
-        public IJudgingStore JudgingStore => this;
+        public DbContext Context { get; }
+
+        public IMutableFileProvider Files { get; }
+
+        public DbSet<Submission> Submissions => Context.Set<Submission>();
 
         public DbSet<Judging> Judgings => Context.Set<Judging>();
 
         public DbSet<Detail> Details => Context.Set<Detail>();
 
-        async Task<IEnumerable<T>> IJudgingStore.GetDetailsAsync<T>(
+        public JudgingStore(DbContext context, Features.Storage.IRunFileRepository runs)
+        {
+            Context = context;
+            Files = runs;
+        }
+
+        public async Task<IEnumerable<T>> GetDetailsAsync<T>(
             int pid, int jid,
             Expression<Func<Testcase, Detail, T>> selector)
         {
@@ -45,7 +57,7 @@ namespace JudgeWeb.Domains.Problems
             return await query.ToListAsync();
         }
 
-        async Task<IFileInfo> IJudgingStore.GetRunFileAsync(
+        public async Task<IFileInfo> GetRunFileAsync(
             int jid, int rid, string type, int? sid, int? pid)
         {
             var notfound = new NotFoundFileInfo($"j{jid}/r{rid}.{type}");
@@ -63,7 +75,10 @@ namespace JudgeWeb.Domains.Problems
             return fileInfo;
         }
 
-        async Task<(Judging j, int pid, int cid, int uid, DateTimeOffset time)> IJudgingStore.FindAsync(int judgingId)
+        public async Task<(
+            Judging j,
+            int pid, int cid, int uid,
+            DateTimeOffset time)> FindAsync(int judgingId)
         {
             var res = await Judgings
                 .Where(j => j.JudgingId == judgingId)
@@ -73,7 +88,7 @@ namespace JudgeWeb.Domains.Problems
             return (res.j, res.ProblemId, res.ContestId, res.Author, res.Time);
         }
 
-        Task<List<T>> IJudgingStore.ListAsync<T>(
+        public Task<List<T>> ListAsync<T>(
             Expression<Func<Judging, bool>> predicate,
             Expression<Func<Judging, T>> selector,
             int topCount)
@@ -86,7 +101,18 @@ namespace JudgeWeb.Domains.Problems
                 .ToListAsync();
         }
 
-        Task<Detail> IJudgingStore.SummarizeAsync(Judging j)
+        public Task<List<Judging>> ListAsync(
+            Expression<Func<Judging, bool>> predicate,
+            int topCount)
+        {
+            return Judgings
+                .Where(predicate)
+                .OrderBy(j => j.JudgingId)
+                .Take(topCount)
+                .ToListAsync();
+        }
+
+        public Task<Detail> SummarizeAsync(Judging j)
         {
             return
                (from d in Details
@@ -105,9 +131,68 @@ namespace JudgeWeb.Domains.Problems
                 .SingleOrDefaultAsync();
         }
 
-        Task<IFileInfo> IJudgingStore.SetRunFileAsync(int jid, int rid, string type, byte[] content)
+        public Task<IFileInfo> SetRunFileAsync(int jid, int rid, string type, byte[] content)
         {
             return Files.WriteBinaryAsync($"j{jid}/r{rid}.{type}", content);
+        }
+
+        public Task<int> CountAsync(Expression<Func<Judging, bool>> predicate)
+        {
+            return Judgings.Where(predicate).CountAsync();
+        }
+
+        public async Task<List<ServerStatus>> GetJudgeQueueAsync(int? cid = null)
+        {
+            IQueryable<Submission> submissions = Context.Set<Submission>();
+            if (cid != null) submissions = submissions.Where(s => s.ContestId == cid);
+
+            var judgingStatus = await Queryable
+                .Join(
+                    outer: Context.Set<Judging>(),
+                    inner: Context.Set<Submission>(),
+                    outerKeySelector: j => j.SubmissionId,
+                    innerKeySelector: s => s.SubmissionId,
+                    resultSelector: (j, s) => new { j.Status, s.ContestId })
+                .GroupBy(g => new { g.Status, g.ContestId })
+                .Select(g => new { g.Key.Status, g.Key.ContestId, Count = g.Count() })
+                .ToListAsync();
+
+            return judgingStatus
+                .GroupBy(a => a.ContestId)
+                .Select(g => new ServerStatus
+                {
+                    cid = g.Key,
+                    num_submissions = g.Sum(a => a.Count),
+                    num_queued = g.SingleOrDefault(a => a.Status == Verdict.Pending)?.Count ?? 0,
+                    num_judging = g.SingleOrDefault(a => a.Status == Verdict.Running)?.Count ?? 0,
+                })
+                .ToList();
+        }
+
+        public async Task<IEnumerable<T>> GetDetailsInnerJoinAsync<T>(
+            Expression<Func<Testcase, Detail, T>> selector,
+            Expression<Func<Testcase, Detail, bool>>? predicate = null,
+            int? limit = null)
+        {
+            var _selector = selector.Combine(
+                objectTemplate: new { t = (Testcase)null, d = (Detail)null },
+                place1: a => a.t, place2: a => a.d);
+            var _predicate = predicate?.Combine(
+                objectTemplate: new { t = (Testcase)null, d = (Detail)null },
+                place1: a => a.t, place2: a => a.d);
+
+            var query = Details.Join(
+                inner: Context.Set<Testcase>(),
+                outerKeySelector: d => d.TestcaseId,
+                innerKeySelector: t => t.TestcaseId,
+                resultSelector: (d, t) => new { t, d });
+            if (_predicate != null)
+                query = query.Where(_predicate)
+                    .OrderBy(a => a.d.TestId);
+            var query2 = query.Select(_selector);
+            if (limit.HasValue)
+                query2 = query2.Take(limit.Value);
+            return await query2.ToListAsync();
         }
     }
 }

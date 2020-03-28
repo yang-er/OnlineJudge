@@ -2,6 +2,7 @@
 using JudgeWeb.Data;
 using JudgeWeb.Domains.Identity;
 using JudgeWeb.Features;
+using Markdig;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;

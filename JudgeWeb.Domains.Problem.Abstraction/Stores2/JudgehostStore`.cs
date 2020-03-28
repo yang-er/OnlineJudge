@@ -7,8 +7,7 @@ using System.Threading.Tasks;
 namespace JudgeWeb.Domains.Problems
 {
     public interface IJudgehostStore :
-        ICrudRepository<JudgeHost>,
-        ICrudInstantUpdate<JudgeHost>
+        ICrudRepository<JudgeHost>
     {
         Task<int> ToggleAsync(string hostname, bool active);
 
@@ -19,6 +18,8 @@ namespace JudgeWeb.Domains.Problems
         Task NotifyPollAsync(JudgeHost host);
 
         Task<int> CountJudgingsAsync(string hostname);
+
+        Task<int> GetJudgeStatusAsync();
 
         Task<List<Judging>> FetchJudgingsAsync(string hostname, int count);
     }

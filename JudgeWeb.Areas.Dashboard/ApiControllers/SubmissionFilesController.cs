@@ -24,6 +24,7 @@ namespace JudgeWeb.Areas.Api.Controllers
         /// Get the files for the given submission as a ZIP archive
         /// </summary>
         /// <param name="sid">The ID of the entity to get</param>
+        /// <param name="submissions"></param>
         /// <param name="cid">The contest ID</param>
         /// <response code="200">The files for the submission as a ZIP archive</response>
         /// <response code="500">An error occurred while creating the ZIP file</response>
@@ -50,6 +51,7 @@ namespace JudgeWeb.Areas.Api.Controllers
         /// </summary>
         /// <param name="cid">The contest ID</param>
         /// <param name="sid">The ID of the entity to get</param>
+        /// <param name="submissions"></param>
         /// <response code="200">The files for the submission</response>
         [HttpGet("{sid}/[action]")]
         public async Task<ActionResult<SubmissionFile[]>> SourceCode(int cid, int sid,

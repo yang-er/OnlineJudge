@@ -14,21 +14,22 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
     [AuditPoint(AuditlogType.TeamAffiliation)]
     public class AffiliationsController : Controller3
     {
-        private ITeamManager Store { get; }
-        public AffiliationsController(ITeamManager tm) => Store = tm;
+        private IAffiliationStore Store { get; }
+
+        public AffiliationsController(IAffiliationStore tm) => Store = tm;
 
 
         [HttpGet]
         public async Task<IActionResult> List()
         {
-            return View(await Store.ListAffiliationsAsync());
+            return View(await Store.ListAsync());
         }
 
 
         [HttpGet("{affid}")]
         public async Task<IActionResult> Detail(int affid)
         {
-            var aff = await Store.FindAffiliationAsync(affid);
+            var aff = await Store.FindAsync(affid);
             if (aff == null) return NotFound();
             return View(aff);
         }
@@ -41,7 +42,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
         [HttpGet("{affid}/[action]")]
         public async Task<IActionResult> Edit(int affid)
         {
-            var aff = await Store.FindAffiliationAsync(affid);
+            var aff = await Store.FindAsync(affid);
             if (aff == null) return NotFound();
             return View(aff);
         }
@@ -88,7 +89,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int affid, TeamAffiliation model, IFormFile logo)
         {
-            var aff = await Store.FindAffiliationAsync(affid);
+            var aff = await Store.FindAsync(affid);
             if (aff == null) return NotFound();
 
             if (model.FormalName == null || model.ExternalId == null)
@@ -108,7 +109,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
         [ValidateInAjax]
         public async Task<IActionResult> Delete(int affid)
         {
-            var desc = await Store.FindAffiliationAsync(affid);
+            var desc = await Store.FindAsync(affid);
             if (desc == null) return NotFound();
 
             return AskPost(
@@ -124,7 +125,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int affid, int inajax)
         {
-            var desc = await Store.FindAffiliationAsync(affid);
+            var desc = await Store.FindAsync(affid);
             if (desc == null) return NotFound();
 
             try

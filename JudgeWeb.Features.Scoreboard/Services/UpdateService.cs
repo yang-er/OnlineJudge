@@ -1,4 +1,5 @@
 ﻿using JudgeWeb.Data;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -51,8 +52,8 @@ namespace JudgeWeb.Features.Scoreboard
                 try
                 {
                     using var scope = _servicesProvider.CreateScope();
-                    using var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-                    db.ChangeTracker.AutoDetectChangesEnabled = false;
+                    using var db = scope.ServiceProvider
+                        .GetRequiredService<ScoreboardContext>();
 
                     while (inner.Count > 0)
                     {

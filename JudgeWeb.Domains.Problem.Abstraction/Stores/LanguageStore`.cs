@@ -5,13 +5,14 @@ using System.Threading.Tasks;
 namespace JudgeWeb.Domains.Problems
 {
     public interface ILanguageStore :
-        ICrudRepository<Language>,
-        ICrudInstantUpdate<Language>
+        ICrudRepository<Language>
     {
         Task<Language> FindAsync(string langid);
 
-        Task<List<Language>> ListAsync(bool? active = null);
+        Task ToggleJudgeAsync(string langid, bool tobe);
 
-        Task<List<Executable>> ListCompilersAsync();
+        Task ToggleSubmitAsync(string langid, bool tobe);
+
+        Task<List<Language>> ListAsync(bool? active = null);
     }
 }

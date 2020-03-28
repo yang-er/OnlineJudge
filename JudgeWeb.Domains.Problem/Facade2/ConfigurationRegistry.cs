@@ -1,40 +1,50 @@
 ﻿using JudgeWeb.Data;
+using JudgeWeb.Domains.Problems;
 using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
+[assembly: Inject(typeof(IConfigurationRegistry), typeof(ConfigurationRegistry))]
 namespace JudgeWeb.Domains.Problems
 {
-    public partial class JudgementFacade :
+    public class ConfigurationRegistry :
         IConfigurationRegistry
     {
-        public IConfigurationRegistry Configurations => this;
+        public DbContext Context { get; }
 
-        Task<List<Configure>> IConfigurationRegistry.ListPublicAsync()
+        DbSet<Configure> Configurations => Context.Set<Configure>();
+
+        public ConfigurationRegistry(DbContext context)
         {
-            return Context.Set<Configure>()
+            Context = context;
+        }
+
+        public Task<List<Configure>> ListPublicAsync()
+        {
+            return Configurations
                 .Where(c => c.Public >= 0)
                 .ToListAsync();
         }
 
-        Task IConfigurationRegistry.UpdateValueAsync(string name, string newValue)
+        public Task UpdateValueAsync(string name, string newValue)
         {
-            return Context.Set<Configure>()
+            return Configurations
                 .Where(c => c.Name == name)
                 .BatchUpdateAsync(c => new Configure { Value = newValue });
         }
 
-        Task<Configure> IConfigurationRegistry.FindAsync(string config)
+        public Task<Configure> FindAsync(string config)
         {
-            return Context.Set<Configure>()
+            return Configurations
                 .Where(c => c.Name == config)
                 .SingleOrDefaultAsync();
         }
 
-        Task<List<Configure>> IConfigurationRegistry.GetAsync(string name)
+        public Task<List<Configure>> GetAsync(string name)
         {
-            IQueryable<Configure> confQuery = Context.Set<Configure>();
+            IQueryable<Configure> confQuery = Configurations;
             if (name != null) confQuery = confQuery.Where(c => c.Name == name);
             return confQuery.ToListAsync();
         }

@@ -1,4 +1,5 @@
 ﻿using JudgeWeb.Data;
+using JudgeWeb.Domains.Problems;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -7,17 +8,25 @@ using System.Linq.Expressions;
 using System.Net;
 using System.Threading.Tasks;
 
+[assembly: Inject(typeof(ISubmissionStore), typeof(SubmissionStore))]
 namespace JudgeWeb.Domains.Problems
 {
-    public partial class JudgementFacade :
+    public class SubmissionStore :
         ISubmissionStore,
         IUpdateRepositoryImpl<Submission>
     {
-        public ISubmissionStore SubmissionStore => this;
+        public DbContext Context { get; }
 
-        public DbSet<Submission> Submissions => Context.Set<Submission>();
+        DbSet<Submission> Submissions => Context.Set<Submission>();
 
-        async Task<Submission> ISubmissionStore.CreateAsync(
+        DbSet<Judging> Judgings => Context.Set<Judging>();
+
+        public SubmissionStore(DbContext context)
+        {
+            Context = context;
+        }
+
+        public async Task<Submission> CreateAsync(
             string code, string lang, int pid, int? cid, int uid,
             IPAddress ipAddr, string via, string username, Verdict? expected,
             DateTimeOffset? time, bool fullJudge)
@@ -64,7 +73,7 @@ namespace JudgeWeb.Domains.Problems
             return s.Entity;
         }
 
-        Task<Submission> ISubmissionStore.FindAsync(int sid, bool includeJudgings)
+        public Task<Submission> FindAsync(int sid, bool includeJudgings)
         {
             var query = Submissions
                 .Where(s => s.SubmissionId == sid);
@@ -73,21 +82,21 @@ namespace JudgeWeb.Domains.Problems
             return query.SingleOrDefaultAsync();
         }
 
-        Task<Submission> ISubmissionStore.FindByJudgingAsync(int jid)
+        public Task<Submission> FindByJudgingAsync(int jid)
         {
-            return (from j in Judgings
-                    where j.JudgingId == jid
-                    join s in Submissions on j.SubmissionId equals s.SubmissionId
-                    select s).SingleOrDefaultAsync();
+            return Judgings
+                .Where(j => j.JudgingId == jid)
+                .Select(j => j.s)
+                .SingleOrDefaultAsync();
         }
 
-        async Task<string> ISubmissionStore.GetAuthorNameAsync(int sid)
+        public async Task<string> GetAuthorNameAsync(int sid)
         {
-            var result = await SubmissionStore.GetAuthorNamesAsync(sid);
+            var result = await GetAuthorNamesAsync(sid);
             return result.Values.SingleOrDefault();
         }
 
-        Task<Dictionary<int, string>> ISubmissionStore.GetAuthorNamesAsync(params int[] sids)
+        public Task<Dictionary<int, string>> GetAuthorNamesAsync(params int[] sids)
         {
             var query =
                 from s in Submissions
@@ -105,7 +114,7 @@ namespace JudgeWeb.Domains.Problems
                     : $"{r.TeamName ?? "CONTEST"} (c{r.ContestId}t{r.Author})");
         }
 
-        async Task<IEnumerable<SubmissionStatistics>> ISubmissionStore.StatisticsByUserAsync(int uid)
+        public async Task<IEnumerable<SubmissionStatistics>> StatisticsByUserAsync(int uid)
         {
             var query =
                 from ss in Context.Set<SubmissionStatistics>()
@@ -123,7 +132,7 @@ namespace JudgeWeb.Domains.Problems
             return await query.ToListAsync();
         }
 
-        async Task<(IEnumerable<T> list, int totPage)> ISubmissionStore.ListWithJudgingAsync<T>(
+        public async Task<(IEnumerable<T> list, int totPage)> ListWithJudgingAsync<T>(
             (int Page, int PageCount) pagination,
             Expression<Func<Submission, Judging, T>> selector,
             Expression<Func<Submission, bool>>? predicate)
@@ -144,7 +153,7 @@ namespace JudgeWeb.Domains.Problems
             return (result, totPage);
         }
 
-        async Task<IEnumerable<T>> ISubmissionStore.ListWithJudgingAsync<T>(
+        public async Task<IEnumerable<T>> ListWithJudgingAsync<T>(
             Expression<Func<Submission, Judging, T>> selector,
             Expression<Func<Submission, bool>> predicate, int? limits)
         {
@@ -158,7 +167,7 @@ namespace JudgeWeb.Domains.Problems
                 .ToListAsync();
         }
 
-        async Task<(string, string)?> ISubmissionStore.GetFileAsync(int sid)
+        public async Task<(string, string)?> GetFileAsync(int sid)
         {
             var query =
                 from s in Submissions
@@ -170,7 +179,7 @@ namespace JudgeWeb.Domains.Problems
             return (result.SourceCode, result.FileExtension);
         }
 
-        async Task<IEnumerable<T>> ISubmissionStore.ListAsync<T>(
+        public async Task<IEnumerable<T>> ListAsync<T>(
             Expression<Func<Submission, T>> projection,
             Expression<Func<Submission, bool>> predicate)
         {

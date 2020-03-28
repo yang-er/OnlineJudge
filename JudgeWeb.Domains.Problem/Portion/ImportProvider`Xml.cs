@@ -1,6 +1,7 @@
 ﻿using JudgeWeb.Data;
-using JudgeWeb.Features;
+using JudgeWeb.Domains.Problems;
 using JudgeWeb.Features.Storage;
+using Markdig;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -9,12 +10,13 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 
-namespace JudgeWeb.Domains.Problems.Portion
+[assembly: Inject(typeof(XmlImportProvider))]
+namespace JudgeWeb.Domains.Problems
 {
     public class XmlImportProvider : IImportProvider
     {
         public StringBuilder LogBuffer { get; }
-        public IProblemFacade Facade { get; }
+        public IProblemStore Store { get; }
         public IMarkdownService Markdown { get; }
         public Problem Problem { get; private set; }
         public ILogger<XmlImportProvider> Logger { get; }
@@ -31,13 +33,13 @@ namespace JudgeWeb.Domains.Problems.Portion
         static readonly (string, bool)[] testcaseGroups = new[] { ("samples", false), ("test_cases", true) };
 
         public XmlImportProvider(
-            IProblemFacade store,
+            IProblemStore store,
             ILogger<XmlImportProvider> logger,
             IMarkdownService markdownService,
             IStaticFileRepository io2)
         {
             LogBuffer = new StringBuilder();
-            Facade = store;
+            Store = store;
             Logger = logger;
             Markdown = markdownService;
             StaticFiles = io2;
@@ -55,7 +57,7 @@ namespace JudgeWeb.Domains.Problems.Portion
             string mdcontent = element.Value;
             var tags = $"p{Problem.ProblemId}";
             var content = await (Markdown, StaticFiles).ImportWithImagesAsync(mdcontent, tags);
-            await Facade.WriteFileAsync(Problem, fileName, content);
+            await Store.WriteFileAsync(Problem, fileName, content);
         }
 
         public async Task<Problem> ImportAsync(Stream stream, string uploadFileName, string username)
@@ -70,7 +72,7 @@ namespace JudgeWeb.Domains.Problems.Portion
 
             var doc = document.Root;
 
-            Problem = await Facade.Problems.CreateAsync(new Problem
+            Problem = await Store.CreateAsync(new Problem
             {
                 Title = doc.Element("title").Value,
                 MemoryLimit = int.Parse(doc.Element("memory_limit").Value),
@@ -108,7 +110,7 @@ namespace JudgeWeb.Domains.Problems.Portion
                     var output = Encoding.UTF8.GetBytes(test.Output);
                     var outputHash = output.ToMD5().ToHexDigest(true);
 
-                    var tc = await Facade.Testcases.CreateAsync(new Testcase
+                    var tc = await Store.CreateAsync(new Testcase
                     {
                         InputLength = input.Length,
                         OutputLength = output.Length,
@@ -121,8 +123,8 @@ namespace JudgeWeb.Domains.Problems.Portion
                         Md5sumOutput = outputHash,
                     });
 
-                    await Facade.WriteFileAsync(Problem, $"t{tc.TestcaseId}.in", input);
-                    await Facade.WriteFileAsync(Problem, $"t{tc.TestcaseId}.out", output);
+                    await Store.WriteFileAsync(Problem, $"t{tc.TestcaseId}.in", input);
+                    await Store.WriteFileAsync(Problem, $"t{tc.TestcaseId}.out", output);
                 }
             }
 

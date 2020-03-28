@@ -9,7 +9,15 @@ namespace JudgeWeb.Areas.Misc.Controllers
     {
         private IContestStore Store { get; }
 
-        public ContestController(IContestStore store) => Store = store;
+        private ITeamStore Teams { get; }
+
+        public ContestController(
+            IContestStore store,
+            ITeamStore teams)
+        {
+            Store = store;
+            Teams = teams;
+        }
 
 
         [HttpGet("/contests")]
@@ -19,7 +27,7 @@ namespace JudgeWeb.Areas.Misc.Controllers
                 uid = -100;
 
             var cts = await Store.ListAsync(gym: false);
-            ViewBag.RegisteredContests = await Store.GetRegisteredContestAsync(uid);
+            ViewBag.RegisteredContests = await Teams.ListRegisteredAsync(uid);
             return View(cts);
         }
 
@@ -31,7 +39,7 @@ namespace JudgeWeb.Areas.Misc.Controllers
                 uid = -100;
 
             var cts = await Store.ListAsync(gym: true);
-            ViewBag.RegisteredContests = await Store.GetRegisteredContestAsync(uid);
+            ViewBag.RegisteredContests = await Teams.ListRegisteredAsync(uid);
             return View(cts);
         }
     }

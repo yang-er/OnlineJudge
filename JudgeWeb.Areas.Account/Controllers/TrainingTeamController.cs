@@ -16,17 +16,25 @@ namespace JudgeWeb.Areas.Account.Controllers
     {
         UserManager UserManager { get; }
 
-        ITeamManager TeamManager { get; }
+        ITrainingStore TeamManager { get; }
+
+        IAffiliationStore Affiliations { get; }
 
         User User2 { get; set; }
 
-        public TrainingTeamController(UserManager um, ITeamManager teamStore)
+        public TrainingTeamController(
+            UserManager um,
+            ITrainingStore teamStore,
+            IAffiliationStore affs)
         {
             UserManager = um;
             TeamManager = teamStore;
+            Affiliations = affs;
         }
 
-        public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
+        public override async Task OnActionExecutionAsync(
+            ActionExecutingContext context,
+            ActionExecutionDelegate next)
         {
             var user = await UserManager.GetUserAsync(User);
             var userId = UserManager.GetUserId(User);
@@ -59,7 +67,7 @@ namespace JudgeWeb.Areas.Account.Controllers
         {
             var team = await TeamManager.FindTeamByIdAsync(teamid);
             if (team == null || team.UserId != User2.Id) return NotFound();
-            ViewBag.Affils = await TeamManager.ListAffiliationsAsync();
+            ViewBag.Affils = await Affiliations.ListAsync();
             ViewBag.Users = await TeamManager.ListMembersAsync(team);
             return View(team);
         }
@@ -72,7 +80,7 @@ namespace JudgeWeb.Areas.Account.Controllers
             var team = await TeamManager.FindTeamByIdAsync(teamid);
             if (team == null || team.UserId != User2.Id) return NotFound();
 
-            var aff = await TeamManager.FindAffiliationAsync(model.AffiliationId);
+            var aff = await Affiliations.FindAsync(model.AffiliationId);
             if (null == aff)
             {
                 StatusMessage = "Error affiliation not found.";
@@ -100,7 +108,7 @@ namespace JudgeWeb.Areas.Account.Controllers
         {
             if (!await TeamManager.CheckCreateAsync(User2))
                 return Message("Create team", "Team count limit exceeded.", MessageType.Danger);
-            ViewBag.Affils = await TeamManager.ListAffiliationsAsync();
+            ViewBag.Affils = await Affiliations.ListAsync();
             return Window();
         }
 
@@ -111,7 +119,7 @@ namespace JudgeWeb.Areas.Account.Controllers
             [FromForm, Required] string teamName,
             [FromForm] int affilId)
         {
-            if (null == await TeamManager.FindAffiliationAsync(affilId))
+            if (null == await Affiliations.FindAsync(affilId))
             {
                 StatusMessage = "Error no such affiliation.";
                 return RedirectToAction(nameof(List));

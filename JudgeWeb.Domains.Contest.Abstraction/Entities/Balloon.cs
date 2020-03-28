@@ -67,6 +67,11 @@ namespace JudgeWeb.Data
         /// </summary>
         public int SortOrder { get; set; }
 
+        /// <summary>
+        /// 导航属性
+        /// </summary>
+        public Submission s { get; set; }
+
         public Balloon() { }
 
         public Balloon(Balloon b, int probid, int teamid, string teamName, string teamLoc, DateTimeOffset time, string catName, int so)

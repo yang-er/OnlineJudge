@@ -2,7 +2,6 @@
 using JudgeWeb.Domains.Problems;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
 
 namespace JudgeWeb.Areas.Dashboard.Controllers
@@ -14,17 +13,8 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
     public class InternalErrorsController : Controller3
     {
         private IInternalErrorStore Store { get; }
-
-        private IJudgementFacade Facade { get; }
-
-        private ILogger<IJudgementFacade> Logger { get; }
-
-        public InternalErrorsController(IJudgementFacade facade)
-        {
-            Facade = facade;
-            Store = facade.InternalErrorStore;
-            Logger = facade.Logger;
-        }
+        public InternalErrorsController(IInternalErrorStore store)
+            => Store = store;
 
 
         [HttpGet]
@@ -36,7 +26,9 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
         
         [HttpGet("{eid}/{todo}")]
         public async Task<IActionResult> Mark(int eid, string todo,
-            [FromServices] IProblemFacade problems)
+            [FromServices] IProblemStore problems,
+            [FromServices] IJudgehostStore judgehosts,
+            [FromServices] ILanguageStore languages)
         {
             var ie = await Store.FindAsync(eid);
             if (ie is null) return NotFound();
@@ -56,23 +48,12 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
                 if (toDisable != null)
                 {
                     var kind = toDisable.kind;
-
                     if (kind == "language")
-                    {
-                        await problems.Languages.UpdateAsync(
-                            predicate: l => l.Id == toDisable.langid,
-                            update: l => new Language { AllowJudge = true });
-                    }
+                        await languages.ToggleJudgeAsync(toDisable.langid, true);
                     else if (kind == "judgehost")
-                    {
-                        await Facade.Judgehosts.ToggleAsync(toDisable.hostname, true);
-                    }
+                        await judgehosts.ToggleAsync(toDisable.hostname, true);
                     else if (kind == "problem")
-                    {
-                        await problems.Problems.ToggleAsync(
-                            pid: toDisable.probid.Value,
-                            expression: p => p.AllowJudge, tobe: true);
-                    }
+                        await problems.ToggleJudgeAsync(toDisable.probid.Value, true);
                 }
 
                 await HttpContext.AuditAsync($"mark as {todo}d", $"{eid}");

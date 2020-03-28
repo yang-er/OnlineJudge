@@ -12,8 +12,8 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
     public class JudgehostsController : Controller3
     {
         private IJudgehostStore Store { get; }
-        public JudgehostsController(IJudgementFacade facade)
-            => Store = facade.JudgehostStore;
+        public JudgehostsController(IJudgehostStore store)
+            => Store = store;
 
 
         [HttpGet]
@@ -24,13 +24,14 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
 
 
         [HttpGet("{hostname}")]
-        public async Task<IActionResult> Detail(string hostname)
+        public async Task<IActionResult> Detail(string hostname,
+            [FromServices] IJudgingStore judgings)
         {
             var host = await Store.FindAsync(hostname);
             if (host is null) return NotFound();
             ViewBag.Host = host;
             ViewBag.Count = await Store.CountJudgingsAsync(hostname);
-            ViewBag.Judgings = await Store.FetchJudgingsAsync(hostname, 100);
+            ViewBag.Judgings = await judgings.ListAsync(j => j.Server == hostname, j => j, 100);
             return View();
         }
         

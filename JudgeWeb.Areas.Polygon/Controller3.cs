@@ -9,7 +9,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
 {
     public abstract class Controller3 : Controller2
     {
-        protected IProblemFacade Facade { get; private set; }
+        protected IProblemStore Problems { get; private set; }
 
         public new Problem Problem { get; set; }
 
@@ -23,7 +23,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
                 return Forbid();
             if (!int.TryParse((string)pid, out int ppid))
                 return base.NotFound();
-            Problem = await Facade.Problems.FindAsync(ppid);
+            Problem = await Problems.FindAsync(ppid);
             return Problem == null
                 ? base.NotFound() : null;
         }
@@ -32,8 +32,8 @@ namespace JudgeWeb.Areas.Polygon.Controllers
             ActionExecutingContext context,
             ActionExecutionDelegate next)
         {
-            Facade = context.HttpContext.RequestServices
-                .GetRequiredService<IProblemFacade>();
+            Problems = context.HttpContext.RequestServices
+                .GetRequiredService<IProblemStore>();
             context.Result = await ValidateAsync();
             await base.OnActionExecutionAsync(context, next);
         }

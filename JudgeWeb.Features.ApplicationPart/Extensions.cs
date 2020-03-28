@@ -54,8 +54,7 @@ namespace Microsoft.AspNetCore.Mvc
                     if (TryLoad(projectPrefix + area + ".dll", out var assembly1))
                     {
                         apm.ApplicationParts.Add(new AssemblyPart(assembly1));
-                        foreach (var attr in assembly1.GetCustomAttributes<InjectAttribute>())
-                            builder.Services.TryAdd(attr.GetDescriptior());
+                        builder.Services.TryAddFrom(assembly1);
                     }
 
                     if (TryLoad(projectPrefix + area + ".Views.dll", out var assembly2))

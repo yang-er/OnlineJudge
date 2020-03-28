@@ -20,6 +20,15 @@ namespace JudgeWeb.Domains.Problems
             Expression<Func<Judging, T>> selector,
             int topCount);
 
+        Task<List<Judging>> ListAsync(
+            Expression<Func<Judging, bool>> predicate,
+            int topCount);
+
+        Task<int> CountAsync(
+            Expression<Func<Judging, bool>> predicate);
+
+        Task<List<ServerStatus>> GetJudgeQueueAsync(int? cid = null);
+
         Task<IFileInfo> GetRunFileAsync(
             int judgingId, int runId, string type,
             int? submissionId = null, int? problemId = null);
@@ -30,6 +39,11 @@ namespace JudgeWeb.Domains.Problems
         Task<IEnumerable<T>> GetDetailsAsync<T>(
             int problemId, int judgingId,
             Expression<Func<Testcase, Detail, T>> selector);
+
+        Task<IEnumerable<T>> GetDetailsInnerJoinAsync<T>(
+            Expression<Func<Testcase, Detail, T>> selector,
+            Expression<Func<Testcase, Detail, bool>>? predicate = null,
+            int? limit = null);
 
         Task<Detail> SummarizeAsync(Judging j);
 

@@ -37,7 +37,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
             [FromQuery(Name = "categories[]")] int[] categories,
             [FromQuery(Name = "clear")] string clear = "")
         {
-            ViewBag.Members = await DbContext.ListTeamMembersAsync(cid);
+            ViewBag.Members = await Facade.Teams.ListMembersAsync(cid);
             return await ScoreboardView(
                 isPublic: Contest.GetState() < ContestState.Finalized,
                 isJury: false, clear == "clear", affiliations, categories);
@@ -53,10 +53,8 @@ namespace JudgeWeb.Areas.Contest.Controllers
             ViewBag.Statistics = board.Statistics;
 
             int? teamid = Team?.TeamId;
-            ViewBag.Clarifications = await DbContext.Clarifications
-                .Where(c => c.ContestId == cid)
-                .Where(c => c.Sender == null && (c.Recipient == null || c.Recipient == teamid))
-                .ToListAsync();
+            ViewBag.Clarifications =
+                await Facade.Clarifications.ListAsync(cid, c => c.Recipient == null);
 
             var readme = io.GetFileInfo($"c{cid}/readme.html");
             ViewBag.Markdown = await readme.ReadAsync();
@@ -166,14 +164,14 @@ namespace JudgeWeb.Areas.Contest.Controllers
         public async Task<IActionResult> Register()
         {
             if (Team != null) return NotFound();
-            int uid = int.Parse(UserManager.GetUserId(User));
+            int uid = int.Parse(User.GetUserId());
             var teamQuery =
                 from ttu in DbContext.TrainingTeamUsers
                 where ttu.UserId == uid && ttu.Accepted == true
                 join t in DbContext.TrainingTeams on ttu.TrainingTeamId equals t.TrainingTeamId
                 join tu in DbContext.TrainingTeamUsers on t.TrainingTeamId equals tu.TrainingTeamId
                 where tu.Accepted == true
-                join u in UserManager.Users on tu.UserId equals u.Id
+                join u in DbContext.Users on tu.UserId equals u.Id
                 select new { t.TeamName, t.TrainingTeamId, tu.UserId, u.UserName };
             var items = await teamQuery.ToListAsync();
             var result = items
@@ -188,6 +186,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
 
 
         [HttpPost("[action]")]
+        [AuditPoint(AuditlogType.Team)]
         public async Task<IActionResult> Register(int cid, GymRegisterModel model)
         {
             try
@@ -200,7 +199,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 string teamName;
                 int[] uids;
                 TeamAffiliation aff;
-                var uid = int.Parse(UserManager.GetUserId(User));
+                var uid = int.Parse(User.GetUserId());
                 var affs = await DbContext.ListTeamAffiliationAsync(cid, false);
 
                 if (model.AsIndividual)
@@ -213,7 +212,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
                                  where u.Id == uid
                                  join s in DbContext.Students on u.StudentId equals s.Id
                                  select s.Name).FirstOrDefaultAsync()
-                        : UserManager.GetNickName(User)) ?? UserManager.GetUserName(User);
+                        : User.GetNickName()) ?? User.GetUserName();
                     uids = new[] { uid };
                 }
                 else
@@ -235,8 +234,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
                         throw new ApplicationException("Error team or team member.");
                 }
 
-                await CreateTeamAsync(
-                    aff: aff,
+                int tid = await Facade.Teams.CreateAsync(
                     uids: uids,
                     team: new Team
                     {
@@ -248,6 +246,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
                         TeamName = teamName,
                     });
 
+                await HttpContext.AuditAsync("added", $"{tid}");
                 StatusMessage = "Registration succeeded.";
                 return RedirectToAction(nameof(Home));
             }
@@ -299,7 +298,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 cid: Contest, uid: Team.TeamId,
                 ipAddr: HttpContext.Connection.RemoteIpAddress,
                 via: "gym-page",
-                username: UserManager.GetUserName(User));
+                username: User.GetUserName());
 
             scoreboardService.SubmissionCreated(Contest, s);
             StatusMessage = "Submission done!";
@@ -369,7 +368,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 .ToListAsync();
 
             ViewBag.Page = page;
-            ViewBag.TeamsName = await DbContext.GetTeamNameAsync(cid);
+            ViewBag.TeamsName = await Facade.Teams.ListNamesAsync(cid);
 
             var board = await DbContext.LoadScoreboardAsync(cid);
             ViewBag.ScoreboardData = Team == null ? null : board.Data.GetValueOrDefault(Team.TeamId);

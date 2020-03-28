@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 namespace JudgeWeb.Areas.Dashboard.Controllers
 {
     [Area("Dashboard")]
-    [Authorize(Roles = "Administrator")]
+    [Authorize(Roles = "Administrator,Teacher")]
     [Route("[area]/[controller]")]
     public class GroupsController : Controller3
     {

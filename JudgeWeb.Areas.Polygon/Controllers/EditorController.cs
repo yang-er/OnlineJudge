@@ -19,24 +19,27 @@ namespace JudgeWeb.Areas.Polygon.Controllers
     public class EditorController : Controller3
     {
         [HttpGet("/[area]/{pid}")]
-        public async Task<IActionResult> Overview(int pid)
+        public async Task<IActionResult> Overview(int pid,
+            [FromServices] ITestcaseStore tcs,
+            [FromServices] IArchiveStore archs)
         {
-            ViewBag.TestcaseCount = await Facade.Testcases.CountAsync(Problem);
-            ViewBag.Archive = await Facade.Archives.FindInternalAsync(pid);
+            ViewBag.TestcaseCount = await tcs.CountAsync(Problem);
+            ViewBag.Archive = await archs.FindInternalAsync(pid);
             return View(Problem);
         }
 
 
         [HttpGet("{execid}")]
-        public async Task<IActionResult> Executables(string execid)
+        public async Task<IActionResult> Executables(string execid,
+            [FromServices] IExecutableStore execs)
         {
             if (execid != Problem.CompareScript && execid != Problem.RunScript)
                 return NotFound();
-            var bytes = await Facade.Executables.FindAsync(execid);
+            var bytes = await execs.FindAsync(execid);
             if (bytes is null) return NotFound();
 
             ViewBag.Executable = bytes;
-            var items = await Facade.Executables.FetchContentAsync(bytes);
+            var items = await execs.FetchContentAsync(bytes);
             return View(items);
         }
 
@@ -44,9 +47,10 @@ namespace JudgeWeb.Areas.Polygon.Controllers
         [HttpGet]
         [ValidateInAjax]
         [Authorize(Roles = "Administrator,Problem")]
-        public async Task<IActionResult> Archive(int pid)
+        public async Task<IActionResult> Archive(int pid,
+            [FromServices] IArchiveStore archives)
         {
-            var arch = await Facade.Archives.FindInternalAsync(pid);
+            var arch = await archives.FindInternalAsync(pid);
             return Window(arch ?? new ProblemArchive { ProblemId = pid });
         }
 
@@ -54,9 +58,11 @@ namespace JudgeWeb.Areas.Polygon.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Administrator,Problem")]
-        public async Task<IActionResult> Archive(int pid, ProblemArchive model)
+        public async Task<IActionResult> Archive(
+            int pid, ProblemArchive model,
+            [FromServices] IArchiveStore archives)
         {
-            var arch = await Facade.Archives.FindInternalAsync(pid);
+            var arch = await archives.FindInternalAsync(pid);
 
             if (arch == null)
             {
@@ -64,7 +70,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
                 {
                     model.TagName ??= "";
                     model.ProblemId = pid;
-                    await Facade.Archives.CreateAsync(model);
+                    await archives.CreateAsync(model);
                     StatusMessage = $"Problem published as {model.PublicId}.";
                 }
                 catch (Exception ex)
@@ -75,7 +81,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
             else
             {
                 arch.TagName = model.TagName;
-                await Facade.Archives.UpdateAsync(arch);
+                await archives.UpdateAsync(arch);
                 StatusMessage = "Problem tag updated.";
             }
 
@@ -106,7 +112,9 @@ namespace JudgeWeb.Areas.Polygon.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Administrator,Problem")]
-        public async Task<IActionResult> Edit(int pid, ProblemEditModel model)
+        public async Task<IActionResult> Edit(
+            int pid, ProblemEditModel model,
+            [FromServices] IExecutableStore execs)
         {
             if (model.RunScript == "upload" && model.UploadedRun == null)
                 ModelState.AddModelError("XYS::RunScript", "No run script was selected.");
@@ -131,7 +139,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
                 var cont = await model.UploadedRun.ReadAsync();
                 var execid = $"p{pid}run";
 
-                var exec = await Facade.Executables.FindAsync(execid);
+                var exec = await execs.FindAsync(execid);
                 bool newone = exec == null;
                 exec ??= new Executable();
                 exec.ExecId = execid;
@@ -141,8 +149,8 @@ namespace JudgeWeb.Areas.Polygon.Controllers
                 exec.Type = "run";
                 exec.ZipSize = cont.Item1.Length;
 
-                if (newone) await Facade.Executables.CreateAsync(exec);
-                else await Facade.Executables.UpdateAsync(exec);
+                if (newone) await execs.CreateAsync(exec);
+                else await execs.UpdateAsync(exec);
                 model.RunScript = execid;
             }
 
@@ -151,7 +159,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
                 var cont = await model.UploadedCompare.ReadAsync();
                 var execid = $"p{pid}cmp";
 
-                var exec = await Facade.Executables.FindAsync(execid);
+                var exec = await execs.FindAsync(execid);
                 bool newone = exec == null;
                 exec ??= new Executable();
                 exec.ExecId = execid;
@@ -161,8 +169,8 @@ namespace JudgeWeb.Areas.Polygon.Controllers
                 exec.Type = "compare";
                 exec.ZipSize = cont.Item1.Length;
 
-                if (newone) await Facade.Executables.CreateAsync(exec);
-                else await Facade.Executables.UpdateAsync(exec);
+                if (newone) await execs.CreateAsync(exec);
+                else await execs.UpdateAsync(exec);
                 model.CompareScript = execid;
             }
 
@@ -175,7 +183,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
             Problem.Title = model.Title;
             Problem.Source = model.Source ?? "";
             Problem.CombinedRunCompare = model.RunAsCompare;
-            await Facade.Problems.UpdateAsync(Problem);
+            await Problems.UpdateAsync(Problem);
 
             return RedirectToAction(nameof(Overview));
         }
@@ -211,7 +219,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ToggleSubmit(int pid)
         {
-            await Facade.Problems.ToggleAsync(pid, p => p.AllowSubmit, !Problem.AllowSubmit);
+            await Problems.ToggleSubmitAsync(pid, !Problem.AllowSubmit);
             return RedirectToAction(nameof(Overview));
         }
 
@@ -220,7 +228,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ToggleJudge(int pid)
         {
-            await Facade.Problems.ToggleAsync(pid, p => p.AllowJudge, !Problem.AllowJudge);
+            await Problems.ToggleJudgeAsync(pid, !Problem.AllowJudge);
             return RedirectToAction(nameof(Overview));
         }
 
@@ -230,7 +238,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
         [Authorize(Roles = "Administrator,Problem")]
         public async Task<IActionResult> Delete(int pid)
         {
-            await Facade.Problems.DeleteAsync(Problem);
+            await Problems.DeleteAsync(Problem);
             StatusMessage = $"Problem {pid} deleted successfully.";
             return RedirectToAction("List", "Root");
         }

@@ -6,8 +6,7 @@ using System.Threading.Tasks;
 namespace JudgeWeb.Domains.Problems
 {
     public interface IExecutableStore :
-        ICrudRepository<Executable>,
-        ICrudInstantUpdate<Executable>
+        ICrudRepository<Executable>
     {
         Task<Executable> FindAsync(string execid);
 

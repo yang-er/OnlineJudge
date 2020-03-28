@@ -1,91 +1,55 @@
 ﻿using JudgeWeb.Areas.Contest.Models;
 using JudgeWeb.Data;
 using JudgeWeb.Domains.Contests;
+using JudgeWeb.Domains.Problems;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
-using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 
 namespace JudgeWeb.Areas.Contest.Controllers
 {
     [Area("Contest")]
     [Route("[area]/{cid}/jury/[controller]")]
+    [AuditPoint(AuditlogType.Rejudging)]
     public class RejudgingsController : JuryControllerBase
     {
+        public IRejudgingStore Store { get; }
+
+        public RejudgingsController(IRejudgingStore store)
+        {
+            Store = store;
+        }
+
+
         [HttpGet]
         public async Task<IActionResult> List(int cid)
         {
-            var query =
-                from r in DbContext.Rejudges
-                where r.ContestId == cid
-                join u in DbContext.Users on r.IssuedBy equals u.Id into uu1
-                from u1 in uu1.DefaultIfEmpty()
-                join u in DbContext.Users on r.OperatedBy equals u.Id into uu2
-                from u2 in uu2.DefaultIfEmpty()
-                select new Rejudge(r, u1.UserName, u2.UserName);
-            var model = await query.ToListAsync();
-
-            var query2 =
-                from j in DbContext.Judgings
-                where (from r in DbContext.Rejudges
-                       where r.ContestId == cid && r.OperatedBy == null
-                       select (int?)r.RejudgeId).Contains(j.RejudgeId)
-                group 1 by new { j.RejudgeId, j.Status } into g
-                select new { g.Key, Cnt = g.Count() };
-            var q2 = await query2.ToListAsync();
-
-            foreach (var qqq in q2.GroupBy(a => a.Key.RejudgeId))
-            {
-                int tot = qqq.Sum(a => a.Cnt);
-                int ped = qqq
-                    .Where(a => a.Key.Status == Verdict.Pending || a.Key.Status == Verdict.Running)
-                    .DefaultIfEmpty()
-                    .Sum(a => a?.Cnt) ?? 0;
-                model.First(r => r.RejudgeId == qqq.Key).Ready = (tot, ped);
-            }
-
-            return View(model);
+            return View(await Store.ListAsync(cid));
         }
 
 
         [HttpGet("{rid}")]
-        public async Task<IActionResult> Detail(int cid, int rid)
+        public async Task<IActionResult> Detail(int cid, int rid,
+            [FromServices] ITeamStore tms)
         {
-            var rquery =
-                from r in DbContext.Rejudges
-                where r.RejudgeId == rid && r.ContestId == cid
-                join u in DbContext.Users on r.IssuedBy equals u.Id into uu
-                from u1 in uu.DefaultIfEmpty()
-                join u in DbContext.Users on r.OperatedBy equals u.Id into uu2
-                from u2 in uu2.DefaultIfEmpty()
-                select new Rejudge(r, u1.UserName, u2.UserName);
-
-            var model = await rquery.SingleOrDefaultAsync();
+            var model = await Store.FindAsync(cid, rid);
             if (model == null) return NotFound();
-
-            var jquery =
-                from j in DbContext.Judgings
-                where j.RejudgeId == rid
-                join s in DbContext.Submissions on j.SubmissionId equals s.SubmissionId
-                join j2 in DbContext.Judgings on j.PreviousJudgingId equals j2.JudgingId
-                orderby s.Time descending
-                select new { s.ProblemId, s.Language, s.Time, s.Author, j, j2 };
-            var jitem = await jquery.ToListAsync();
-
-            ViewBag.Teams = await DbContext.GetTeamNameAsync(cid);
-            ViewBag.Judgings = jitem.Select(a =>
-                (a.j, a.j2, a.ProblemId, a.Language, a.Time, a.Author));
+            ViewBag.Teams = await tms.ListNamesAsync(cid);
+            ViewBag.Judgings = await Store.ViewAsync(model);
             return View(model);
         }
 
 
         [HttpGet("[action]")]
-        public async Task<IActionResult> Add(int cid)
+        public async Task<IActionResult> Add(int cid,
+            [FromServices] IJudgehostStore jhs,
+            [FromServices] ITeamStore tms)
         {
-            ViewBag.Teams = await DbContext.GetTeamNameAsync(cid);
-            ViewBag.Judgehosts = await DbContext.JudgeHosts.ToListAsync();
+            ViewBag.Teams = await tms.ListNamesAsync(cid);
+            ViewBag.Judgehosts = await jhs.ListAsync();
             return View(new AddRejudgingModel());
         }
 
@@ -96,110 +60,70 @@ namespace JudgeWeb.Areas.Contest.Controllers
         {
             if (!ModelState.IsValid) return View(model);
 
-            var r = DbContext.Rejudges.Add(new Rejudge
+            var r = await Store.CreateAsync(new Rejudge
             {
                 ContestId = Contest.ContestId,
                 Reason = model.Reason,
                 StartTime = DateTimeOffset.Now,
-                IssuedBy = int.Parse(UserManager.GetUserId(User))
+                IssuedBy = int.Parse(User.GetUserId())
             });
 
-            await DbContext.SaveChangesAsync();
-            int rejid = r.Entity.RejudgeId;
-            IQueryable<int> q2;
+            Expression<Func<Submission, Judging, bool>> cond
+                = (s, j) => s.RejudgeId == null && s.ContestId == cid;
 
             if (model.Submission.HasValue)
             {
                 int sid = model.Submission.Value;
-                q2 = DbContext.Submissions
-                    .Where(s => s.ContestId == cid && s.RejudgeId == null && s.SubmissionId == sid)
-                    .Select(s => s.SubmissionId);
+                cond = cond.Combine((s, j) => s.SubmissionId == sid);
             }
             else
             {
-                var submissionSource = DbContext.Submissions
-                    .Where(s => s.ContestId == cid && s.RejudgeId == null);
-
                 var probs = model.Problems ?? Array.Empty<int>();
                 if (probs.Length > 0)
-                    submissionSource = submissionSource.Where(s => probs.Contains(s.ProblemId));
+                    cond = cond.Combine((s, j) => probs.Contains(s.ProblemId));
 
                 var teams = model.Teams ?? Array.Empty<int>();
                 if (teams.Length > 0)
-                    submissionSource = submissionSource.Where(s => teams.Contains(s.Author));
+                    cond = cond.Combine((s, j) => teams.Contains(s.Author));
 
                 var langs = model.Languages ?? Array.Empty<string>();
                 if (langs.Length > 0)
-                    submissionSource = submissionSource.Where(s => langs.Contains(s.Language));
+                    cond = cond.Combine((s, j) => langs.Contains(s.Language));
 
                 if (model.TimeBefore.TryParseAsTimeSpan(out var tb) && tb.HasValue)
                 {
                     var timed = (Contest.StartTime ?? DateTimeOffset.Now) + tb.Value;
-                    submissionSource = submissionSource.Where(s => s.Time <= timed);
+                    cond = cond.Combine((s, j) => s.Time <= timed);
                 }
 
                 if (model.TimeAfter.TryParseAsTimeSpan(out var ta) && ta.HasValue)
                 {
                     var timed = (Contest.StartTime ?? DateTimeOffset.Now) + ta.Value;
-                    submissionSource = submissionSource.Where(s => s.Time >= timed);
+                    cond = cond.Combine((s, j) => s.Time >= timed);
                 }
-
-                var sjSource = submissionSource
-                    .Join(
-                        inner: DbContext.Judgings,
-                        outerKeySelector: s => new { s.SubmissionId, Active = true },
-                        innerKeySelector: j => new { j.SubmissionId, j.Active },
-                        resultSelector: (s, j) => new { s, j });
 
                 var hosts = model.Judgehosts ?? Array.Empty<string>();
                 if (hosts.Length > 0)
-                    sjSource = sjSource.Where(a => hosts.Contains(a.j.Server));
+                    cond = cond.Combine((s, j) => hosts.Contains(j.Server));
 
                 var verds = model.Verdicts ?? Array.Empty<Verdict>();
                 if (model.Verdicts.Length > 0)
-                    sjSource = sjSource.Where(a => verds.Contains(a.j.Status));
-
-                q2 = sjSource.Select(a => a.s.SubmissionId);
+                    cond = cond.Combine((s, j) => verds.Contains(j.Status));
             }
 
-            int count = await DbContext.Submissions
-                .Where(s => q2.Contains(s.SubmissionId))
-                .BatchUpdateAsync(s => new Submission { RejudgeId = rejid });
+            int tok = await Store.BatchRejudgeAsync(cond, r);
 
-            if (count == 0)
+            if (tok == 0)
             {
-                await DbContext.Rejudges
-                    .Where(rr => rr.RejudgeId == rejid)
-                    .BatchDeleteAsync();
+                await Store.DeleteAsync(r);
                 StatusMessage = "Error no submissions was rejudged.";
                 return RedirectToAction(nameof(List));
             }
             else
             {
-                var newJudgings =
-                    from s in DbContext.Submissions
-                    where s.RejudgeId == rejid
-                    join j in DbContext.Judgings
-                        on new { s.SubmissionId, Active = true }
-                        equals new { j.SubmissionId, j.Active }
-                    select new Judging
-                    {
-                        Active = false,
-                        SubmissionId = s.SubmissionId,
-                        FullTest = j.FullTest,
-                        Status = Verdict.Pending,
-                        RejudgeId = rejid,
-                        PreviousJudgingId = j.JudgingId,
-                    };
-
-                var tok = await newJudgings
-                    .BatchInsertIntoAsync(DbContext.Judgings);
-
                 StatusMessage = $"{tok} submissions will be rejudged.";
-
-                InternalLog(AuditlogType.Rejudging, $"{rejid}", "added", $"with {tok} submissions");
-                await DbContext.SaveChangesAsync();
-                return RedirectToAction(nameof(Detail), new { rid = rejid });
+                await HttpContext.AuditAsync("added", $"{r.RejudgeId}", $"with {tok} submissions");
+                return RedirectToAction(nameof(Detail), new { rid = r.RejudgeId });
             }
         }
 
@@ -220,9 +144,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Repeat(int cid, int rid)
         {
-            var rej = await DbContext.Rejudges
-                .Where(r => r.RejudgeId == rid && r.ContestId == cid)
-                .SingleOrDefaultAsync();
+            var rej = await Store.FindAsync(cid, rid);
             if (rej == null) return NotFound();
 
             if (rej.OperatedBy == null)
@@ -231,53 +153,29 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 return RedirectToAction(nameof(Detail));
             }
 
-            var r2e = DbContext.Rejudges.Add(new Rejudge
+            var r2e = await Store.CreateAsync(new Rejudge
             {
                 ContestId = Contest.ContestId,
                 StartTime = DateTimeOffset.Now,
-                IssuedBy = int.Parse(UserManager.GetUserId(User)),
+                IssuedBy = int.Parse(User.GetUserId()),
                 Reason = "repeat: " + rej.Reason,
             });
 
-            await DbContext.SaveChangesAsync();
-            var rejid = r2e.Entity.RejudgeId;
+            int tok = await Store.BatchRejudgeAsync(
+                predicate: (s, j) => j.RejudgeId == rid,
+                rejudge: r2e);
 
-            int count = await DbContext.Submissions
-                .Where(s => (from j in DbContext.Judgings
-                             where j.RejudgeId == rid
-                             select j.SubmissionId).Contains(s.SubmissionId) && s.RejudgeId == null)
-                .BatchUpdateAsync(s => new Submission { RejudgeId = rejid });
-
-            if (count == 0)
+            if (tok == 0)
             {
-                await DbContext.Rejudges
-                    .Where(rr => rr.RejudgeId == rejid)
-                    .BatchDeleteAsync();
+                await Store.DeleteAsync(r2e);
                 StatusMessage = "Error no submissions was rejudged.";
                 return RedirectToAction(nameof(Detail));
             }
             else
             {
-                var newJudgings =
-                    from s in DbContext.Submissions
-                    where s.RejudgeId == rejid
-                    join j in DbContext.Judgings
-                        on new { s.SubmissionId, Active = true }
-                        equals new { j.SubmissionId, j.Active }
-                    select new Judging
-                    {
-                        Active = false,
-                        SubmissionId = s.SubmissionId,
-                        FullTest = j.FullTest,
-                        Status = Verdict.Pending,
-                        RejudgeId = rejid,
-                        PreviousJudgingId = j.JudgingId,
-                    };
-
-                var tok = await newJudgings
-                    .BatchInsertIntoAsync(DbContext.Judgings);
                 StatusMessage = $"{tok} submissions will be rejudged.";
-                return RedirectToAction(nameof(Detail), new { rid = rejid });
+                await HttpContext.AuditAsync("added", $"{r2e.RejudgeId}", $"with {tok} submissions");
+                return RedirectToAction(nameof(Detail), new { rid = r2e.RejudgeId });
             }
         }
 
@@ -286,24 +184,10 @@ namespace JudgeWeb.Areas.Contest.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Cancel(int cid, int rid)
         {
-            var rej = await DbContext.Rejudges
-                .Where(r => r.ContestId == cid && r.RejudgeId == rid && r.EndTime == null)
-                .SingleOrDefaultAsync();
-            if (rej == null) return NotFound();
-
-            var cancelJudgings = await DbContext.Judgings
-                .Where(j => j.RejudgeId == rid && j.Status == Verdict.Pending)
-                .BatchDeleteAsync();
-
-            var resetSubmits = await DbContext.Submissions
-                .Where(s => s.RejudgeId == rid)
-                .BatchUpdateAsync(s => new Submission { RejudgeId = null });
-
-            rej.EndTime = DateTimeOffset.Now;
-            rej.Applied = false;
-            rej.OperatedBy = int.Parse(UserManager.GetUserId(User));
-            DbContext.Rejudges.Update(rej);
-            await DbContext.SaveChangesAsync();
+            var rej = await Store.FindAsync(cid, rid);
+            if (rej == null || rej.EndTime != null) return NotFound();
+            await Store.CancelAsync(rej, int.Parse(User.GetUserId()));
+            await HttpContext.AuditAsync("cancelled", $"{rid}");
             return RedirectToAction(nameof(Detail));
         }
 
@@ -311,16 +195,15 @@ namespace JudgeWeb.Areas.Contest.Controllers
         [HttpPost("{rid}/[action]")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Apply(int cid, int rid,
-            [FromServices] IScoreboardService scoreboardService)
+            [FromServices] IScoreboardService scoreboard,
+            [FromServices] IJudgingStore judgings)
         {
-            var rej = await DbContext.Rejudges
-                .Where(r => r.ContestId == cid && r.RejudgeId == rid && r.EndTime == null)
-                .SingleOrDefaultAsync();
-            if (rej == null) return NotFound();
+            var rej = await Store.FindAsync(cid, rid);
+            if (rej == null || rej.EndTime != null) return NotFound();
 
-            var pending = await DbContext.Judgings
-                .Where(j => j.RejudgeId == rid && j.Status == Verdict.Pending || j.Status == Verdict.Running)
-                .CountAsync();
+            var pending = await judgings.CountAsync(j =>
+                j.RejudgeId == rid &&
+                (j.Status == Verdict.Pending || j.Status == Verdict.Running));
 
             if (pending > 0)
             {
@@ -328,31 +211,9 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 return RedirectToAction(nameof(Detail));
             }
 
-            var applyNew = await DbContext.Judgings
-                .Where(j => j.RejudgeId == rid)
-                .BatchUpdateAsync(j => new Judging { Active = true });
-
-            var oldJudgings = DbContext.Judgings
-                .Where(j => j.RejudgeId == rid)
-                .Select(j => j.PreviousJudgingId);
-            var supplyOld = await DbContext.Judgings
-                .Where(j => oldJudgings.Contains(j.JudgingId))
-                .BatchUpdateAsync(j => new Judging { Active = false });
-
-            var oldSubmissions = DbContext.Judgings
-                .Where(j => j.RejudgeId == rid)
-                .Select(j => j.SubmissionId);
-            var resetSubmit = await DbContext.Submissions
-                .Where(s => oldSubmissions.Contains(s.SubmissionId))
-                .BatchUpdateAsync(s => new Submission { RejudgeId = null });
-
-            rej.Applied = true;
-            rej.EndTime = DateTimeOffset.Now;
-            rej.OperatedBy = int.Parse(UserManager.GetUserId(User));
-            DbContext.Rejudges.Update(rej);
-            await DbContext.SaveChangesAsync();
-
-            scoreboardService.RefreshCache(Contest, DateTimeOffset.Now);
+            await Store.ApplyAsync(rej, int.Parse(User.GetUserId()));
+            await HttpContext.AuditAsync("applied", $"{rid}");
+            scoreboard.RefreshCache(Contest, DateTimeOffset.Now);
             StatusMessage = "Rejudging applied. Scoreboard cache will be refreshed.";
             return RedirectToAction(nameof(Detail));
         }

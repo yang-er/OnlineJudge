@@ -19,6 +19,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Markdig.Service" Version="0.18.3.1" />
     <PackageReference Include="Microsoft.ApplicationInsights" Version="2.10.0" />
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Versioning" Version="4.1.1" />
@@ -31,7 +32,6 @@
     <ProjectReference Include="..\JudgeWeb.Domains.Problem.Abstraction\JudgeWeb.Domains.Problems.Abstraction.csproj" />
     <ProjectReference Include="..\JudgeWeb.Features.AspNetCore\JudgeWeb.Features.AspNetCore.csproj" />
     <ProjectReference Include="..\JudgeWeb.Features.Extensions\JudgeWeb.Features.Extensions.csproj" />
-    <ProjectReference Include="..\JudgeWeb.Features.Markdown\JudgeWeb.Features.Markdown.csproj" />
   </ItemGroup>
 
 </Project>

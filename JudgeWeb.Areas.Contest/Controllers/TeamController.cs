@@ -1,12 +1,11 @@
 ﻿using JudgeWeb.Areas.Contest.Models;
 using JudgeWeb.Data;
 using JudgeWeb.Domains.Contests;
-using JudgeWeb.Features.Storage;
+using JudgeWeb.Domains.Problems;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using System;
 using System.Collections.Generic;
@@ -47,6 +46,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
 
 
         [HttpPost("[action]")]
+        [AuditPoint(AuditlogType.Printing)]
         public Task<IActionResult> Print(int cid, AddPrintModel model) => PrintDo(cid, model);
 
 
@@ -61,39 +61,28 @@ namespace JudgeWeb.Areas.Contest.Controllers
 
 
         [HttpGet]
-        public async Task<IActionResult> Home(int cid)
+        public async Task<IActionResult> Home(int cid,
+            [FromServices] ISubmissionStore submits,
+            [FromServices] IClarificationStore clars)
         {
             int teamid = Team.TeamId;
             var board = await FindScoreboardAsync(teamid);
-            var probs = board.Problems;
+            
+            ViewBag.Clarifications = await clars.ListAsync(cid,
+                c => (c.Sender == null && c.Recipient == null)
+                || c.Recipient == teamid || c.Sender == teamid);
 
-            var clars = await DbContext.Clarifications
-                .Where(c => c.ContestId == cid)
-                .Where(c => (c.Sender == null && c.Recipient == null)
-                    || c.Recipient == teamid || c.Sender == teamid)
-                .ToListAsync();
-
-            ViewBag.Clarifications = clars;
-
-            var subQuery = await DbContext.Submissions
-                .Where(s => s.ContestId == cid && s.Author == teamid)
-                .Join(
-                    inner: DbContext.Judgings,
-                    outerKeySelector: s => new { s.SubmissionId, Active = true },
-                    innerKeySelector: g => new { g.SubmissionId, g.Active },
-                    resultSelector: (s, g) => new { s.SubmissionId, g.Status, s.Time, s.ProblemId, s.Language })
-                .OrderByDescending(a => a.SubmissionId)
-                .ToListAsync();
-
-            ViewBag.Submissions = subQuery
-                .Select(a => new SubmissionViewModel
+            ViewBag.Submissions = 
+                await submits.ListWithJudgingAsync(
+                predicate: s => s.ContestId == cid && s.Author == teamid,
+                selector: (s, j) => new SubmissionViewModel
                 {
-                    Grade = 0,
-                    Language = Languages[a.Language],
-                    SubmissionId = a.SubmissionId,
-                    Time = a.Time,
-                    Verdict = a.Status,
-                    Problem = probs.FirstOrDefault(cp => cp.ProblemId == a.ProblemId),
+                    Grade = j.TotalScore ?? 0,
+                    Language = Languages[s.Language],
+                    SubmissionId = s.SubmissionId,
+                    Time = s.Time,
+                    Verdict = j.Status,
+                    Problem = Problems.Find(s.ProblemId),
                 });
 
             return View(board);
@@ -109,44 +98,40 @@ namespace JudgeWeb.Areas.Contest.Controllers
 
         [HttpGet("[action]/{sid}")]
         [ValidateInAjax]
-        public async Task<IActionResult> Submission(int cid, int sid)
+        public async Task<IActionResult> Submission(int cid, int sid,
+            [FromServices] ISubmissionStore submissions)
         {
             int teamid = Team.TeamId;
 
-            var model = await DbContext.Submissions
-                .Where(s => s.SubmissionId == sid && s.ContestId == cid && s.Author == teamid)
-                .Join(
-                    inner: DbContext.Judgings,
-                    outerKeySelector: s => new { s.SubmissionId, Active = true },
-                    innerKeySelector: g => new { g.SubmissionId, g.Active },
-                    resultSelector: (s, g) => new { s.SubmissionId, g.Status, s.Time, s.ProblemId, g.CompileError, s.Language, s.SourceCode })
-                .SingleOrDefaultAsync();
+            var models = await submissions.ListWithJudgingAsync(
+                predicate: s => s.ContestId == cid && s.SubmissionId == sid,
+                selector: (s, j) => new SubmissionViewModel
+                {
+                    SubmissionId = s.SubmissionId,
+                    Grade = j.TotalScore ?? 0,
+                    Language = Languages[s.Language],
+                    Time = s.Time,
+                    Verdict = j.Status,
+                    Problem = Problems.Find(s.ProblemId),
+                    CompilerOutput = j.CompileError,
+                    SourceCode = s.SourceCode,
+                });
 
+            var model = models.SingleOrDefault();
             if (model == null) return NotFound();
-
-            return Window(new SubmissionViewModel
-            {
-                SubmissionId = model.SubmissionId,
-                Grade = 0,
-                Language = Languages[model.Language],
-                Time = model.Time,
-                Verdict = model.Status,
-                Problem = Problems.Find(model.ProblemId),
-                CompilerOutput = model.CompileError,
-                SourceCode = model.SourceCode,
-            });
+            return Window(model);
         }
 
 
         [HttpGet("problems/{prob}")]
         public async Task<IActionResult> Problemset(string prob,
-            [FromServices] IProblemFileRepository io)
+            [FromServices] IProblemStore probs)
         {
             if (TooEarly && !ViewData.ContainsKey("IsJury")) return NotFound();
             var problem = Problems.Find(prob);
             if (problem == null) return NotFound();
 
-            var viewFile = io.GetFileInfo($"p{problem.ProblemId}/view.html");
+            var viewFile = probs.GetFile(problem, "view.html");
             var view = await viewFile.ReadAsync();
             if (string.IsNullOrEmpty(view)) return NotFound();
 
@@ -166,11 +151,11 @@ namespace JudgeWeb.Areas.Contest.Controllers
 
         [HttpGet("clarifications/{clarid}")]
         [ValidateInAjax]
-        public async Task<IActionResult> Clarification(int cid, int clarid, bool needMore = true)
+        public async Task<IActionResult> Clarification(
+            [FromServices] IClarificationStore claris,
+            int cid, int clarid, bool needMore = true)
         {
-            var toSee = await DbContext.Clarifications
-                .Where(c => c.ContestId == cid && c.ClarificationId == clarid)
-                .SingleOrDefaultAsync();
+            var toSee = await claris.FindAsync(cid, clarid);
             var clars = Enumerable.Empty<Clarification>();
 
             if (toSee?.CheckPermission(Team.TeamId) ?? true)
@@ -180,9 +165,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 if (needMore && toSee.ResponseToId.HasValue)
                 {
                     int respid = toSee.ResponseToId.Value;
-                    var toSee2 = await DbContext.Clarifications
-                        .Where(c => c.ContestId == cid && c.ClarificationId == respid)
-                        .SingleOrDefaultAsync();
+                    var toSee2 = await claris.FindAsync(cid, respid);
                     if (toSee2 != null) clars = clars.Prepend(toSee2);
                 }
             }
@@ -195,15 +178,16 @@ namespace JudgeWeb.Areas.Contest.Controllers
 
         [HttpPost("clarifications/{op}")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Clarification(string op, AddClarificationModel model)
+        [AuditPoint(AuditlogType.Clarification)]
+        public async Task<IActionResult> Clarification(
+            string op, AddClarificationModel model,
+            [FromServices] IClarificationStore clars)
         {
             var (cid, teamid) = (Contest.ContestId, Team.TeamId);
             int repl = 0;
             if (op != "add" && !int.TryParse(op, out repl)) return NotFound();
 
-            var replit = await DbContext.Clarifications
-                .Where(c => c.ContestId == cid && c.ClarificationId == repl)
-                .SingleOrDefaultAsync();
+            var replit = await clars.FindAsync(cid, repl);
             if (repl != 0 && replit == null)
                 ModelState.AddModelError("xys::replyto", "The clarification replied to is not found.");
 
@@ -222,17 +206,19 @@ namespace JudgeWeb.Areas.Contest.Controllers
             }
             else
             {
-                await SendClarificationAsync(new Clarification
-                {
-                    Body = model.Body,
-                    SubmitTime = DateTimeOffset.Now,
-                    ContestId = cid,
-                    Sender = teamid,
-                    ResponseToId = model.ReplyTo,
-                    ProblemId = usage.Item3,
-                    Category = usage.Item2,
-                });
+                int id = await clars.SendAsync(
+                    new Clarification
+                    {
+                        Body = model.Body,
+                        SubmitTime = DateTimeOffset.Now,
+                        ContestId = cid,
+                        Sender = teamid,
+                        ResponseToId = model.ReplyTo,
+                        ProblemId = usage.Item3,
+                        Category = usage.Item2,
+                    });
 
+                await HttpContext.AuditAsync("added", $"{id}");
                 StatusMessage = "Clarification sent to the jury.";
             }
 
@@ -254,7 +240,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Submit(
             int cid, TeamCodeSubmitModel model,
-            [FromServices] SubmissionManager submgr,
+            [FromServices] ISubmissionStore submits,
             [FromServices] IScoreboardService scoreboardService)
         {
             if (TooEarly && !ViewData.ContainsKey("IsJury"))
@@ -277,14 +263,15 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 return RedirectToAction(nameof(Home));
             }
 
-            var s = await submgr.CreateAsync(
+            var s = await submits.CreateAsync(
                 code: model.Code,
-                langid: lang,
-                probid: prob.ProblemId,
-                cid: Contest, uid: Team.TeamId,
+                language: lang.Id,
+                problemId: prob.ProblemId,
+                contestId: Contest.ContestId,
+                userId: Team.TeamId,
                 ipAddr: HttpContext.Connection.RemoteIpAddress,
                 via: "team-page",
-                username: UserManager.GetUserName(User));
+                username: User.GetUserName());
 
             scoreboardService.SubmissionCreated(Contest, s);
             StatusMessage = "Submission done! Watch for the verdict in the list below.";

@@ -18,12 +18,10 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
     public class ExecutablesController : Controller3
     {
         private IExecutableStore Store { get; }
-        private ILogger<IProblemFacade> Logger { get; }
 
-        public ExecutablesController(IProblemFacade facade)
+        public ExecutablesController(IExecutableStore store)
         {
-            Store = facade.ExecutableStore;
-            Logger = facade.Logger;
+            Store = store;
         }
 
 

@@ -1,8 +1,8 @@
 ﻿using JudgeWeb.Areas.Contest.Models;
 using JudgeWeb.Data;
+using JudgeWeb.Domains.Contests;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
-using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,11 +12,10 @@ namespace JudgeWeb.Areas.Contest.Controllers
 {
     [Area("Contest")]
     [Route("[area]/{cid}/jury/[controller]")]
+    [AuditPoint(AuditlogType.Clarification)]
     public class ClarificationsController : JuryControllerBase
     {
-        private IQueryable<Clarification> QueryOf(int cid, int clarid) =>
-            DbContext.Clarifications
-                .Where(c => c.ContestId == cid && c.ClarificationId == clarid);
+        public IClarificationStore Store => Facade.Clarifications;
 
         [ViewData]
         public Dictionary<int, string> Teams { get; set; }
@@ -25,16 +24,14 @@ namespace JudgeWeb.Areas.Contest.Controllers
         public override async Task OnActionExecutingAsync(ActionExecutingContext context)
         {
             await base.OnActionExecutingAsync(context);
-            Teams = await DbContext.GetTeamNameAsync(Contest.ContestId);
+            Teams = await Facade.Teams.ListNamesAsync(Contest.ContestId);
         }
 
 
         [HttpGet]
         public async Task<IActionResult> List(int cid)
         {
-            var query = await DbContext.Clarifications
-                .Where(c => c.ContestId == cid && c.Recipient == null)
-                .ToListAsync();
+            var query = await Store.ListAsync(cid, c => c.Recipient == null);
             
             foreach (var item in query)
                 item.TeamName = Teams.GetValueOrDefault(item.Sender ?? -1);
@@ -43,7 +40,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
             {
                 AllClarifications = query,
                 Problems = Problems,
-                JuryName = UserManager.GetUserName(User),
+                JuryName = User.GetUserName(),
             });
         }
 
@@ -60,8 +57,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
             Clarification replyTo = null;
             if (model.ReplyTo.HasValue)
             {
-                replyTo = await QueryOf(cid, model.ReplyTo.Value)
-                    .SingleOrDefaultAsync();
+                replyTo = await Store.FindAsync(cid, model.ReplyTo.Value);
                 if (replyTo == null)
                     ModelState.AddModelError("xys::clar_not_found", "The clarification replied to not found.");
             }
@@ -72,12 +68,12 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 ModelState.AddModelError("xys::error_cate", "The category specified is wrong.");
 
             if (!ModelState.IsValid) return View(model);
-            var clarId = await SendClarificationAsync(replyTo: replyTo, clar: new Clarification
+            var clarId = await Facade.Clarifications.SendAsync(replyTo: replyTo, clar: new Clarification
             {
                 Body = model.Body,
                 SubmitTime = DateTimeOffset.Now,
                 ContestId = cid,
-                JuryMember = UserManager.GetUserName(User),
+                JuryMember = User.GetUserName(),
                 Sender = null,
                 ResponseToId = model.ReplyTo,
                 Recipient = model.TeamTo == 0 ? default(int?) : model.TeamTo,
@@ -86,6 +82,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 Category = usage.Item2,
             });
 
+            await HttpContext.AuditAsync("added", $"{clarId}");
             StatusMessage = $"Clarification {clarId} has been sent.";
             return RedirectToAction(nameof(Detail), new { clarid = clarId });
         }
@@ -101,8 +98,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
         [HttpGet("{clarid}/[action]/{answered}")]
         public async Task<IActionResult> SetAnswered(int cid, int clarid, bool answered)
         {
-            var result = await QueryOf(cid, clarid)
-                .BatchUpdateAsync(c => new Clarification { Answered = answered });
+            var result = await Store.SetAnsweredAsync(cid, clarid, answered);
 
             if (result == 1)
                 return Message(
@@ -120,23 +116,19 @@ namespace JudgeWeb.Areas.Contest.Controllers
         [HttpGet("{clarid}")]
         public async Task<IActionResult> Detail(int cid, int clarid)
         {
-            var clar = await QueryOf(cid, clarid)
-                .FirstOrDefaultAsync();
+            var clar = await Store.FindAsync(cid, clarid);
             if (clar == null) return NotFound();
             var query = Enumerable.Repeat(clar, 1);
 
             if (!clar.Sender.HasValue && clar.ResponseToId.HasValue)
             {
-                var clar2 = await QueryOf(cid, clar.ResponseToId.Value)
-                    .FirstOrDefaultAsync();
+                var clar2 = await Store.FindAsync(cid, clar.ResponseToId.Value);
                 if (clar2 != null) query = query.Prepend(clar2);
             }
             else if (clar.Sender.HasValue)
             {
-                var otherClars = await DbContext.Clarifications
-                    .Where(c => c.ContestId == cid)
-                    .Where(c => c.ResponseToId == clarid && c.Sender == null)
-                    .ToListAsync();
+                var otherClars = await Store.ListAsync(cid,
+                    c => c.ResponseToId == clarid && c.Sender == null);
                 query = query.Concat(otherClars);
             }
 
@@ -153,7 +145,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 Main = query.First(),
                 Problems = Problems,
                 Teams = Teams,
-                UserName = UserManager.GetUserName(User),
+                UserName = User.GetUserName(),
             });
         }
 
@@ -162,14 +154,8 @@ namespace JudgeWeb.Areas.Contest.Controllers
         [ValidateInAjax]
         public async Task<IActionResult> Claim(int cid, int clarid, bool claim)
         {
-            var admin = UserManager.GetUserName(User);
-            var result = await (claim
-                ? QueryOf(cid, clarid)
-                    .Where(c => c.JuryMember == null)
-                    .BatchUpdateAsync(c => new Clarification { JuryMember = admin })
-                : QueryOf(cid, clarid)
-                    .Where(c => c.JuryMember == admin)
-                    .BatchUpdateAsync(c => new Clarification { JuryMember = null }));
+            var admin = User.GetUserName();
+            var result = await Store.ClaimAsync(cid, clarid, admin, claim);
 
             if (result == 1 && claim == true)
                 return RedirectToAction(nameof(Detail));

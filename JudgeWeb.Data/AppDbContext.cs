@@ -14,23 +14,23 @@ namespace JudgeWeb.Data
         }
 
         public virtual DbSet<Student> Students { get; set; }
-        public virtual DbSet<TeachingClass> Classes { get; set; }
-        public virtual DbSet<ClassStudent> ClassStudent { get; set; }
-        public virtual DbSet<PersonRank> PersonRanks { get; set; }
-        public virtual DbSet<News> News { get; set; }
+        public virtual DbSet<TeachingClass> Classes { get; set; } //
+        public virtual DbSet<ClassStudent> ClassStudent { get; set; } //
+        public virtual DbSet<PersonRank> PersonRanks { get; set; } //
+        public virtual DbSet<News> News { get; set; } //
         public virtual DbSet<Auditlog> Auditlogs { get; set; }
         public virtual DbSet<TrainingTeam> TrainingTeams { get; set; }
         public virtual DbSet<TrainingTeamUser> TrainingTeamUsers { get; set; }
 
-        public virtual DbSet<Configure> Configures { get; set; }
-        public virtual DbSet<Executable> Executable { get; set; }
-        public virtual DbSet<InternalError> InternalErrors { get; set; }
+        public virtual DbSet<Configure> Configures { get; set; } //
+        public virtual DbSet<Executable> Executable { get; set; } //
+        public virtual DbSet<InternalError> InternalErrors { get; set; } //
         public virtual DbSet<Language> Languages { get; set; }
-        public virtual DbSet<JudgeHost> JudgeHosts { get; set; }
+        public virtual DbSet<JudgeHost> JudgeHosts { get; set; } //
 
         public virtual DbSet<Submission> Submissions { get; set; }
         public virtual DbSet<Problem> Problems { get; set; }
-        public virtual DbSet<ProblemArchive> Archives { get; set; }
+        public virtual DbSet<ProblemArchive> Archives { get; set; } //
         public virtual DbSet<Testcase> Testcases { get; set; }
         public virtual DbSet<Rejudge> Rejudges { get; set; }
         public virtual DbSet<Judging> Judgings { get; set; }

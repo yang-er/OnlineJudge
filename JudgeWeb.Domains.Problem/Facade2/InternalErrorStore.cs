@@ -1,26 +1,35 @@
 ﻿using JudgeWeb.Data;
+using JudgeWeb.Domains.Problems;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
+[assembly: Inject(typeof(IInternalErrorStore), typeof(InternalErrorStore))]
 namespace JudgeWeb.Domains.Problems
 {
-    public partial class JudgementFacade :
+    public class InternalErrorStore :
         IInternalErrorStore,
         ICrudRepositoryImpl<InternalError>
     {
-        public IInternalErrorStore InternalErrorStore => this;
+        public DbContext Context { get; }
 
-        public DbSet<InternalError> InternalErrors => Context.Set<InternalError>();
+        DbSet<InternalError> InternalErrors => Context.Set<InternalError>();
 
-        Task<InternalError> IInternalErrorStore.FindAsync(int id)
+        public InternalErrorStore(DbContext context)
+        {
+            Context = context;
+        }
+
+        public Task<InternalError> FindAsync(int id)
         {
             return InternalErrors.SingleOrDefaultAsync(e => e.ErrorId == id);
         }
 
-        async Task<InternalErrorDisable> IInternalErrorStore.ResolveAsync(InternalError error, InternalErrorStatus status)
+        public async Task<InternalErrorDisable> ResolveAsync(
+            InternalError error,
+            InternalErrorStatus status)
         {
             if (error.Status != InternalErrorStatus.Open)
                 throw new InvalidOperationException();
@@ -32,7 +41,7 @@ namespace JudgeWeb.Domains.Problems
             return error.Disabled.AsJson<InternalErrorDisable>();
         }
 
-        Task<List<InternalError>> IInternalErrorStore.ListAsync()
+        public Task<List<InternalError>> ListAsync(int page, int count)
         {
             return InternalErrors
                 .Select(
@@ -44,8 +53,16 @@ namespace JudgeWeb.Domains.Problems
                         Description = e.Description,
                     })
                 .OrderByDescending(e => e.ErrorId)
-                .Take(50)
+                .Skip(count * (page - 1))
+                .Take(count)
                 .ToListAsync();
+        }
+
+        public Task<int> GetJudgeStatusAsync()
+        {
+            return InternalErrors
+                .Where(ie => ie.Status == InternalErrorStatus.Open)
+                .CountAsync();
         }
     }
 }

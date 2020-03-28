@@ -12,21 +12,22 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
     [AuditPoint(AuditlogType.TeamCategory)]
     public class CategoriesController : Controller3
     {
-        private ITeamManager Store { get; }
-        public CategoriesController(ITeamManager tm) => Store = tm;
+        private ICategoryStore Store { get; }
+
+        public CategoriesController(ICategoryStore tm) => Store = tm;
 
 
         [HttpGet]
         public async Task<IActionResult> List()
         {
-            return View(await Store.ListCategoriesAsync());
+            return View(await Store.ListAsync());
         }
 
 
         [HttpGet("{catid}")]
         public async Task<IActionResult> Detail(int catid)
         {
-            var cat = await Store.FindCategoryAsync(catid);
+            var cat = await Store.FindAsync(catid);
             if (cat == null) return NotFound();
             return View(cat);
         }
@@ -39,7 +40,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
         [HttpGet("{catid}/[action]")]
         public async Task<IActionResult> Edit(int catid)
         {
-            var cat = await Store.FindCategoryAsync(catid);
+            var cat = await Store.FindAsync(catid);
             if (cat == null) return NotFound();
             return View(cat);
         }
@@ -60,7 +61,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int catid, TeamCategory model)
         {
-            var cat = await Store.FindCategoryAsync(catid);
+            var cat = await Store.FindAsync(catid);
             if (cat == null) return NotFound();
 
             if (model.Name == null || model.Color == null)
@@ -80,7 +81,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
         [ValidateInAjax]
         public async Task<IActionResult> Delete(int catid)
         {
-            var desc = await Store.FindCategoryAsync(catid);
+            var desc = await Store.FindAsync(catid);
             if (desc == null) return NotFound();
 
             return AskPost(
@@ -96,7 +97,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int catid, int inajax)
         {
-            var desc = await Store.FindCategoryAsync(catid);
+            var desc = await Store.FindAsync(catid);
             if (desc == null) return NotFound();
 
             try

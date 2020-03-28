@@ -11,7 +11,7 @@ namespace JudgeWeb.Domains.Contests
         {
             entity.HasKey(e => e.Id);
 
-            entity.HasOne<Submission>()
+            entity.HasOne<Submission>(e => e.s)
                 .WithMany()
                 .HasForeignKey(e => e.SubmissionId)
                 .OnDelete(DeleteBehavior.Cascade);

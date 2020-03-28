@@ -8,6 +8,7 @@ using JudgeWeb.Features.Mailing;
 using JudgeWeb.Features.OjUpdate;
 using JudgeWeb.Features.Scoreboard;
 using JudgeWeb.Features.Storage;
+using Markdig;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -86,8 +87,9 @@ namespace JudgeWeb
                 })
                 .AddEntityFrameworkStores<AppDbContext>()
                 .AddUserManager<UserManager>()
+                .AddSignInManager<SignInManager>()
                 .AddDefaultTokenProviders()
-                .Fuck<AppDbContext>()
+                .RegisterOtherStores()
                 .UseClaimsPrincipalFactory<UserWithNickNameClaimsPrincipalFactory, User>()
                 .AddTokenProvider<Email2TokenProvider>("Email2");
 
@@ -122,10 +124,11 @@ namespace JudgeWeb
             services.AddHostedService<ArchiveCacheService>();
             services.AddScoreboard();
 
-            services.AddProblemDomain<AppDbContext>();
+            services.AddProblemDomain();
 
             services.AddProblemRepository();
-            services.AddMarkdown();
+            services.AddMarkdown(options => options.
+                PipelineBuilder.Use<SampCodeBlockExtension>());
 
             services.AddControllersWithViews()
                 .AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new TimeSpanJsonConverter()))
@@ -144,6 +147,7 @@ namespace JudgeWeb
                 .AddDocument("DOMjudge", "DOMjudge compact API v4", "7.2.0")
                 .AddSecurityScheme("basic", Microsoft.OpenApi.Models.SecuritySchemeType.Http)
                 .IncludeXmlComments(EnabledAreas.Select(item => System.IO.Path.Combine(AppContext.BaseDirectory, $"{AssemblyPrefix}{item}.xml")))
+                .IncludeXmlComments(System.IO.Path.Combine(AppContext.BaseDirectory, "JudgeWeb.Domains.Contests.CcsApi.xml"))
                 .FilterByRouteArea();
         }
 

@@ -7,15 +7,20 @@ using System.Threading.Tasks;
 
 namespace JudgeWeb.Domains.Problems
 {
-    public partial class ProblemFacade :
+    public class ArchiveStore :
         IArchiveStore,
         IUpdateRepositoryImpl<ProblemArchive>
     {
-        public IArchiveStore ArchiveStore => this;
+        public DbContext Context { get; }
 
         public DbSet<ProblemArchive> Archives => Context.Set<ProblemArchive>();
 
-        async Task<ProblemArchive> ICreateRepository<ProblemArchive>.CreateAsync(ProblemArchive archive)
+        public ArchiveStore(DbContext context)
+        {
+            Context = context;
+        }
+
+        public async Task<ProblemArchive> CreateAsync(ProblemArchive archive)
         {
             if (archive.PublicId != 0)
             {
@@ -37,37 +42,34 @@ namespace JudgeWeb.Domains.Problems
             return archive;
         }
 
-        Task<ProblemArchive> IArchiveStore.FindAsync(int pid)
+        public Task<ProblemArchive> FindAsync(int pid)
         {
-            var query =
-                from a in Archives
-                where a.PublicId == pid
-                join p in Problems on a.ProblemId equals p.ProblemId
-                select new ProblemArchive(a, p.Title, p.Source, p.AllowSubmit);
-            return query.SingleOrDefaultAsync();
+            return Archives
+                .Where(a => a.PublicId == pid)
+                .Select(a => new ProblemArchive(a, a.p.Title, a.p.Source, a.p.AllowSubmit))
+                .SingleOrDefaultAsync();
         }
 
-        Task<ProblemArchive> IArchiveStore.FindInternalAsync(int pid)
+        public Task<ProblemArchive> FindInternalAsync(int pid)
         {
             return Archives.SingleOrDefaultAsync(p => p.ProblemId == pid);
         }
 
-        Task<List<ProblemArchive>> IArchiveStore.ListAsync(int page, int uid)
+        public Task<List<ProblemArchive>> ListAsync(int page, int uid)
         {
             var query =
                 from a in Archives
                 where a.PublicId <= IArchiveStore.StartId + page * IArchiveStore.ArchivePerPage
                     && a.PublicId > IArchiveStore.StartId + (page - 1) * IArchiveStore.ArchivePerPage
-                join p in Problems on a.ProblemId equals p.ProblemId
                 join ss in Context.Set<SubmissionStatistics>()
-                    on new { p.ProblemId, ContestId = 0, Author = uid }
+                    on new { a.ProblemId, ContestId = 0, Author = uid }
                     equals new { ss.ProblemId, ss.ContestId, ss.Author }
                 orderby a.PublicId ascending
-                select new ProblemArchive(a, p.Title, p.Source, ss.AcceptedSubmission, ss.TotalSubmission);
+                select new ProblemArchive(a, a.p.Title, a.p.Source, ss.AcceptedSubmission, ss.TotalSubmission);
             return query.ToListAsync();
         }
 
-        Task<int> IArchiveStore.MaxPageAsync()
+        public Task<int> MaxPageAsync()
         {
             return Context.CachedGetAsync("prob::totcount", TimeSpan.FromMinutes(10), async () =>
             {

@@ -26,8 +26,6 @@ namespace JudgeWeb.Data
 
         public IQueryable<Judging> Judgings => DbContext.Judgings;
 
-        public IQueryable<JudgeHost> Judgehosts => DbContext.JudgeHosts;
-
         public IQueryable<Language> Languages => DbContext.Languages;
 
 

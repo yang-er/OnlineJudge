@@ -51,7 +51,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
         [HttpGet("{uid}")]
         public async Task<IActionResult> Detail(int uid,
             [FromServices] ISubmissionStore submissions,
-            [FromServices] IContestStore contests)
+            [FromServices] ITeamStore contests)
         {
             var user = await UserManager.FindByIdAsync(uid);
             if (user == null) return NotFound();
@@ -66,7 +66,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
                 ? await UserManager.FindStudentAsync(user.StudentId.Value)
                 : null;
 
-            ViewBag.Teams = await contests.GetRegisteredContestWithDetailAsync(uid);
+            ViewBag.Teams = await contests.ListRegisteredWithDetailAsync(uid);
             return View(user);
         }
 

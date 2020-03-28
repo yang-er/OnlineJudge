@@ -20,16 +20,21 @@ namespace JudgeWeb.Areas.Polygon.Controllers
 
         private IJudgingStore Judgings { get; }
 
-        public SubmissionsController(IJudgementFacade facade)
+        public SubmissionsController(
+            ISubmissionStore s1,
+            IRejudgingStore s2,
+            IJudgingStore s3)
         {
-            Submissions = facade.SubmissionStore;
-            Rejudgings = facade.Rejudgings;
-            Judgings = facade.JudgingStore;
+            Submissions = s1;
+            Rejudgings = s2;
+            Judgings = s3;
         }
 
 
         [HttpGet]
-        public async Task<IActionResult> List(int pid, int page = 1, bool all = false)
+        public async Task<IActionResult> List(
+            [FromServices] ITestcaseStore tcs,
+            int pid, int page = 1, bool all = false)
         {
             if (page < 0) return NotFound();
 
@@ -49,19 +54,21 @@ namespace JudgeWeb.Areas.Polygon.Controllers
             ViewBag.TotalPage = totPage;
             ViewBag.Page = page;
             ViewBag.AllSub = all;
-            ViewBag.Testcase = await Facade.Testcases.ListAsync(pid);
+            ViewBag.Testcase = await tcs.ListAsync(pid);
             return View(result);
         }
 
 
         [HttpGet("{sid}")]
-        public async Task<IActionResult> Detail(int pid, int sid, int? jid)
+        public async Task<IActionResult> Detail(
+            int pid, int sid, int? jid,
+            [FromServices] ILanguageStore langs)
         {
             var s = await Submissions.FindAsync(sid, true);
             if (s == null || s.ProblemId != pid) return NotFound();
             var j = s.Judgings.SingleOrDefault(jj => jid.HasValue ? jj.JudgingId == jid : jj.Active);
             if (j == null) return NotFound();
-            var l = await Facade.Languages.FindAsync(s.Language);
+            var l = await langs.FindAsync(s.Language);
             var det = await Judgings.GetDetailsAsync(pid, j.JudgingId);
             var uname = await Submissions.GetAuthorNameAsync(sid);
 
@@ -96,18 +103,21 @@ namespace JudgeWeb.Areas.Polygon.Controllers
 
         [HttpGet("[action]")]
         [ValidateInAjax]
-        public async Task<IActionResult> Submit()
+        public async Task<IActionResult> Submit(
+            [FromServices] ILanguageStore langs)
         {
-            ViewBag.Language = await Facade.Languages.ListAsync();
+            ViewBag.Language = await langs.ListAsync();
             return Window(new CodeSubmitModel());
         }
 
 
         [HttpPost("[action]")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Submit(CodeSubmitModel model)
+        public async Task<IActionResult> Submit(
+            CodeSubmitModel model,
+            [FromServices] ILanguageStore langs)
         {
-            var lang = await Facade.Languages.FindAsync(model.Language);
+            var lang = await langs.FindAsync(model.Language);
             if (lang == null) return BadRequest();
 
             var sub = await Submissions.CreateAsync(
@@ -180,11 +190,13 @@ namespace JudgeWeb.Areas.Polygon.Controllers
 
         [HttpGet("{sid}/[action]")]
         [ValidateInAjax]
-        public async Task<IActionResult> ChangeExpected(int pid, int sid)
+        public async Task<IActionResult> ChangeExpected(
+            int pid, int sid,
+            [FromServices] ILanguageStore langs)
         {
             var sub = await Submissions.FindAsync(sid);
             if (sub == null || sub.ProblemId != pid) return NotFound();
-            ViewBag.Languages = await Facade.Languages.ListAsync();
+            ViewBag.Languages = await langs.ListAsync();
 
             return Window(new ChangeExpectedModel
             {

@@ -32,7 +32,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
         protected async Task<IEnumerable<SubmissionViewModel>> ListSubmissionsByJuryAsync(
             int cid, int? teamid = null, bool all = true)
         {
-            var teamNames = await DbContext.GetTeamNameAsync(cid);
+            var teamNames = await Facade.Teams.ListNamesAsync(cid);
 
             return await DbContext.CachedGetAsync($"`c{cid}`t{teamid ?? -1}`sub_jury`{all}", TimeSpan.FromSeconds(3), async () =>
             {

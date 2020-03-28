@@ -1,8 +1,9 @@
 ﻿using JudgeWeb.Areas.Contest.Models;
 using JudgeWeb.Data;
+using JudgeWeb.Domains.Contests;
+using JudgeWeb.Domains.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,97 +14,33 @@ namespace JudgeWeb.Areas.Contest.Controllers
     [Area("Contest")]
     [Authorize]
     [Route("[area]/{cid}/jury/[controller]")]
+    [AuditPoint(AuditlogType.Team)]
     public class TeamsController : JuryControllerBase
     {
-        protected async Task UpdateTeamAsync(Team team, string act, string action, int? oldUid = null)
+        ITeamStore Store { get; }
+
+        public TeamsController(ITeamStore store)
         {
-            var aff = await DbContext.TeamAffiliations
-                .Where(a => a.AffiliationId == team.AffiliationId)
-                .SingleOrDefaultAsync();
-            if (aff == null) throw new ApplicationException();
-
-            DbContext.Teams.Update(team);
-
-            if (action != null)
-            {
-                var ct = new Data.Api.ContestTeam(team, aff);
-                DbContext.Events.Add(ct.ToEvent(action, team.ContestId));
-            }
-
-            InternalLog(AuditlogType.Team, $"{team.TeamId}", act, null);
-            await DbContext.SaveChangesAsync();
-
-            var list = await DbContext.TeamMembers
-                .Where(tu => tu.ContestId == team.ContestId && tu.TeamId == team.TeamId)
-                .ToListAsync();
-
-            DbContext.RemoveCacheEntry($"`c{team.ContestId}`teams`t{team.TeamId}");
-            foreach (var uu in list)
-                DbContext.RemoveCacheEntry($"`c{team.ContestId}`teams`u{uu.UserId}");
-            DbContext.RemoveCacheEntry($"`c{team.ContestId}`teams`list_jury");
-            DbContext.RemoveCacheEntry($"`c{team.ContestId}`teams`aff0");
-            DbContext.RemoveCacheEntry($"`c{team.ContestId}`teams`cat`1");
-            DbContext.RemoveCacheEntry($"`c{team.ContestId}`teams`cat`2");
-        }
-
-
-        protected async Task DeleteTeamAsync(Team team)
-        {
-            if (team.Status == 1)
-                DbContext.Events.Add(
-                    new Data.Api.ContestTeam { id = team.TeamId.ToString() }
-                    .ToEvent("delete", team.ContestId));
-
-            var list = await DbContext.TeamMembers
-                .Where(tu => tu.ContestId == team.ContestId && tu.TeamId == team.TeamId)
-                .ToListAsync();
-
-            string extra = null;
-            if (list.Count > 0)
-                extra = "with u" + string.Join(",u", list.Select(it => it.UserId.ToString()));
-            InternalLog(AuditlogType.Team, $"{team.TeamId}", "deleted", extra);
-
-            team.Status = 3;
-            DbContext.Teams.Update(team);
-            await DbContext.SaveChangesAsync();
-
-            await DbContext.TeamMembers
-                .Where(tu => tu.ContestId == team.ContestId && tu.TeamId == team.TeamId)
-                .BatchDeleteAsync();
-
-            DbContext.RemoveCacheEntry($"`c{team.ContestId}`teams`t{team.TeamId}");
-            foreach (var uu in list)
-                DbContext.RemoveCacheEntry($"`c{team.ContestId}`teams`u{uu.UserId}");
-            DbContext.RemoveCacheEntry($"`c{team.ContestId}`teams`list_jury");
-            DbContext.RemoveCacheEntry($"`c{team.ContestId}`teams`aff0");
-            DbContext.RemoveCacheEntry($"`c{team.ContestId}`teams`cat`1");
-            DbContext.RemoveCacheEntry($"`c{team.ContestId}`teams`cat`2");
-            DbContext.RemoveCacheEntry($"`c{team.ContestId}`teams`members");
+            Store = store;
         }
 
 
         [HttpGet]
         public async Task<IActionResult> List(int cid)
         {
-            var query =
-                from t in DbContext.Teams
-                where t.ContestId == cid && t.Status != 3
-                join a in DbContext.TeamAffiliations on t.AffiliationId equals a.AffiliationId
-                join c in DbContext.TeamCategories on t.CategoryId equals c.CategoryId
-                select new JuryListTeamModel
+            var model = await Store.ListAsync(cid,
+                cacheTag: ($"`c{cid}`teams`list_jury", TimeSpan.FromSeconds(10)),
+                selector: t => new JuryListTeamModel
                 {
-                    Affiliation = a.ExternalId,
-                    AffiliationName = a.FormalName,
-                    Category = c.Name,
+                    Affiliation = t.Affiliation.ExternalId,
+                    AffiliationName = t.Affiliation.FormalName,
+                    Category = t.Category.Name,
                     Status = t.Status,
                     TeamId = t.TeamId,
                     TeamName = t.TeamName,
                     RegisterTime = t.RegisterTime,
-                };
+                });
 
-            var model = await query.CachedToListAsync(
-                tag: $"`c{cid}`teams`list_jury",
-                timeSpan: TimeSpan.FromSeconds(10));
             return View(model);
         }
 
@@ -115,32 +52,11 @@ namespace JudgeWeb.Areas.Contest.Controllers
             var model = await FindScoreboardAsync(teamid);
             if (model == null) return NotFound();
 
-            var userQuery =
-                from tu in DbContext.TeamMembers
-                where tu.ContestId == cid && tu.TeamId == teamid
-                join u in DbContext.Users on tu.UserId equals u.Id
-                select u.UserName;
-            ViewBag.Member = await userQuery.ToListAsync();
+            var allMembers = await Store.ListMembersAsync(cid);
+            ViewBag.Member = Enumerable.Empty<string>();
+            if (allMembers.Contains(teamid))
+                ViewBag.Member = allMembers[teamid];
             return View(model);
-        }
-
-
-        [HttpGet("[action]/{userName?}")]
-        public async Task<IActionResult> TestUser(string userName)
-        {
-            if (userName != null)
-            {
-                var user = await UserManager.FindByNameAsync(userName);
-                if (user == null)
-                    return Content("No such user.", "text/html");
-                else if ((await FindTeamByUserAsync(user.Id)) != null)
-                    return Content("Duplicate user.", "text/html");
-                return Content("", "text/html");
-            }
-            else
-            {
-                return Content("", "text/html");
-            }
         }
 
 
@@ -148,8 +64,8 @@ namespace JudgeWeb.Areas.Contest.Controllers
         [ValidateInAjax]
         public async Task<IActionResult> Add(int cid)
         {
-            ViewBag.Aff = await DbContext.ListTeamAffiliationAsync(cid, false);
-            ViewBag.Cat = await DbContext.ListTeamCategoryAsync(cid);
+            ViewBag.Aff = await Store.ListAffiliationAsync(cid, false);
+            ViewBag.Cat = await Store.ListCategoryAsync(cid);
             return Window(new JuryAddTeamModel());
         }
 
@@ -157,19 +73,30 @@ namespace JudgeWeb.Areas.Contest.Controllers
         [HttpPost("[action]")]
         [ValidateInAjax]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Add(int cid, JuryAddTeamModel model)
+        [AuditPoint(AuditlogType.Team)]
+        public async Task<IActionResult> Add(
+            int cid, JuryAddTeamModel model,
+            [FromServices] UserManager userManager)
         {
-            User user = null;
+            HashSet<int> users = new HashSet<int>();
             if (model.UserName != null)
             {
-                user = await UserManager.FindByNameAsync(model.UserName);
-                if (user == null)
-                    ModelState.AddModelError("xys::no_user", "No such user.");
-                else if ((await FindTeamByUserAsync(user.Id)) != null)
-                    ModelState.AddModelError("xys::duplicate_user", "Duplicate user.");
+                var userNames = model.UserName.Split(',', StringSplitOptions.RemoveEmptyEntries);
+                foreach (var userName in userNames)
+                {
+                    var user = await userManager.FindByNameAsync(userName.Trim());
+                    if (user == null)
+                        ModelState.AddModelError("xys::no_user", $"No such user {userName.Trim()}.");
+                    else if ((await Store.FindByUserAsync(cid, user.Id)) != null)
+                        ModelState.AddModelError("xys::duplicate_user", "Duplicate user.");
+                    else if (users.Contains(user.Id))
+                        continue;
+                    else
+                        users.Add(user.Id);
+                }
             }
 
-            var affs = await DbContext.ListTeamAffiliationAsync(cid, false);
+            var affs = await Store.ListAffiliationAsync(cid, false);
             var aff = affs.FirstOrDefault(a => a.AffiliationId == model.AffiliationId);
             if (aff == null)
                 ModelState.AddModelError("xys::no_aff", "No such affiliation.");
@@ -177,13 +104,12 @@ namespace JudgeWeb.Areas.Contest.Controllers
             if (!ModelState.IsValid)
             {
                 ViewBag.Aff = affs;
-                ViewBag.Cat = await DbContext.ListTeamCategoryAsync(cid);
+                ViewBag.Cat = await Store.ListCategoryAsync(cid);
                 return Window(model);
             }
 
-            var teamid = await CreateTeamAsync(
-                aff: aff,
-                uids: user == null ? null : new[] { user.Id },
+            var teamid = await Store.CreateAsync(
+                uids: users.Count > 0 ? users.ToArray() : null,
                 team: new Team
                 {
                     AffiliationId = model.AffiliationId,
@@ -193,6 +119,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
                     TeamName = model.TeamName,
                 });
 
+            await HttpContext.AuditAsync("added", $"{teamid}");
             return Message(
                 title: "Add team",
                 message: $"Team {model.TeamName} (t{teamid}) added.",
@@ -204,14 +131,14 @@ namespace JudgeWeb.Areas.Contest.Controllers
         [ValidateInAjax]
         public async Task<IActionResult> Delete(int cid, int teamid)
         {
-            var team = await FindTeamByIdAsync(teamid);
+            var team = await Store.FindByIdAsync(cid, teamid);
             if (team == null) return NotFound();
 
             return AskPost(
                 title: $"Delete team t{team.TeamId}",
                 message: $"You are about to delete {team.TeamName} (t{team.TeamId}). Are you sure?",
                 area: "Contest", ctrl: "Teams", act: "Delete", type: MessageType.Danger,
-                routeValues: new Dictionary<string, string> { ["cid"] = $"{cid}", ["teamid"] = $"{teamid}" });
+                routeValues: new { cid, teamid });
         }
 
 
@@ -219,12 +146,15 @@ namespace JudgeWeb.Areas.Contest.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int cid, int teamid, bool @checked = true)
         {
-            var team = await DbContext.Teams
-                .Where(t => t.ContestId == cid && t.TeamId == teamid)
-                .SingleOrDefaultAsync();
+            var team = await Store.FindByIdAsync(cid, teamid);
             if (team is null || team.Status == 3) return NotFound();
 
-            await DeleteTeamAsync(team);
+            var users = await Store.DeleteAsync(team);
+
+            string extra = null;
+            if (users.Any())
+                extra = "with u" + string.Join(",u", users.Select(it => it.ToString()));
+            await HttpContext.AuditAsync("deleted", $"{team.TeamId}", extra);
             StatusMessage = $"Team t{teamid} deleted.";
             return RedirectToAction(nameof(List));
         }
@@ -234,10 +164,10 @@ namespace JudgeWeb.Areas.Contest.Controllers
         [ValidateInAjax]
         public async Task<IActionResult> Edit(int cid, int teamid)
         {
-            var team = await FindTeamByIdAsync(teamid);
+            var team = await Store.FindByIdAsync(cid, teamid);
             if (team == null) return NotFound();
-            ViewBag.Aff = await DbContext.ListTeamAffiliationAsync(cid, false);
-            ViewBag.Cat = await DbContext.ListTeamCategoryAsync(cid);
+            ViewBag.Aff = await Store.ListAffiliationAsync(cid, false);
+            ViewBag.Cat = await Store.ListCategoryAsync(cid);
 
             return Window(new JuryEditTeamModel
             {
@@ -254,15 +184,14 @@ namespace JudgeWeb.Areas.Contest.Controllers
         [ValidateInAjax]
         public async Task<IActionResult> Edit(int cid, int teamid, JuryEditTeamModel model)
         {
-            var team = await DbContext.Teams
-                .Where(t => t.ContestId == cid && t.TeamId == teamid)
-                .SingleOrDefaultAsync();
+            var team = await Store.FindByIdAsync(cid, teamid);
             if (team == null) return NotFound();
 
             team.TeamName = model.TeamName;
             team.AffiliationId = model.AffiliationId;
             team.CategoryId = model.CategoryId;
-            await UpdateTeamAsync(team, "updated", team.Status == 1 ? "update" : null);
+            await Store.UpdateAsync(team);
+            await HttpContext.AuditAsync("updated", $"{teamid}");
 
             return Message(
                 title: "Edit team",
@@ -275,13 +204,11 @@ namespace JudgeWeb.Areas.Contest.Controllers
         [ValidateInAjax]
         public async Task<IActionResult> Accept(int cid, int teamid)
         {
-            var team = await DbContext.Teams
-                .Where(t => t.ContestId == cid && t.TeamId == teamid)
-                .SingleOrDefaultAsync();
+            var team = await Store.FindByIdAsync(cid, teamid);
             if (team == null) return NotFound();
-            bool oldok = team.Status != 1;
             team.Status = 1;
-            await UpdateTeamAsync(team, "accepted", oldok ? "create" : null);
+            await Store.UpdateAsync(team);
+            await HttpContext.AuditAsync("accepted", $"{teamid}");
 
             return Message(
                 title: "Team registration confirm",
@@ -294,13 +221,11 @@ namespace JudgeWeb.Areas.Contest.Controllers
         [ValidateInAjax]
         public async Task<IActionResult> Reject(int cid, int teamid)
         {
-            var team = await DbContext.Teams
-                .Where(t => t.ContestId == cid && t.TeamId == teamid)
-                .SingleOrDefaultAsync();
+            var team = await Store.FindByIdAsync(cid, teamid);
             if (team == null) return NotFound();
-            bool oldok = team.Status == 1;
             team.Status = 2;
-            await UpdateTeamAsync(team, "rejected", oldok ? "delete" : null);
+            await Store.UpdateAsync(team);
+            await HttpContext.AuditAsync("rejected", $"{teamid}");
 
             return Message(
                 title: "Team registration confirm",

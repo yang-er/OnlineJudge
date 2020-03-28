@@ -1,5 +1,6 @@
-﻿using JudgeWeb.Features;
+﻿using JudgeWeb.Domains.Problems;
 using JudgeWeb.Features.Storage;
+using Markdig;
 using Markdig.Renderers.LaTeX;
 using Markdig.Syntax;
 using Markdig.Syntax.Inlines;
@@ -9,9 +10,10 @@ using System.IO.Compression;
 using System.Text;
 using System.Text.Encodings.Web;
 
+[assembly: Inject(typeof(IProblemViewProvider), typeof(MarkdownProblemViewProvider))]
 namespace JudgeWeb.Domains.Problems
 {
-    internal class MarkdownProblemViewProvider : IProblemViewProvider
+    public class MarkdownProblemViewProvider : IProblemViewProvider
     {
         private IMarkdownService Markdown { get; }
 

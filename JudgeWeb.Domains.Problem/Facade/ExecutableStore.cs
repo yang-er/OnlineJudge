@@ -9,14 +9,18 @@ using System.Threading.Tasks;
 
 namespace JudgeWeb.Domains.Problems
 {
-    public partial class ProblemFacade :
+    public class ExecutableStore :
         IExecutableStore,
-        ICrudRepositoryImpl<Executable>,
-        ICrudInstantUpdateImpl<Executable>
+        ICrudRepositoryImpl<Executable>
     {
-        public IExecutableStore ExecutableStore => this;
+        public DbContext Context { get; }
 
-        public DbSet<Executable> Executables { get; }
+        public DbSet<Executable> Executables => Context.Set<Executable>();
+
+        public ExecutableStore(DbContext context)
+        {
+            Context = context;
+        }
 
         public Task<Dictionary<string, string>> ListMd5Async(params string[] targets)
         {
@@ -26,7 +30,7 @@ namespace JudgeWeb.Domains.Problems
                 .ToDictionaryAsync(e => e.ExecId, e => e.Md5sum);
         }
 
-        async Task<List<ExecutableViewContentModel>> IExecutableStore.FetchContentAsync(Executable executable)
+        public async Task<List<ExecutableViewContentModel>> FetchContentAsync(Executable executable)
         {
             var items = new List<ExecutableViewContentModel>();
             using var stream = new MemoryStream(executable.ZipFile, false);
@@ -53,12 +57,12 @@ namespace JudgeWeb.Domains.Problems
             return items;
         }
 
-        Task<Executable> IExecutableStore.FindAsync(string execid)
+        public Task<Executable> FindAsync(string execid)
         {
             return Executables.SingleOrDefaultAsync(e => e.ExecId == execid);
         }
 
-        Task<List<Executable>> IExecutableStore.ListAsync(string? type)
+        public Task<List<Executable>> ListAsync(string? type = null)
         {
             IQueryable<Executable> execs = Executables;
             if (type != null)
@@ -68,16 +72,16 @@ namespace JudgeWeb.Domains.Problems
                 .ToListAsync();
         }
 
-        async Task<ILookup<string, string>> IExecutableStore.ListUsageAsync(Executable executable)
+        public async Task<ILookup<string, string>> ListUsageAsync(Executable executable)
         {
             var execid = executable.ExecId;
-            var compile = Languages
+            var compile = Context.Set<Language>()
                 .Where(l => l.CompileScript == execid)
                 .Select(l => new { l.Id, Type = "compile" });
-            var run = Problems
+            var run = Context.Set<Problem>()
                 .Where(p => p.RunScript == execid)
                 .Select(p => new { Id = p.ProblemId.ToString(), Type = "run" });
-            var compare = Problems
+            var compare = Context.Set<Problem>()
                 .Where(p => p.CompareScript == execid)
                 .Select(p => new { Id = p.ProblemId.ToString(), Type = "compare" });
             var query = compile.Concat(run).Concat(compare);

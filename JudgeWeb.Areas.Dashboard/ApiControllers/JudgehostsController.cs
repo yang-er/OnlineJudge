@@ -5,6 +5,7 @@ using JudgeWeb.Domains.Problems;
 using Microsoft.ApplicationInsights;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -25,34 +26,21 @@ namespace JudgeWeb.Areas.Api.Controllers
     public class JudgehostsController : ControllerBase
     {
         ILogger<JudgehostsController> Logger { get; }
-        IJudgementFacade Facade { get; }
-        IProblemFacade ProblemFacade { get; }
-        IJudgehostStore Judgehosts => Facade.Judgehosts;
-        IInternalErrorStore InternalErrors => Facade.InternalErrors;
-        ILanguageStore Languages => ProblemFacade.Languages;
-        IScoreboardService Scoreboard { get; }
-        IProblemStore Problems => ProblemFacade.Problems;
-        ITestcaseStore Testcases => ProblemFacade.Testcases;
-        IExecutableStore Executables => ProblemFacade.Executables;
-        IJudgingStore Judgings => Facade.Judgings;
-        IContestEventNotifier Events { get; }
+        IJudgehostStore Judgehosts { get; }
+        IJudgingStore Judgings { get; }
         TelemetryClient Telemetry { get; }
 
         static AsyncLock Lock { get; } = new AsyncLock();
 
         public JudgehostsController(
             ILogger<JudgehostsController> logger,
-            IJudgementFacade facade2,
-            IProblemFacade facade,
-            IScoreboardService scb,
-            IContestEventNotifier cen,
+            IJudgehostStore judgehosts,
+            IJudgingStore judgings,
             TelemetryClient telemetry)
         {
             Logger = logger;
-            Facade = facade2;
-            Events = cen;
-            ProblemFacade = facade;
-            Scoreboard = scb;
+            Judgehosts = judgehosts;
+            Judgings = judgings;
             Telemetry = telemetry;
         }
 
@@ -73,10 +61,10 @@ namespace JudgeWeb.Areas.Api.Controllers
                 AuditlogType.Judging, cid, j.Server,
                 "judged", $"{j.JudgingId}", $"{j.Status}");
 
-            if (cid.HasValue)
-                await Events.Update(cid.Value, j);
             if (cid.HasValue && j.Active)
-                Scoreboard.JudgingFinished(cid.Value, subtime, pid, uid, j);
+                HttpContext.RequestServices
+                    .GetRequiredService<IScoreboardService>()
+                    .JudgingFinished(cid.Value, subtime, pid, uid, j);
 
             Telemetry.TrackDependency(
                 dependencyTypeName: "JudgeHost",
@@ -286,8 +274,12 @@ namespace JudgeWeb.Areas.Api.Controllers
             }
 
             var toFindMd5 = new[] { r.prob.RunScript, r.prob.CompareScript, r.lang.CompileScript };
-            var md5s = await Executables.ListMd5Async(toFindMd5);
-            var tcss = await Testcases.ListAsync(r.prob.ProblemId);
+            var md5s = await HttpContext.RequestServices
+                .GetRequiredService<IExecutableStore>()
+                .ListMd5Async(toFindMd5);
+            var tcss = await HttpContext.RequestServices
+                .GetRequiredService<ITestcaseStore>()
+                .ListAsync(r.prob.ProblemId);
 
             return new NextJudging
             {
@@ -390,7 +382,6 @@ namespace JudgeWeb.Areas.Api.Controllers
             foreach (var run in batch)
             {
                 var detail = await Judgings.CreateAsync(run.ParseInfo(judgingId, host.PollTime));
-                if (cid != 0) await Events.Create(cid, detail);
 
                 if (run.output_error is null || run.output_run is null)
                     continue;
@@ -408,7 +399,9 @@ namespace JudgeWeb.Areas.Api.Controllers
             }
 
             // Check for the final status
-            var countTc = await Testcases.CountAsync(pid);
+            var countTc = await HttpContext.RequestServices
+                .GetRequiredService<ITestcaseStore>()
+                .CountAsync(pid);
             var verdict = await Judgings.SummarizeAsync(judging);
             // testId for score, testcaseId for count of tested cases
 
@@ -433,13 +426,19 @@ namespace JudgeWeb.Areas.Api.Controllers
         ///  Internal error reporting (back from judgehost)
         /// </summary>
         /// <param name="model">Model</param>
+        /// <param name="store"></param>
+        /// <param name="langs"></param>
+        /// <param name="probs"></param>
         /// <response code="200">The ID of the created internal error</response>
         [HttpPost("[action]")]
         [RequestSizeLimit(1 << 26)]
         [Consumes("application/x-www-form-urlencoded")]
         [AuditPoint(AuditlogType.InternalError)]
         public async Task<ActionResult<int>> InternalError(
-            [FromForm] InternalErrorModel model)
+            [FromForm] InternalErrorModel model,
+            [FromServices] IInternalErrorStore store,
+            [FromServices] ILanguageStore langs,
+            [FromServices] IProblemStore probs)
         {
             if (!ModelState.IsValid)
                 return BadRequest();
@@ -447,7 +446,7 @@ namespace JudgeWeb.Areas.Api.Controllers
             var toDisable = model.disabled.AsJson<InternalErrorDisable>();
             var kind = toDisable.kind;
 
-            var ie = await InternalErrors.CreateAsync(
+            var ie = await store.CreateAsync(
                 new InternalError
                 {
                     JudgehostLog = model.judgehostlog,
@@ -462,9 +461,7 @@ namespace JudgeWeb.Areas.Api.Controllers
             if (kind == "language")
             {
                 var langid = toDisable.langid;
-                await Languages.UpdateAsync(
-                    predicate: l => l.Id == langid,
-                    update: l => new Language { AllowJudge = false });
+                await langs.ToggleJudgeAsync(langid, false);
 
                 Telemetry.TrackDependency(
                     dependencyTypeName: "Language",
@@ -490,7 +487,7 @@ namespace JudgeWeb.Areas.Api.Controllers
             else if (kind == "problem")
             {
                 var probid = toDisable.probid.Value;
-                await Problems.ToggleAsync(probid, p => p.AllowJudge, false);
+                await probs.ToggleJudgeAsync(probid, false);
 
                 Telemetry.TrackDependency(
                     dependencyTypeName: "Problem",

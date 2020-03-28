@@ -20,14 +20,6 @@ namespace JudgeWeb.Areas.Api.Controllers
     [Produces("application/json")]
     public class GeneralController : ControllerBase
     {
-        private IJudgementFacade Facade { get; }
-
-        public GeneralController(IJudgementFacade facade)
-        {
-            Facade = facade;
-        }
-
-
         /// <summary>
         /// Get the current API version
         /// </summary>
@@ -64,9 +56,10 @@ namespace JudgeWeb.Areas.Api.Controllers
         /// <response code="200">General status information for the currently active contests</response>
         [HttpGet]
         [Authorize(Roles = "Judgehost,Administrator")]
-        public async Task<ActionResult<List<ServerStatus>>> Status()
+        public async Task<ActionResult<List<ServerStatus>>> Status(
+            [FromServices] IJudgingStore judgings)
         {
-            return await Facade.GetJudgeQueueAsync();
+            return await judgings.GetJudgeQueueAsync();
         }
         
 
@@ -98,12 +91,14 @@ namespace JudgeWeb.Areas.Api.Controllers
         /// Get configuration variables
         /// </summary>
         /// <param name="name">Get only this configuration variable</param>
+        /// <param name="configs"></param>
         /// <response code="200">The configuration variables</response>
         [HttpGet]
         [Authorize(Roles = "Judgehost,Administrator")]
-        public async Task<IActionResult> Config(string name)
+        public async Task<IActionResult> Config(string name,
+            [FromServices] IConfigurationRegistry configs)
         {
-            var value = await Facade.Configurations.GetAsync(name);
+            var value = await configs.GetAsync(name);
             var result = new StringBuilder();
             result.Append("{");
             for (int i = 0; i < value.Count; i++)

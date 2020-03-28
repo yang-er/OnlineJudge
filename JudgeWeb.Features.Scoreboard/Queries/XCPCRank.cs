@@ -18,7 +18,7 @@ namespace JudgeWeb.Features.Scoreboard
                     .ThenBy(a => a.RankCache.SingleOrDefault().TotalTimeRestricted);
 
 
-        public async Task Accept(AppDbContext db, ScoreboardEventArgs args)
+        public async Task Accept(ScoreboardContext db, ScoreboardEventArgs args)
         {
             Expression<Func<ScoreCache, ScoreCache>> scp;
 
@@ -27,10 +27,10 @@ namespace JudgeWeb.Features.Scoreboard
                 from sc in db.ScoreCache
                 where sc.ContestId == args.ContestId && sc.ProblemId == args.ProblemId && sc.FirstToSolve
                 join t in db.Teams on new { sc.ContestId, sc.TeamId } equals new { t.ContestId, t.TeamId }
-                join c in db.TeamCategories on t.CategoryId equals c.CategoryId
+                join c in db.Categories on t.CategoryId equals c.CategoryId
                 where (from t in db.Teams
                        where t.ContestId == args.ContestId && t.TeamId == args.TeamId
-                       join c in db.TeamCategories on t.CategoryId equals c.CategoryId
+                       join c in db.Categories on t.CategoryId equals c.CategoryId
                        select c.SortOrder).Contains(c.SortOrder)
                 select new { tid = sc.TeamId };
             bool firstBlood = !await fbQuery.AnyAsync();
@@ -139,7 +139,7 @@ namespace JudgeWeb.Features.Scoreboard
         }
 
 
-        public Task CompileError(AppDbContext db, ScoreboardEventArgs args)
+        public Task CompileError(ScoreboardContext db, ScoreboardEventArgs args)
         {
             Expression<Func<ScoreCache, ScoreCache>> scp;
 
@@ -165,7 +165,7 @@ namespace JudgeWeb.Features.Scoreboard
         }
 
 
-        public Task Pending(AppDbContext db, ScoreboardEventArgs args)
+        public Task Pending(ScoreboardContext db, ScoreboardEventArgs args)
         {
             return db.ScoreCache.MergeAsync(
                 sourceTable: new[] { new { args.ContestId, args.TeamId, args.ProblemId } },
@@ -191,7 +191,7 @@ namespace JudgeWeb.Features.Scoreboard
         }
 
 
-        public Task Reject(AppDbContext db, ScoreboardEventArgs args)
+        public Task Reject(ScoreboardContext db, ScoreboardEventArgs args)
         {
             Expression<Func<ScoreCache, ScoreCache>> scp;
 
@@ -220,7 +220,7 @@ namespace JudgeWeb.Features.Scoreboard
         }
 
 
-        public async Task RefreshCache(AppDbContext db, ScoreboardEventArgs args)
+        public async Task RefreshCache(ScoreboardContext db, ScoreboardEventArgs args)
         {
             int cid = args.ContestId;
 
@@ -228,7 +228,7 @@ namespace JudgeWeb.Features.Scoreboard
                 from s in db.Submissions
                 where s.ContestId == cid
                 join t in db.Teams on new { s.ContestId, TeamId = s.Author } equals new { t.ContestId, t.TeamId }
-                join tc in db.TeamCategories on t.CategoryId equals tc.CategoryId
+                join tc in db.Categories on t.CategoryId equals tc.CategoryId
                 join j in db.Judgings on new { s.SubmissionId, Active = true } equals new { j.SubmissionId, j.Active }
                 orderby s.Time ascending
                 select new { s.SubmissionId, t.TeamId, tc.SortOrder, s.ProblemId, s.Time, j.Status };
@@ -301,9 +301,11 @@ namespace JudgeWeb.Features.Scoreboard
             await db.ScoreCache
                 .Where(t => t.ContestId == cid)
                 .BatchDeleteAsync();
+            
             await db.RankCache
                 .Where(t => t.ContestId == cid)
                 .BatchDeleteAsync();
+
             db.RankCache.AddRange(rcc.Values);
             db.ScoreCache.AddRange(scc.Values);
 

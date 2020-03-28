@@ -15,7 +15,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
         [HttpGet]
         public async Task<IActionResult> List(int cid, bool all = false)
         {
-            ViewBag.TeamNames = await DbContext.GetTeamNameAsync(cid);
+            ViewBag.TeamNames = await Facade.Teams.ListNamesAsync(cid);
             return View(await ListSubmissionsByJuryAsync(cid, null, all));
         }
 

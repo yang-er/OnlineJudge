@@ -1,4 +1,5 @@
 ﻿using JudgeWeb.Data;
+using JudgeWeb.Features.Storage;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using System.Collections.Generic;
@@ -7,16 +8,23 @@ using System.Threading.Tasks;
 
 namespace JudgeWeb.Domains.Problems
 {
-    public partial class ProblemFacade :
+    public class TestcaseStore :
         ITestcaseStore,
-        ICrudRepositoryImpl<Testcase>,
-        ICrudInstantUpdateImpl<Testcase>
+        ICrudRepositoryImpl<Testcase>
     {
-        public ITestcaseStore TestcaseStore => this;
+        public DbContext Context { get; }
 
         public DbSet<Testcase> Testcases => Context.Set<Testcase>();
 
-        Task<List<Testcase>> ITestcaseStore.ListAsync(int pid, bool? secret)
+        public IMutableFileProvider Files { get; }
+
+        public TestcaseStore(DbContext context, IProblemFileRepository fs)
+        {
+            Context = context;
+            Files = fs;
+        }
+
+        public Task<List<Testcase>> ListAsync(int pid, bool? secret)
         {
             var query = Testcases.Where(t => t.ProblemId == pid);
             if (secret.HasValue)
@@ -25,14 +33,14 @@ namespace JudgeWeb.Domains.Problems
             return query.ToListAsync();
         }
 
-        Task<Testcase> ITestcaseStore.FindAsync(int pid, int tid)
+        public Task<Testcase> FindAsync(int pid, int tid)
         {
             return Testcases
                 .Where(t => t.ProblemId == pid && t.TestcaseId == tid)
                 .SingleOrDefaultAsync();
         }
 
-        async Task<int> ITestcaseStore.CascadeDeleteAsync(Testcase testcase)
+        public async Task<int> CascadeDeleteAsync(Testcase testcase)
         {
             using var tran = await Context.Database.BeginTransactionAsync();
             int dts;
@@ -60,7 +68,7 @@ namespace JudgeWeb.Domains.Problems
             return dts;
         }
 
-        async Task ITestcaseStore.ChangeRankAsync(int pid, int tid, bool up)
+        public async Task ChangeRankAsync(int pid, int tid, bool up)
         {
             var tc = await Testcases
                 .Where(t => t.ProblemId == pid && t.TestcaseId == tid)
@@ -81,17 +89,17 @@ namespace JudgeWeb.Domains.Problems
             }
         }
 
-        Task<int> ITestcaseStore.CountAsync(int pid)
+        public Task<int> CountAsync(int pid)
         {
             return Testcases.CountAsync(p => p.ProblemId == pid);
         }
 
-        Task<Testcase> ITestcaseStore.FindAsync(int tid)
+        public Task<Testcase> FindAsync(int tid)
         {
             return Testcases.SingleOrDefaultAsync(t => t.TestcaseId == tid);
         }
 
-        IFileInfo ITestcaseStore.GetFile(Testcase tc, string target)
+        public IFileInfo GetFile(Testcase tc, string target)
         {
             return Files.GetFileInfo($"p{tc.ProblemId}/t{tc.TestcaseId}.{target}");
         }

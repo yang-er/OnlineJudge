@@ -13,8 +13,11 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
     public class LanguagesController : Controller3
     {
         private ILanguageStore Store { get; }
-        public LanguagesController(IProblemFacade facade)
-            => Store = facade.LanguageStore;
+
+        public LanguagesController(ILanguageStore store)
+        {
+            Store = store;
+        }
 
 
         [HttpGet]
@@ -42,10 +45,10 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ToggleSubmit(string langid)
         {
-            await Store.UpdateAsync(
-                predicate: l => l.Id == langid,
-                update: l => new Language { AllowSubmit = !l.AllowSubmit });
+            var lang = await Store.FindAsync(langid);
+            if (lang is null) return NotFound();
 
+            await Store.ToggleSubmitAsync(langid, !lang.AllowSubmit);
             await HttpContext.AuditAsync("toggle allow submit", langid);
             return RedirectToAction(nameof(Detail), new { langid });
         }
@@ -55,21 +58,22 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ToggleJudge(string langid)
         {
-            await Store.UpdateAsync(
-                predicate: l => l.Id == langid,
-                update: l => new Language { AllowJudge = !l.AllowJudge });
+            var lang = await Store.FindAsync(langid);
+            if (lang is null) return NotFound();
 
+            await Store.ToggleJudgeAsync(langid, !lang.AllowJudge);
             await HttpContext.AuditAsync("toggle allow judge", langid);
             return RedirectToAction(nameof(Detail), new { langid });
         }
 
 
         [HttpGet("{langid}/[action]")]
-        public async Task<IActionResult> Edit(string langid)
+        public async Task<IActionResult> Edit(string langid,
+            [FromServices] IExecutableStore executables)
         {
             var lang = await Store.FindAsync(langid);
             if (lang == null) return NotFound();
-            ViewBag.Executables = await Store.ListCompilersAsync();
+            ViewBag.Executables = await executables.ListAsync("compile");
 
             ViewBag.Operator = "Edit";
             return View(new LanguageEditModel
@@ -102,9 +106,10 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
 
 
         [HttpGet("[action]")]
-        public async Task<IActionResult> Add()
+        public async Task<IActionResult> Add(
+            [FromServices] IExecutableStore executables)
         {
-            ViewBag.Executables = await Store.ListCompilersAsync();
+            ViewBag.Executables = await executables.ListAsync("compile");
             ViewBag.Operator = "Add";
             return View("Edit", new LanguageEditModel { TimeFactor = 1 });
         }

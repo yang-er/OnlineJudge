@@ -50,6 +50,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
         [HttpPost]
         [Authorize]
         [ValidateAntiForgeryToken]
+        [AuditPoint(AuditlogType.Team)]
         public async Task<IActionResult> Register(int cid)
         {
             if (ViewData.ContainsKey("HasTeam"))
@@ -69,9 +70,8 @@ namespace JudgeWeb.Areas.Contest.Controllers
             var aff = affs.FirstOrDefault(a => a.ExternalId == defaultAff);
             if (aff == null) throw new System.ApplicationException("No default affiliation.");
 
-            await CreateTeamAsync(
-                aff: aff,
-                uids: new[] { int.Parse(UserManager.GetUserId(User)) },
+            int tid = await Facade.Teams.CreateAsync(
+                uids: new[] { int.Parse(User.GetUserId()) },
                 team: new Team
                 {
                     AffiliationId = aff.AffiliationId,
@@ -79,9 +79,10 @@ namespace JudgeWeb.Areas.Contest.Controllers
                     CategoryId = Contest.RegisterDefaultCategory,
                     RegisterTime = System.DateTimeOffset.Now,
                     Status = 0,
-                    TeamName = UserManager.GetNickName(User) ?? UserManager.GetUserName(User),
+                    TeamName = User.GetNickName() ?? User.GetUserName(),
                 });
 
+            await HttpContext.AuditAsync("added", $"{tid}");
             StatusMessage = "Registration succeeded.";
             return RedirectToAction(nameof(Info));
         }

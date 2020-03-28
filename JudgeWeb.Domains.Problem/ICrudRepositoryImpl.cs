@@ -57,19 +57,4 @@ namespace JudgeWeb.Domains.Problems
         where TEntity : class, new()
     {
     }
-
-    public interface ICrudInstantUpdateImpl<TEntity> :
-        ICrudInstantUpdate<TEntity>,
-        IDbContextRepository
-        where TEntity : class, new()
-    {
-        Task<int> ICrudInstantUpdate<TEntity>.UpdateAsync(
-            Expression<Func<TEntity, bool>> predicate,
-            Expression<Func<TEntity, TEntity>> update)
-        {
-            return Context.Set<TEntity>()
-                .Where(predicate)
-                .BatchUpdateAsync(update);
-        }
-    }
 }

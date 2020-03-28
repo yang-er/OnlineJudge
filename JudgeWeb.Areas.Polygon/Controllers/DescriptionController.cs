@@ -25,7 +25,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
         [NonAction]
         public async Task<string> GenerateViewAsync()
         {
-            var statement = await Facade.StatementAsync(Problem);
+            var statement = await Problems.StatementAsync(Problem);
             return Generator.BuildHtml(statement).ToString();
         }
 
@@ -41,7 +41,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
             else
             {
                 ViewData["Title"] = "View";
-                var fileInfo = Facade.GetFile(Problem, "view.html");
+                var fileInfo = Problems.GetFile(Problem, "view.html");
                 ViewData["Content"] = await fileInfo.ReadAsync() ?? "";
             }
 
@@ -53,9 +53,9 @@ namespace JudgeWeb.Areas.Polygon.Controllers
         [HttpGet("{target}")]
         public async Task<IActionResult> Markdown(string target, int pid)
         {
-            if (!IProblemFacade.MarkdownFiles.Contains(target))
+            if (!IProblemStore.MarkdownFiles.Contains(target))
                 return NotFound();
-            var fileInfo = Facade.GetFile(Problem, $"{target}.md");
+            var fileInfo = Problems.GetFile(Problem, $"{target}.md");
             var lastVersion = await fileInfo.ReadAsync() ?? "";
             ViewBag.ProblemId = pid;
 
@@ -73,11 +73,11 @@ namespace JudgeWeb.Areas.Polygon.Controllers
         public async Task<IActionResult> Markdown(
             string target, int pid, MarkdownModel model)
         {
-            if (!IProblemFacade.MarkdownFiles.Contains(target))
+            if (!IProblemStore.MarkdownFiles.Contains(target))
                 return NotFound();
             if (target != model.Target || $"p{pid}" != model.BackingStore)
                 return BadRequest();
-            await Facade.WriteFileAsync(Problem, $"{target}.md", model.Markdown);
+            await Problems.WriteFileAsync(Problem, $"{target}.md", model.Markdown);
             StatusMessage = "Description saved.";
             return RedirectToAction();
         }
@@ -87,7 +87,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
         public async Task<IActionResult> Generate(int pid)
         {
             var content = await GenerateViewAsync();
-            await Facade.WriteFileAsync(Problem, "view.html", content);
+            await Problems.WriteFileAsync(Problem, "view.html", content);
             StatusMessage = "Problem description saved successfully.";
             return RedirectToAction(nameof(Preview), new { @new = false });
         }
@@ -96,7 +96,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
         [HttpGet]
         public async Task<IActionResult> GenerateLatex(int pid)
         {
-            var statement = await Facade.StatementAsync(Problem);
+            var statement = await Problems.StatementAsync(Problem);
             var memstream = new MemoryStream();
             using (var zip = new ZipArchive(memstream, ZipArchiveMode.Create, true))
                 Generator.BuildLatex(zip, statement);

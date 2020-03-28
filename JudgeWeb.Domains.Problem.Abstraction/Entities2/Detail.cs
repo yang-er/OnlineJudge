@@ -56,5 +56,10 @@ namespace JudgeWeb.Data
         /// 比较脚本输出，以BASE64编码
         /// </summary>
         public string OutputDiff { get; set; }
+
+        /// <summary>
+        /// 导航属性
+        /// </summary>
+        public Judging j { get; set; }
     }
 }

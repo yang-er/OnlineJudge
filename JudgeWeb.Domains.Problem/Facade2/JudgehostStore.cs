@@ -1,44 +1,50 @@
 ﻿using JudgeWeb.Data;
+using JudgeWeb.Domains.Problems;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
+[assembly: Inject(typeof(IJudgehostStore), typeof(JudgehostStore))]
 namespace JudgeWeb.Domains.Problems
 {
-    public partial class JudgementFacade :
+    public class JudgehostStore :
         IJudgehostStore,
-        ICrudRepositoryImpl<JudgeHost>,
-        ICrudInstantUpdateImpl<JudgeHost>
+        ICrudRepositoryImpl<JudgeHost>
     {
-        public IJudgehostStore JudgehostStore => this;
+        public DbContext Context { get; }
 
         public DbSet<JudgeHost> Judgehosts => Context.Set<JudgeHost>();
 
-        Task<int> IJudgehostStore.ToggleAsync(string hostname, bool active)
+        public JudgehostStore(DbContext context)
+        {
+            Context = context;
+        }
+
+        public Task<int> ToggleAsync(string hostname, bool active)
         {
             IQueryable<JudgeHost> src = Judgehosts;
             if (hostname != null) src = src.Where(h => h.ServerName == hostname);
             return src.BatchUpdateAsync(h => new JudgeHost { Active = active });
         }
 
-        Task<List<JudgeHost>> IJudgehostStore.ListAsync()
+        public Task<List<JudgeHost>> ListAsync()
         {
             return Judgehosts.ToListAsync();
         }
 
-        Task<JudgeHost> IJudgehostStore.FindAsync(string name)
+        public Task<JudgeHost> FindAsync(string name)
         {
             return Judgehosts.SingleOrDefaultAsync(h => h.ServerName == name);
         }
 
-        Task<int> IJudgehostStore.CountJudgingsAsync(string hostname)
+        public Task<int> CountJudgingsAsync(string hostname)
         {
             return Context.Set<Judging>().Where(g => g.Server == hostname).CountAsync();
         }
 
-        Task<List<Judging>> IJudgehostStore.FetchJudgingsAsync(string hostname, int count)
+        public Task<List<Judging>> FetchJudgingsAsync(string hostname, int count)
         {
             return Context.Set<Judging>()
                 .Where(j => j.Server == hostname)
@@ -47,12 +53,18 @@ namespace JudgeWeb.Domains.Problems
                 .ToListAsync();
         }
 
-        Task IJudgehostStore.NotifyPollAsync(JudgeHost host)
+        public Task NotifyPollAsync(JudgeHost host)
         {
             host.PollTime = DateTimeOffset.Now;
             Judgehosts.Update(host);
             return Context.SaveChangesAsync();
-            //throw new System.NotImplementedException();
+        }
+
+        public Task<int> GetJudgeStatusAsync()
+        {
+            return Judgehosts
+                .Where(jh => jh.PollTime < DateTimeOffset.Now.AddSeconds(-120) && jh.Active)
+                .CountAsync();
         }
     }
 }

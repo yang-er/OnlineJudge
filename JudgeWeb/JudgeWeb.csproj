@@ -44,7 +44,6 @@
     <ProjectReference Include="..\JudgeWeb.Features.AspNetCore\JudgeWeb.Features.AspNetCore.csproj" />
     <ProjectReference Include="..\JudgeWeb.Features.Extensions\JudgeWeb.Features.Extensions.csproj" />
     <ProjectReference Include="..\JudgeWeb.Features.Mailing\JudgeWeb.Features.Mailing.csproj" />
-    <ProjectReference Include="..\JudgeWeb.Features.Markdown\JudgeWeb.Features.Markdown.csproj" />
     <ProjectReference Include="..\JudgeWeb.Features.OjUpdate\JudgeWeb.Features.OjUpdate.csproj" />
     <ProjectReference Include="..\JudgeWeb.Features.Routing\JudgeWeb.Features.Routing.csproj" />
   </ItemGroup>

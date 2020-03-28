@@ -27,7 +27,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
         {
             await DbContext.UpdateContestAsync(Contest.ContestId, template);
 
-            var newcont = await DbContext.GetContestAsync(Contest.ContestId);
+            var newcont = await Facade.Contests.FindAsync(Contest.ContestId);
 
             DbContext.Events.Add(
                 new Data.Api.ContestInfo(newcont)
@@ -55,6 +55,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
 
 
         [HttpPost("[action]")]
+        [AuditPoint(AuditlogType.Printing)]
         public Task<IActionResult> Print(int cid, AddPrintModel model) => PrintDo(cid, model);
 
 
@@ -289,49 +290,15 @@ namespace JudgeWeb.Areas.Contest.Controllers
         [HttpGet("[action]")]
         public async Task<IActionResult> Balloon(int cid)
         {
-            var balloonQuery =
-                from b in DbContext.Balloon
-                join s in DbContext.Submissions on b.SubmissionId equals s.SubmissionId
-                where s.ContestId == cid
-                join t in DbContext.Teams on new { s.ContestId, TeamId = s.Author } equals new { t.ContestId, t.TeamId }
-                join c in DbContext.TeamCategories on t.CategoryId equals c.CategoryId
-                select new Balloon(b, s.ProblemId, s.Author, t.TeamName, t.Location, s.Time, c.Name, c.SortOrder);
-
-            var balloons = await balloonQuery.ToListAsync();
-            balloons.Sort((b1, b2) => b1.Time.CompareTo(b2.Time));
-            foreach (var g in balloons
-                .OrderBy(b => b.Time)
-                .GroupBy(b => new { b.ProblemId, b.SortOrder }))
-            {
-                var fb = true;
-                foreach (var item in g)
-                {
-                    item.FirstToSolve = fb;
-                    fb = false;
-                    var p = Problems.Find(item.ProblemId);
-                    item.BalloonColor = p.Color;
-                    item.ProblemShortName = p.ShortName;
-                }
-            }
-
-            return View(balloons);
+            var model = await Facade.Balloons.ListAsync(cid, Problems);
+            return View(model);
         }
 
 
         [HttpGet("balloon/{bid}/set-done")]
         public async Task<IActionResult> BalloonSetDone(int cid, int bid)
         {
-            var bquery =
-                from b in DbContext.Balloon
-                where b.Id == bid
-                join s in DbContext.Submissions on b.SubmissionId equals s.SubmissionId
-                where s.ContestId == cid
-                select b.Id;
-
-            await DbContext.Balloon
-                .Where(b => bquery.Contains(b.Id))
-                .BatchUpdateAsync(b => new Balloon { Done = true });
-
+            await Facade.Balloons.SetDoneAsync(cid, bid);
             return RedirectToAction(nameof(Balloon));
         }
 
@@ -345,6 +312,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
         [HttpPost("[action]")]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Administrator")]
+        [AuditPoint(AuditlogType.User)]
         public async Task<IActionResult> Assign(int cid, JuryAssignModel model)
         {
             var user = await UserManager.FindByNameAsync(model.UserName);
@@ -355,17 +323,17 @@ namespace JudgeWeb.Areas.Contest.Controllers
             }
             else
             {
-                var result = await UserManager
-                    .AddToRoleAsync(user, $"JuryOfContest{cid}");
+                var result = await UserManager.AddToRoleAsync(user, $"JuryOfContest{cid}");
 
                 if (result.Succeeded)
                 {
                     StatusMessage = $"Jury role of user {user.UserName} assigned.";
-                    InternalLog(AuditlogType.User, $"{user.Id}", "assigned jury");
-                    await DbContext.SaveChangesAsync();
+                    await HttpContext.AuditAsync("assigned jury", $"{user.Id}", $"c{cid}");
                 }
                 else
+                {
                     StatusMessage = "Error " + string.Join('\n', result.Errors.Select(e => e.Description));
+                }
             }
 
             return RedirectToAction(nameof(Home));
@@ -392,21 +360,23 @@ namespace JudgeWeb.Areas.Contest.Controllers
         [HttpPost("[action]/{uid}")]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Administrator")]
+        [AuditPoint(AuditlogType.User)]
         public async Task<IActionResult> Unassign(int cid, int uid)
         {
             var user = await UserManager.FindByIdAsync(uid.ToString());
             if (user == null) return NotFound();
-            var result = await UserManager
-                .RemoveFromRoleAsync(user, $"JuryOfContest{cid}");
+            var result = await UserManager.RemoveFromRoleAsync(user, $"JuryOfContest{cid}");
 
             if (result.Succeeded)
             {
                 StatusMessage = $"Jury role of user {user.UserName} unassigned.";
-                InternalLog(AuditlogType.User, $"{uid}", "unassigned jury");
-                await DbContext.SaveChangesAsync();
+                await HttpContext.AuditAsync("unassigned jury", $"{uid}", $"c{cid}");
             }
             else
+            {
                 StatusMessage = "Error " + string.Join('\n', result.Errors.Select(e => e.Description));
+            }
+
             return RedirectToAction(nameof(Home));
         }
 
@@ -684,16 +654,8 @@ namespace JudgeWeb.Areas.Contest.Controllers
         [HttpGet("[action]")]
         public async Task<IActionResult> Updates(int cid)
         {
-            var clarifications = await DbContext.Clarifications
-                .Where(c => c.ContestId == cid && !c.Answered)
-                .CachedCountAsync($"`c{cid}`clar`una_count", TimeSpan.FromSeconds(10));
-            var teams = await DbContext.Teams
-                .Where(t => t.Status == 0 && t.ContestId == cid)
-                .CachedCountAsync($"`c{cid}`teams`pending_count", TimeSpan.FromSeconds(10));
-            var rejudgings = await DbContext.Rejudges
-                .Where(t => t.Applied == null && t.ContestId == cid)
-                .CachedCountAsync($"`c{cid}`rejs`pending_count", TimeSpan.FromSeconds(10));
-            return Json(new { clarifications, teams, rejudgings });
+            var r = await Facade.GetJuryStatusAsync(cid);
+            return Json(new { r.clarifications, r.teams, r.rejudgings });
         }
 
 

@@ -16,7 +16,7 @@ namespace JudgeWeb.Domains.Problems
 
             entity.HasIndex(e => e.ProblemId);
 
-            entity.HasOne<Problem>()
+            entity.HasOne<Problem>(e => e.p)
                 .WithMany(p => p.ArchiveCollection)
                 .HasForeignKey(e => e.ProblemId)
                 .OnDelete(DeleteBehavior.Restrict);

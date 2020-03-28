@@ -11,6 +11,9 @@ namespace JudgeWeb.Areas.Contest.Controllers
     [Route("[area]/{cid}/jury/[controller]")]
     public class ProblemsController : JuryControllerBase
     {
+        
+
+
         private void MarkChanged()
         {
             DbContext.RemoveCacheEntry($"`c{Contest.ContestId}`probs");
@@ -65,7 +68,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 await DbContext.SaveChangesAsync();
                 MarkChanged();
 
-                var newprobs = await DbContext.GetProblemsAsync(cid);
+                var newprobs = await Facade.Contests.ListProblemsAsync(cid);
                 DbContext.Events.AddCreate(cid,
                     new Data.Api.ContestProblem2(newprobs.Find(model.ProblemId)));
                 foreach (var @new in newprobs)
@@ -126,7 +129,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 await DbContext.SaveChangesAsync();
                 MarkChanged();
 
-                var newprobs = await DbContext.GetProblemsAsync(cid);
+                var newprobs = await Facade.Contests.ListProblemsAsync(cid);
                 foreach (var @new in newprobs)
                     DbContext.Events.AddUpdate(cid, new Data.Api.ContestProblem2(@new));
                 await DbContext.SaveChangesAsync();
@@ -169,7 +172,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
             DbContext.Events.AddDelete(cid, new Data.Api.ContestProblem2(prob));
             await DbContext.SaveChangesAsync();
             MarkChanged();
-            var newprobs = await DbContext.GetProblemsAsync(cid);
+            var newprobs = await Facade.Contests.ListProblemsAsync(cid);
             foreach (var @new in newprobs)
                 DbContext.Events.AddUpdate(cid, new Data.Api.ContestProblem2(@new));
             await DbContext.SaveChangesAsync();

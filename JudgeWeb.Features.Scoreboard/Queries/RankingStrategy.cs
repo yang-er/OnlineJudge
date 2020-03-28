@@ -22,34 +22,34 @@ namespace JudgeWeb.Features.Scoreboard
         /// </summary>
         /// <param name="db">数据库</param>
         /// <param name="args">提交事件数据</param>
-        Task Pending(AppDbContext db, ScoreboardEventArgs args);
+        Task Pending(ScoreboardContext db, ScoreboardEventArgs args);
 
         /// <summary>
         /// 提交等待评测
         /// </summary>
         /// <param name="db">数据库</param>
         /// <param name="args">提交事件数据</param>
-        Task CompileError(AppDbContext db, ScoreboardEventArgs args);
+        Task CompileError(ScoreboardContext db, ScoreboardEventArgs args);
 
         /// <summary>
         /// 提交等待评测
         /// </summary>
         /// <param name="db">数据库</param>
         /// <param name="args">提交事件数据</param>
-        Task Reject(AppDbContext db, ScoreboardEventArgs args);
+        Task Reject(ScoreboardContext db, ScoreboardEventArgs args);
 
         /// <summary>
         /// 提交等待评测
         /// </summary>
         /// <param name="db">数据库</param>
         /// <param name="args">提交事件数据</param>
-        Task Accept(AppDbContext db, ScoreboardEventArgs args);
+        Task Accept(ScoreboardContext db, ScoreboardEventArgs args);
 
         /// <summary>
         /// 刷新榜单缓存
         /// </summary>
         /// <param name="db">数据库</param>
         /// <param name="contest">比赛</param>
-        Task RefreshCache(AppDbContext db, ScoreboardEventArgs args);
+        Task RefreshCache(ScoreboardContext db, ScoreboardEventArgs args);
     }
 }

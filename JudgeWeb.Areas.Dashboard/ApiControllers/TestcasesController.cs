@@ -27,10 +27,10 @@ namespace JudgeWeb.Areas.Api.Controllers
 
         private JsonResult JsonEmpty() => new JsonResult("");
 
-        public TestcasesController(IProblemFacade facade, IJudgementFacade facade2)
+        public TestcasesController(ITestcaseStore testcases, IJudgingStore judgings)
         {
-            Testcases = facade.Testcases;
-            Judgings = facade2.Judgings;
+            Testcases = testcases;
+            Judgings = judgings;
         }
 
 
