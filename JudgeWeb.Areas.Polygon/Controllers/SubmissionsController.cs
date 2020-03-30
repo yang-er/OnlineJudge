@@ -46,6 +46,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
                 predicate: s => s.ProblemId == pid,
                 includeDetails: true,
                 pagination: (page, 30));
+            totPage = (totPage - 1) / 30 + 1;
             var names = await Submissions.GetAuthorNamesAsync(
                 result.Select(l => l.AuthorId).ToArray());
             foreach (var item in result)

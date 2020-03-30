@@ -18,7 +18,9 @@ namespace JudgeWeb.Areas.Contest.Controllers
 {
     public class Controller3 : Controller2
     {
-        protected UserManager UserManager { get; private set; }
+        protected IContestFacade Facade { get; private set; }
+
+        protected IContestEventNotifier Notifier { get; private set; }
 
         protected IScoreboardService ScoreboardService { get; private set; }
 
@@ -54,26 +56,12 @@ namespace JudgeWeb.Areas.Contest.Controllers
             return Facade.Teams.FindByUserAsync(Contest.ContestId, uid);
         }
 
-        protected void InternalLog(AuditlogType type, string dataId, string action, string extraInfo = null)
-        {
-            DbContext.Auditlogs.Add(new Auditlog
-            {
-                Time = DateTimeOffset.Now,
-                UserName = User.GetUserName(),
-                ContestId = Contest.ContestId,
-                Action = action,
-                ExtraInfo = extraInfo,
-                DataId = dataId,
-                DataType = type,
-            });
-        }
-
         protected async Task<SingleBoardViewModel> FindScoreboardAsync(int teamid)
         {
-            var scb = await DbContext.LoadScoreboardAsync(Contest.ContestId);
+            var scb = await Facade.Teams.LoadScoreboardAsync(Contest.ContestId);
             var bq = scb.Data.GetValueOrDefault(teamid);
             if (bq == null) return null;
-            var cats = await DbContext.ListTeamCategoryAsync(Contest.ContestId);
+            var cats = await Facade.Teams.ListCategoryAsync(Contest.ContestId);
 
             return new SingleBoardViewModel
             {
@@ -96,7 +84,9 @@ namespace JudgeWeb.Areas.Contest.Controllers
             if (!Contest.PrintingAvaliable)
                 return ExplicitNotFound();
 
-            var p = await Facade.Printings.CreateAsync(new Printing
+            var Printings = HttpContext.RequestServices
+                .GetRequiredService<IPrintingStore>();
+            var p = await Printings.CreateAsync(new Printing
             {
                 ContestId = cid,
                 LanguageId = model.Language ?? "plain",
@@ -114,9 +104,10 @@ namespace JudgeWeb.Areas.Contest.Controllers
 
         protected async Task<IActionResult> ScoreboardView(bool isPublic, bool isJury, bool clear, int[] aff, int[] cat)
         {
-            var scb = await DbContext.LoadScoreboardAsync(Contest.ContestId);
-            var affs = await DbContext.ListTeamAffiliationAsync(Contest.ContestId);
-            var orgs = await DbContext.ListTeamCategoryAsync(Contest.ContestId, !isJury);
+            var store = Facade.Teams;
+            var scb = await store.LoadScoreboardAsync(Contest.ContestId);
+            var affs = await store.ListAffiliationAsync(Contest.ContestId);
+            var orgs = await store.ListCategoryAsync(Contest.ContestId, !isJury);
 
             var board = new FullBoardViewModel
             {
@@ -161,32 +152,40 @@ namespace JudgeWeb.Areas.Contest.Controllers
             }
 
             // parse the base service
-            var store = HttpContext.RequestServices
-                .GetRequiredService<IContestStore>();
+            Facade = HttpContext.RequestServices
+                .GetRequiredService<IContestFacade>();
+            Notifier = HttpContext.RequestServices
+                .GetRequiredService<IContestEventNotifier>();
 
             // check the existence
-            Contest = await store.FindAsync(cid);
-            ViewBag.Contest = Contest;
+            Contest = await Facade.Contests.FindAsync(cid);
             if (Contest == null)
             {
                 context.Result = NotFound();
                 return;
             }
 
-            Problems = await store.ListProblemsAsync(cid);
-            Languages = await store.ListLanguageAsync(cid);
+            HttpContext.Items[nameof(cid)] = cid;
+            ViewBag.Contest = Contest;
+            Problems = await Facade.Problemset.ListAsync(cid);
+            Languages = await Facade.ListLanguageAsync(cid);
             ViewBag.Problems = Problems;
             ViewBag.Languages = Languages;
 
-            /*
-            if (!Cache.TryGetValue($"`c{cid}`internal_state", out ContestState state)
-                || state != Contest.GetState())
+            // the event of contest state change
+            var stateNow = Contest.GetState();
+            if (!Cache.TryGetValue($"`c{cid}`internal_state", out ContestState state))
             {
-                Cache.Set($"`c{cid}`internal_state", Contest.GetState(), TimeSpan.FromDays(365));
-                
-                //DbContext.Events.AddUpdate(cid, new Data.Api.ContestTime(Contest));
-                //await DbContext.SaveChangesAsync();
-            }*/
+                Cache.Set($"`c{cid}`internal_state", stateNow, TimeSpan.FromDays(365));
+                if (stateNow != ContestState.Finalized)
+                    await Notifier.Update(cid, Contest, stateNow);
+            }
+            else if (state != stateNow)
+            {
+                Cache.Set($"`c{cid}`internal_state", stateNow, TimeSpan.FromDays(365));
+                if (stateNow != ContestState.Finalized)
+                    await Notifier.Update(cid, Contest, stateNow);
+            }
 
             // check the permission
             if (User.IsInRoles($"Administrator,JuryOfContest{cid}"))

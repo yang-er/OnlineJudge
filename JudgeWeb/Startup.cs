@@ -1,5 +1,6 @@
 ﻿using idunno.Authentication.Basic;
 using JudgeWeb.Data;
+using JudgeWeb.Domains.Contests;
 using JudgeWeb.Domains.Identity;
 using JudgeWeb.Domains.Identity.Providers;
 using JudgeWeb.Domains.Problems;
@@ -64,6 +65,10 @@ namespace JudgeWeb
             services.AddDbContext<AppDbContext>(options => options
                 .UseSqlServer(Configuration.GetConnectionString("UserDbConnection"))
                 .UseBulkExtensions());
+            services.AddScoped<DbContext, AppDbContext>();
+
+            services.AddScoped<IContestEventNotifier, ContestEventNotifier>();
+            services.AddScoped<IAuditlogger, Auditlogger>();
 
             services.AddIdentity<User, Role>(
                 options =>
@@ -125,6 +130,7 @@ namespace JudgeWeb
             services.AddScoreboard();
 
             services.AddProblemDomain();
+            services.AddContestDomain();
 
             services.AddProblemRepository();
             services.AddMarkdown(options => options.

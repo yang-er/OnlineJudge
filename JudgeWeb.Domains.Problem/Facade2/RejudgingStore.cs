@@ -206,5 +206,12 @@ namespace JudgeWeb.Domains.Problems
             Rejudges.Update(rejudge);
             await Context.SaveChangesAsync();
         }
+
+        public Task<int> GetJuryStatusAsync(int cid)
+        {
+            return Rejudges
+                .Where(t => t.Applied == null && t.ContestId == cid)
+                .CachedCountAsync($"`c{cid}`rejs`pending_count", TimeSpan.FromSeconds(10));
+        }
     }
 }

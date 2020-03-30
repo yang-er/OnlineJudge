@@ -338,9 +338,9 @@
     .bd-sidebar {
       position: -webkit-sticky;
       position: sticky;
-      top: 4rem;
+      top: 3.5rem;
       z-index: 1000;
-      height: calc(100vh - 4rem);
+      height: calc(100vh - 3.5rem);
     }
   }
 }

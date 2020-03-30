@@ -14,6 +14,8 @@ namespace JudgeWeb.Domains.Problems
             Expression<Func<Submission, Judging, bool>> predicate,
             Rejudge rejudge = null, bool fullTest = false);
 
+        Task<int> GetJuryStatusAsync(int cid);
+
         Task<Rejudge> FindAsync(int cid, int rjid);
 
         Task<List<Rejudge>> ListAsync(int cid);

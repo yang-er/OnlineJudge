@@ -1,7 +1,12 @@
 ﻿using JudgeWeb.Data;
+using JudgeWeb.Domains.Contests;
+using JudgeWeb.Domains.Problems;
+using JudgeWeb.Features.Storage;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
+using Microsoft.Extensions.FileProviders;
+using System;
+using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -9,38 +14,22 @@ namespace JudgeWeb.Areas.Contest.Controllers
 {
     [Area("Contest")]
     [Route("[area]/{cid}/jury/[controller]")]
+    [AuditPoint(AuditlogType.Problem)]
     public class ProblemsController : JuryControllerBase
     {
-        
-
-
-        private void MarkChanged()
-        {
-            DbContext.RemoveCacheEntry($"`c{Contest.ContestId}`probs");
-        }
-
-
-        private async Task<string> DetectProblemConflict(int pid, bool pname)
-        {
-            if (Problems.Find(pid) != null)
-                return "Problem has been added into contest.";
-
-            var prob = await DbContext.Problems
-                .Where(p => p.ProblemId == pid)
-                .SingleOrDefaultAsync();
-            if (prob == null)
-                return "Problem is not found.";
-            if (!User.IsInRoles($"Administrator,AuthorOfProblem{pid}"))
-                return "Permission denied.";
-            return pname ? prob.Title : null;
-        }
+        private IProblemsetStore Store => Facade.Problemset;
 
 
         [HttpGet("[action]")]
         [ValidateInAjax]
         public IActionResult Add(int cid)
         {
-            return Window(new ContestProblem { ContestId = cid, AllowJudge = true, AllowSubmit = true });
+            return Window(new ContestProblem
+            {
+                ContestId = cid,
+                AllowJudge = true,
+                AllowSubmit = true
+            });
         }
 
 
@@ -49,32 +38,26 @@ namespace JudgeWeb.Areas.Contest.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Add(int cid, ContestProblem model)
         {
-            var items = await DbContext.ContestProblem
-                .Where(cp => cp.ContestId == cid)
-                .ToListAsync();
-
-            if (items.Any(cp => cp.ShortName == model.ShortName))
+            if (Problems.Any(cp => cp.ShortName == model.ShortName))
                 ModelState.AddModelError("xys::duplicate", "Duplicate short name for problem.");
-            var probDetect = await DetectProblemConflict(model.ProblemId, false);
-            if (probDetect != null)
-                ModelState.AddModelError("xys::prob", probDetect);
+            var probDetect = await Store.CheckAvailabilityAsync(cid, model.ProblemId, User);
+            if (!probDetect.ok)
+                ModelState.AddModelError("xys::prob", probDetect.msg);
 
             if (ModelState.IsValid)
             {
                 var oldprobs = Problems;
                 model.Color = "#" + model.Color.TrimStart('#');
                 model.ContestId = cid;
-                DbContext.ContestProblem.Add(model);
-                await DbContext.SaveChangesAsync();
-                MarkChanged();
+                await Store.CreateAsync(model);
+                await HttpContext.AuditAsync("attached", $"{model.ProblemId}");
 
-                var newprobs = await Facade.Contests.ListProblemsAsync(cid);
-                DbContext.Events.AddCreate(cid,
-                    new Data.Api.ContestProblem2(newprobs.Find(model.ProblemId)));
+                var newprobs = await Store.ListAsync(cid);
+                var nowp = newprobs.SingleOrDefault(p => p.ProblemId == model.ProblemId);
+                await Notifier.Create(cid, nowp);
                 foreach (var @new in newprobs)
-                    if (@new.ProblemId != model.ProblemId)
-                        DbContext.Events.AddUpdate(cid, new Data.Api.ContestProblem2(@new));
-                await DbContext.SaveChangesAsync();
+                    if (@new.Rank > nowp.Rank)
+                        await Notifier.Update(cid, @new);
 
                 StatusMessage = $"Problem {model.ShortName} saved.";
                 return RedirectToAction("Home", "Jury");
@@ -87,9 +70,10 @@ namespace JudgeWeb.Areas.Contest.Controllers
 
 
         [HttpGet("[action]/{pid}")]
-        public async Task<IActionResult> Find(int pid)
+        public async Task<IActionResult> Find(int cid, int pid)
         {
-            return Content(await DetectProblemConflict(pid, true));
+            var (_, msg) = await Store.CheckAvailabilityAsync(cid, pid, User);
+            return Content(msg);
         }
 
 
@@ -97,7 +81,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
         [ValidateInAjax]
         public IActionResult Edit(int pid)
         {
-            var prob = Problems.Find(pid);
+            var prob = Problems.SingleOrDefault(p => p.ProblemId == pid);
             if (prob == null) return NotFound();
             return Window(prob);
         }
@@ -108,39 +92,30 @@ namespace JudgeWeb.Areas.Contest.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int cid, int pid, ContestProblem model)
         {
-            // here we should split it out..
-            var oldprobs = Problems;
-            var items = await DbContext.ContestProblem
-                .Where(cp => cp.ContestId == cid)
-                .ToListAsync();
-
-            var prob = items.FirstOrDefault(cp => cp.ProblemId == pid);
-            if (prob == null) return NotFound();
-            if (items.Any(cp => cp.ShortName == model.ShortName && cp.ProblemId != pid))
+            if (!Problems.Any(cp => cp.ProblemId == pid))
+                return NotFound();
+            if (Problems.Any(cp => cp.ShortName == model.ShortName && cp.ProblemId != pid))
                 ModelState.AddModelError("xys::duplicate", "Duplicate short name for problem.");
-
-            if (ModelState.IsValid)
-            {
-                prob.Color = "#" + model.Color.TrimStart('#');
-                prob.AllowSubmit = model.AllowSubmit;
-                prob.AllowJudge = model.AllowJudge;
-                prob.ShortName = model.ShortName;
-                DbContext.ContestProblem.Update(prob);
-                await DbContext.SaveChangesAsync();
-                MarkChanged();
-
-                var newprobs = await Facade.Contests.ListProblemsAsync(cid);
-                foreach (var @new in newprobs)
-                    DbContext.Events.AddUpdate(cid, new Data.Api.ContestProblem2(@new));
-                await DbContext.SaveChangesAsync();
-
-                StatusMessage = $"Problem {model.ShortName} saved.";
-                return RedirectToAction("Home", "Jury");
-            }
-            else
-            {
+            if (!ModelState.IsValid)
                 return Window(model);
-            }
+
+            await Store.UpdateAsync(cid, pid,
+                () => new ContestProblem
+                {
+                    Color = "#" + model.Color.TrimStart('#'),
+                    AllowSubmit = model.AllowSubmit,
+                    AllowJudge = model.AllowJudge,
+                    ShortName = model.ShortName,
+                });
+
+            await HttpContext.AuditAsync("updated", $"{pid}");
+
+            var newprobs = await Store.ListAsync(cid);
+            foreach (var @new in newprobs)
+                await Notifier.Update(cid, @new);
+
+            StatusMessage = $"Problem {model.ShortName} saved.";
+            return RedirectToAction("Home", "Jury");
         }
 
 
@@ -148,14 +123,14 @@ namespace JudgeWeb.Areas.Contest.Controllers
         [ValidateInAjax]
         public IActionResult Delete(int cid, int pid)
         {
-            var prob = Problems.Find(pid);
+            var prob = Problems.SingleOrDefault(p => p.ProblemId == pid);
             if (prob == null) return NotFound();
 
             return AskPost(
                 title: "Delete contest problem",
                 message: $"Are you sure to delete problem {prob.ShortName}?",
                 area: "Contest", ctrl: "Problems", act: "Delete",
-                routeValues: new Dictionary<string, string> { ["cid"] = $"{cid}", ["pid"] = $"{pid}" },
+                routeValues: new { cid, pid },
                 type: MessageType.Danger);
         }
 
@@ -163,25 +138,72 @@ namespace JudgeWeb.Areas.Contest.Controllers
         [HttpPost("{pid}/[action]")]
         public async Task<IActionResult> Delete(int cid, int pid, bool post = true)
         {
-            var prob = Problems.Find(pid);
+            var prob = Problems.SingleOrDefault(p => p.ProblemId == pid);
             if (prob == null) return NotFound();
 
-            int tot = await DbContext.ContestProblem
-                .Where(cp => cp.ContestId == cid && cp.ProblemId == pid)
-                .BatchDeleteAsync();
-            DbContext.Events.AddDelete(cid, new Data.Api.ContestProblem2(prob));
-            await DbContext.SaveChangesAsync();
-            MarkChanged();
-            var newprobs = await Facade.Contests.ListProblemsAsync(cid);
-            foreach (var @new in newprobs)
-                DbContext.Events.AddUpdate(cid, new Data.Api.ContestProblem2(@new));
-            await DbContext.SaveChangesAsync();
+            await Store.DeleteAsync(prob);
+            await HttpContext.AuditAsync("detached", $"{pid}");
+            await Notifier.Delete(cid, prob);
 
-            if (tot == 1) MarkChanged();
-            StatusMessage = tot == 1
-                ? $"Contest problem {prob.ShortName} has been deleted."
-                : $"Error when deleting contest problem {prob.ShortName}.";
+            var newprobs = await Store.ListAsync(cid);
+            foreach (var @new in newprobs)
+                if (@new.Rank >= prob.Rank)
+                    await Notifier.Update(cid, @new);
+
+            StatusMessage = $"Contest problem {prob.ShortName} has been deleted.";
             return RedirectToAction("Home", "Jury");
+        }
+
+
+        [HttpGet("[action]")]
+        public async Task<IActionResult> GenerateStatement(int cid,
+            [FromServices] IProblemViewProvider generator,
+            [FromServices] IStaticFileRepository io)
+        {
+            var stmts = await Facade.Problemset.StatementsAsync(cid);
+
+            var startTime = Contest.StartTime ?? DateTimeOffset.Now;
+            var startDate = startTime.ToString("dddd, MMMM d, yyyy",
+                formatProvider: System.Globalization.CultureInfo.GetCultureInfo(1033));
+
+            var memstream = new MemoryStream();
+            using (var zip = new ZipArchive(memstream, ZipArchiveMode.Create, true))
+            {
+                var olymp = io.GetFileInfo("static/olymp.sty");
+                using (var olympStream = olymp.CreateReadStream())
+                    await zip.CreateEntryFromStream(olympStream, "olymp.sty");
+                var texBegin = io.GetFileInfo("static/contest.tex-begin");
+                var documentStart = await texBegin.ReadAsync();
+                var documentBuilder = new System.Text.StringBuilder(documentStart)
+                    .Append("\\begin {document}\n\n")
+                    .Append("\\contest\n{")
+                    .Append(Contest.Name)
+                    .Append("}%\n{ACM.XYLAB.FUN}%\n{")
+                    .Append(startDate)
+                    .Append("}%\n\n")
+                    .Append("\\binoppenalty=10000\n")
+                    .Append("\\relpenalty=10000\n\n")
+                    .Append("\\renewcommand{\\t}{\\texttt}\n\n");
+
+                foreach (var item in stmts)
+                {
+                    var folderPrefix = $"{item.ShortName}/";
+                    generator.BuildLatex(zip, item, folderPrefix);
+
+                    documentBuilder
+                        .Append("\\graphicspath{{./")
+                        .Append(item.ShortName)
+                        .Append("/}}\n\\import{./")
+                        .Append(item.ShortName)
+                        .Append("/}{./problem.tex}\n\n");
+                }
+
+                documentBuilder.Append("\\end{document}\n\n");
+                zip.CreateEntryFromString(documentBuilder.ToString(), "contest.tex");
+            }
+
+            memstream.Position = 0;
+            return File(memstream, "application/zip", $"c{cid}-statements.zip");
         }
     }
 }

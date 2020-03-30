@@ -62,20 +62,23 @@ namespace JudgeWeb.Areas.Misc.Controllers
 
 
         [HttpGet("{pid}/[action]")]
-        [ValidateInAjax]
         [Authorize]
-        public async Task<IActionResult> Submissions(int pid, int page)
+        public async Task<IActionResult> Submissions(int pid, int draw, int start, int length)
         {
+            const int PageCount = 15;
             var prob = await Store.FindAsync(pid);
             if (prob == null) return NotFound();
             var uid = int.Parse(User.GetUserId() ?? "-100");
-            if (page <= 0) page = 1;
 
-            var subs = await Submits.ListWithJudgingAsync(
+            if (length != PageCount || start % PageCount != 0)
+                return BadRequest();
+            start = start / PageCount + 1;
+
+            var (data, count) = await Submits.ListWithJudgingAsync(
                 selector: (s, j) => new { Id = s.SubmissionId, s.Time, s.Language, j.Status },
-                pagination: (page, 15),
+                pagination: (start, 15),
                 predicate: s => s.ProblemId == prob.ProblemId && s.Author == uid && s.ContestId == 0);
-            return Json(subs);
+            return Json(new { draw, recordsTotal = count, recordsFiltered = count, data });
         }
 
 

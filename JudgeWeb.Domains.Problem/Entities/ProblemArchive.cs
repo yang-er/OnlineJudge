@@ -29,6 +29,8 @@ namespace JudgeWeb.Domains.Problems
             entity.Ignore(e => e.Source);
 
             entity.Ignore(e => e.Submitted);
+
+            entity.Ignore(e => e.AllowSubmit);
         }
     }
 }

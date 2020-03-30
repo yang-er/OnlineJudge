@@ -1,4 +1,5 @@
 ﻿using JudgeWeb.Data;
+using JudgeWeb.Domains.Contests;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -6,17 +7,25 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 
+[assembly: Inject(typeof(IPrintingStore), typeof(PrintingStore))]
 namespace JudgeWeb.Domains.Contests
 {
-    public partial class ContestFacade :
+    public class PrintingStore :
         IPrintingStore,
         ICrudRepositoryImpl<Printing>
     {
-        public IPrintingStore PrintingStore => this;
+        public DbContext Context { get; }
 
         DbSet<Printing> Printings => Context.Set<Printing>();
 
-        Task<List<T>> IPrintingStore.ListAsync<T>(
+        DbSet<TeamMember> Members => Context.Set<TeamMember>();
+
+        public PrintingStore(DbContext context)
+        {
+            Context = context;
+        }
+
+        public Task<List<T>> ListAsync<T>(
             int takeCount, int page,
             Expression<Func<Printing, User, Team, T>> expression,
             Expression<Func<Printing, bool>>? predicate)
@@ -30,9 +39,7 @@ namespace JudgeWeb.Domains.Contests
                 into uu from u in uu.DefaultIfEmpty()
                 join tu in Members on new { p.ContestId, p.UserId } equals new { tu.ContestId, tu.UserId }
                 into tuu from tu in tuu.DefaultIfEmpty()
-                join t in Teams on new { tu.ContestId, tu.TeamId } equals new { t.ContestId, t.TeamId }
-                into tt from t in tt.DefaultIfEmpty()
-                select new { p, u, t };
+                select new { p, u, t = tu.Team };
 
             if (page > 0)
             {
@@ -52,7 +59,7 @@ namespace JudgeWeb.Domains.Contests
                 .ToListAsync();
         }
 
-        async Task<bool> IPrintingStore.SetStateAsync(int pid, bool? done)
+        public async Task<bool> SetStateAsync(int pid, bool? done)
         {
             int status = await Printings
                 .Where(p => p.Id == pid)

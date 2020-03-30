@@ -17,12 +17,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
     [AuditPoint(AuditlogType.Team)]
     public class TeamsController : JuryControllerBase
     {
-        ITeamStore Store { get; }
-
-        public TeamsController(ITeamStore store)
-        {
-            Store = store;
-        }
+        ITeamStore Store => Facade.Teams;
 
 
         [HttpGet]

@@ -48,17 +48,17 @@ namespace JudgeWeb.Domains.Identity
                 .SingleOrDefaultAsync();
         }
 
-        public async Task<IEnumerable<IGrouping<TrainingTeam, TrainingTeamUser>>> ListAsync(User user)
+        public async Task<ILookup<TrainingTeam, TrainingTeamUser>> ListAsync(int uid)
         {
             var query =
                 from ttu in TrainingTeamUsers
-                where ttu.UserId == user.Id && ttu.Accepted == true
+                where ttu.UserId == uid && ttu.Accepted == true
                 join t in TrainingTeams on ttu.TrainingTeamId equals t.TrainingTeamId
                 join tu in TrainingTeamUsers on t.TrainingTeamId equals tu.TrainingTeamId
                 join u in Context.Set<User>() on tu.UserId equals u.Id
                 select new { t, tuu = new TrainingTeamUser(tu, u.UserName, u.Email) };
             var results = await query.AsTracking().ToListAsync();
-            return results.GroupBy(k => k.t, v => v.tuu);
+            return results.ToLookup(k => k.t, v => v.tuu);
         }
 
         public Task<List<TrainingTeamUser>> ListMembersAsync(TrainingTeam team)

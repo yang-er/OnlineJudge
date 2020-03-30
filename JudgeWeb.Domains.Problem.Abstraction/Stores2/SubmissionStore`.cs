@@ -42,7 +42,7 @@ namespace JudgeWeb.Domains.Problems
             Expression<Func<Submission, T>> projection,
             Expression<Func<Submission, bool>> predicate = null);
 
-        Task<(IEnumerable<T> list, int totPage)> ListWithJudgingAsync<T>(
+        Task<(IEnumerable<T> list, int count)> ListWithJudgingAsync<T>(
             (int Page, int PageCount) pagination,
             Expression<Func<Submission, Judging, T>> selector,
             Expression<Func<Submission, bool>> predicate = null);
@@ -91,7 +91,7 @@ namespace JudgeWeb.Domains.Problems
                 };
         }
 
-        public Task<(IEnumerable<ListSubmissionModel> list, int totPage)> ListWithJudgingAsync(
+        public Task<(IEnumerable<ListSubmissionModel> list, int count)> ListWithJudgingAsync(
             (int Page, int PageCount) pagination,
             Expression<Func<Submission, bool>> predicate = null,
             bool includeDetails = false)

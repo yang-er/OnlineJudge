@@ -1,4 +1,5 @@
 ﻿using JudgeWeb.Data;
+using JudgeWeb.Domains.Problems;
 using JudgeWeb.Features.Storage;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -10,6 +11,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 
+[assembly: Inject(typeof(IProblemStore), typeof(ProblemStore))]
 namespace JudgeWeb.Domains.Problems
 {
     public class ProblemStore :

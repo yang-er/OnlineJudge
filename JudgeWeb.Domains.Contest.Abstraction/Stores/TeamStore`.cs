@@ -18,6 +18,8 @@ namespace JudgeWeb.Domains.Contests
         Task<T> FindAsync<T>(int cid, int tid,
             Expression<Func<Team, T>> selector);
 
+        Task<int> GetJuryStatusAsync(int cid);
+
         Task<HashSet<int>> ListRegisteredAsync(int uid);
 
         Task<List<TeamMember>> ListRegisteredWithDetailAsync(int uid);

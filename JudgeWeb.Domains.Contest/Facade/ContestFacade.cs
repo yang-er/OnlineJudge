@@ -1,4 +1,5 @@
 ﻿using JudgeWeb.Data;
+using JudgeWeb.Domains.Contests;
 using JudgeWeb.Features.Storage;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
@@ -8,41 +9,37 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+[assembly: Inject(typeof(IContestFacade), typeof(ContestFacade))]
 namespace JudgeWeb.Domains.Contests
 {
-    public class DbContestFacade<TContext> : ContestFacade
-        where TContext : DbContext
-    {
-        public DbContestFacade(TContext context, IProblemFileRepository files)
-            : base(context, files)
-        {
-        }
-    }
-
-    public partial class ContestFacade : IContestFacade
+    public class ContestFacade : IContestFacade
     {
         public DbContext Context { get; }
 
-        public IMutableFileProvider Files { get; }
+        public IContestStore Contests { get; }
 
-        protected ContestFacade(DbContext context, IMutableFileProvider files)
+        public IProblemsetStore Problemset { get; }
+
+        public ITeamStore Teams { get; }
+
+        public ContestFacade(
+            DbContext context,
+            IContestStore store1,
+            IProblemsetStore store2,
+            ITeamStore store3)
         {
             Context = context;
-            Files = files;
+            Contests = store1;
+            Problemset = store2;
+            Teams = store3;
         }
 
-        public async Task<(int clarifications, int teams, int rejudgings)> GetJuryStatusAsync(int cid)
+        public Task<Dictionary<string, Language>> ListLanguageAsync(int cid)
         {
-            var clarifications = await Clarifications
-                .Where(c => c.ContestId == cid && !c.Answered)
-                .CachedCountAsync($"`c{cid}`clar`una_count", TimeSpan.FromSeconds(10));
-            var teams = await Teams
-                .Where(t => t.Status == 0 && t.ContestId == cid)
-                .CachedCountAsync($"`c{cid}`teams`pending_count", TimeSpan.FromSeconds(10));
-            var rejudgings = await Context.Set<Rejudge>()
-                .Where(t => t.Applied == null && t.ContestId == cid)
-                .CachedCountAsync($"`c{cid}`rejs`pending_count", TimeSpan.FromSeconds(10));
-            return (clarifications, teams, rejudgings);
+            return Context.Set<Language>().CachedToDictionaryAsync(
+                keySelector: k => k.Id,
+                tag: $"`c{cid}`langs",
+                timeSpan: TimeSpan.FromMinutes(10));
         }
     }
 }

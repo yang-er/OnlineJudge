@@ -1,6 +1,7 @@
 ﻿@model CodeSubmitModel
 @{
-    IEnumerable<SelectListItem> langs = ViewBag.Language;
+    IEnumerable<Language> _langs = ViewBag.Language;
+    var langs = _langs.Select(l => new SelectListItem(l.Name, l.Id));
     Layout = null;
 }
 

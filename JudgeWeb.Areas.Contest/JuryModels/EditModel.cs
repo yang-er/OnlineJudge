@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
 namespace JudgeWeb.Areas.Contest.Models
@@ -56,5 +57,30 @@ namespace JudgeWeb.Areas.Contest.Models
         [TimeSpan]
         [DisplayName("Scoreboard unfreeze time")]
         public string UnfreezeTime { get; set; }
+
+        public JuryEditModel() { }
+
+        public JuryEditModel(Data.Contest cont)
+        {
+            var startTime = cont.StartTime?.ToString("yyyy-MM-dd HH:mm:ss zzz") ?? "";
+            var startDateTime = cont.StartTime ?? DateTimeOffset.UnixEpoch;
+            var stopTime = (cont.EndTime - startDateTime)?.ToDeltaString() ?? "";
+            var unfTime = (cont.UnfreezeTime - startDateTime)?.ToDeltaString() ?? "";
+            var freTime = (cont.FreezeTime - startDateTime)?.ToDeltaString() ?? "";
+
+            ContestId = cont.ContestId;
+            FreezeTime = freTime;
+            Name = cont.Name;
+            ShortName = cont.ShortName;
+            RankingStrategy = cont.RankingStrategy;
+            StartTime = startTime;
+            StopTime = stopTime;
+            UnfreezeTime = unfTime;
+            DefaultCategory = cont.RegisterDefaultCategory;
+            IsPublic = cont.IsPublic;
+            UsePrintings = cont.PrintingAvaliable;
+            UseBalloon = cont.BalloonAvaliable;
+            StatusAvailable = cont.StatusAvaliable;
+        }
     }
 }

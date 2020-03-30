@@ -1,10 +1,12 @@
 ﻿using JudgeWeb.Data;
+using JudgeWeb.Domains.Problems;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
+[assembly: Inject(typeof(IArchiveStore), typeof(ArchiveStore))]
 namespace JudgeWeb.Domains.Problems
 {
     public class ArchiveStore :
@@ -64,6 +66,7 @@ namespace JudgeWeb.Domains.Problems
                 join ss in Context.Set<SubmissionStatistics>()
                     on new { a.ProblemId, ContestId = 0, Author = uid }
                     equals new { ss.ProblemId, ss.ContestId, ss.Author }
+                into sss from ss in sss.DefaultIfEmpty()
                 orderby a.PublicId ascending
                 select new ProblemArchive(a, a.p.Title, a.p.Source, ss.AcceptedSubmission, ss.TotalSubmission);
             return query.ToListAsync();

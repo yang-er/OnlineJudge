@@ -1,4 +1,5 @@
 ﻿using JudgeWeb.Data;
+using JudgeWeb.Domains.Contests;
 using JudgeWeb.Features.Storage;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -13,6 +14,8 @@ namespace JudgeWeb.Areas.Contest.Controllers
     [Route("[area]/{cid}/[action]")]
     public class PublicController : Controller3
     {
+        private ITeamStore Store => Facade.Teams;
+
         public override Task OnActionExecutingAsync(ActionExecutingContext context)
         {
             if (Contest.Gym)
@@ -36,9 +39,9 @@ namespace JudgeWeb.Areas.Contest.Controllers
         public async Task<IActionResult> Info(int cid,
             [FromServices] IProblemFileRepository io)
         {
-            var affs = await DbContext.ListTeamAffiliationAsync(cid);
+            var affs = await Store.ListAffiliationAsync(cid);
             ViewBag.Affiliations = affs.ToDictionary(a => a.AffiliationId);
-            var cats = await DbContext.ListTeamCategoryAsync(cid);
+            var cats = await Store.ListCategoryAsync(cid);
             ViewBag.Categories = cats.ToDictionary(a => a.CategoryId);
 
             var fileInfo = io.GetFileInfo($"c{cid}/readme.html");
@@ -66,7 +69,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
             }
 
             string defaultAff = User.IsInRole("Student") ? "jlu" : "null";
-            var affs = await DbContext.ListTeamAffiliationAsync(cid, false);
+            var affs = await Store.ListAffiliationAsync(cid, false);
             var aff = affs.FirstOrDefault(a => a.ExternalId == defaultAff);
             if (aff == null) throw new System.ApplicationException("No default affiliation.");
 

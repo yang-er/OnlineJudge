@@ -47,7 +47,7 @@ namespace JudgeWeb.Areas.Account.Controllers
         [HttpGet]
         public async Task<IActionResult> List()
         {
-            return View(await TeamManager.ListAsync(User2));
+            return View(await TeamManager.ListAsync(User2.Id));
         }
 
 

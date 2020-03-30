@@ -20,7 +20,7 @@
 
   <ItemGroup>
     <PackageReference Include="Markdig.Service" Version="0.18.3.1" />
-    <PackageReference Include="Microsoft.ApplicationInsights" Version="2.10.0" />
+    <PackageReference Include="Microsoft.ApplicationInsights" Version="2.13.1" />
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Versioning" Version="4.1.1" />
     <PackageReference Include="System.IO.Compression.ZipFile" Version="4.3.0" />

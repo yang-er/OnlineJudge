@@ -137,13 +137,13 @@
                 <th title="old vs. new verdicts">-\+</th>
                 @foreach (var v in usedVerdicts)
                 {
-                    <th title="@v (new)">@JudgeWeb.Data.Api.JudgementType.For(v)</th>
+                    <th title="@v (new)">@v JudgeWeb.Data.Api.JudgementType.For(v)</th>
                 }
             </tr>
             @for (int i = 0; i < usedVerdicts.Length; i++)
             {
                 <tr>
-                    <th title="@usedVerdicts[i] (old)">@JudgeWeb.Data.Api.JudgementType.For(usedVerdicts[i])</th>
+                    <th title="@usedVerdicts[i] (old)">@usedVerdicts[i] JudgeWeb.Data.Api.JudgementType.For(usedVerdicts[i])</th>
                     @for (int j = 0; j < usedVerdicts.Length; j++)
                     {
                         <td class="@(i == j ? "identical" : its[i, j] == 0 ? "zero" : "changed")">@its[i, j]</td>

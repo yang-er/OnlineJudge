@@ -179,6 +179,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
                     ? $"u{item.AuthorId}"
                     : $"c{item.ContestId}t{item.AuthorId}";
 
+            totPage = (totPage - 1) / 50 + 1;
             ViewBag.Page = page;
             ViewBag.TotalPage = totPage;
             return View(model);

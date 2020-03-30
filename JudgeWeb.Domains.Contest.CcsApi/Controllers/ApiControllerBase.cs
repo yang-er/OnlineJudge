@@ -26,7 +26,9 @@ namespace JudgeWeb.Areas.Api.Controllers
                     .GetRequiredService<IContestStore>();
                 Contest = await store.FindAsync(cid);
                 if (Contest == null || !Contest.StartTime.HasValue) return;
-                Problems = await store.ListProblemsAsync(cid);
+                Problems = await HttpContext.RequestServices
+                    .GetRequiredService<IProblemsetStore>()
+                    .ListAsync(cid);
                 MaxEventId = await store.MaxEventIdAsync(cid);
                 HttpContext.Items[nameof(cid)] = cid;
                 

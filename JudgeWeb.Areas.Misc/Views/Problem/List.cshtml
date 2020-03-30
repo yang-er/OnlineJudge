@@ -1,7 +1,6 @@
 ﻿@model IEnumerable<ProblemArchive>
 @{
     ViewData["Title"] = "Problem List";
-    IEnumerable<SubmissionStatistics> stats = ViewBag.Stat;
 }
 
 <h2 class="mt-4">Problems</h2>
@@ -17,15 +16,14 @@
     <tbody>
         @foreach (var item in Model)
         {
-            var stat = stats.FirstOrDefault(a => a.ProblemId == item.PublicId);
             <tr>
                 <td>
                     @item.PublicId
-                    <if cond="stat != null">
-                        <if cond="stat.AcceptedSubmission > 0">
+                    <if cond="item.Submitted.HasValue">
+                        <if cond="item.Submitted.Value">
                             <i class="fas fa-check-circle text-success"></i>
                         </if>
-                        <if cond="stat.AcceptedSubmission == 0">
+                        <if cond="!item.Submitted.Value">
                             <i class="fas fa-exclamation-circle text-warning"></i>
                         </if>
                     </if>

@@ -1,9 +1,11 @@
-﻿@model IEnumerable<SubmissionViewModel>
+﻿@using JudgeWeb.Domains.Problems
+@model IEnumerable<ListSubmissionModel>
 @{
     ViewData["Title"] = "Submission";
     ViewData["RefreshSpan"] = 30;
     if (ViewData.ContainsKey("InAjax")) { Layout = null; }
     Contest ctx = ViewBag.Contest;
+    ContestProblem[] probs = ViewBag.Problems;
     int correct = 0, total = 0;
     Dictionary<int, string> tn = ViewBag.TeamNames;
 }
@@ -33,27 +35,28 @@
     <tbody>
         @foreach (var sub in Model)
         {
-            if (sub.Problem == null) { continue; }
+            var prob = probs.SingleOrDefault(p => p.ProblemId == sub.ProblemId);
+            if (prob == null) { continue; }
             var tooLate = (ctx.EndTime ?? DateTimeOffset.MaxValue) < sub.Time;
             if (sub.Verdict == Verdict.Accepted) { correct++; }
             total++;
             <tr asp-controller="Submissions" asp-action="Detail" asp-route-sid="@sub.SubmissionId"
                 data-toggle="gotoUrl"
-                data-problem-id="@sub.Problem?.ProblemId"
-                data-team-id="@sub.TeamId"
+                data-problem-id="@sub.ProblemId"
+                data-team-id="@sub.AuthorId"
                 data-language-id="@sub.Language"
                 data-submission-id="@sub.SubmissionId">
                 <td use-a>s@(sub.SubmissionId)</td>
                 <td use-a title="@sub.Time">@((sub.Time - ctx.StartTime).GetValueOrDefault().ToDeltaString())</td>
-                <td use-a>@tn.GetValueOrDefault(sub.TeamId) (t@(sub.TeamId))</td>
-                <td use-a class="probid">@sub.Problem.ShortName</td>
-                <td use-a class="langid">@sub.Language.Id</td>
+                <td use-a>@tn.GetValueOrDefault(sub.AuthorId) (t@(sub.AuthorId))</td>
+                <td use-a class="probid">@prob.ShortName</td>
+                <td use-a class="langid">@sub.Language</td>
                 <td use-a>
                     <verdict3 value="@sub.Verdict" too-late="tooLate" />
                     <if cond="tooLate"> (<verdict3 value="@sub.Verdict" />)</if>
                 </td>
                 <td class="testcase-results">
-                    @{ int t = 0; foreach (var item in sub.Details) { t++;<verdict6 value="@item" />}@for (; t < (sub.Problem?.TestcaseCount ?? 1); t++) {<verdict6 value="Pending" judging-pending="@(sub.Verdict == Verdict.Pending || sub.Verdict == Verdict.Running)" />}}
+                    @{ int t = 0; foreach (var item in sub.Details) { t++;<verdict6 value="@item.Status" />}@for (; t < prob.TestcaseCount; t++) {<verdict6 value="Pending" judging-pending="@(sub.Verdict == Verdict.Pending || sub.Verdict == Verdict.Running)" />}}
                 </td>
             </tr>
         }

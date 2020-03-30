@@ -1,20 +1,16 @@
 ﻿using JudgeWeb.Areas.Contest.Models;
 using JudgeWeb.Data;
 using JudgeWeb.Domains.Contests;
+using JudgeWeb.Domains.Identity;
 using JudgeWeb.Domains.Problems;
-using JudgeWeb.Features;
 using JudgeWeb.Features.Storage;
+using Markdig;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using System;
-using System.Collections.Generic;
-using System.IO;
-using System.IO.Compression;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Threading.Tasks;
 
 namespace JudgeWeb.Areas.Contest.Controllers
@@ -23,31 +19,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
     [Route("[area]/{cid}/[controller]")]
     public class JuryController : JuryControllerBase
     {
-        private async Task UpdateContestAsync(Expression<Func<Data.Contest, Data.Contest>> template)
-        {
-            await DbContext.UpdateContestAsync(Contest.ContestId, template);
-
-            var newcont = await Facade.Contests.FindAsync(Contest.ContestId);
-
-            DbContext.Events.Add(
-                new Data.Api.ContestInfo(newcont)
-                    .ToEvent("update", Contest.ContestId));
-
-            DbContext.Events.Add(
-                new Data.Api.ContestTime(newcont)
-                    .ToEvent("update", Contest.ContestId));
-
-            InternalLog(AuditlogType.Contest, $"{Contest.ContestId}", "updated");
-
-            await DbContext.SaveChangesAsync();
-        }
-
-
-        private IActionResult GoBackHome(string str)
-        {
-            StatusMessage = str;
-            return RedirectToAction(nameof(Home));
-        }
+        private IContestStore Store => Facade.Contests;
 
 
         [HttpGet("[action]")]
@@ -68,62 +40,11 @@ namespace JudgeWeb.Areas.Contest.Controllers
 
         [HttpPost("[action]")]
         [ValidateAntiForgeryToken]
+        [AuditPoint(AuditlogType.Scoreboard)]
         public async Task<IActionResult> ResetEventFeed(int cid)
         {
-            await DbContext.Events
-                .Where(e => e.ContestId == cid)
-                .BatchDeleteAsync();
-
-            // contests
-            DbContext.Events.AddCreate(cid, new Data.Api.ContestInfo(Contest));
-            await DbContext.SaveChangesAsync();
-
-            // judgement-types
-            DbContext.Events.AddCreate(cid, Data.Api.JudgementType.Defaults);
-            await DbContext.SaveChangesAsync();
-
-            // languages
-            DbContext.Events.AddCreate(cid,
-                Languages.Values.Select(l => new Data.Api.ContestLanguage(l)));
-            await DbContext.SaveChangesAsync();
-
-            // groups
-            var groups = await DbContext.ListTeamCategoryAsync(cid, null);
-            DbContext.Events.AddCreate(cid,
-                groups.Select(c => new Data.Api.ContestGroup(c)));
-            await DbContext.SaveChangesAsync();
-
-            // organizations
-            var cts = await DbContext.ListTeamAffiliationAsync(cid, false);
-            DbContext.Events.AddCreate(cid,
-                cts.Select(a => new Data.Api.ContestOrganization(a)));
-            await DbContext.SaveChangesAsync();
-
-            // problems
-            DbContext.Events.AddCreate(cid,
-                Problems.Select(a => new Data.Api.ContestProblem2(a)));
-            await DbContext.SaveChangesAsync();
-
-            // teams
-            DbContext.Events.AddCreate(cid, await (
-                from t in DbContext.Teams
-                where t.ContestId == cid && t.Status == 1
-                join a in DbContext.TeamAffiliations on t.AffiliationId equals a.AffiliationId
-                select new Data.Api.ContestTeam(t, a))
-                .ToListAsync());
-            await DbContext.SaveChangesAsync();
-
-            // clarifications
-            DbContext.Events.AddCreate(cid,
-                await DbContext.Clarifications
-                    .Where(c => c.ContestId == cid)
-                    .Select(c => new Data.Api.ContestClarification(c, Contest.StartTime.Value))
-                    .ToListAsync());
-            await DbContext.SaveChangesAsync();
-
-            InternalLog(AuditlogType.Scoreboard, null, "reset event");
-            await DbContext.SaveChangesAsync();
-
+            await Notifier.ResetAsync(cid);
+            await HttpContext.AuditAsync("reset event", null);
             StatusMessage = "Event feed reset.";
             return RedirectToAction(nameof(Home));
         }
@@ -140,7 +61,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
                     "But you shouldn't change any settings more, and you should use it only before contest start. " +
                     "Or it will lead to event missing. Are you sure?",
                 area: "Contest", ctrl: "Jury", act: "ResetEventFeed",
-                routeValues: new Dictionary<string, string> { ["cid"] = Contest.ContestId.ToString() },
+                routeValues: new { cid = Contest.ContestId },
                 type: MessageType.Warning);
         }
 
@@ -154,39 +75,12 @@ namespace JudgeWeb.Areas.Contest.Controllers
 
 
         [HttpGet("[action]")]
-        public async Task<IActionResult> Statistics(int cid,
-            [FromServices] SubmissionManager submitMgr)
-        {
-            var query =
-                from s in submitMgr.Submissions
-                where s.ContestId == cid
-                join g in submitMgr.Judgings
-                    on new { s.SubmissionId, Active = true }
-                    equals new { g.SubmissionId, g.Active }
-                select new { s.Time, g.Status };
-            var result = await query.CachedToListAsync(
-                $"`c{cid}`statistics", TimeSpan.FromMinutes(1));
-
-            return View(result.Select(a => (a.Status, a.Time)));
-        }
-
-
-        [HttpGet("[action]")]
-        public async Task<IActionResult> Auditlog(int cid, int page = 1)
+        public async Task<IActionResult> Auditlog(
+            [FromServices] IAuditlogger logger,
+            int cid, int page = 1)
         {
             if (page <= 0) return NotFound();
-            var counts = await DbContext.Auditlogs
-                .Where(l => l.ContestId == cid)
-                .CachedCountAsync($"`c{cid}`logcount", TimeSpan.FromSeconds(15));
-            int totalPage = (counts + 999) / 1000;
-            if (page > totalPage) return NotFound();
-
-            var model = await DbContext.Auditlogs
-                .Where(l => l.ContestId == cid)
-                .OrderByDescending(l => l.LogId)
-                .Skip((page - 1) * 1000).Take(1000)
-                .ToListAsync();
-
+            var (model, totalPage) = await logger.ViewLogsAsync(cid, page, 1000);
             ViewBag.Page = page;
             ViewBag.TotalPage = totalPage;
             return View(model);
@@ -196,6 +90,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
         [HttpPost("[action]/{target}")]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Administrator")]
+        [AuditPoint(AuditlogType.Contest)]
         public async Task<IActionResult> ChangeState(string target)
         {
             var now = DateTimeOffset.Now;
@@ -273,32 +168,35 @@ namespace JudgeWeb.Areas.Contest.Controllers
                     newcont.UnfreezeTime = DateTimeOffset.UnixEpoch + (newcont.UnfreezeTime.Value - old);
             }
 
-            await UpdateContestAsync(c => new Data.Contest
-            {
-                StartTime = newcont.StartTime,
-                EndTime = newcont.EndTime,
-                FreezeTime = newcont.FreezeTime,
-                UnfreezeTime = newcont.UnfreezeTime,
-            });
+            await Store.UpdateAsync(Contest.ContestId,
+                c => new Data.Contest
+                {
+                    StartTime = newcont.StartTime,
+                    EndTime = newcont.EndTime,
+                    FreezeTime = newcont.FreezeTime,
+                    UnfreezeTime = newcont.UnfreezeTime,
+                });
 
-            InternalLog(AuditlogType.Contest, $"{Contest.ContestId}", "changed time");
-            await DbContext.SaveChangesAsync();
+            
+            await HttpContext.AuditAsync("changed time", $"{Contest.ContestId}");
             return GoBackHome("Contest state changed.");
         }
 
 
         [HttpGet("[action]")]
-        public async Task<IActionResult> Balloon(int cid)
+        public async Task<IActionResult> Balloon(int cid,
+            [FromServices] IBalloonStore store)
         {
-            var model = await Facade.Balloons.ListAsync(cid, Problems);
+            var model = await store.ListAsync(cid, Problems);
             return View(model);
         }
 
 
         [HttpGet("balloon/{bid}/set-done")]
-        public async Task<IActionResult> BalloonSetDone(int cid, int bid)
+        public async Task<IActionResult> BalloonSetDone(int cid, int bid,
+            [FromServices] IBalloonStore store)
         {
-            await Facade.Balloons.SetDoneAsync(cid, bid);
+            await store.SetDoneAsync(cid, bid);
             return RedirectToAction(nameof(Balloon));
         }
 
@@ -313,9 +211,11 @@ namespace JudgeWeb.Areas.Contest.Controllers
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Administrator")]
         [AuditPoint(AuditlogType.User)]
-        public async Task<IActionResult> Assign(int cid, JuryAssignModel model)
+        public async Task<IActionResult> Assign(
+            int cid, JuryAssignModel model,
+            [FromServices] UserManager userManager)
         {
-            var user = await UserManager.FindByNameAsync(model.UserName);
+            var user = await userManager.FindByNameAsync(model.UserName);
 
             if (user == null)
             {
@@ -323,7 +223,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
             }
             else
             {
-                var result = await UserManager.AddToRoleAsync(user, $"JuryOfContest{cid}");
+                var result = await userManager.AddToRoleAsync(user, $"JuryOfContest{cid}");
 
                 if (result.Succeeded)
                 {
@@ -343,16 +243,17 @@ namespace JudgeWeb.Areas.Contest.Controllers
         [HttpGet("[action]/{uid}")]
         [ValidateInAjax]
         [Authorize(Roles = "Administrator")]
-        public async Task<IActionResult> Unassign(int uid)
+        public async Task<IActionResult> Unassign(int uid,
+            [FromServices] UserManager userManager)
         {
-            var user = await UserManager.FindByIdAsync(uid.ToString());
+            var user = await userManager.FindByIdAsync(uid.ToString());
             if (user == null) return NotFound();
 
             return AskPost(
                 title: "Unassign jury",
                 message: $"Do you want to unassign jury {user.UserName} (u{uid})?",
                 area: "Contest", ctrl: "Jury", act: "Unassign",
-                routeValues: new Dictionary<string, string> { ["uid"] = $"{uid}" },
+                routeValues: new { uid, cid = Contest.ContestId },
                 type: MessageType.Danger);
         }
 
@@ -361,11 +262,12 @@ namespace JudgeWeb.Areas.Contest.Controllers
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Administrator")]
         [AuditPoint(AuditlogType.User)]
-        public async Task<IActionResult> Unassign(int cid, int uid)
+        public async Task<IActionResult> Unassign(int cid, int uid,
+            [FromServices] UserManager userManager)
         {
-            var user = await UserManager.FindByIdAsync(uid.ToString());
+            var user = await userManager.FindByIdAsync(uid.ToString());
             if (user == null) return NotFound();
-            var result = await UserManager.RemoveFromRoleAsync(user, $"JuryOfContest{cid}");
+            var result = await userManager.RemoveFromRoleAsync(user, $"JuryOfContest{cid}");
 
             if (result.Succeeded)
             {
@@ -382,11 +284,12 @@ namespace JudgeWeb.Areas.Contest.Controllers
 
 
         [HttpGet("[action]/{userName?}")]
-        public async Task<IActionResult> TestUser(string userName)
+        public async Task<IActionResult> TestUser(string userName,
+            [FromServices] UserManager userManager)
         {
             if (userName != null)
             {
-                var user = await UserManager.FindByNameAsync(userName);
+                var user = await userManager.FindByNameAsync(userName);
                 if (user == null)
                     return Content("No such user.", "text/html");
                 return Content("", "text/html");
@@ -401,30 +304,8 @@ namespace JudgeWeb.Areas.Contest.Controllers
         [HttpGet("[action]")]
         public async Task<IActionResult> Edit(int cid)
         {
-            ViewBag.Categories = await DbContext.ListTeamCategoryAsync(cid);
-
-            var startTime = Contest.StartTime?.ToString("yyyy-MM-dd HH:mm:ss zzz") ?? "";
-            var startDateTime = Contest.StartTime ?? DateTimeOffset.UnixEpoch;
-            var stopTime = (Contest.EndTime - startDateTime)?.ToDeltaString() ?? "";
-            var unfTime = (Contest.UnfreezeTime - startDateTime)?.ToDeltaString() ?? "";
-            var freTime = (Contest.FreezeTime - startDateTime)?.ToDeltaString() ?? "";
-
-            return View(new JuryEditModel
-            {
-                ContestId = Contest.ContestId,
-                FreezeTime = freTime,
-                Name = Contest.Name,
-                ShortName = Contest.ShortName,
-                RankingStrategy = Contest.RankingStrategy,
-                StartTime = startTime,
-                StopTime = stopTime,
-                UnfreezeTime = unfTime,
-                DefaultCategory = Contest.RegisterDefaultCategory,
-                IsPublic = Contest.IsPublic,
-                UsePrintings = Contest.PrintingAvaliable,
-                UseBalloon = Contest.BalloonAvaliable,
-                StatusAvailable = Contest.StatusAvaliable,
-            });
+            ViewBag.Categories = await Facade.Teams.ListCategoryAsync(cid);
+            return View(new JuryEditModel(Contest));
         }
         
 
@@ -433,7 +314,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
         public async Task<IActionResult> Edit(int cid, JuryEditModel model)
         {
             // check the category id
-            var cates = await DbContext.ListTeamCategoryAsync(cid);
+            var cates = await Facade.Teams.ListCategoryAsync(cid);
             if (model.DefaultCategory != 0 && !cates.Any(c => c.CategoryId == model.DefaultCategory))
                 ModelState.AddModelError("xys::nocat", "No corresponding category found.");
 
@@ -443,7 +324,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
 
             bool contestTimeChanged = false;
             DateTimeOffset @base;
-            DateTimeOffset? startTime, endTime, freezeTime, unfreezeTime;
+            DateTimeOffset? startTime, endTime = null, freezeTime = null, unfreezeTime = null;
 
             if (string.IsNullOrEmpty(model.StartTime))
             {
@@ -456,35 +337,17 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 startTime = @base;
             }
 
-            if (string.IsNullOrWhiteSpace(model.StopTime))
-            {
-                endTime = null;
-            }
-            else
-            {
-                model.StopTime.TryParseAsTimeSpan(out var ts);
-                endTime = @base + ts.Value;
-            }
+            if (!string.IsNullOrWhiteSpace(model.StopTime)
+                && model.StopTime.TryParseAsTimeSpan(out var ts1))
+                endTime = @base + ts1.Value;
 
-            if (string.IsNullOrWhiteSpace(model.FreezeTime))
-            {
-                freezeTime = null;
-            }
-            else
-            {
-                model.FreezeTime.TryParseAsTimeSpan(out var ts);
-                freezeTime = @base + ts.Value;
-            }
+            if (!string.IsNullOrWhiteSpace(model.FreezeTime)
+                && model.FreezeTime.TryParseAsTimeSpan(out var ts2))
+                freezeTime = @base + ts2.Value;
 
-            if (string.IsNullOrWhiteSpace(model.UnfreezeTime))
-            {
-                unfreezeTime = null;
-            }
-            else
-            {
-                model.UnfreezeTime.TryParseAsTimeSpan(out var ts);
-                unfreezeTime = @base + ts.Value;
-            }
+            if (!string.IsNullOrWhiteSpace(model.UnfreezeTime)
+                && model.UnfreezeTime.TryParseAsTimeSpan(out var ts3))
+                unfreezeTime = @base + ts3.Value;
 
             if (!InSequence(startTime, freezeTime, endTime, unfreezeTime))
                 ModelState.AddModelError("xys::time", "Time sequence is wrong.");
@@ -503,7 +366,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 || unfreezeTime != cst.UnfreezeTime)
                 contestTimeChanged = true;
 
-            await UpdateContestAsync(c => new Data.Contest
+            await Store.UpdateAsync(cid, c => new Data.Contest
             {
                 ShortName = model.ShortName,
                 Name = model.Name,
@@ -519,8 +382,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 StatusAvaliable = model.StatusAvailable,
             });
 
-            InternalLog(AuditlogType.Contest, $"{cid}", "updated", "via edit-page");
-            await DbContext.SaveChangesAsync();
+            await HttpContext.AuditAsync("updated", $"{cid}", "via edit-page");
 
             StatusMessage = "Contest updated successfully.";
             if (contestTimeChanged)
@@ -528,6 +390,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 StatusMessage += " Scoreboard cache will be refreshed later.";
                 HttpContext.RequestServices
                     .GetRequiredService<IScoreboardService>()
+                    
                     .RefreshCache(Contest, DateTimeOffset.Now);
             }
 
@@ -538,13 +401,13 @@ namespace JudgeWeb.Areas.Contest.Controllers
         [HttpPost("[action]")]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Administrator")]
+        [AuditPoint(AuditlogType.Scoreboard)]
         public async Task<IActionResult> RefreshCache(int cid,
             [FromServices] IScoreboardService scoreboardService)
         {
             scoreboardService.RefreshCache(Contest, DateTimeOffset.Now);
             StatusMessage = "Scoreboard cache will be refreshed in minutes...";
-            InternalLog(AuditlogType.Scoreboard, null, "refresh cache");
-            await DbContext.SaveChangesAsync();
+            await HttpContext.AuditAsync("refresh cache", null);
             return RedirectToAction(nameof(Home));
         }
 
@@ -556,9 +419,10 @@ namespace JudgeWeb.Areas.Contest.Controllers
         {
             return AskPost(
                 title: "Refresh scoreboard cache",
-                message: "Do you want to refresh scoreboard cache? This will lead to a heavy database load in minutes.",
+                message: "Do you want to refresh scoreboard cache? " +
+                    "This will lead to a heavy database load in minutes.",
                 area: "Contest", ctrl: "Jury", act: "RefreshCache",
-                routeValues: new Dictionary<string, string> { ["cid"] = $"{cid}" },
+                routeValues: new { cid },
                 type: MessageType.Warning);
         }
 
@@ -586,76 +450,23 @@ namespace JudgeWeb.Areas.Contest.Controllers
             var document = md.Parse(model.Markdown);
             await io.WriteStringAsync($"c{cid}/readme.html", md.RenderAsHtml(document));
 
-            InternalLog(AuditlogType.Contest, $"{cid}", "updated", "description");
-            await DbContext.SaveChangesAsync();
+            await HttpContext.AuditAsync("updated", $"{cid}", "description");
             return View(model);
         }
 
 
         [HttpGet("[action]")]
-        public async Task<IActionResult> GenerateStatement(int cid,
-            [FromServices] IProblemViewProvider generator,
-            [FromServices] IStaticFileRepository io)
+        public async Task<IActionResult> Updates(int cid,
+            [FromServices] IClarificationStore clars,
+            [FromServices] ITeamStore teams,
+            [FromServices] IRejudgingStore rejs)
         {
-            var probs =
-                from cp in DbContext.ContestProblem
-                where cp.ContestId == cid
-                join p in DbContext.Problems on cp.ProblemId equals p.ProblemId
-                select new { cp.ShortName, p };
-            await probs.ToListAsync();
-
-            var startTime = Contest.StartTime ?? DateTimeOffset.Now;
-            var startDate = startTime.ToString("dddd, MMMM d, yyyy",
-                formatProvider: System.Globalization.CultureInfo.GetCultureInfo(1033));
-
-            var memstream = new MemoryStream();
-            using (var zip = new ZipArchive(memstream, ZipArchiveMode.Create, true))
+            return Json(new
             {
-                var olymp = io.GetFileInfo("static/olymp.sty");
-                using (var olympStream = olymp.CreateReadStream())
-                    await zip.CreateEntryFromStream(olympStream, "olymp.sty");
-                var texBegin = io.GetFileInfo("static/contest.tex-begin");
-                var documentStart = await texBegin.ReadAsync();
-                var documentBuilder = new System.Text.StringBuilder(documentStart)
-                    .Append("\\begin {document}\n\n")
-                    .Append("\\contest\n{")
-                    .Append(Contest.Name)
-                    .Append("}%\n{ACM.XYLAB.FUN}%\n{")
-                    .Append(startDate)
-                    .Append("}%\n\n")
-                    .Append("\\binoppenalty=10000\n")
-                    .Append("\\relpenalty=10000\n\n")
-                    .Append("\\renewcommand{\\t}{\\texttt}\n\n");
-
-                foreach (var item in probs)
-                {
-                    var folderPrefix = $"{item.ShortName}/";
-                    var statement = new ProblemStatement();// await generator
-                        //.LoadStatement(item.p, DbContext.Testcases);
-                    generator.BuildLatex(zip, statement, folderPrefix);
-
-                    documentBuilder
-                        .Append("\\graphicspath{{./")
-                        .Append(item.ShortName)
-                        .Append("/}}\n\\import{./")
-                        .Append(item.ShortName)
-                        .Append("/}{./problem.tex}\n\n");
-                }
-
-                documentBuilder.Append("\\end{document}\n\n");
-                zip.CreateEntryFromString(documentBuilder.ToString(), "contest.tex");
-            }
-
-            memstream.Position = 0;
-            return File(memstream, "application/zip", $"c{cid}-statements.zip");
-        }
-
-
-        [HttpGet("[action]")]
-        public async Task<IActionResult> Updates(int cid)
-        {
-            var r = await Facade.GetJuryStatusAsync(cid);
-            return Json(new { r.clarifications, r.teams, r.rejudgings });
+                clarifications = await clars.GetJuryStatusAsync(cid),
+                teams = await teams.GetJuryStatusAsync(cid),
+                rejudgings = await rejs.GetJuryStatusAsync(cid)
+            });
         }
 
 

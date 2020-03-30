@@ -1,5 +1,7 @@
 ﻿using JudgeWeb.Data;
+using JudgeWeb.Domains.Problems;
 using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
@@ -7,6 +9,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+[assembly: Inject(typeof(IExecutableStore), typeof(ExecutableStore))]
 namespace JudgeWeb.Domains.Problems
 {
     public class ExecutableStore :

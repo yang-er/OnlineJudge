@@ -14,14 +14,30 @@
             max-width: 768px;
         }
 
+        #jlucpcid-super-banner {
+            background-color: #f2f2f2;
+        }
+
         @@media (min-width: 768px) {
             #jlucpcid {
-                box-shadow: 0px 1px 5px 0px rgba(0,0,0,0.2);
+                box-shadow: 0px 0.12rem 0.25rem rgba(0,0,0,0.075) !important;
+                background-color: #ffffff;
+                border-radius: 0.25rem !important;
+                border: 1px solid rgba(0, 0, 0, 0.125);
+            }
+
+            #jlucpcid-super-banner {
+                border-top-left-radius: 0.23rem !important;
+                border-top-right-radius: 0.23rem !important;
+            }
+
+            body {
+                background-color: #f8f9fa;
             }
         }
     </style>
     <div class="container-fluid mt-md-4 mb-4 pl-0 pr-0" id="jlucpcid">
-        <div style="background-color:#f2f2f2">
+        <div id="jlucpcid-super-banner">
             <div class="container-fluid d-flex pt-4 pb-4 pl-md-4 pr-md-4">
                 <div class="avatar @(aff.ExternalId == "null" ? "d-none" : "")">
                     <img src="~/images/affiliations/@(aff.ExternalId).png" style="width:100%;max-width:5em" />

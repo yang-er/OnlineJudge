@@ -1,8 +1,6 @@
 ﻿using JudgeWeb.Areas.Contest.Models;
-using JudgeWeb.Data;
+using JudgeWeb.Domains.Problems;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -12,6 +10,24 @@ namespace JudgeWeb.Areas.Contest.Controllers
     [Route("[area]/{cid}/jury/[controller]")]
     public class SubmissionsController : JuryControllerBase
     {
+        private ISubmissionStore Store { get; }
+
+        public SubmissionsController(ISubmissionStore store)
+        {
+            Store = store;
+        }
+
+
+        [HttpGet("[action]")]
+        public async Task<IActionResult> Statistics(int cid)
+        {
+            var result = await Store.ListWithJudgingAsync(
+                predicate: s => s.ContestId == cid,
+                selector: (s, j) => new { s.Time, j.Status });
+            return View(result.Select(a => (a.Status, a.Time)));
+        }
+
+
         [HttpGet]
         public async Task<IActionResult> List(int cid, bool all = false)
         {
@@ -22,44 +38,29 @@ namespace JudgeWeb.Areas.Contest.Controllers
 
         [HttpGet("{sid}/{jid?}")]
         public async Task<IActionResult> Detail(int cid, int sid, int? jid,
-            [FromServices] SubmissionManager submitMgr)
+            [FromServices] IJudgingStore store2)
         {
-            var judging = submitMgr.Judgings
-                .Where(g => g.SubmissionId == sid);
-            if (jid.HasValue)
-                judging = judging.Where(g => g.JudgingId == jid);
-            else
-                judging = judging.Where(g => g.Active);
+            var submit = await Store.FindAsync(sid, true);
+            if (submit == null || submit.ContestId != cid) return NotFound();
+            var judgings = submit.Judgings;
 
-            var result = await judging
-                .Join(
-                    inner: submitMgr.Submissions,
-                    outerKeySelector: j => j.SubmissionId,
-                    innerKeySelector: s => s.SubmissionId,
-                    resultSelector: (j, s) => new { j, s })
-                .Where(a => a.s.ContestId == cid)
-                .SingleOrDefaultAsync();
-            if (result == null) return NotFound();
-
-            var judgings = await submitMgr.Judgings
-                .Where(j => j.SubmissionId == sid)
-                .ToListAsync();
-
-            var details = await submitMgr.GetDetailsAsync(result.j.JudgingId, result.s.ProblemId);
-            var team = await FindTeamByIdAsync(result.s.Author);
-            var prob = Problems.Find(result.s.ProblemId);
+            var prob = Problems.SingleOrDefault(p => p.ProblemId == submit.ProblemId);
             if (prob == null) return NotFound(); // the problem is deleted later
-            var lang = Languages[result.s.Language];
+
+            var judging = jid.HasValue
+                ? judgings.SingleOrDefault(j => j.JudgingId == jid.Value)
+                : judgings.SingleOrDefault(j => j.Active);
+            if (judging == null) return NotFound();
 
             return View(new JuryViewSubmissionModel
             {
-                Submission = result.s,
-                Judging = result.j,
-                Details = details,
+                Submission = submit,
+                Judging = judging,
                 AllJudgings = judgings,
-                Team = team,
+                Details = await store2.GetDetailsAsync(submit.ProblemId, judging.JudgingId),
+                Team = await Facade.Teams.FindByIdAsync(cid, submit.Author),
                 Problem = prob,
-                Language = lang,
+                Language = Languages[submit.Language],
             });
         }
 
@@ -68,10 +69,8 @@ namespace JudgeWeb.Areas.Contest.Controllers
         [ValidateInAjax]
         public async Task<IActionResult> Rejudge(int cid, int sid)
         {
-            var sub = await DbContext.Submissions
-                .Where(s => s.SubmissionId == sid && s.ContestId == cid)
-                .FirstOrDefaultAsync();
-            if (sub == null) return NotFound();
+            var sub = await Store.FindAsync(sid);
+            if (sub == null || sub.ContestId != cid) return NotFound();
 
             if (sub.RejudgeId.HasValue)
                 return RedirectToAction("Detail", "Rejudgings", new { rid = sub.RejudgeId });

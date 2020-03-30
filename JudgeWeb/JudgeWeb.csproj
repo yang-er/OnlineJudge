@@ -40,12 +40,20 @@
     <ProjectReference Include="..\JudgeWeb.Areas.Misc\JudgeWeb.Areas.Misc.csproj" />
     <ProjectReference Include="..\JudgeWeb.Areas.Polygon\JudgeWeb.Areas.Polygon.csproj" />
     <ProjectReference Include="..\JudgeWeb.Data\JudgeWeb.Data.csproj" />
+    <ProjectReference Include="..\JudgeWeb.Domains.Contest.Abstraction\JudgeWeb.Domains.Contests.Abstraction.csproj" />
+    <ProjectReference Include="..\JudgeWeb.Domains.Contest.CcsApi\JudgeWeb.Domains.Contests.CcsApi.csproj" />
+    <ProjectReference Include="..\JudgeWeb.Domains.Contest\JudgeWeb.Domains.Contests.csproj" />
+    <ProjectReference Include="..\JudgeWeb.Domains.Identity.Abstraction\JudgeWeb.Domains.Identity.Abstraction.csproj" />
+    <ProjectReference Include="..\JudgeWeb.Domains.Identity\JudgeWeb.Domains.Identity.csproj" />
+    <ProjectReference Include="..\JudgeWeb.Domains.Problem.Abstraction\JudgeWeb.Domains.Problems.Abstraction.csproj" />
+    <ProjectReference Include="..\JudgeWeb.Domains.Problem\JudgeWeb.Domains.Problems.csproj" />
     <ProjectReference Include="..\JudgeWeb.Features.ApplicationPart\JudgeWeb.Features.ApplicationPart.csproj" />
     <ProjectReference Include="..\JudgeWeb.Features.AspNetCore\JudgeWeb.Features.AspNetCore.csproj" />
     <ProjectReference Include="..\JudgeWeb.Features.Extensions\JudgeWeb.Features.Extensions.csproj" />
     <ProjectReference Include="..\JudgeWeb.Features.Mailing\JudgeWeb.Features.Mailing.csproj" />
     <ProjectReference Include="..\JudgeWeb.Features.OjUpdate\JudgeWeb.Features.OjUpdate.csproj" />
     <ProjectReference Include="..\JudgeWeb.Features.Routing\JudgeWeb.Features.Routing.csproj" />
+    <ProjectReference Include="..\JudgeWeb.Features.Scoreboard\JudgeWeb.Domains.Contests.Scoreboard.csproj" />
   </ItemGroup>
 
 

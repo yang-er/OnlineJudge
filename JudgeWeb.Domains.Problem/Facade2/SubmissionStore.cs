@@ -132,7 +132,7 @@ namespace JudgeWeb.Domains.Problems
             return await query.ToListAsync();
         }
 
-        public async Task<(IEnumerable<T> list, int totPage)> ListWithJudgingAsync<T>(
+        public async Task<(IEnumerable<T> list, int count)> ListWithJudgingAsync<T>(
             (int Page, int PageCount) pagination,
             Expression<Func<Submission, Judging, T>> selector,
             Expression<Func<Submission, bool>>? predicate)
@@ -142,7 +142,6 @@ namespace JudgeWeb.Domains.Problems
                 submissions = submissions.Where(predicate);
 
             int tot = await submissions.CountAsync();
-            int totPage = (tot - 1) / pagination.PageCount + 1;
 
             var result = await submissions
                 .OrderByDescending(s => s.SubmissionId)
@@ -150,7 +149,7 @@ namespace JudgeWeb.Domains.Problems
                 .Skip((pagination.Page - 1) * pagination.PageCount)
                 .Take(pagination.PageCount)
                 .ToListAsync();
-            return (result, totPage);
+            return (result, tot);
         }
 
         public async Task<IEnumerable<T>> ListWithJudgingAsync<T>(

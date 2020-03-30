@@ -4,6 +4,22 @@
     font-variant: small-caps;
 }
 
+.dataTables_paginate .page-link {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.dataTables_paginate .page-item:first-child .page-link {
+  border-top-left-radius: 0.2rem;
+  border-bottom-left-radius: 0.2rem;
+}
+
+.dataTables_paginate .page-item:last-child .page-link {
+  border-top-right-radius: 0.2rem;
+  border-bottom-right-radius: 0.2rem;
+}
+
 .data-table td a:not(.btn), .data-table td a:hover:not(.btn) {
     display: block;
     text-decoration: none;

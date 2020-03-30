@@ -32,12 +32,11 @@ namespace JudgeWeb.Areas.Contest.Controllers
 
 
         [HttpGet("{rid}")]
-        public async Task<IActionResult> Detail(int cid, int rid,
-            [FromServices] ITeamStore tms)
+        public async Task<IActionResult> Detail(int cid, int rid)
         {
             var model = await Store.FindAsync(cid, rid);
             if (model == null) return NotFound();
-            ViewBag.Teams = await tms.ListNamesAsync(cid);
+            ViewBag.Teams = await Facade.Teams.ListNamesAsync(cid);
             ViewBag.Judgings = await Store.ViewAsync(model);
             return View(model);
         }
@@ -45,10 +44,9 @@ namespace JudgeWeb.Areas.Contest.Controllers
 
         [HttpGet("[action]")]
         public async Task<IActionResult> Add(int cid,
-            [FromServices] IJudgehostStore jhs,
-            [FromServices] ITeamStore tms)
+            [FromServices] IJudgehostStore jhs)
         {
-            ViewBag.Teams = await tms.ListNamesAsync(cid);
+            ViewBag.Teams = await Facade.Teams.ListNamesAsync(cid);
             ViewBag.Judgehosts = await jhs.ListAsync();
             return View(new AddRejudgingModel());
         }

@@ -14,6 +14,8 @@ namespace JudgeWeb.Domains.Contests
         Task<List<Clarification>> ListAsync(int cid,
             Expression<Func<Clarification, bool>>? predicate = null);
 
+        Task<int> GetJuryStatusAsync(int cid);
+        
         Task<int> SendAsync(Clarification clar, Clarification replyTo = null);
 
         Task<int> SetAnsweredAsync(int cid, int clarId, bool answered);

@@ -18,7 +18,7 @@ namespace JudgeWeb.Domains.Identity
 
         Task<TrainingTeamUser> IsInTeamAsync(User user, TrainingTeam team);
 
-        Task<IEnumerable<IGrouping<TrainingTeam, TrainingTeamUser>>> ListAsync(User user);
+        Task<ILookup<TrainingTeam, TrainingTeamUser>> ListAsync(int uid);
 
         Task<bool> CheckCreateAsync(User user);
 

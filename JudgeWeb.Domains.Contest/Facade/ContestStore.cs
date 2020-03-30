@@ -1,4 +1,5 @@
 ﻿using JudgeWeb.Data;
+using JudgeWeb.Domains.Contests;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -6,6 +7,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 
+[assembly: Inject(typeof(IContestStore), typeof(ContestStore))]
 namespace JudgeWeb.Domains.Contests
 {
     public class ContestStore :
@@ -16,8 +18,6 @@ namespace JudgeWeb.Domains.Contests
 
         DbSet<Contest> Contests => Context.Set<Contest>();
         
-        DbSet<ContestProblem> Problems => Context.Set<ContestProblem>();
-
         public ContestStore(DbContext context)
         {
             Context = context;
@@ -69,39 +69,6 @@ namespace JudgeWeb.Domains.Contests
                 .CachedSingleOrDefaultAsync($"`c{cid}`info", TimeSpan.FromMinutes(5));
         }
 
-        public Task<ContestProblem[]> ListProblemsAsync(int cid)
-        {
-            return Context.CachedGetAsync($"`c{cid}`probs", TimeSpan.FromMinutes(5), async () =>
-            {
-                var result = await Problems
-                    .Where(cp => cp.ContestId == cid)
-                    .Select(cp => new ContestProblem(cp, cp.p.Title, cp.p.TimeLimit, cp.p.MemoryLimit, cp.p.CombinedRunCompare, cp.p.Shared))
-                    .ToArrayAsync();
-
-                Array.Sort(result, (a, b) => a.ShortName.CompareTo(b.ShortName));
-                for (int i = 0; i < result.Length; i++)
-                    result[i].Rank = i + 1;
-
-                var query2 =
-                    from cp in Problems
-                    where cp.ContestId == cid
-                    join t in Context.Set<Testcase>() on cp.ProblemId equals t.ProblemId
-                    group t by cp.ProblemId into g
-                    select new { g.Key, Count = g.Count(), Score = g.Sum(t => t.Point) };
-
-                var result2 = await query2.ToDictionaryAsync(k => k.Key);
-
-                foreach (var item in result)
-                {
-                    var res = result2.GetValueOrDefault(item.ProblemId) ?? new { Key = 0, Count = 0, Score = 0 };
-                    item.TestcaseCount = res.Count;
-                    if (item.Score == 0) item.Score = res.Score;
-                }
-
-                return result;
-            });
-        }
-
         public Task<int> MaxEventIdAsync(int cid)
         {
             return Context.Set<Event>()
@@ -120,14 +87,6 @@ namespace JudgeWeb.Domains.Contests
 
             Context.RemoveCacheEntry($"`c{cid}`info");
             Context.RemoveCacheEntry($"`c{cid}`internal_state");
-        }
-
-        public Task<Dictionary<string, Language>> ListLanguageAsync(int cid)
-        {
-            return Context.Set<Language>().CachedToDictionaryAsync(
-                keySelector: k => k.Id,
-                tag: $"`c{cid}`langs",
-                timeSpan: TimeSpan.FromMinutes(10));
         }
     }
 }

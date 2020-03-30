@@ -1,4 +1,5 @@
 ﻿using JudgeWeb.Data;
+using JudgeWeb.Domains.Contests;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -6,6 +7,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 
+[assembly: Inject(typeof(ITeamStore), typeof(TeamStore))]
 namespace JudgeWeb.Domains.Contests
 {
     public class TeamStore :
@@ -258,6 +260,13 @@ namespace JudgeWeb.Domains.Contests
             Context.RemoveCacheEntry($"`c{team.ContestId}`teams`cat`2");
             Context.RemoveCacheEntry($"`c{team.ContestId}`teams`members");
             return list.Select(t => t.UserId);
+        }
+
+        public Task<int> GetJuryStatusAsync(int cid)
+        {
+            return Teams
+                .Where(t => t.Status == 0 && t.ContestId == cid)
+                .CachedCountAsync($"`c{cid}`teams`pending_count", TimeSpan.FromSeconds(10));
         }
     }
 }

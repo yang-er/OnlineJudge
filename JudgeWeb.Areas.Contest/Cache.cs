@@ -14,17 +14,5 @@ namespace JudgeWeb.Data
 
         public static ContestProblem Find(this ContestProblem[] cps, string shortname) => cps.FirstOrDefault(cp => cp.ShortName == shortname);
 
-        
-        public static void AddCreate(this DbSet<Event> db, int cid, Api.ContestEventEntity cee)
-            => db.Add(cee.ToEvent("create", cid));
-
-        public static void AddCreate(this DbSet<Event> db, int cid, IEnumerable<Api.ContestEventEntity> cees)
-            => db.AddRange(cees.Select(cee => cee.ToEvent("create", cid)));
-
-        public static void AddUpdate(this DbSet<Event> db, int cid, Api.ContestEventEntity cee)
-            => db.Add(cee.ToEvent("update", cid));
-
-        public static void AddDelete(this DbSet<Event> db, int cid, Api.ContestEventEntity cee)
-            => db.Add(cee.ToEvent("delete", cid));
     }
 }

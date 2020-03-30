@@ -4,33 +4,28 @@
     ViewData["Title"] = $"Problem {ViewData["Id"]}";
     var srcs = (string)ViewData["Source"];
     var tag = (string)ViewData["Tag"];
-    IEnumerable<(Submission, Judging)> subs = ViewBag.Subs;
 }
 <link rel="stylesheet" href="~/static/katex.min.css" />
 <script defer src="~/static/katex.min.js"></script>
 
-<div class="container-fluid mt-4 mb-5 pl-0 pr-0">
+<div class="container-fluid mt-4 mb-5 pt-0 pt-xl-2 pl-0 pr-0">
     <div class="row">
+        <div class="col-12 col-lg-12 col-xl-1"></div>
         <div class="col-12 col-lg-8 col-xl-6">
             @Html.Raw((string)ViewData["Content"])
         </div>
-        <div class="col-12 col-lg-4 col-xl-6">
+        <div class="col-12 col-lg-4 col-xl-3">
             <h4 class="mt-lg-5">Tags</h4>
             <p>
                 @foreach (var src in tag.Split(',').Where(s => !string.IsNullOrWhiteSpace(s)))
                 {
                     <span class="badge badge-secondary">@src.Trim()</span>
                 }
+                @foreach (var src in srcs.Split(',').Where(s => !string.IsNullOrWhiteSpace(s)))
+                {
+                    <span class="badge badge-info">@src.Trim()</span>
+                }
             </p>
-            <if cond="!string.IsNullOrWhiteSpace(srcs)">
-                <h4>Source</h4>
-                <p>
-                    @foreach (var src in srcs.Split(',').Where(s => !string.IsNullOrWhiteSpace(s)))
-                    {
-                        <span class="badge badge-info">@src.Trim()</span>
-                    }
-                </p>
-            </if>
             <if cond="SignInManager.IsSignedIn(User)">
                 <h4>Operations</h4>
                 <p>
@@ -44,7 +39,7 @@
                     </viewmodule>
                 </p>
                 <h4>My submissions</h4>
-                <table class="data-table table table-hover table-striped table-sm submissions-table table-responsive" role="grid">
+                <table class="data-table pagination-sm table table-hover table-striped table-sm submissions-table" role="grid">
                     <thead class="thead-light">
                         <tr>
                             <th scope="col">ID</th>
@@ -52,31 +47,7 @@
                             <th scope="col">verdict</th>
                         </tr>
                     </thead>
-                    <tbody id="my-submissions">
-                        @foreach (var (sub, grade) in subs)
-                        {
-                            <tr asp-action="Submission" asp-route-sid="@sub.SubmissionId" data-toggle="ajaxWindow" data-target="view" role="row">
-                                <td use-a>s@(sub.SubmissionId)</td>
-                                <td use-a>@sub.Time.ToString("yyyy/M/d HH:mm")</td>
-                                <td use-a><verdict3 value="@grade.Status" /></td>
-                            </tr>
-                        }
-
-                        <if cond="subs.Count() == 0">
-                            <tr role="row">
-                                <td colspan="3" class="text-center">No submissions were found.</td>
-                            </tr>
-                        </if>
-
-                        <if cond="subs.Count() >= 9">
-                            <tr>
-                                <td colspan="3" class="text-center">
-                                    <a class="text-reset" asp-action="submissions" data-toggle="ajaxWindow" data-target="mysub">
-                                        <i class="fas fa-ellipsis-h"></i>
-                                    </a>
-                                </td>
-                            </tr>
-                        </if>
+                    <tbody>
                     </tbody>
                 </table>
             </if>
@@ -88,9 +59,100 @@
     </div>
 </div>
 
-<style>
+<style type="text/css">
     .samp .input, .samp .output { border: 1px solid #888888; }
     .samp .output { margin-bottom: 1em; position: relative; top: -1px; }
     .samp .output pre, .samp .input pre { background-color: #EFEFEF; line-height: 1.25em; margin: 0; padding: 0.25em; }
     .samp .title { background-color: #FFFFFF; border-bottom: 1px solid #888888; font-family: arial; font-weight: bold; padding: 0.25em; }
 </style>
+
+<script type="text/javascript">
+    function dateFormat(fmt, date) {
+        let ret;
+        const opt = {
+            "Y+": date.getFullYear().toString(),
+            "m+": (date.getMonth() + 1).toString(),
+            "d+": date.getDate().toString(),
+            "H+": date.getHours().toString(),
+            "M+": date.getMinutes().toString(),
+        };
+        for (let k in opt) {
+            ret = new RegExp("(" + k + ")").exec(fmt);
+            if (ret) {
+                fmt = fmt.replace(ret[1], (ret[1].length == 1) ? (opt[k]) : (opt[k].padStart(ret[1].length, "0")))
+            };
+        };
+        return fmt;
+    }
+
+    xylab = { "dt": {} };
+
+    xylab.dt.verdicts = [
+        { "tag": "unknown", "class": "sol sol_queued" },
+        { "tag": "timelimit", "class": "sol sol_incorrect" },
+        { "tag": "memory-limit", "class": "sol sol_incorrect" },
+        { "tag": "run-error", "class": "sol sol_incorrect" },
+        { "tag": "output-limit", "class": "sol sol_incorrect" },
+        { "tag": "wrong-answer", "class": "sol sol_incorrect" },
+        { "tag": "compiler-error", "class": "sol sol_incorrect" },
+        { "tag": "wrong-answer", "class": "sol sol_incorrect" },
+        { "tag": "queued", "class": "sol sol_queued" },
+        { "tag": "running", "class": "sol sol_queued" },
+        { "tag": "undefined", "class": "sol sol_incorrect" },
+        { "tag": "correct", "class": "sol sol_correct" }
+    ];
+
+    xylab.dt.verdict = function (data, type, row) {
+        return '<span class="' + xylab.dt.verdicts[data].class + '">' + xylab.dt.verdicts[data].tag + '</span>';
+    };
+
+    xylab.dt.wrapUrl = function (url, wd, inf) {
+        return function (data, type, row) {
+            if (type != 'display') return inf(data, type, row);
+            return '<a data-target="' + wd + '" data-toggle="ajaxWindow" href="' + url + row.id + '">' + inf(data, type, row) + '</a>';
+        };
+    };
+
+    xylab.dt.prefix = function (pf) {
+        return function (data, type, row) {
+            return pf + data;
+        };
+    };
+
+    xylab.dt.time = function (fmt) {
+        return function (data, type, row) {
+            return dateFormat(fmt, new Date(data));
+        };
+    };
+
+    function makeUrl(fn) {
+        return xylab.dt.wrapUrl('/problem/@ViewBag.Id/submission/', 'view', fn);
+    }
+
+    $().ready(function () {
+        $('.data-table').DataTable({
+            "paging": true,
+            "pageLength": 15,
+            "searching": false,
+            "ordering": false,
+            "info": false,
+            "autoWidth": false,
+            "lengthChange": false,
+            "serverSide": true,
+            "ajax": {
+                "url": "@Url.ActionLink("Submissions")"
+            },
+            "columns": [
+                { "data": "id", "render": makeUrl(xylab.dt.prefix('s')) },
+                { "data": "time", "render": makeUrl(xylab.dt.time('Y/mm/dd HH:MM')) },
+                { "data": "status", "render": makeUrl(xylab.dt.verdict) },
+            ],
+            "language": {
+                "oPaginate": {
+                    "sPrevious": "&laquo;",
+                    "sNext": "&raquo;",
+                },
+            }
+        });
+    });
+</script>

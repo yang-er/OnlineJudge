@@ -58,7 +58,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
 
             ViewBag.Roles = await UserManager.ListRolesAsync(user);
 
-            ViewBag.Submissions = await submissions.ListWithJudgingAsync(
+            (ViewBag.Submissions, _) = await submissions.ListWithJudgingAsync(
                 pagination: (1, 100),
                 predicate: s => s.ContestId == 0 && s.Author == uid);
 

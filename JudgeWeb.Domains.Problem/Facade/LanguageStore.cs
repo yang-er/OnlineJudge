@@ -1,9 +1,12 @@
 ﻿using JudgeWeb.Data;
+using JudgeWeb.Domains.Problems;
 using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
+[assembly: Inject(typeof(ILanguageStore), typeof(LanguageStore))]
 namespace JudgeWeb.Domains.Problems
 {
     public class LanguageStore :

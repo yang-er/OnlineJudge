@@ -1,11 +1,14 @@
 ﻿using JudgeWeb.Data;
+using JudgeWeb.Domains.Problems;
 using JudgeWeb.Features.Storage;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
+[assembly: Inject(typeof(ITestcaseStore), typeof(TestcaseStore))]
 namespace JudgeWeb.Domains.Problems
 {
     public class TestcaseStore :

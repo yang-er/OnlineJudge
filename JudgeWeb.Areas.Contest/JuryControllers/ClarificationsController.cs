@@ -15,12 +15,16 @@ namespace JudgeWeb.Areas.Contest.Controllers
     [AuditPoint(AuditlogType.Clarification)]
     public class ClarificationsController : JuryControllerBase
     {
-        public IClarificationStore Store => Facade.Clarifications;
+        public IClarificationStore Store { get; }
 
         [ViewData]
         public Dictionary<int, string> Teams { get; set; }
 
-
+        public ClarificationsController(IClarificationStore store)
+        {
+            Store = store;
+        }
+        
         public override async Task OnActionExecutingAsync(ActionExecutingContext context)
         {
             await base.OnActionExecutingAsync(context);
@@ -47,7 +51,8 @@ namespace JudgeWeb.Areas.Contest.Controllers
 
         [HttpPost("[action]")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Send(int cid, AddClarificationModel model)
+        public async Task<IActionResult> Send(
+            int cid, AddClarificationModel model)
         {
             // validate the model
             if (string.IsNullOrWhiteSpace(model.Body))
@@ -68,19 +73,21 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 ModelState.AddModelError("xys::error_cate", "The category specified is wrong.");
 
             if (!ModelState.IsValid) return View(model);
-            var clarId = await Facade.Clarifications.SendAsync(replyTo: replyTo, clar: new Clarification
-            {
-                Body = model.Body,
-                SubmitTime = DateTimeOffset.Now,
-                ContestId = cid,
-                JuryMember = User.GetUserName(),
-                Sender = null,
-                ResponseToId = model.ReplyTo,
-                Recipient = model.TeamTo == 0 ? default(int?) : model.TeamTo,
-                ProblemId = usage.Item3,
-                Answered = true,
-                Category = usage.Item2,
-            });
+            var clarId = await Store.SendAsync(
+                replyTo: replyTo,
+                clar: new Clarification
+                {
+                    Body = model.Body,
+                    SubmitTime = DateTimeOffset.Now,
+                    ContestId = cid,
+                    JuryMember = User.GetUserName(),
+                    Sender = null,
+                    ResponseToId = model.ReplyTo,
+                    Recipient = model.TeamTo == 0 ? default(int?) : model.TeamTo,
+                    ProblemId = usage.Item3,
+                    Answered = true,
+                    Category = usage.Item2,
+                });
 
             await HttpContext.AuditAsync("added", $"{clarId}");
             StatusMessage = $"Clarification {clarId} has been sent.";
