@@ -241,11 +241,10 @@ namespace JudgeWeb.Areas.Api.Controllers
 
             using (await Lock.LockAsync())
             {
-                var nextLst = await Judgings.ListAsync(
+                r = await Judgings.FindAsync(
                     predicate: j => j.Status == Verdict.Pending
                             && j.s.l.AllowJudge
                             && j.s.p.AllowJudge,
-                    topCount: 1,
                     selector: j => new
                     {
                         judging = j,
@@ -256,7 +255,6 @@ namespace JudgeWeb.Areas.Api.Controllers
                         rjid = j.s.RejudgeId
                     });
 
-                r = nextLst.SingleOrDefault();
                 if (r is null) return Empty();
 
                 var judging = r.judging;

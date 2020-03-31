@@ -117,25 +117,27 @@ namespace JudgeWeb.Domains.Problems
         {
             if (url.StartsWith("/images/problem/"))
             {
-                var fileName = Path.GetFileName(url);
                 var file = StaticFiles.GetFileInfo(url.TrimStart('/'));
                 if (!file.Exists) return url;
+                var ext = Path.GetExtension(file.PhysicalPath).TrimStart('.');
+                var guid = Guid.NewGuid().ToString("N").Substring(0, 16);
+                var fileName = $"{guid}.{ext}";
                 zip.CreateEntryFromFile(file.PhysicalPath, localPrefix + fileName);
-                return "{" + Path.GetFileNameWithoutExtension(fileName) + "}" + Path.GetExtension(fileName);
+                return Path.GetFileNameWithoutExtension(fileName) + Path.GetExtension(fileName);
             }
             else if (url.StartsWith("data:image/"))
             {
                 var index = url.IndexOf(";base64,");
                 if (index == -1) return url;
-                string ext = url.Substring(11, index - 11);
+                string ext = url[11..index];
                 var guid = Guid.NewGuid().ToString("N").Substring(0, 16);
-                var fileName = $"p{pid}.{guid}.{ext}";
+                var fileName = $"{guid}.{ext}";
 
                 try
                 {
                     var fileIn = Convert.FromBase64String(url.Substring(index + 8));
                     zip.CreateEntryFromByteArray(fileIn, localPrefix + fileName);
-                    return "{" + Path.GetFileNameWithoutExtension(fileName) + "}" + Path.GetExtension(fileName);
+                    return Path.GetFileNameWithoutExtension(fileName) + Path.GetExtension(fileName);
                 }
                 catch
                 {

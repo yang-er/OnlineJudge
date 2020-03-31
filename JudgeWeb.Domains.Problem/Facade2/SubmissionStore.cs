@@ -92,15 +92,14 @@ namespace JudgeWeb.Domains.Problems
 
         public async Task<string> GetAuthorNameAsync(int sid)
         {
-            var result = await GetAuthorNamesAsync(sid);
+            var result = await GetAuthorNamesAsync(s => s.SubmissionId == sid);
             return result.Values.SingleOrDefault();
         }
 
-        public Task<Dictionary<int, string>> GetAuthorNamesAsync(params int[] sids)
+        public Task<Dictionary<int, string>> GetAuthorNamesAsync(IQueryable<Submission> sids)
         {
             var query =
-                from s in Submissions
-                where sids.Contains(s.SubmissionId)
+                from s in sids
                 join u in Context.Set<User>() on new { s.ContestId, s.Author } equals new { ContestId = 0, Author = u.Id }
                 into uu from u in uu.DefaultIfEmpty()
                 join t in Context.Set<Team>() on new { s.ContestId, s.Author } equals new { t.ContestId, Author = t.TeamId }
@@ -186,6 +185,11 @@ namespace JudgeWeb.Domains.Problems
             if (predicate != null) query = query.Where(predicate);
             var query2 = query.Select(projection);
             return await query2.ToListAsync();
+        }
+
+        public Task<Dictionary<int, string>> GetAuthorNamesAsync(Expression<Func<Submission, bool>> sids)
+        {
+            return GetAuthorNamesAsync(Submissions.Where(sids));
         }
     }
 }

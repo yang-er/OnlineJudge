@@ -1,8 +1,11 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using System;
 using System.Linq;
 using System.Security.Claims;
 using System.Text;
@@ -12,6 +15,14 @@ namespace Microsoft.AspNetCore.Mvc
 {
     public static class Extensions
     {
+        public static AuthenticationBuilder SetCookie(
+            this AuthenticationBuilder builder,
+            Action<CookieAuthenticationOptions> configure)
+        {
+            builder.Services.ConfigureApplicationCookie(configure);
+            return builder;
+        }
+
         public static bool IsInRoles(this ClaimsPrincipal user, string roles)
         {
             return roles.Split(',').Any(role => user.IsInRole(role));

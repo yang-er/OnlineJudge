@@ -99,7 +99,7 @@ namespace JudgeWeb
                 .AddTokenProvider<Email2TokenProvider>("Email2");
 
             services.AddAuthentication()
-                .AddCookie2(options =>
+                .SetCookie(options =>
                 {
                     options.Cookie.HttpOnly = true;
                     options.ExpireTimeSpan = TimeSpan.FromDays(30);
@@ -145,8 +145,6 @@ namespace JudgeWeb
                 .UseAreaParts(AssemblyPrefix, EnabledAreas);
 
             services.AddSession(options => options.Cookie.IsEssential = true);
-
-            services.AddDefaultManagers();
 
             services.AddApiExplorer()
                 .AddHtmlTemplate(Environment.WebRootFileProvider.GetFileInfo("static/nelmioapidoc/index.html.src"))

@@ -48,7 +48,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
             var p = await Store.CreateAsync(new Problem
             {
                 AllowJudge = true,
-                AllowSubmit = true,
+                AllowSubmit = false,
                 CompareScript = "compare",
                 RunScript = "run",
                 Title = "UNTITLED",

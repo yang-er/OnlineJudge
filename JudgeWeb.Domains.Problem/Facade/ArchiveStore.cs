@@ -24,7 +24,7 @@ namespace JudgeWeb.Domains.Problems
 
         public async Task<ProblemArchive> CreateAsync(ProblemArchive archive)
         {
-            if (archive.PublicId != 0)
+            if (archive.PublicId == 0)
             {
                 archive.PublicId = await Archives.MaxAsync(p => p.PublicId);
                 if (archive.PublicId == 0) archive.PublicId = 1001;

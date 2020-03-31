@@ -1,4 +1,5 @@
-﻿@model List<ExecutableViewContentModel>
+﻿@using JudgeWeb.Domains.Problems 
+@model List<ExecutableViewContentModel>
 @{
     Executable exec = ViewBag.Executable;
     ViewData["Title"] = "View content of executable " + exec.ExecId;

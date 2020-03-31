@@ -5,11 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
-using System.Collections.Generic;
-using System.IO;
-using System.IO.Compression;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace JudgeWeb.Areas.Polygon.Controllers
@@ -198,17 +194,16 @@ namespace JudgeWeb.Areas.Polygon.Controllers
                 title: $"Delete problem {Problem.ProblemId} - \"{Problem.Title}\"",
                 message: $"You're about to delete problem {Problem.ProblemId} \"{Problem.Title}\". " +
                     "Warning, this will cascade to testcases. Are you sure?",
-                area: "Polygon",
-                ctrl: "Editor",
-                act: "Delete",
-                routeValues: new Dictionary<string, string> { ["pid"] = $"{Problem.ProblemId}" },
+                area: "Polygon", ctrl: "Editor", act: "Delete",
+                routeValues: new { pid = Problem.ProblemId },
                 type: MessageType.Danger);
         }
 
 
         [HttpGet]
         [Authorize(Roles = "Administrator,Problem")]
-        public async Task<IActionResult> Export(IExportProvider export)
+        public async Task<IActionResult> Export(
+            [FromServices] IExportProvider export)
         {
             var (stream, mimeType, fileName) = await export.ExportAsync(Problem);
             return File(stream, mimeType, fileName, false);
@@ -238,9 +233,17 @@ namespace JudgeWeb.Areas.Polygon.Controllers
         [Authorize(Roles = "Administrator,Problem")]
         public async Task<IActionResult> Delete(int pid)
         {
-            await Problems.DeleteAsync(Problem);
-            StatusMessage = $"Problem {pid} deleted successfully.";
-            return RedirectToAction("List", "Root");
+            try
+            {
+                await Problems.DeleteAsync(Problem);
+                StatusMessage = $"Problem {pid} deleted successfully.";
+                return RedirectToAction("List", "Root");
+            }
+            catch
+            {
+                StatusMessage = $"Error occurred when deleting Problem {pid}, foreign key constraints failed.";
+                return RedirectToAction(nameof(Overview));
+            }
         }
 
 

@@ -10,6 +10,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
     [Area("Dashboard")]
     [Authorize(Roles = "Administrator")]
     [Route("[area]/[controller]")]
+    [AuditPoint(AuditlogType.Language)]
     public class LanguagesController : Controller3
     {
         private ILanguageStore Store { get; }

@@ -35,7 +35,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
             if (model == null) return NotFound();
 
             if (page < 1) return BadRequest();
-            var (stus, totPage) = await Store.ListStudentsAsync(page, ItemPerPage);
+            var (stus, totPage) = await Store.ListStudentsAsync(model.Id, page, 200);
             ViewBag.Page = page;
             ViewBag.TotalPage = totPage;
             ViewBag.Students = stus;

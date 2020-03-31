@@ -11,7 +11,23 @@
 <h2 class="mt-2">Submissions</h2>
 
 <div class="d-none" id="paging">
-    <partial name="_Pagination" model="(curPage, totPage)" />
+
+    <ul class="pagination pagination-sm">
+        <li class="page-item @(1 == curPage ? "disabled" : "")">
+            <a class="page-link" asp-route-all="@showAll" asp-route-page="@(curPage-1)">&laquo;</a>
+        </li>
+
+        @for (int i = 1; i <= totPage; i++)
+        {
+            <li class="page-item @(i == curPage ? "active" : "")">
+                <a class="page-link" asp-route-all="@showAll" asp-route-page="@i">@i</a>
+            </li>
+        }
+
+        <li class="page-item @(totPage == curPage ? "disabled" : "")">
+            <a class="page-link" asp-route-all="@showAll" asp-route-page="@(curPage+1)">&raquo;</a>
+        </li>
+    </ul>
 </div>
 
 <div class="table-wrapper">
@@ -37,7 +53,7 @@
                     <td use-a><verdict3 value="@(sub.Expected ?? Verdict.Unknown)" too-late="@(!sub.Expected.HasValue)" /></td>
                     <td use-a>@sub.AuthorName</td>
                     <td use-a class="langid">@sub.Language</td>
-                    <td use-a>@(sub.ExecutionTime)ms</td>
+                    <td use-a>@(sub.ExecutionTime.HasValue ? $"{sub.ExecutionTime}ms" : "N/A")</td>
                     <td use-a><verdict3 value="@sub.Verdict" /></td>
                     <td class="testcase-results">
                         @{

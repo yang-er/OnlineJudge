@@ -78,18 +78,20 @@ namespace JudgeWeb.Domains.Problems
         public async Task<ILookup<string, string>> ListUsageAsync(Executable executable)
         {
             var execid = executable.ExecId;
-            var compile = Context.Set<Language>()
+            var compile = await Context.Set<Language>()
                 .Where(l => l.CompileScript == execid)
-                .Select(l => new { l.Id, Type = "compile" });
-            var run = Context.Set<Problem>()
+                .Select(l => new { l.Id, Type = "compile" })
+                .ToListAsync();
+            var run = await Context.Set<Problem>()
                 .Where(p => p.RunScript == execid)
-                .Select(p => new { Id = p.ProblemId.ToString(), Type = "run" });
-            var compare = Context.Set<Problem>()
+                .Select(p => new { Id = p.ProblemId.ToString(), Type = "run" })
+                .ToListAsync();
+            var compare = await Context.Set<Problem>()
                 .Where(p => p.CompareScript == execid)
-                .Select(p => new { Id = p.ProblemId.ToString(), Type = "compare" });
+                .Select(p => new { Id = p.ProblemId.ToString(), Type = "compare" })
+                .ToListAsync();
             var query = compile.Concat(run).Concat(compare);
-            var list = await query.ToListAsync();
-            return list.ToLookup(k => k.Type, v => v.Id);
+            return query.ToLookup(k => k.Type, v => v.Id);
         }
     }
 }

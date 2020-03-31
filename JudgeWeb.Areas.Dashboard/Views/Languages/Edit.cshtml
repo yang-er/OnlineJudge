@@ -2,8 +2,8 @@
 @{
     string op = ViewBag.Operator;
     ViewData["Title"] = $"{op} language {Model.ExternalId}";
-    IEnumerable<string> execs = ViewBag.Executables;
-    var sli = execs.Select(s => new SelectListItem(s, s));
+    IEnumerable<Executable> execs = ViewBag.Executables;
+    var sli = execs.Select(s => new SelectListItem($"{s.ExecId} - {s.Description}", s.ExecId));
 }
 
 <h2 class="mt-2">@ViewData["Title"]</h2>

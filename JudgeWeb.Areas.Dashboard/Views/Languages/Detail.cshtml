@@ -1,6 +1,7 @@
-﻿@{
+﻿@using JudgeWeb.Domains.Problems 
+@{
     Language lang = ViewBag.Language;
-    IEnumerable<(Submission s, Judging g)> subs = ViewBag.Submissions;
+    IEnumerable<ListSubmissionModel> subs = ViewBag.Submissions;
     ViewData["Title"] = "Language " + lang.Name;
 }
 
@@ -44,27 +45,27 @@
 
 <h3>Submissions in @lang.Name</h3>
 
-<table class="data-table table table-hover table-striped table-sm submissions-table" role="grid">
+<table class="data-table table table-hover table-striped table-sm submissions-table table-responsive" role="grid">
     <thead class="thead-light">
         <tr>
             <th scope="col">ID</th>
-            <th scope="col">contest</th>
+            <th scope="col">user</th>
             <th scope="col">problem</th>
             <th scope="col">time</th>
-            <th scope="col">user/team</th>
+            <th scope="col">code len</th>
             <th scope="col">result</th>
         </tr>
     </thead>
     <tbody>
-        @foreach (var (sub, grade) in subs)
+        @foreach (var md in subs)
         {
-            <tr asp-area="Polygon" asp-controller="Submissions" asp-action="Detail" asp-route-pid="@sub.ProblemId" asp-route-sid="@sub.SubmissionId" role="row">
-                <td use-a>s@(sub.SubmissionId)</td>
-                <td use-a>@(sub.ContestId == 0 ? "-" : "c" + sub.ContestId)</td>
-                <td use-a>p@(sub.ProblemId)</td>
-                <td use-a>@Html.CstTime(sub.Time)</td>
-                <td use-a>@((sub.ContestId == 0 ? "u" : "t") + sub.Author)</td>
-                <td use-a><verdict3 value="@grade.Status" /></td>
+            <tr asp-area="Polygon" asp-controller="Submissions" asp-action="Detail" asp-route-pid="@md.ProblemId" asp-route-sid="@md.SubmissionId" role="row">
+                <td use-a>s@(md.SubmissionId)</td>
+                <td use-a>@(md.ContestId == 0 ? $"u{md.AuthorId}" : $"c{md.ContestId}t{md.AuthorId}")</td>
+                <td use-a>p@(md.ProblemId)</td>
+                <td use-a>@Html.CstTime(md.Time)</td>
+                <td use-a>@(md.CodeLength)B</td>
+                <td use-a><verdict3 value="@md.Verdict" /></td>
             </tr>
         }
         @if (subs.Count() == 0)

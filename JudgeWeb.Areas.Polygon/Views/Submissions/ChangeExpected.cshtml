@@ -1,8 +1,8 @@
 ﻿@model ChangeExpectedModel
 @{
     Layout = null;
-    IEnumerable<(string, string)> langs = ViewBag.Languages;
-    var sels = langs.Select(a => new SelectListItem(a.Item2, a.Item1));
+    List<Language> langs = ViewBag.Languages;
+    var sels = langs.Select(a => new SelectListItem(a.Name, a.Id));
 }
 
 <form asp-action="ChangeExpected" method="post">

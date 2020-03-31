@@ -43,7 +43,7 @@ namespace JudgeWeb.Domains.Problems
     {
         Task IDeleteRepository<TEntity>.DeleteAsync(TEntity entity)
         {
-            Context.Set<TEntity>().Update(entity);
+            Context.Set<TEntity>().Remove(entity);
             return Context.SaveChangesAsync();
         }
     }

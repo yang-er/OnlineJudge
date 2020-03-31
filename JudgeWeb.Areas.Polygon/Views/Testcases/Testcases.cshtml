@@ -4,16 +4,16 @@
     ViewData["Title"] = "Testcases for p" + Model.ProblemId;
 }
 
-<h2 class="mt-2">@ViewData["Title"] - @Model.Title</h2>
-
-<div class="mb-2">
-    <a asp-controller="Editor" asp-action="Overview">Back to problem p@(Model.ProblemId)</a>
-    |
-    <a asp-action="Create" data-toggle="ajaxWindow" data-target="createTc">Add a testcase</a>
+<div class="alert alert-primary" role="alert">
+    Sample test cases will be used in real judge. Judge test cases should be checked with standard programs.
 </div>
 
+<h2 class="mt-2">@ViewData["Title"] - @Model.Title</h2>
+
 <style>
-    .table td, .table th { vertical-align: middle; }
+    .table td, .table th {
+        vertical-align: middle;
+    }
 </style>
 
 <table class="table table-sm table-striped" style="width:auto">
@@ -35,10 +35,12 @@
                        title="Move testcase up"><i class="fas fa-arrow-up"></i></a><br>
                     @tc.Rank<br>
                     <a asp-action="Move" asp-route-tid="@tc.TestcaseId" asp-route-direction="down"
-                       title="Move testcase down"><i class="fas fa-arrow-down"></i></a></td>
+                       title="Move testcase down"><i class="fas fa-arrow-down"></i></a>
+                </td>
                 <td rowspan="2" style="padding-left:1em" class="bg-light">
                     <span class="badge badge-@(tc.IsSecret ? "danger" : "primary")">@(tc.IsSecret ? "secret" : "sample")</span>
-                    @if (tc.Point > 0) {<span class="badge badge-success">@tc.Point pts</span>}<br />
+                    @if (tc.Point > 0)
+                    {<span class="badge badge-success">@tc.Point pts</span>}<br />
                     @tc.Description
                 </td>
                 <td scope="row" class="filename"><a asp-route-tid="@tc.TestcaseId" title="MD5: @tc.Md5sumInput" asp-action="Fetch" asp-route-filetype="input">p@(tc.ProblemId).t@(tc.TestcaseId).in</a></td>
@@ -62,4 +64,6 @@
     </tbody>
 </table>
 
-<small class="form-text text-muted">Sample test cases will be used in real judge. Judge test cases should be checked with standard programs.</small>
+<p>
+    <a asp-action="Create" class="btn btn-primary" data-toggle="ajaxWindow" data-target="createTc"><i class="fas fa-plus"></i> Create</a>
+</p>

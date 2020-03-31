@@ -34,23 +34,28 @@ namespace JudgeWeb.Areas.Polygon.Controllers
         [HttpGet]
         public async Task<IActionResult> List(
             [FromServices] ITestcaseStore tcs,
-            int pid, int page = 1, bool all = false)
+            int pid, bool all = false, int page = 1)
         {
             if (page < 0) return NotFound();
 
-            Expression<Func<Submission, bool>> predicate;
-            if (all) predicate = s => s.ProblemId == pid;
-            else predicate = s => s.ExpectedResult != null && s.ProblemId == pid;
+            Expression<Func<Submission, bool>> cond =
+                s => s.ProblemId == pid;
+            if (!all)
+                cond = cond.Combine(s => s.ExpectedResult != null);
 
-            var (result, totPage) = await Submissions.ListWithJudgingAsync(
-                predicate: s => s.ProblemId == pid,
-                includeDetails: true,
-                pagination: (page, 30));
+            var (result, totPage) = await Submissions.ListWithJudgingAsync((page, 30), cond, true);
             totPage = (totPage - 1) / 30 + 1;
-            var names = await Submissions.GetAuthorNamesAsync(
-                result.Select(l => l.AuthorId).ToArray());
-            foreach (var item in result)
-                item.AuthorName = names.GetValueOrDefault(item.AuthorId, "SYSTEM");
+
+            if (result.Any())
+            {
+                var id1 = result.First().SubmissionId;
+                var id2 = result.Last().SubmissionId;
+                if (id1 > id2) (id1, id2) = (id2, id1);
+                var cond2 = cond.Combine(s => s.SubmissionId >= id1 && s.SubmissionId <= id2);
+                var names = await Submissions.GetAuthorNamesAsync(cond2);
+                foreach (var item in result)
+                    item.AuthorName = names.GetValueOrDefault(item.SubmissionId, "SYSTEM");
+            }
 
             ViewBag.TotalPage = totPage;
             ViewBag.Page = page;
@@ -212,7 +217,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
         public async Task<IActionResult> ChangeExpected(int pid, int sid, ChangeExpectedModel model)
         {
             var it = await Submissions.FindAsync(sid);
-            if (it == null || it.ProblemId == pid) return NotFound();
+            if (it == null || it.ProblemId != pid) return NotFound();
 
             it.ExpectedResult = model.Verdict == -1 ? default(Verdict?) : (Verdict)model.Verdict;
             it.Language = model.Language;

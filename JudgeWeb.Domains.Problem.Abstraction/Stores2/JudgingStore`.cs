@@ -15,6 +15,10 @@ namespace JudgeWeb.Domains.Problems
     {
         Task<(Judging j, int pid, int cid, int uid, DateTimeOffset time)> FindAsync(int judgingId);
 
+        Task<T> FindAsync<T>(
+            Expression<Func<Judging, bool>> predicate,
+            Expression<Func<Judging, T>> selector);
+
         Task<List<T>> ListAsync<T>(
             Expression<Func<Judging, bool>> predicate,
             Expression<Func<Judging, T>> selector,

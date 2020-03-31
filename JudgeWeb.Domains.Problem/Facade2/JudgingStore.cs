@@ -101,6 +101,17 @@ namespace JudgeWeb.Domains.Problems
                 .ToListAsync();
         }
 
+        public Task<T> FindAsync<T>(
+            Expression<Func<Judging, bool>> predicate,
+            Expression<Func<Judging, T>> selector)
+        {
+            return Judgings
+                .Where(predicate)
+                .OrderBy(j => j.JudgingId)
+                .Select(selector)
+                .FirstOrDefaultAsync();
+        }
+
         public Task<List<Judging>> ListAsync(
             Expression<Func<Judging, bool>> predicate,
             int topCount)

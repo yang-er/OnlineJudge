@@ -19,18 +19,11 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
     {
         [HttpGet]
         public async Task<IActionResult> List(
-            [FromServices] IContestStore store)
+            [FromServices] IContestFacade facade)
         {
-            ViewBag.Teams = new Dictionary<int, int>();// await DbContext.Teams
-                //.Where(t => t.Status == 1)
-                //.GroupBy(t => t.ContestId)
-                //.Select(g => new { ContestId = g.Key, TeamCount = g.Count() })
-                //.ToDictionaryAsync(k => k.ContestId, v => v.TeamCount);
-            ViewBag.Problems = new Dictionary<int, int>(); //await DbContext.ContestProblem
-                //.GroupBy(t => t.ContestId)
-                //.Select(g => new { ContestId = g.Key, ProblemCount = g.Count() })
-                //.ToDictionaryAsync(k => k.ContestId, v => v.ProblemCount);
-            return View(await store.ListAsync());
+            ViewBag.Teams = await facade.StatisticsTeamAsync();
+            ViewBag.Problems = await facade.StatisticsProblemAsync();
+            return View(await facade.Contests.ListAsync());
         }
 
 

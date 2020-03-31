@@ -1,5 +1,6 @@
 ﻿using JudgeWeb.Data;
 using JudgeWeb.Domains.Contests;
+using JudgeWeb.Domains.Problems;
 using JudgeWeb.Features.Storage;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
@@ -22,16 +23,20 @@ namespace JudgeWeb.Domains.Contests
 
         public ITeamStore Teams { get; }
 
+        public ISubmissionStore Submissions { get; }
+
         public ContestFacade(
             DbContext context,
             IContestStore store1,
             IProblemsetStore store2,
-            ITeamStore store3)
+            ITeamStore store3,
+            ISubmissionStore store4)
         {
             Context = context;
             Contests = store1;
             Problemset = store2;
             Teams = store3;
+            Submissions = store4;
         }
 
         public Task<Dictionary<string, Language>> ListLanguageAsync(int cid)
@@ -40,6 +45,23 @@ namespace JudgeWeb.Domains.Contests
                 keySelector: k => k.Id,
                 tag: $"`c{cid}`langs",
                 timeSpan: TimeSpan.FromMinutes(10));
+        }
+
+        public Task<Dictionary<int, int>> StatisticsProblemAsync()
+        {
+            return Context.Set<Team>()
+                .Where(t => t.Status == 1)
+                .GroupBy(t => t.ContestId)
+                .Select(g => new { ContestId = g.Key, TeamCount = g.Count() })
+                .ToDictionaryAsync(k => k.ContestId, v => v.TeamCount);
+        }
+
+        public Task<Dictionary<int, int>> StatisticsTeamAsync()
+        {
+            return Context.Set<ContestProblem>()
+                .GroupBy(t => t.ContestId)
+                .Select(g => new { ContestId = g.Key, TeamCount = g.Count() })
+                .ToDictionaryAsync(k => k.ContestId, v => v.TeamCount);
         }
     }
 }

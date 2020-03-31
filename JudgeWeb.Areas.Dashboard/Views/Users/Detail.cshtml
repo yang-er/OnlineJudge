@@ -1,9 +1,10 @@
-﻿@model User
+﻿@using JudgeWeb.Domains.Problems
+@model User
 @{
     ViewData["Title"] = "User u" + Model.Id;
     IEnumerable<Role> roles = ViewBag.Roles;
-    IEnumerable<(Contest, Team, TeamAffiliation, TeamCategory)> teams = ViewBag.Teams;
-    IEnumerable<(Submission, Judging)> subs = ViewBag.Submissions;
+    IEnumerable<TeamMember> teams = ViewBag.Teams;
+    IEnumerable<ListSubmissionModel> subs = ViewBag.Submissions;
     Student student = ViewBag.Student;
 }
 
@@ -25,7 +26,7 @@
         <table class="table table-sm table-striped">
             <tr><th>Roles</th><td>@Html.Raw(string.Join("<br>", roles.Where(r => r.ShortName != null).Select(r => r.Description)))</td></tr>
             <tr><th>Jury of</th><td>@foreach (var r in roles.Where(r => r.Name.StartsWith("JuryOfContest"))) { int cid = int.Parse(r.Name.Substring("JuryOfContest".Length)); <a asp-area="Contest" asp-route-cid="@cid" asp-controller="Public" asp-action="Info">c@(cid)</a> }</td></tr>
-            <tr><th>Author of</th><td>@foreach (var r in roles.Where(r => r.Name.StartsWith("AuthorOfProblem"))) { int cid = int.Parse(r.Name.Substring("AuthorOfProblem".Length)); <a asp-area="Contest" asp-route-cid="@cid" asp-controller="Public" asp-action="Info">p@(cid)</a> }</td></tr>
+            <tr><th>Author of</th><td>@foreach (var r in roles.Where(r => r.Name.StartsWith("AuthorOfProblem"))) { int cid = int.Parse(r.Name.Substring("AuthorOfProblem".Length)); <a asp-area="Polygon" asp-route-pid="@cid" asp-controller="Editor" asp-action="Overview">p@(cid)</a> }</td></tr>
             <tr><th>Student @(Model.StudentVerified ? "" : "?")</th><td>@student?.Id @student?.Name</td></tr>
         </table>
     </div>
@@ -51,14 +52,14 @@
             </tr>
         </thead>
         <tbody>
-            @foreach (var (c, t, a, o) in teams)
+            @foreach (var t in teams)
             {
-                <tr asp-area="Contest" asp-route-cid="@c.ContestId" asp-controller="Teams" asp-action="Detail" asp-route-teamid="@t.TeamId" data-toggle="gotoUrl">
-                    <td use-a title="c@(c.ContestId) - @c.Name"><span class="forceWidth" style="max-width:20em">c@(c.ContestId) - @c.Name</span></td>
-                    <td use-a title="t@(t.TeamId) - @t.TeamName"><span class="forceWidth" style="max-width:20em">t@(t.TeamId) - @t.TeamName</span></td>
-                    <td use-a class="text-variant" title="@a.FormalName">@a.ExternalId</td>
-                    <td use-a>@o.Name</td>
-                    <td use-a><verdict0 type="TeamStatus" value="@t.Status" /></td>
+                <tr asp-area="Contest" asp-route-cid="@t.Team.ContestId" asp-controller="Teams" asp-action="Detail" asp-route-teamid="@t.TeamId" data-toggle="gotoUrl">
+                    <td use-a title="c@(t.Team.ContestId) - @t.Team.Contest.Name"><span class="forceWidth" style="max-width:20em">c@(t.Team.ContestId) - @t.Team.Contest.Name</span></td>
+                    <td use-a title="t@(t.TeamId) - @t.Team.TeamName"><span class="forceWidth" style="max-width:20em">t@(t.TeamId) - @t.Team.TeamName</span></td>
+                    <td use-a class="text-variant" title="@t.Team.Affiliation.FormalName">@t.Team.Affiliation.ExternalId</td>
+                    <td use-a>@t.Team.Category.Name</td>
+                    <td use-a><verdict0 type="TeamStatus" value="@t.Team.Status" /></td>
                 </tr>
             }
         </tbody>
@@ -102,15 +103,15 @@
         </tr>
     </thead>
     <tbody>
-        @foreach (var (sub, grade) in subs)
+        @foreach (var sub in subs)
         {
             <tr asp-area="Polygon" asp-controller="Submissions" asp-action="Detail" asp-route-pid="@sub.ProblemId" asp-route-sid="@sub.SubmissionId" role="row">
                 <td use-a>s@(sub.SubmissionId)</td>
                 <td use-a>p@(sub.ProblemId)</td>
                 <td use-a>@Html.CstTime(sub.Time)</td>
-                <td use-a><verdict3 value="@grade.Status" /></td>
+                <td use-a><verdict3 value="@sub.Verdict" /></td>
                 <td use-a>@(sub.CodeLength)B</td>
-                <td use-a><if cond="grade.ExecuteTime.HasValue">@(grade.ExecuteTime)ms, @(grade.ExecuteMemory)kb</if><if cond="!grade.ExecuteTime.HasValue">N/A</if></td>
+                <td use-a><if cond="sub.ExecutionTime.HasValue">@(sub.ExecutionTime)ms, @(sub.ExecutionMemory)kb</if><if cond="!sub.ExecutionTime.HasValue">N/A</if></td>
                 <td use-a>@sub.Ip</td>
             </tr>
         }

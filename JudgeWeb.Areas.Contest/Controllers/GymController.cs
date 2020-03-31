@@ -274,12 +274,12 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 return RedirectToAction(nameof(Home));
             }
 
-            var s = await submissions.CreateAsync(
+            var s = await Facade.SubmitAsync(
                 code: model.Code,
                 language: lang.Id,
                 problemId: prob.ProblemId,
-                contestId: cid,
-                userId: Team.TeamId,
+                contest: Contest,
+                teamId: Team.TeamId,
                 ipAddr: HttpContext.Connection.RemoteIpAddress,
                 via: "gym-page",
                 username: User.GetUserName());
