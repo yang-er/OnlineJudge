@@ -17,7 +17,7 @@ namespace System.Linq.Expressions
 
         public override Expression Visit(Expression node)
         {
-            return Changes.GetValueOrDefault(node) ?? base.Visit(node);
+            return node == null ? null : Changes.GetValueOrDefault(node) ?? base.Visit(node);
         }
     }
 

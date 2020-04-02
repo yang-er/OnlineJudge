@@ -10,7 +10,7 @@ namespace JudgeWeb.Features.Scoreboard
         internal static IRankingStrategy[] SC = new IRankingStrategy[]
         {
             new XCPCRank(),
-            null,
+            new XCPCRank(),
             new OIRank(),
         };
 
@@ -34,11 +34,6 @@ namespace JudgeWeb.Features.Scoreboard
                 TeamId = teamid,
                 TotalScore = judging.TotalScore ?? 0,
             });
-        }
-
-        public void JudgingFinished(int cid, DateTimeOffset time, int probid, int teamid, Judging judging)
-        {
-            throw new NotImplementedException();
         }
 
         public void RefreshCache(Contest contest, DateTimeOffset now)
@@ -80,11 +75,6 @@ namespace JudgeWeb.Features.Scoreboard
                 SubmitTime = submission.Time,
                 TeamId = submission.Author,
             });
-        }
-
-        public void SubmissionCreated(int cid, Submission submission)
-        {
-            throw new NotImplementedException();
         }
     }
 }

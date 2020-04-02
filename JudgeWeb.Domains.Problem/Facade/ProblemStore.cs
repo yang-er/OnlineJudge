@@ -57,7 +57,7 @@ namespace JudgeWeb.Domains.Problems
             int totPage = (totalCount - 1) / perCount + 1;
 
             var probs = await problemSource
-                .Include(p => p.ArchiveCollection)
+                .Include(p => p.Archive)
                 .OrderBy(p => p.ProblemId)
                 .Skip(perCount * (page - 1)).Take(perCount)
                 .ToListAsync();

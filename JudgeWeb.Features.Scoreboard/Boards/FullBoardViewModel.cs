@@ -19,9 +19,12 @@ namespace JudgeWeb.Features.Scoreboard
 
         private Dictionary<int, TeamCategory> cats2;
 
+        private Dictionary<int, TeamAffiliation> affs2;
+
         protected override IEnumerable<SortOrderModel> GetEnumerable()
         {
             cats2 = Categories.ToDictionary(t => t.CategoryId);
+            affs2 = Affiliations.ToDictionary(t => t.AffiliationId);
 
             var rt = RankCache
                 .Where(a => cats2.ContainsKey(a.CategoryId))
@@ -59,8 +62,8 @@ namespace JudgeWeb.Features.Scoreboard
                     catName = cats2[catid].Name;
                 }
 
-                int point = ispublic ? item.RankCache.SingleOrDefault().PointsPublic : item.RankCache.SingleOrDefault().PointsRestricted;
-                int penalty = ispublic ? item.RankCache.SingleOrDefault().TotalTimePublic : item.RankCache.SingleOrDefault().TotalTimeRestricted;
+                int point = ispublic ? item.RankCache.PointsPublic : item.RankCache.PointsRestricted;
+                int penalty = ispublic ? item.RankCache.TotalTimePublic : item.RankCache.TotalTimeRestricted;
                 rank++;
                 if (last_point != point || last_penalty != penalty) last_rank = rank;
                 last_point = point;
@@ -114,8 +117,8 @@ namespace JudgeWeb.Features.Scoreboard
                     ContestId = IsPublic ? default(int?) : item.ContestId,
                     TeamId = item.TeamId,
                     TeamName = item.TeamName,
-                    Affiliation = item.Affiliation.FormalName,
-                    AffiliationId = item.Affiliation.ExternalId,
+                    Affiliation = affs2.GetValueOrDefault(item.AffiliationId)?.FormalName ?? "",
+                    AffiliationId = affs2.GetValueOrDefault(item.AffiliationId)?.ExternalId ?? "null",
                     Category = catName,
                     CategoryColor = cats[catid].Color,
                     Points = point,

@@ -12,7 +12,7 @@
         WriteLiteral("[[0,0],");
         int tot = 0;
 
-        foreach (var (c, t) in Model)
+        foreach (var (c, t) in Model.Reverse())
         {
             if (t < ctx.StartTime || t > ctx.EndTime) continue;
             if (c == v) tot++;

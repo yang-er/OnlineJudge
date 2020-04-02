@@ -9,18 +9,6 @@
     IEnumerable<Clarification> clars = ViewBag.Clarifications;
 }
 
-@if ((ctx.StartTime ?? DateTimeOffset.MaxValue) >= DateTimeOffset.Now)
-{
-    <h1 id="teamwelcome" class="text-center">
-        Welcome <span id="teamwelcometeam">@team?.TeamName</span>!
-    </h1>
-    <h2 id="contestnotstarted" class="text-center">
-        Gym has not been started
-    </h2>
-}
-else
-{
-    
 <div class="container pl-0 pr-0">
 <partial name="_StatusMessage" model="@TempData["StatusMessage"]" />
 @{ TempData.Remove("StatusMessage"); }
@@ -124,4 +112,3 @@ else
         .head-box-2 { min-width: 6.5em; max-width: 6.5em; width: 6.5em; }
     }
 </style>
-}

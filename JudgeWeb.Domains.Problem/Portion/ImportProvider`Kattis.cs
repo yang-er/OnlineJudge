@@ -94,21 +94,21 @@ namespace JudgeWeb.Domains.Problems
 
             yamlParser.Add("output", (token, node) =>
             {
-                if (int.TryParse(token, out int mem))
+                if (int.TryParse(token, out int output_limit))
                 {
-                    if (mem > 40)
+                    if (output_limit > 40)
                     {
-                        mem = 40;
-                        node.Log("output limit has been cut to 1GB.");
+                        output_limit = 40;
+                        node.Log("output limit has been cut to 40MB.");
                     }
 
-                    if (mem < 4)
+                    if (output_limit < 4)
                     {
-                        mem = 4;
-                        node.Log("output limit has been enlarged to 32MB.");
+                        output_limit = 4;
+                        node.Log("output limit has been enlarged to 4MB.");
                     }
 
-                    node.Problem.OutputLimit = mem << 10;
+                    node.Problem.OutputLimit = output_limit << 10;
                 }
             });
         }

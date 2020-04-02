@@ -68,7 +68,6 @@ namespace JudgeWeb.Areas.Contest.Controllers
         [HttpPost("[action]")]
         [ValidateInAjax]
         [ValidateAntiForgeryToken]
-        [AuditPoint(AuditlogType.Team)]
         public async Task<IActionResult> Add(
             int cid, JuryAddTeamModel model,
             [FromServices] UserManager userManager)

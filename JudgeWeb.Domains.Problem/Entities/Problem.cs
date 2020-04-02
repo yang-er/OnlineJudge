@@ -42,8 +42,6 @@ namespace JudgeWeb.Domains.Problems
             entity.Property(e => e.ComapreArguments)
                 .IsUnicode(false)
                 .HasMaxLength(128);
-
-            entity.Ignore(e => e.Archive);
         }
     }
 }

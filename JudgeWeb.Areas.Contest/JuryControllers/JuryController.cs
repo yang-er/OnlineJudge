@@ -311,6 +311,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
 
         [HttpPost("[action]")]
         [ValidateAntiForgeryToken]
+        [AuditPoint(AuditlogType.Contest)]
         public async Task<IActionResult> Edit(int cid, JuryEditModel model)
         {
             // check the category id
@@ -439,6 +440,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
 
         [HttpPost("[action]")]
         [ValidateAntiForgeryToken]
+        [AuditPoint(AuditlogType.Contest)]
         public async Task<IActionResult> Description(
             int cid, JuryMarkdownModel model,
             [FromServices] IProblemFileRepository io,

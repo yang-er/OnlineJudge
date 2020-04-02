@@ -17,6 +17,12 @@
     <Compile Remove="Migrations\20200329122744_RefactorLarge.Designer.cs" />
     <Compile Remove="Migrations\20200329123051_RefactorLarge.cs" />
     <Compile Remove="Migrations\20200329123051_RefactorLarge.Designer.cs" />
+    <Compile Remove="Migrations\20200401044252_OneToOne.cs" />
+    <Compile Remove="Migrations\20200401044252_OneToOne.Designer.cs" />
+    <Compile Remove="Migrations\20200401044734_OneToOne.cs" />
+    <Compile Remove="Migrations\20200401044734_OneToOne.Designer.cs" />
+    <Compile Remove="Migrations\20200401044951_OneToOne.cs" />
+    <Compile Remove="Migrations\20200401044951_OneToOne.Designer.cs" />
   </ItemGroup>
 
   <ItemGroup>

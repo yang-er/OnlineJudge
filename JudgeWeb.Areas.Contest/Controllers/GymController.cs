@@ -31,10 +31,14 @@ namespace JudgeWeb.Areas.Contest.Controllers
             return RedirectToAction(nameof(Home));
         }
 
+        private IActionResult NotStarted() => View("NotStarted");
+
         public override Task OnActionExecutingAsync(ActionExecutingContext context)
         {
             if (!Contest.Gym)
                 context.Result = RedirectToAction("Info", "Public");
+            else if ((Contest.StartTime ?? DateTimeOffset.MaxValue) >= DateTimeOffset.Now)
+                context.Result = NotStarted();
             return base.OnActionExecutingAsync(context);
         }
 
@@ -165,7 +169,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
             [FromServices] ITrainingStore training)
         {
             if (Team != null) return NotFound();
-            var items = await training.ListAsync(int.Parse(User.GetUserId()));
+            var items = await training.ListAsync(int.Parse(User.GetUserId()), true);
             ViewData["TeamsJson"] = items.Select(g => new
             {
                 team = new { name = g.Key.TeamName, id = g.Key.TrainingTeamId },
@@ -217,7 +221,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
                     return GoBackHome("Error team or team member.");
                 (teamName, affId) = (team.TeamName, team.AffiliationId);
 
-                var users = await training.ListMembersAsync(team);
+                var users = await training.ListMembersAsync(team, true);
                 uids = (model.UserIds ?? Enumerable.Empty<int>()).Append(uid).Distinct().ToArray();
                 if (uids.Except(users.Select(g => g.UserId)).Any())
                     return GoBackHome("Error team or team member.");

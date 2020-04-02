@@ -152,10 +152,8 @@ namespace JudgeWeb.Domains.Contests
             {
                 var value = await Teams
                     .Where(t => t.ContestId == cid && t.Status == 1)
-                    .Include(t => t.Affiliation)
-                    .Include(t => t.RankCache)
+                    .Include(t => t.rc)
                     .Include(t => t.ScoreCache)
-                    .Include(t => t.Category)
                     .ToDictionaryAsync(a => a.TeamId);
 
                 var result = new ScoreboardDataModel

@@ -1,4 +1,5 @@
-﻿@model IEnumerable<(Submission, Judging)>
+﻿@using JudgeWeb.Domains.Problems
+@model IEnumerable<ListSubmissionModel>
 @{
     ViewData["Title"] = "View Problem";
     ViewData["DisableAjaxRefresh"] = true;
@@ -32,13 +33,13 @@
             </tr>
         </thead>
         <tbody id="my-submissions">
-            @foreach (var (sub, grade) in Model)
+            @foreach (var sub in Model)
             {
                 <tr asp-action="Submission" asp-route-sid="@sub.SubmissionId" data-toggle="ajaxWindow" data-target="view" role="row">
                     <td use-a>s@(sub.SubmissionId)</td>
                     <td use-a>@Html.CstTime(sub.Time)</td>
                     <td use-a class="text-variant">@sub.Language</td>
-                    <td use-a><verdict3 value="@grade.Status" /></td>
+                    <td use-a><verdict3 value="@sub.Verdict" /></td>
                 </tr>
             }
 

@@ -12,10 +12,10 @@ namespace JudgeWeb.Features.Scoreboard
     {
         public IEnumerable<Team> SortByRule(IEnumerable<Team> source, bool isPublic)
             => isPublic
-                ? source.OrderByDescending(a => a.RankCache.SingleOrDefault().PointsPublic)
-                    .ThenBy(a => a.RankCache.SingleOrDefault().TotalTimePublic)
-                : source.OrderByDescending(a => a.RankCache.SingleOrDefault().PointsRestricted)
-                    .ThenBy(a => a.RankCache.SingleOrDefault().TotalTimeRestricted);
+                ? source.OrderByDescending(a => a.RankCache.PointsPublic)
+                    .ThenBy(a => a.RankCache.TotalTimePublic)
+                : source.OrderByDescending(a => a.RankCache.PointsRestricted)
+                    .ThenBy(a => a.RankCache.TotalTimeRestricted);
 
 
         public Task Accept(ScoreboardContext db, ScoreboardEventArgs args)

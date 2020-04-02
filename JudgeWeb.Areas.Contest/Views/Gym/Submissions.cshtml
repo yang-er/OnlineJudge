@@ -1,4 +1,5 @@
-﻿@model IEnumerable<StatusListModel>
+﻿@using JudgeWeb.Domains.Problems
+@model IEnumerable<ListSubmissionModel>
 @{
     ViewData["Title"] = "Status";
     int curPage = ViewBag.Page;
@@ -37,11 +38,11 @@
             {
                 var prob = probs.FirstOrDefault(cp => cp.ProblemId == stat.ProblemId);
                 if (prob == null) { continue; }
-                var notIgnore = ctx.StatusAvaliable == 1 || (ctx.StatusAvaliable == 0 ? stat.Author == teamid : avp.Contains(stat.ProblemId));
+                var notIgnore = ctx.StatusAvaliable == 1 || (ctx.StatusAvaliable == 0 ? stat.AuthorId == teamid : avp.Contains(stat.ProblemId));
                 <tr role="row" asp-link-ignore="@(!notIgnore)" asp-action="Submission" asp-route-sid="@stat.SubmissionId" data-toggle="ajaxWindow" data-target="showSubmission">
                     <td use-a="">@stat.SubmissionId</td>
                     <td use-a>@Html.CstTime(stat.Time)</td>
-                    <td>@names.GetValueOrDefault(stat.Author)</td>
+                    <td>@names.GetValueOrDefault(stat.AuthorId)</td>
                     <td><a asp-action="ProblemView" asp-route-prob="@prob.ShortName">@(prob.ShortName)<span class="d-none d-sm-inline">. @prob.Title</span></a></td>
                     <td class="d-none d-lg-table-cell text-variant" use-a>@stat.Language</td>
                     <td use-a><verdict3 value="@stat.Verdict" /></td>

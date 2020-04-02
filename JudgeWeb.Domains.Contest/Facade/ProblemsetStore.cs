@@ -61,8 +61,11 @@ namespace JudgeWeb.Domains.Contests
 
         public async Task<IEnumerable<ProblemStatement>> StatementsAsync(int cid)
         {
-            var probs = await ContestProblems.Include(cp => cp.p).ToListAsync();
-            probs.Sort((p1, p2) => p1.ShortName.CompareTo(p2.ShortName));
+            var probs = await ContestProblems
+                .Where(cp => cp.ContestId == cid)
+                .Include(cp => cp.p)
+                .OrderBy(cp => cp.ShortName)
+                .ToListAsync();
 
             var lst = new List<ProblemStatement>(probs.Count);
             for (int i = 0; i < probs.Count; i++)
@@ -108,7 +111,7 @@ namespace JudgeWeb.Domains.Contests
         public async Task UpdateAsync(int cid, int pid, Expression<Func<ContestProblem>> change)
         {
             var change2 = Expression.Lambda<Func<ContestProblem, ContestProblem>>(
-                change, Expression.Parameter(typeof(ContestProblem), "oldcp"));
+                change.Body, Expression.Parameter(typeof(ContestProblem), "oldcp"));
             await ContestProblems
                 .Where(oldcp => oldcp.ContestId == cid && oldcp.ProblemId == pid)
                 .BatchUpdateAsync(change2);

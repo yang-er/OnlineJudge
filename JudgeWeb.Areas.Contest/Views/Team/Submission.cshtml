@@ -32,6 +32,11 @@
                             <div class="p-2">
                                 Run result: <verdict3 value="@Model.Verdict" />
                             </div>
+                            <if cond="ctx.RankingStrategy == 2">
+                                <div class="p-2">
+                                    Score: <b>@Model.Grade</b>
+                                </div>
+                            </if>
                         </div>
                     </if>
 

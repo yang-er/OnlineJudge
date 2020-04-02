@@ -27,6 +27,7 @@ namespace JudgeWeb.Domains.Problems
 
         public Task<Dictionary<string, string>> ListMd5Async(params string[] targets)
         {
+            targets = (targets ?? Array.Empty<string>()).Distinct().ToArray();
             return Executables
                 .Where(e => targets.Contains(e.ExecId))
                 .Select(e => new { e.ExecId, e.Md5sum })

@@ -30,59 +30,39 @@
 
         public static Verdict For(string verdict)
         {
-            switch (verdict)
+            return verdict switch
             {
-                case "CE":
-                    return Verdict.CompileError;
-                case "MLE":
-                    return Verdict.MemoryLimitExceeded;
-                case "OLE":
-                    return Verdict.OutputLimitExceeded;
-                case "RTE":
-                    return Verdict.RuntimeError;
-                case "TLE":
-                    return Verdict.TimeLimitExceeded;
-                case "WA":
-                    return Verdict.WrongAnswer;
-                case "PE":
-                    return Verdict.PresentationError;
-                case "AC":
-                    return Verdict.Accepted;
-                case "JE":
-                    return Verdict.UndefinedError;
-                default:
-                    return Verdict.Unknown;
-            }
+                "CE" => Verdict.CompileError,
+                "MLE" => Verdict.MemoryLimitExceeded,
+                "OLE" => Verdict.OutputLimitExceeded,
+                "RTE" => Verdict.RuntimeError,
+                "TLE" => Verdict.TimeLimitExceeded,
+                "WA" => Verdict.WrongAnswer,
+                "PE" => Verdict.PresentationError,
+                "AC" => Verdict.Accepted,
+                "JE" => Verdict.UndefinedError,
+                _ => Verdict.Unknown,
+            };
         }
 
         public static string For(Verdict verdict)
         {
-            switch (verdict)
+            return verdict switch
             {
-                case Verdict.TimeLimitExceeded:
-                    return Defaults[4].id;
-                case Verdict.MemoryLimitExceeded:
-                    return Defaults[1].id;
-                case Verdict.RuntimeError:
-                    return Defaults[3].id;
-                case Verdict.OutputLimitExceeded:
-                    return Defaults[2].id;
-                case Verdict.WrongAnswer:
-                    return Defaults[5].id;
-                case Verdict.CompileError:
-                    return Defaults[0].id;
-                case Verdict.PresentationError:
-                    return Defaults[6].id;
-                case Verdict.Accepted:
-                    return Defaults[7].id;
-                case Verdict.Pending:
-                case Verdict.Running:
-                    return null;
-                case Verdict.Unknown:
-                case Verdict.UndefinedError:
-                default:
-                    return Defaults[8].id;
-            }
+                Verdict.TimeLimitExceeded => Defaults[4].id,
+                Verdict.MemoryLimitExceeded => Defaults[1].id,
+                Verdict.RuntimeError => Defaults[3].id,
+                Verdict.OutputLimitExceeded => Defaults[2].id,
+                Verdict.WrongAnswer => Defaults[5].id,
+                Verdict.CompileError => Defaults[0].id,
+                Verdict.PresentationError => Defaults[6].id,
+                Verdict.Accepted => Defaults[7].id,
+                Verdict.Pending => null,
+                Verdict.Running => null,
+                Verdict.Unknown => Defaults[8].id,
+                Verdict.UndefinedError => Defaults[8].id,
+                _ => Defaults[8].id,
+            };
         }
     }
 }

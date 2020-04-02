@@ -3,7 +3,7 @@
     ViewData["Title"] = "Standings";
     var dateFormat = System.Globalization.CultureInfo.GetCultureInfo(1033);
     var state = Model.Contest.GetState();
-    Dictionary<int, IGrouping<int, string>> members = ViewBag.Members;
+    ILookup<int, string> members = ViewBag.Members;
 }
 
 <div class="container-fluid pl-0 pr-0" id="eoj-container">
@@ -45,7 +45,7 @@
     @foreach (var ___sortOrder in Model)
     {
         <tbody>
-@foreach (var row in ___sortOrder) { bool fst = true;<tr class="text-center"><td scope="row">@row.Rank</td><td class="text-left"><a class="font-weight-semibold">@row.TeamName</a><if cond="members.ContainsKey(row.TeamId)">@foreach (var it in members[row.TeamId]) {@(fst ? " : " : ", ")<a asp-area="Account" asp-controller="Profile" asp-action="Show" asp-route-username="@it">@it</a>fst = false;}</if></td><td>@row.Points</td>@foreach (var penalty in row.Problems) { if (penalty == null || penalty.JudgedCount == 0) {<td></td>continue; } if (Model.Contest.RankingStrategy == 0) {<td class="text-center"><span class="@(penalty.SolveTime.HasValue ? "text-success" : "text-danger") font-weight-bold">@(penalty.SolveTime.HasValue ? penalty.JudgedCount == 1 ? "+" : $"+{penalty.JudgedCount-1}" : $"-{penalty.JudgedCount}")</span></td>} else if (Model.Contest.RankingStrategy == 2) {int val = (int)penalty.SolveTime.GetValueOrDefault();<td class="text-center"><span class="font-weight-bold">@val</span></td>}}</tr>}
+@foreach (var row in ___sortOrder) { bool fst = true;<tr class="text-center"><td scope="row">@row.Rank</td><td class="text-left"><a class="font-weight-semibold">@row.TeamName</a><if cond="members.Contains(row.TeamId)">@foreach (var it in members[row.TeamId]) {@(fst ? " : " : ", ")<a asp-area="Account" asp-controller="Profile" asp-action="Show" asp-route-username="@it">@it</a>fst = false;}</if></td><td>@row.Points</td>@foreach (var penalty in row.Problems) { if (penalty == null || penalty.JudgedCount == 0) {<td></td>continue; } if (Model.Contest.RankingStrategy == 0) {<td class="text-center"><span class="@(penalty.SolveTime.HasValue ? "text-success" : "text-danger") font-weight-bold">@(penalty.SolveTime.HasValue ? penalty.JudgedCount == 1 ? "+" : $"+{penalty.JudgedCount-1}" : $"-{penalty.JudgedCount}")</span></td>} else if (Model.Contest.RankingStrategy == 2) {int val = (int)penalty.SolveTime.GetValueOrDefault();<td class="text-center"><span class="font-weight-bold">@val</span></td>}}</tr>}
         </tbody>
         <tfoot>
             <tr class="thead-light-2">

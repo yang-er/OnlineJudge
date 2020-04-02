@@ -85,10 +85,18 @@ namespace JudgeWeb.Domains.Problems
 
             if (tc2 != null)
             {
-                tc2.Rank = tc.Rank;
-                tc.Rank = rk2;
-                Testcases.UpdateRange(tc, tc2);
-                await Context.SaveChangesAsync();
+                var tcid1 = tc.TestcaseId;
+                var tcid2 = tc2.TestcaseId;
+                var rk1 = tc.Rank;
+                await Testcases
+                    .Where(t => t.TestcaseId == tcid1)
+                    .BatchUpdateAsync(t => new Testcase { Rank = -1 });
+                await Testcases
+                    .Where(t => t.TestcaseId == tcid2)
+                    .BatchUpdateAsync(t => new Testcase { Rank = rk1 });
+                await Testcases
+                    .Where(t => t.TestcaseId == tcid1)
+                    .BatchUpdateAsync(t => new Testcase { Rank = rk2 });
             }
         }
 

@@ -29,6 +29,7 @@
                         <div class="p-2">Language: <b>@Model.Language.Name</b></div>
                         <div class="p-2">Time: @(Model.ExecuteTime.HasValue ? $"{Model.ExecuteTime.Value / 1000.0}s" : "N/A")</div>
                         <div class="p-2">Memory: @(Model.ExecuteMemory.HasValue ? $"{Model.ExecuteMemory.Value / 1024}MB" : "N/A")</div>
+                        <if cond="ctx.RankingStrategy == 2"><div class="p-2">Score: @Model.Grade</div></if>
                     </div>
 
                     <ace value="@Model.SourceCode.UnBase64()" file="Main.@Model.Language.FileExtension" />
@@ -44,7 +45,7 @@
                         <h4 class="text-center">Judging Protocol</h4>
 
                         @{ ViewData["Shared"] = true; }
-                        @foreach (var (t, r) in (IEnumerable<(Testcase, Detail)>)ViewBag.Runs)
+                        @foreach (var (r, t) in (IEnumerable<(Detail, Testcase)>)ViewBag.Runs)
                         {
                             var type = r == null
                                 ? "_SubmissionDetailNull"

@@ -14,11 +14,11 @@ namespace JudgeWeb.Domains.Problems
             entity.Property(e => e.PublicId)
                 .ValueGeneratedNever();
 
-            entity.HasIndex(e => e.ProblemId);
+            entity.HasAlternateKey(e => e.ProblemId);
 
             entity.HasOne<Problem>(e => e.p)
-                .WithMany(p => p.ArchiveCollection)
-                .HasForeignKey(e => e.ProblemId)
+                .WithOne(p => p.Archive)
+                .HasForeignKey<ProblemArchive>(e => e.ProblemId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             entity.Property(e => e.TagName)

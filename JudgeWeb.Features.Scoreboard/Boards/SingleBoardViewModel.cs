@@ -10,6 +10,8 @@ namespace JudgeWeb.Features.Scoreboard
 
         public TeamCategory Category { get; set; }
 
+        public TeamAffiliation Affiliation { get; set; }
+
         protected override IEnumerable<SortOrderModel> GetEnumerable()
         {
             yield return new SortOrderModel(GetSingleScore(), null);
@@ -38,12 +40,12 @@ namespace JudgeWeb.Features.Scoreboard
             {
                 TeamId = QueryInfo.TeamId,
                 TeamName = QueryInfo.TeamName,
-                Affiliation = QueryInfo.Affiliation.FormalName,
-                AffiliationId = QueryInfo.Affiliation.ExternalId,
+                Affiliation = Affiliation.FormalName,
+                AffiliationId = Affiliation.ExternalId,
                 Category = Category.Name,
                 CategoryColor = Category.Color,
-                Points = QueryInfo.RankCache.SingleOrDefault()?.PointsRestricted ?? 0,
-                Penalty = QueryInfo.RankCache.SingleOrDefault()?.TotalTimeRestricted ?? 0,
+                Points = QueryInfo.RankCache.PointsRestricted,
+                Penalty = QueryInfo.RankCache.TotalTimeRestricted,
                 ShowRank = true,
                 Problems = prob,
             };

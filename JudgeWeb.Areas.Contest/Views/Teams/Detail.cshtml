@@ -1,12 +1,14 @@
-﻿@model SingleBoardViewModel
+﻿@using JudgeWeb.Domains.Problems
+@model SingleBoardViewModel
 @{
     var team = Model.QueryInfo;
     var org = Model.Category;
-    var aff = Model.QueryInfo.Affiliation;
-    IEnumerable<SubmissionViewModel> submissions = ViewBag.Submissions;
+    var aff = Model.Affiliation;
+    IEnumerable<ListSubmissionModel> submissions = ViewBag.Submissions;
     ViewData["Title"] = "Team " + team.TeamId;
     Contest ctx = ViewBag.Contest;
-    List<string> members = ViewBag.Member;
+    IEnumerable<string> members = ViewBag.Member;
+    ContestProblem[] cps = ViewBag.Problems;
     int correct = 0, total = 0;
 }
 
@@ -41,7 +43,7 @@
                 <th>Status</th>
                 <td><verdict0 type="TeamStatus" value="@team.Status" /></td>
             </tr>
-            <if cond="members.Count > 0">
+            <if cond="members.Any()">
                 <tr>
                     <th>User</th>
                     <td>
@@ -83,25 +85,26 @@
         {
             var tooLate = (ctx.EndTime ?? DateTimeOffset.MaxValue) < sub.Time;
             if (sub.Verdict == Verdict.Accepted) { correct++; }
+            var prob = cps.FirstOrDefault(cp => cp.ProblemId == sub.ProblemId);
             total++;
             <tr asp-controller="Submissions" asp-action="Detail" asp-route-sid="@sub.SubmissionId"
                 data-toggle="gotoUrl"
-                data-problem-id="@sub.Problem?.ProblemId"
-                data-team-id="@sub.TeamId"
+                data-problem-id="@sub.ProblemId"
+                data-team-id="@sub.AuthorId"
                 data-language-id="@sub.Language"
                 data-submission-id="@sub.SubmissionId">
                 <td use-a>s@(sub.SubmissionId)</td>
                 <td use-a>@sub.Time.ToString("HH:mm")</td>
-                <td use-a class="probid">@sub.Problem?.ShortName</td>
-                <td use-a class="langid">@sub.Language.Id</td>
+                <td use-a class="probid">@prob?.ShortName</td>
+                <td use-a class="langid">@sub.Language</td>
                 <td use-a>
                     <verdict3 value="@sub.Verdict" too-late="tooLate" />
                     <if cond="tooLate"> (<verdict3 value="@sub.Verdict" />)</if>
                 </td>
                 <td class="testcase-results">
-                    @{ int t = 0; foreach (var item in sub.Details) { t++;<verdict6 value="@item" />}@for (; t < (sub.Problem?.TestcaseCount ?? 1); t++) {<verdict6 value="Pending" judging-pending="@(sub.Verdict == Verdict.Pending || sub.Verdict == Verdict.Running)" />}}
+                    @{ int t = 0; foreach (var item in sub.Details) { t++;<verdict6 value="@item.Status" />}@for (; t < (prob?.TestcaseCount ?? 1); t++) {<verdict6 value="Pending" judging-pending="@(sub.Verdict == Verdict.Pending || sub.Verdict == Verdict.Running)" />}}
                 </td>
-                <td use-a>@sub.CompilerOutput</td>
+                <td use-a>@sub.Ip</td>
             </tr>
         }
     </tbody>

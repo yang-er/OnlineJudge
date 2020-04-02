@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace JudgeWeb.Data
 {
@@ -66,11 +67,18 @@ namespace JudgeWeb.Data
         /// <summary>
         /// 排名缓存
         /// </summary>
-        public ICollection<RankCache> RankCache { get; set; }
+        public RankCache RankCache => rc ?? EmptyRankCache;
+
+        /// <summary>
+        /// 排名缓存
+        /// </summary>
+        public RankCache rc { get; set; }
 
         /// <summary>
         /// 分数缓存
         /// </summary>
         public ICollection<ScoreCache> ScoreCache { get; set; }
+
+        private static readonly RankCache EmptyRankCache = new RankCache();
     }
 }

@@ -13,6 +13,9 @@ namespace JudgeWeb.Domains.Problems
 
             entity.HasIndex(e => e.ProblemId);
 
+            entity.HasIndex(e => new { e.ProblemId, e.Rank })
+                .IsUnique();
+
             entity.HasOne<Problem>()
                 .WithMany()
                 .HasForeignKey(e => e.ProblemId)

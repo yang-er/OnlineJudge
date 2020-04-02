@@ -26,6 +26,9 @@ namespace JudgeWeb.Domains.Contests
                 .HasMaxLength(10)
                 .IsUnicode(false);
 
+            entity.HasIndex(e => new { e.ContestId, e.ShortName })
+                .IsUnique();
+
             entity.Property(e => e.Color)
                 .IsRequired();
 

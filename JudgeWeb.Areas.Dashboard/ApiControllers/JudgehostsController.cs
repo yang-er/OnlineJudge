@@ -62,9 +62,16 @@ namespace JudgeWeb.Areas.Api.Controllers
                 "judged", $"{j.JudgingId}", $"{j.Status}");
 
             if (cid.HasValue && j.Active)
+            {
+                var cont = await HttpContext.RequestServices
+                    .GetRequiredService<IContestStore>()
+                    .FindAsync(cid.Value);
+                if (cont == null)
+                    throw new ApplicationException();
                 HttpContext.RequestServices
                     .GetRequiredService<IScoreboardService>()
-                    .JudgingFinished(cid.Value, subtime, pid, uid, j);
+                    .JudgingFinished(cont, subtime, pid, uid, j);
+            }
 
             Telemetry.TrackDependency(
                 dependencyTypeName: "JudgeHost",

@@ -81,11 +81,6 @@ namespace JudgeWeb.Data
         /// <summary>
         /// 用于表示存档的内部导航属性
         /// </summary>
-        public ICollection<ProblemArchive> ArchiveCollection { get; set; }
-
-        /// <summary>
-        /// 存档信息
-        /// </summary>
-        public ProblemArchive Archive => ArchiveCollection.SingleOrDefault();
+        public ProblemArchive Archive { get; set; }
     }
 }

@@ -73,7 +73,7 @@ else
                                 <td use-a>@t.ToString("HH:mm")</td>
                                 <td use-a class="probid" title="@submit.Problem.TimeLimit">@submit.Problem.ShortName</td>
                                 <td use-a class="langid">@submit.Language.Id</td>
-                                <td use-a><verdict3 value="@submit.Verdict" too-late="!b" /></td>
+                                <td use-a><if cond="Model.Contest.RankingStrategy == 2">@submit.Grade - </if><verdict3 value="@submit.Verdict" too-late="!b" /></td>
                             </tr>
                         }
                     </tbody>

@@ -172,11 +172,14 @@ namespace JudgeWeb.Domains.Problems
                 .Where(s => s.RejudgeId == rid)
                 .BatchUpdateAsync(s => new Submission { RejudgeId = null });
 
-            rej.EndTime = DateTimeOffset.Now;
-            rej.Applied = false;
-            rej.OperatedBy = uid;
-            Rejudges.Update(rej);
-            await Context.SaveChangesAsync();
+            await Rejudges
+                .Where(r => r.RejudgeId == rid)
+                .BatchUpdateAsync(r => new Rejudge
+                {
+                    EndTime = DateTimeOffset.Now,
+                    Applied = false,
+                    OperatedBy = uid
+                });
         }
 
         public async Task ApplyAsync(Rejudge rejudge, int uid)
@@ -200,11 +203,14 @@ namespace JudgeWeb.Domains.Problems
                 .Where(s => oldSubmissions.Contains(s.SubmissionId))
                 .BatchUpdateAsync(s => new Submission { RejudgeId = null });
 
-            rejudge.Applied = true;
-            rejudge.EndTime = DateTimeOffset.Now;
-            rejudge.OperatedBy = uid;
-            Rejudges.Update(rejudge);
-            await Context.SaveChangesAsync();
+            await Rejudges
+                .Where(r => r.RejudgeId == rid)
+                .BatchUpdateAsync(r => new Rejudge
+                {
+                    Applied = true,
+                    EndTime = DateTimeOffset.Now,
+                    OperatedBy = uid,
+                });
         }
 
         public Task<int> GetJuryStatusAsync(int cid)

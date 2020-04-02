@@ -1,0 +1,11 @@
+﻿@{
+    ViewData["Title"] = "Pending";
+    Team team = ViewBag.Team;
+}
+
+<h1 id="teamwelcome" class="text-center">
+    Welcome <span id="teamwelcometeam">@team?.TeamName</span>!
+</h1>
+<h2 id="contestnotstarted" class="text-center">
+    Gym has not been started
+</h2>

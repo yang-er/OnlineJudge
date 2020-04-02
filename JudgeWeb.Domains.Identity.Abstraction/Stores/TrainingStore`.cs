@@ -14,11 +14,11 @@ namespace JudgeWeb.Domains.Identity
         
         Task<TrainingTeam> FindTeamByIdAsync(int teamid);
 
-        Task<List<TrainingTeamUser>> ListMembersAsync(TrainingTeam team);
+        Task<List<TrainingTeamUser>> ListMembersAsync(TrainingTeam team, bool active = false);
 
         Task<TrainingTeamUser> IsInTeamAsync(User user, TrainingTeam team);
 
-        Task<ILookup<TrainingTeam, TrainingTeamUser>> ListAsync(int uid);
+        Task<ILookup<TrainingTeam, TrainingTeamUser>> ListAsync(int uid, bool active = false);
 
         Task<bool> CheckCreateAsync(User user);
 

@@ -62,12 +62,14 @@ namespace JudgeWeb.Areas.Contest.Controllers
             var bq = scb.Data.GetValueOrDefault(teamid);
             if (bq == null) return null;
             var cats = await Facade.Teams.ListCategoryAsync(Contest.ContestId);
+            var affs = await Facade.Teams.ListAffiliationAsync(Contest.ContestId);
 
             return new SingleBoardViewModel
             {
                 QueryInfo = bq,
                 Contest = Contest,
                 Problems = Problems,
+                Affiliation = affs.FirstOrDefault(a => a.AffiliationId == bq.AffiliationId),
                 Category = cats.FirstOrDefault(c => c.CategoryId == bq.CategoryId),
             };
         }

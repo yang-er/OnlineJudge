@@ -10,6 +10,28 @@
     if (ViewData.ContainsKey("InAjax")) { Layout = null; }
 }
 
+@functions {
+    public static string For(Verdict verdict)
+    {
+        return verdict switch
+        {
+            Verdict.TimeLimitExceeded => "TLE",
+            Verdict.MemoryLimitExceeded => "MLE",
+            Verdict.RuntimeError => "RTE",
+            Verdict.OutputLimitExceeded => "OLE",
+            Verdict.WrongAnswer => "WA",
+            Verdict.CompileError => "CE",
+            Verdict.PresentationError => "PE",
+            Verdict.Accepted => "AC",
+            Verdict.Pending => null,
+            Verdict.Running => null,
+            Verdict.Unknown => "JE",
+            Verdict.UndefinedError => "JE",
+            _ => "JE",
+        };
+    }
+}
+
 @section Header {
     <h2 class="mt-2">
         @ViewData["Title"]
@@ -137,13 +159,13 @@
                 <th title="old vs. new verdicts">-\+</th>
                 @foreach (var v in usedVerdicts)
                 {
-                    <th title="@v (new)">@v JudgeWeb.Data.Api.JudgementType.For(v)</th>
+                    <th title="@For(v) (new)">@For(v)</th>
                 }
             </tr>
             @for (int i = 0; i < usedVerdicts.Length; i++)
             {
                 <tr>
-                    <th title="@usedVerdicts[i] (old)">@usedVerdicts[i] JudgeWeb.Data.Api.JudgementType.For(usedVerdicts[i])</th>
+                    <th title="@For(usedVerdicts[i]) (old)">@For(usedVerdicts[i])</th>
                     @for (int j = 0; j < usedVerdicts.Length; j++)
                     {
                         <td class="@(i == j ? "identical" : its[i, j] == 0 ? "zero" : "changed")">@its[i, j]</td>
@@ -186,7 +208,7 @@
                     data-submission-id="@s.old.SubmissionId">
                     <td use-a>s@(s.old.SubmissionId)</td>
                     <td use-a>@s.time</td>
-                    <td use-a>@teams.GetValueOrDefault(s.teamid)</td>
+                    <td use-a>@teams.GetValueOrDefault(s.teamid) (t@(s.teamid))</td>
                     <td use-a class="probid">@probs.FirstOrDefault(ss => ss.ProblemId == s.probid)?.ShortName</td>
                     <td use-a class="langid">@s.langid</td>
                     <td use-a><verdict3 value="@(s.@new.Status)" /></td>

@@ -35,9 +35,9 @@ namespace JudgeWeb.Domains.Contests
                 .HasForeignKey(sc => new { sc.ContestId, sc.TeamId })
                 .OnDelete(DeleteBehavior.Cascade);
 
-            entity.HasMany<RankCache>(e => e.RankCache)
+            entity.HasOne<RankCache>(e => e.rc)
                 .WithOne()
-                .HasForeignKey(rc => new { rc.ContestId, rc.TeamId })
+                .HasForeignKey<RankCache>(rc => new { rc.ContestId, rc.TeamId })
                 .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasIndex(e => e.Status);
