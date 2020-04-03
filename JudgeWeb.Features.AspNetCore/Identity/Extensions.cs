@@ -40,7 +40,7 @@ namespace Microsoft.AspNetCore.Mvc
 
         public static string GetNickName(this ClaimsPrincipal principal)
         {
-            return principal.FindFirstValue("XYS.NickName");
+            return principal.FindFirstValue("XYS.NickName") ?? GetUserName(principal);
         }
 
         public static T Deserialize<T>(this IJsonHelper jsonHelper, string content)
