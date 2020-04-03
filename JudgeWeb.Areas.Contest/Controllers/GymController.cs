@@ -67,7 +67,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
 
             int? teamid = Team?.TeamId;
             ViewBag.Clarifications =
-                await clars.ListAsync(cid, c => c.Recipient == null);
+                await clars.ListAsync(cid, c => c.Recipient == null && c.Sender == null);
 
             var readme = io.GetFileInfo($"c{cid}/readme.html");
             ViewBag.Markdown = await readme.ReadAsync();
