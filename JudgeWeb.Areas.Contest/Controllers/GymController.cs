@@ -105,7 +105,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
             if (model == null) return NotFound();
             var board = await Facade.Teams.LoadScoreboardAsync(cid);
             var boardQuery = board.Data.GetValueOrDefault(Team.TeamId);
-            model.TeamName = boardQuery.TeamName;
+            model.TeamName = board.Data.GetValueOrDefault(model.TeamId)?.TeamName;
 
             if (model.TeamId != Team.TeamId)
             {
