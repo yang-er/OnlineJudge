@@ -1,11 +1,13 @@
 ﻿using JudgeWeb.Data;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace JudgeWeb.Domains.Identity
 {
-    public partial class IdentityEntityTypeConfiguration
-        : IEntityTypeConfiguration<User>
+    public partial class IdentityEntityTypeConfiguration :
+        IEntityTypeConfiguration<User>,
+        IEntityTypeConfiguration<IdentityUserRole<int>>
     {
         public void Configure(EntityTypeBuilder<User> entity)
         {
@@ -31,6 +33,12 @@ namespace JudgeWeb.Domains.Identity
 
             entity.Property(u => u.NickName)
                 .HasMaxLength(256);
+        }
+
+        public void Configure(EntityTypeBuilder<IdentityUserRole<int>> entity)
+        {
+            entity.HasData(
+                new IdentityUserRole<int> { RoleId = OfRole("Judgehost"), UserId = -1 });
         }
     }
 }

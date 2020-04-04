@@ -1,5 +1,4 @@
-﻿using idunno.Authentication.Basic;
-using JudgeWeb.Data;
+﻿using JudgeWeb.Data;
 using JudgeWeb.Domains.Contests;
 using JudgeWeb.Domains.Identity;
 using JudgeWeb.Domains.Identity.Providers;
@@ -10,12 +9,12 @@ using JudgeWeb.Features.OjUpdate;
 using JudgeWeb.Features.Scoreboard;
 using JudgeWeb.Features.Storage;
 using Markdig;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
@@ -66,6 +65,7 @@ namespace JudgeWeb
                 .UseSqlServer(Configuration.GetConnectionString("UserDbConnection"))
                 .UseBulkExtensions());
             services.AddScoped<DbContext, AppDbContext>();
+            services.AddScoped<IdentityDbContext<User, Role, int>, AppDbContext>();
 
             services.AddScoped<IContestEventNotifier, ContestEventNotifier>();
             services.AddScoped<IAuditlogger, Auditlogger>();
@@ -116,6 +116,14 @@ namespace JudgeWeb
                     options.Events = new BasicAuthenticationValidator<User, Role, int, AppDbContext>();
                 });
 
+            if (Configuration["IdentityServer:Enabled"] == "True")
+                services.AddIdentityServer()
+                    .AddAspNetIdentity<User>()
+                    .AddInMemoryClients(Configuration.GetSection("IdentityServer:Clients"))
+                    .AddInMemoryIdentityResources(Configuration.GetSection("IdentityServer:Scopes"))
+                    .AddInMemoryApiResources(Configuration.GetSection("IdentityServer:Apis"))
+                    .AddDeveloperSigningCredential();
+
             services.AddSingleton(
                 HtmlEncoder.Create(
                     UnicodeRanges.BasicLatin,
@@ -158,6 +166,8 @@ namespace JudgeWeb
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app)
         {
+            app.EnsureClaimTypes();
+
             if (Environment.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -191,10 +201,13 @@ namespace JudgeWeb
             app.UseCookiePolicy();
             app.UseSession();
 
+            if (Configuration["IdentityServer:Enabled"] == "True")
+                app.UseIdentityServer();
+
             app.UseRouting();
             app.UseAuthentication();
             app.UseAuthorization();
-            
+
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();

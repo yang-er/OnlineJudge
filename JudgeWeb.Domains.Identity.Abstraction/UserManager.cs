@@ -37,16 +37,22 @@ namespace JudgeWeb.Domains.Identity
         }
 
         readonly IStudentStore studentStore;
-        const string ClaimOfNickName = "XYS.NickName";
         const string Email2TokenProvider = "Email2";
         const string Email2TokenPurpose = "Email2Confirmation";
 
         public override bool SupportsUserTwoFactor => false;
         public override bool SupportsUserTwoFactorRecoveryCodes => false;
 
+        public override string GetUserId(ClaimsPrincipal principal)
+        {
+            // Be careful of the old logins
+            return base.GetUserId(principal)
+                ?? principal.FindFirstValue(ClaimTypes.NameIdentifier);
+        }
+
         public string GetNickName(ClaimsPrincipal claim)
         {
-            var nickName = claim.FindFirstValue(ClaimOfNickName);
+            var nickName = claim.FindFirstValue("nickname");
             if (string.IsNullOrEmpty(nickName)) nickName = GetUserName(claim);
             return nickName;
         }

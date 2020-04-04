@@ -1,10 +1,11 @@
 ﻿using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
 using System;
 using System.Linq;
 using System.Security.Claims;
@@ -30,17 +31,26 @@ namespace Microsoft.AspNetCore.Mvc
 
         public static string GetUserName(this ClaimsPrincipal principal)
         {
-            return principal.FindFirstValue(ClaimTypes.Name);
+            return principal.FindFirstValue(ClaimTypes.Name) ?? principal.FindFirstValue("name");
         }
 
         public static string GetUserId(this ClaimsPrincipal principal)
         {
-            return principal.FindFirstValue(ClaimTypes.NameIdentifier);
+            return principal.FindFirstValue(ClaimTypes.NameIdentifier) ?? principal.FindFirstValue("sub");
+        }
+
+        public static IApplicationBuilder EnsureClaimTypes(this IApplicationBuilder app)
+        {
+            var optionsAccessor = app.ApplicationServices.GetRequiredService<IOptions<IdentityOptions>>();
+            if (optionsAccessor.Value.ClaimsIdentity.UserIdClaimType != ClaimTypes.NameIdentifier
+                && optionsAccessor.Value.ClaimsIdentity.UserIdClaimType != "sub")
+                throw new InvalidOperationException();
+            return app;
         }
 
         public static string GetNickName(this ClaimsPrincipal principal)
         {
-            return principal.FindFirstValue("XYS.NickName") ?? GetUserName(principal);
+            return principal.FindFirstValue("nickname") ?? GetUserName(principal);
         }
 
         public static T Deserialize<T>(this IJsonHelper jsonHelper, string content)

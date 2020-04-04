@@ -53,6 +53,17 @@ namespace JudgeWeb.Areas.Account.Controllers
         }
 
 
+        [HttpGet("{username}/[action]")]
+        [Authorize(Roles = "Administrator")]
+        public async Task<IActionResult> Claims(string username)
+        {
+            var user = await GetUserAsync();
+            if (user.NormalizedUserName != username.ToUpper())
+                return NotFound();
+            return View();
+        }
+
+
         [HttpGet("{username}")]
         [AllowAnonymous]
         public async Task<IActionResult> Show(string username,

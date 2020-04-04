@@ -108,7 +108,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
                 if (!result.Succeeded) msg += $"Error in reset password: {result.Errors.First().Description}.\n";
             }
 
-            if (model.Email != null)
+            if (model.Email != null && user.Email != model.Email)
             {
                 var result = await UserManager.SetEmailAsync(user, model.Email);
                 if (!result.Succeeded) msg += $"Error in set email: {result.Errors.First().Description}.\n";
