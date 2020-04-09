@@ -12,6 +12,7 @@ namespace JudgeWeb.Domains.Problems
             {
                 ["kattis"] = typeof(KattisImportProvider),
                 ["xysxml"] = typeof(XmlImportProvider),
+                ["hustoj"] = typeof(FpsImportProvider),
             };
             
             services.TryAddFrom(typeof(ServiceCollectionExtensions).Assembly);

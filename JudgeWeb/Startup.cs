@@ -220,7 +220,7 @@ namespace JudgeWeb
                 endpoints.MapFallbackNotFound("/images/{**slug}");
 
                 endpoints.MapFallbackNotFound("/static/{**slug}");
-
+                
                 endpoints.MapFallbackToAreaController(
                     pattern: "/dashboard/problems/{**slug}",
                     "NotFound2", "Root", "Polygon");
