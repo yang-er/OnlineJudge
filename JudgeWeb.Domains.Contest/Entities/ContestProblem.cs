@@ -39,6 +39,7 @@ namespace JudgeWeb.Domains.Contests
             entity.Ignore(e => e.TestcaseCount);
             entity.Ignore(e => e.Interactive);
             entity.Ignore(e => e.Shared);
+            entity.Ignore(e => e.AllowJudge);
         }
     }
 }

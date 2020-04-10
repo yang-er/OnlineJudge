@@ -27,7 +27,6 @@ namespace JudgeWeb.Areas.Contest.Controllers
             return Window(new ContestProblem
             {
                 ContestId = cid,
-                AllowJudge = true,
                 AllowSubmit = true
             });
         }
@@ -104,7 +103,6 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 {
                     Color = "#" + model.Color.TrimStart('#'),
                     AllowSubmit = model.AllowSubmit,
-                    AllowJudge = model.AllowJudge,
                     ShortName = model.ShortName,
                 });
 

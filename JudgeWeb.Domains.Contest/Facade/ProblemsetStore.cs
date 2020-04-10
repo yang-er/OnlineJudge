@@ -32,7 +32,7 @@ namespace JudgeWeb.Domains.Contests
             {
                 var result = await ContestProblems
                     .Where(cp => cp.ContestId == cid)
-                    .Select(cp => new ContestProblem(cp, cp.p.Title, cp.p.TimeLimit, cp.p.MemoryLimit, cp.p.CombinedRunCompare, cp.p.Shared))
+                    .Select(cp => new ContestProblem(cp, cp.p.Title, cp.p.TimeLimit, cp.p.MemoryLimit, cp.p.CombinedRunCompare, cp.p.Shared, cp.p.AllowJudge))
                     .ToArrayAsync();
 
                 Array.Sort(result, (a, b) => a.ShortName.CompareTo(b.ShortName));

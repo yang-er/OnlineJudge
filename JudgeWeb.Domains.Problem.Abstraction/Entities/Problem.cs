@@ -34,11 +34,6 @@ namespace JudgeWeb.Data
         public bool AllowSubmit { get; set; }
 
         /// <summary>
-        /// 题目信息的标志
-        /// </summary>
-        public int Flag { get; set; }
-
-        /// <summary>
         /// 时间限制，以ms为单位
         /// </summary>
         public int TimeLimit { get; set; }

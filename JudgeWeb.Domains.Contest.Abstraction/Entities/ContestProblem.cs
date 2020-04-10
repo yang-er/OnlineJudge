@@ -31,7 +31,7 @@
         public bool AllowSubmit { get; set; }
 
         /// <summary>
-        /// 是否允许评测
+        /// [Ignore] 是否允许评测
         /// </summary>
         public bool AllowJudge { get; set; }
 
@@ -89,9 +89,9 @@
         /// 拷贝构造函数
         /// </summary>
         /// <param name="cp">拷贝源</param>
-        public ContestProblem(ContestProblem cp, string tit, int time, int mem, bool ia, bool shared)
+        public ContestProblem(ContestProblem cp, string tit, int time, int mem, bool ia, bool shared, bool alj)
         {
-            AllowJudge = cp.AllowJudge;
+            AllowJudge = alj;
             AllowSubmit = cp.AllowSubmit;
             Color = cp.Color;
             ContestId = cp.ContestId;
