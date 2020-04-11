@@ -27,7 +27,7 @@ namespace JudgeWeb.Domains.Problems
 
         public DbSet<Detail> Details => Context.Set<Detail>();
 
-        public JudgingStore(DbContext context, Features.Storage.IRunFileRepository runs)
+        public JudgingStore(DbContextAccessor context, Features.Storage.IRunFileRepository runs)
         {
             Context = context;
             Files = runs;

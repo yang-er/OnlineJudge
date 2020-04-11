@@ -8,7 +8,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Threading.Tasks;
 
 [assembly: Inject(typeof(IProblemStore), typeof(ProblemStore))]
@@ -25,7 +24,7 @@ namespace JudgeWeb.Domains.Problems
 
         public DbSet<Problem> Problems => Context.Set<Problem>();
 
-        public ProblemStore(DbContext context, IProblemFileRepository files)
+        public ProblemStore(DbContextAccessor context, IProblemFileRepository files)
         {
             Context = context;
             Files = files;

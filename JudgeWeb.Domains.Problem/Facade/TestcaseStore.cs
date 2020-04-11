@@ -21,7 +21,7 @@ namespace JudgeWeb.Domains.Problems
 
         public IMutableFileProvider Files { get; }
 
-        public TestcaseStore(DbContext context, IProblemFileRepository fs)
+        public TestcaseStore(DbContextAccessor context, IProblemFileRepository fs)
         {
             Context = context;
             Files = fs;

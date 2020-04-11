@@ -17,7 +17,7 @@ namespace JudgeWeb.Domains.Contests
 
         public DbSet<Balloon> Balloons => Context.Set<Balloon>();
 
-        public BalloonStore(DbContext context)
+        public BalloonStore(DbContextAccessor context)
         {
             Context = context;
         }

@@ -18,7 +18,7 @@ namespace JudgeWeb.Domains.Contests
 
         DbSet<Clarification> Clarifications => Context.Set<Clarification>();
 
-        public ClarificationStore(DbContext context)
+        public ClarificationStore(DbContextAccessor context)
         {
             Context = context;
         }

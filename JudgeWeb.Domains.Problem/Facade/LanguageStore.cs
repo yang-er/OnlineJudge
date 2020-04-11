@@ -17,7 +17,7 @@ namespace JudgeWeb.Domains.Problems
 
         public DbSet<Language> Languages => Context.Set<Language>();
 
-        public LanguageStore(DbContext context)
+        public LanguageStore(DbContextAccessor context)
         {
             Context = context;
         }

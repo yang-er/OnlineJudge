@@ -14,7 +14,6 @@ namespace JudgeWeb.Features.OjUpdate
             services.AddHostedService<HdojUpdateService>();
             services.AddHostedService<CfUpdateService>();
             services.AddHostedService<VjUpdateService>();
-            services.AddScoped<IDbContextHolder, DbContextHolder<TContext>>();
             return services;
         }
     }

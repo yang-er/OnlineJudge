@@ -9,13 +9,15 @@ using System.Threading.Tasks;
 
 namespace JudgeWeb.Domains.Identity.Providers
 {
-    public class UserWithNickNameClaimsPrincipalFactory : UserClaimsPrincipalFactory<User>
+    public class UserWithNickNameClaimsPrincipalFactory<TContext> :
+        UserClaimsPrincipalFactory<User>
+        where TContext : IdentityDbContext<User, Role, int>
     {
         public IdentityDbContext<User, Role, int> Identity { get; }
 
         public UserWithNickNameClaimsPrincipalFactory(
             UserManager<User> userManager,
-            IdentityDbContext<User, Role, int> identityDbContext,
+            TContext identityDbContext,
             IOptions<IdentityOptions> options) :
             base(userManager, options)
         {

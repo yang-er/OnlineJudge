@@ -21,7 +21,7 @@ namespace JudgeWeb.Domains.Problems
 
         DbSet<Judging> Judgings => Context.Set<Judging>();
 
-        public SubmissionStore(DbContext context)
+        public SubmissionStore(DbContextAccessor context)
         {
             Context = context;
         }

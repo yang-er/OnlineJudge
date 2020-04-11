@@ -11,6 +11,7 @@ namespace JudgeWeb.Data
         public AppDbContext(DbContextOptions<AppDbContext> options)
             : base(options)
         {
+            ChangeTracker.AutoDetectChangesEnabled = false;
         }
 
         public virtual DbSet<Student> Students { get; set; }

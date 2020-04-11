@@ -18,7 +18,7 @@ namespace JudgeWeb.Domains.Identity
 
         DbSet<TeamAffiliation> Affiliations => Context.Set<TeamAffiliation>();
 
-        public AffiliationStore(DbContext context)
+        public AffiliationStore(DbContextAccessor context)
         {
             Context = context;
         }

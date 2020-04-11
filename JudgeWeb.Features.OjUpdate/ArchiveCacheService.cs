@@ -49,16 +49,16 @@ namespace JudgeWeb.Features.OjUpdate
             Logger.LogDebug("Fetch service stopped.");
         }
 
-        private static async Task UpdateStatistics(IDbContextHolder store)
+        private static async Task UpdateStatistics(DbContext store)
         {
-            var source = store.Statistics.FromSqlRaw(
+            var source = store.Set<SubmissionStatistics>().FromSqlRaw(
                 "SELECT COUNT(*) AS [TotalSubmission], [s].[ProblemId], [s].[Author], [s].[ContestId]," +
                       " SUM(CASE WHEN [j].[Status] = 11 THEN 1 ELSE 0 END) AS [AcceptedSubmission]\r\n" +
                 "FROM [Submissions] AS [s]\r\n" +
                 "INNER JOIN [Judgings] AS [j] ON ([s].[SubmissionId] = [j].[SubmissionId]) AND ([j].[Active] = 1)\r\n" +
                 "GROUP BY [s].[ProblemId], [s].[ContestId], [s].[Author]");
 
-            await store.Statistics.MergeAsync(
+            await store.Set<SubmissionStatistics>().MergeAsync(
                 sourceTable: source,
                 targetKey: ss => new { ss.Author, ss.ContestId, ss.ProblemId },
                 sourceKey: ss => new { ss.Author, ss.ContestId, ss.ProblemId },
@@ -80,9 +80,9 @@ namespace JudgeWeb.Features.OjUpdate
                 });
         }
 
-        private static async Task UpdateArchive(IDbContextHolder store)
+        private static async Task UpdateArchive(DbContext store)
         {
-            var source = store.Statistics
+            var source = store.Set<SubmissionStatistics>()
                 .Where(ss => ss.ContestId == 0)
                 .GroupBy(ss => ss.ProblemId)
 
@@ -93,7 +93,7 @@ namespace JudgeWeb.Features.OjUpdate
                     Total = g.Sum(ss => ss.TotalSubmission),
                 });
 
-            await store.Archives.MergeAsync(
+            await store.Set<ProblemArchive>().MergeAsync(
                 sourceTable: source,
                 targetKey: a => a.ProblemId,
                 sourceKey: a => a.ProblemId,
@@ -109,7 +109,7 @@ namespace JudgeWeb.Features.OjUpdate
         private async Task UpdateAsync(CancellationToken stoppingToken)
         {
             using var scope = ServiceProvider.CreateScope();
-            using var store = scope.ServiceProvider.GetRequiredService<IDbContextHolder>();
+            using var store = scope.ServiceProvider.GetRequiredService<DbContextAccessor>();
 
             await UpdateStatistics(store);
             await UpdateArchive(store);

@@ -20,7 +20,7 @@ namespace JudgeWeb.Domains.Problems
 
         public DbSet<Executable> Executables => Context.Set<Executable>();
 
-        public ExecutableStore(DbContext context)
+        public ExecutableStore(DbContextAccessor context)
         {
             Context = context;
         }

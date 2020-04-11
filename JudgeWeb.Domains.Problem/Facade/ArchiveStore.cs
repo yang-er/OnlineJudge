@@ -17,7 +17,7 @@ namespace JudgeWeb.Domains.Problems
 
         public DbSet<ProblemArchive> Archives => Context.Set<ProblemArchive>();
 
-        public ArchiveStore(DbContext context)
+        public ArchiveStore(DbContextAccessor context)
         {
             Context = context;
         }

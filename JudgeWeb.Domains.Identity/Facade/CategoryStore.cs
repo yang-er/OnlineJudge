@@ -18,7 +18,7 @@ namespace JudgeWeb.Domains.Identity
 
         DbSet<TeamCategory> Categories => Context.Set<TeamCategory>();
 
-        public CategoryStore(DbContext context)
+        public CategoryStore(DbContextAccessor context)
         {
             Context = context;
         }

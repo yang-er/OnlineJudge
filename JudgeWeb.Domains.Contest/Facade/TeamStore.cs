@@ -22,7 +22,7 @@ namespace JudgeWeb.Domains.Contests
 
         DbSet<TeamMember> Members => Context.Set<TeamMember>();
 
-        public TeamStore(DbContext context)
+        public TeamStore(DbContextAccessor context)
         {
             Context = context;
         }

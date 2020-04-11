@@ -26,7 +26,7 @@ namespace JudgeWeb.Domains.Contests
         public ISubmissionStore Submissions { get; }
 
         public ContestFacade(
-            DbContext context,
+            DbContextAccessor context,
             IContestStore store1,
             IProblemsetStore store2,
             ITeamStore store3,
@@ -47,7 +47,7 @@ namespace JudgeWeb.Domains.Contests
                 timeSpan: TimeSpan.FromMinutes(10));
         }
 
-        public Task<Dictionary<int, int>> StatisticsProblemAsync()
+        public Task<Dictionary<int, int>> StatisticsTeamAsync()
         {
             return Context.Set<Team>()
                 .Where(t => t.Status == 1)
@@ -56,7 +56,7 @@ namespace JudgeWeb.Domains.Contests
                 .ToDictionaryAsync(k => k.ContestId, v => v.TeamCount);
         }
 
-        public Task<Dictionary<int, int>> StatisticsTeamAsync()
+        public Task<Dictionary<int, int>> StatisticsProblemAsync()
         {
             return Context.Set<ContestProblem>()
                 .GroupBy(t => t.ContestId)

@@ -14,7 +14,7 @@ namespace JudgeWeb.Features
 
         private DbSet<Auditlog> Auditlogs => Context.Set<Auditlog>();
 
-        public Auditlogger(DbContext context)
+        public Auditlogger(AppDbContext context)
         {
             Context = context;
         }

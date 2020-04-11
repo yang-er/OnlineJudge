@@ -15,7 +15,7 @@ namespace JudgeWeb.Domains.Identity
     {
         public DbContext Context { get; }
 
-        public NewsStore(DbContext context) => Context = context;
+        public NewsStore(DbContextAccessor context) => Context = context;
 
         public DbSet<News> News => Context.Set<News>();
 

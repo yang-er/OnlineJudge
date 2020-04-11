@@ -15,7 +15,7 @@ namespace JudgeWeb.Domains.Identity
         ICrudRepositoryImpl<TrainingTeamUser>
     {
         public DbContext Context { get; }
-        public TrainingStore(DbContext context) => Context = context;
+        public TrainingStore(DbContextAccessor context) => Context = context;
 
         DbSet<TrainingTeam> TrainingTeams => Context.Set<TrainingTeam>();
         DbSet<TrainingTeamUser> TrainingTeamUsers => Context.Set<TrainingTeamUser>();

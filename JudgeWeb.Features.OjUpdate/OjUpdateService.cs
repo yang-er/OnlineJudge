@@ -160,15 +160,15 @@ namespace JudgeWeb.Features.OjUpdate
             await base.StartAsync(cancellationToken);
 
             using var scope = ServiceProvider.CreateScope();
-            using var db = scope.ServiceProvider.GetRequiredService<IDbContextHolder>();
+            using var db = scope.ServiceProvider.GetRequiredService<DbContextAccessor>();
             var confName = $"oj_{CategoryId}_update_time";
-            var conf = await db.Configures
+            var conf = await db.Set<Configure>()
                 .Where(c => c.Name == confName)
                 .FirstOrDefaultAsync();
 
             if (conf == null)
             {
-                var cnf = db.Configures.Add(new Configure
+                var cnf = db.Set<Configure>().Add(new Configure
                 {
                     Name = confName,
                     Description = $"The last update time of {SiteName}.",
@@ -193,10 +193,10 @@ namespace JudgeWeb.Features.OjUpdate
             await base.StopAsync(cancellationToken);
 
             using var scope = ServiceProvider.CreateScope();
-            using var db = scope.ServiceProvider.GetRequiredService<IDbContextHolder>();
+            using var db = scope.ServiceProvider.GetRequiredService<DbContextAccessor>();
             var confName = $"oj_{CategoryId}_update_time";
             var confValue = LastUpdate.ToJson();
-            var conf = await db.Configures
+            var conf = await db.Set<Configure>()
                 .Where(c => c.Name == confName)
                 .BatchUpdateAsync(c => new Configure { Value = confValue });
         }
@@ -219,17 +219,17 @@ namespace JudgeWeb.Features.OjUpdate
                 using (var scope = ServiceProvider.CreateScope())
                 {
                     var dbContext = scope.ServiceProvider
-                        .GetRequiredService<IDbContextHolder>();
+                        .GetRequiredService<DbContextAccessor>();
                     int category = CategoryId;
 
-                    var names = await dbContext.PersonRanks
+                    var names = await dbContext.Set<PersonRank>()
                         .Where(r => r.Category == category)
                         .ToListAsync();
 
                     foreach (var id in names)
                     {
                         await UpdateOne(httpClient, id, stoppingToken);
-                        dbContext.PersonRanks.Update(id);
+                        dbContext.Set<PersonRank>().Update(id);
                         await dbContext.SaveChangesAsync();
                     }
                 }

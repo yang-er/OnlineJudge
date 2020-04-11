@@ -14,7 +14,6 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
@@ -64,8 +63,7 @@ namespace JudgeWeb
             services.AddDbContext<AppDbContext>(options => options
                 .UseSqlServer(Configuration.GetConnectionString("UserDbConnection"))
                 .UseBulkExtensions());
-            services.AddScoped<DbContext, AppDbContext>();
-            services.AddScoped<IdentityDbContext<User, Role, int>, AppDbContext>();
+            services.AddScoped<DbContextAccessor, DbContextAccessor<AppDbContext>>();
 
             services.AddScoped<IContestEventNotifier, ContestEventNotifier>();
             services.AddScoped<IAuditlogger, Auditlogger>();
@@ -95,7 +93,7 @@ namespace JudgeWeb
                 .AddSignInManager<SignInManager>()
                 .AddDefaultTokenProviders()
                 .RegisterOtherStores()
-                .UseClaimsPrincipalFactory<UserWithNickNameClaimsPrincipalFactory, User>()
+                .UseClaimsPrincipalFactory<UserWithNickNameClaimsPrincipalFactory<AppDbContext>, User>()
                 .AddTokenProvider<Email2TokenProvider>("Email2");
 
             services.AddAuthentication()

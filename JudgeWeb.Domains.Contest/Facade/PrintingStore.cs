@@ -20,7 +20,7 @@ namespace JudgeWeb.Domains.Contests
 
         DbSet<TeamMember> Members => Context.Set<TeamMember>();
 
-        public PrintingStore(DbContext context)
+        public PrintingStore(DbContextAccessor context)
         {
             Context = context;
         }

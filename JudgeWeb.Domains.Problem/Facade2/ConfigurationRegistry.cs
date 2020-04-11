@@ -16,7 +16,7 @@ namespace JudgeWeb.Domains.Problems
 
         DbSet<Configure> Configurations => Context.Set<Configure>();
 
-        public ConfigurationRegistry(DbContext context)
+        public ConfigurationRegistry(DbContextAccessor context)
         {
             Context = context;
         }

@@ -19,7 +19,7 @@ namespace JudgeWeb.Domains.Identity
         ICrudRepositoryImpl<TeachingClass>
     {
         public DbContext Context { get; }
-        public StudentStore(DbContext context) => Context = context;
+        public StudentStore(DbContextAccessor context) => Context = context;
 
         DbSet<Student> Students => Context.Set<Student>();
         DbSet<TeachingClass> Classes => Context.Set<TeachingClass>();

@@ -17,7 +17,7 @@ namespace JudgeWeb.Domains.Problems
 
         DbSet<InternalError> InternalErrors => Context.Set<InternalError>();
 
-        public InternalErrorStore(DbContext context)
+        public InternalErrorStore(DbContextAccessor context)
         {
             Context = context;
         }

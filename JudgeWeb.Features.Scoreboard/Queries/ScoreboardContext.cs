@@ -41,10 +41,9 @@ namespace JudgeWeb.Features.Scoreboard
             ((IDisposable)Context).Dispose();
         }
 
-        public ScoreboardContext(DbContext context)
+        public ScoreboardContext(DbContextAccessor context)
         {
             Context = context;
-            Context.ChangeTracker.AutoDetectChangesEnabled = false;
         }
     }
 }

@@ -18,7 +18,7 @@ namespace JudgeWeb.Domains.Contests
 
         DbSet<Contest> Contests => Context.Set<Contest>();
         
-        public ContestStore(DbContext context)
+        public ContestStore(DbContextAccessor context)
         {
             Context = context;
         }

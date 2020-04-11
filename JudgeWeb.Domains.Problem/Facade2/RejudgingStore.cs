@@ -22,7 +22,7 @@ namespace JudgeWeb.Domains.Problems
 
         DbSet<Judging> Judgings => Context.Set<Judging>();
 
-        public RejudgingStore(DbContext context)
+        public RejudgingStore(DbContextAccessor context)
         {
             Context = context;
         }

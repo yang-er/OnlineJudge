@@ -17,7 +17,7 @@ namespace JudgeWeb.Domains.Problems
 
         public DbSet<JudgeHost> Judgehosts => Context.Set<JudgeHost>();
 
-        public JudgehostStore(DbContext context)
+        public JudgehostStore(DbContextAccessor context)
         {
             Context = context;
         }

@@ -20,7 +20,7 @@ namespace JudgeWeb.Domains.Contests
 
         DbSet<ContestProblem> ContestProblems => Context.Set<ContestProblem>();
 
-        public ProblemsetStore(DbContext context, IProblemStore problem)
+        public ProblemsetStore(DbContextAccessor context, IProblemStore problem)
         {
             Context = context;
             Parent = problem;
