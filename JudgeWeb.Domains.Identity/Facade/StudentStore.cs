@@ -35,11 +35,11 @@ namespace JudgeWeb.Domains.Identity
                 .SingleOrDefaultAsync();
         }
 
-        public Task<User> FindByStudentIdAsync(int sid)
+        public Task<List<User>> FindByStudentIdAsync(int sid)
         {
             return Users
                 .Where(u => u.StudentId == sid)
-                .SingleOrDefaultAsync();
+                .ToListAsync();
         }
 
         public Task<IdentityResult> SlideExpirationAsync(User user)
@@ -198,6 +198,29 @@ namespace JudgeWeb.Domains.Identity
                 updateExpression: null,
                 insertExpression: s => new ClassStudent { ClassId = s.ClassId, StudentId = s.StudentId },
                 delete: false);
+        }
+
+        public async Task<IEnumerable<Student>> ListStudentsAsync(TeachingClass @class)
+        {
+            int classId = @class.Id;
+            var stuQuery =
+                from gs in ClassStudent
+                where gs.ClassId == classId
+                join s in Students on gs.StudentId equals s.Id
+                join u in Users on s.Id equals u.StudentId
+                into uu from u in uu.DefaultIfEmpty()
+                orderby s.Id ascending
+                select new Student
+                {
+                    Id = s.Id,
+                    IsVerified = u.StudentVerified,
+                    Name = s.Name,
+                    Email = u.StudentEmail,
+                    UserId = u.Id,
+                    UserName = u.UserName,
+                };
+
+            return await stuQuery.ToListAsync();
         }
     }
 }

@@ -95,7 +95,7 @@ namespace JudgeWeb.Domains.Problems
         {
             return Judgings
                 .Where(predicate)
-                .OrderBy(j => j.JudgingId)
+                .OrderByDescending(j => j.JudgingId)
                 .Take(topCount)
                 .Select(selector)
                 .ToListAsync();

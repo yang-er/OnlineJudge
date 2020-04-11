@@ -142,7 +142,7 @@ namespace JudgeWeb.Domains.Identity
             return studentStore.FindStudentAsync(sid);
         }
 
-        public virtual Task<User> FindByStudentIdAsync(int sid)
+        public virtual Task<List<User>> FindByStudentIdAsync(int sid)
         {
             return studentStore.FindByStudentIdAsync(sid);
         }

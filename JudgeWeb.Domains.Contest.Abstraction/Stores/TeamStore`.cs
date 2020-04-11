@@ -26,6 +26,8 @@ namespace JudgeWeb.Domains.Contests
 
         Task<List<TeamAffiliation>> ListAffiliationAsync(int cid, bool filtered = true);
 
+        Task<HashSet<int>> ListMemberUidsAsync(int cid);
+
         Task<List<TeamCategory>> ListCategoryAsync(int cid, bool? requirePublic = null);
 
         Task<ScoreboardDataModel> LoadScoreboardAsync(int cid);

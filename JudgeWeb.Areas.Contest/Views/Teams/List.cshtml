@@ -66,7 +66,20 @@
     });
 </script>
 
-<p>
-    <a asp-action="Add" data-toggle="ajaxWindow" data-target="addTeam" class="btn btn-primary" title="Add new team"><i class="fas fa-plus"></i>&nbsp;Add new team</a>
-    <a asp-action="Import" data-toggle="ajaxWindow" data-target="importTeam" class="btn btn-secondary" title="Import teams"><i class="fas fa-file-import"></i>&nbsp;Import teams</a>
-</p>
+<div>
+    <div class="btn-group">
+        <a asp-action="Add" data-toggle="ajaxWindow" data-target="addTeam" class="btn btn-primary" title="Add new team">
+            <i class="fas fa-plus"></i>&nbsp;Add new team
+        </a>
+    </div>
+    <div class="btn-group dropdown">
+        <a class="btn btn-secondary dropdown-toggle" href="#" role="button" id="dropdownMenuLink" title="Import teams" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <i class="fas fa-file-import"></i>&nbsp;Import teams
+        </a>
+
+        <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+            <a class="dropdown-item" asp-action="Import" data-toggle="ajaxWindow" data-target="importTeam"><i class="fas fa-envelope-open-text fa-fw"></i>&nbsp;Batch import</a>
+            <a class="dropdown-item" asp-action="ByGroup" data-toggle="ajaxWindow" data-target="importTeam"><i class="fas fa-graduation-cap fa-fw"></i>&nbsp;Add teaching class</a>
+        </div>
+    </div>
+</div>

@@ -1,5 +1,8 @@
 ﻿@{
     Layout = "_Layout";
     ViewData["BigTitle"] = "Dashboard";
-    ViewData["AjaxUpdateUrl"] = "/dashboard/updates";
+    if (User.IsInRole("Administrator"))
+    {
+        ViewData["AjaxUpdateUrl"] = "/dashboard/updates";
+    }
 }

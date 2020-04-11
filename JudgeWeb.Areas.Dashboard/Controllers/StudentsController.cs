@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace JudgeWeb.Areas.Dashboard.Controllers
@@ -31,11 +32,12 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
         }
 
 
-        [HttpGet("{stuid}/[action]")]
+        [HttpGet("{stuid}/[action]/{uid}")]
         [ValidateInAjax]
-        public async Task<IActionResult> Unlink(int page, int stuid)
+        public async Task<IActionResult> Unlink(int page, int stuid, int uid)
         {
-            var user = await UserManager.FindByStudentIdAsync(stuid);
+            var users = await UserManager.FindByStudentIdAsync(stuid);
+            var user = users.SingleOrDefault(u => u.Id == uid);
             if (user == null) return NotFound();
 
             return AskPost(
@@ -47,11 +49,12 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
         }
 
 
-        [HttpPost("{stuid}/[action]")]
+        [HttpPost("{stuid}/[action]/{uid}")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Unlink(int page, int stuid, bool post = true)
+        public async Task<IActionResult> Unlink(int page, int stuid, int uid, bool post = true)
         {
-            var user = await UserManager.FindByStudentIdAsync(stuid);
+            var users = await UserManager.FindByStudentIdAsync(stuid);
+            var user = users.SingleOrDefault(u => u.Id == uid);
             if (user == null) return NotFound();
 
             user.StudentEmail = null;
@@ -88,10 +91,12 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
             var stuId = await UserManager.FindStudentAsync(stuid);
             if (stuId == null) return NotFound();
 
-            var user = await UserManager.FindByStudentIdAsync(stuid);
+            var users = await UserManager.FindByStudentIdAsync(stuid);
+            string unlinked = "";
 
-            if (user != null)
+            foreach (var user in users)
             {
+                unlinked += $" u{user.Id}";
                 user.StudentEmail = null;
                 user.StudentId = null;
                 user.StudentVerified = false;
@@ -100,20 +105,21 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
             }
 
             await UserManager.DeleteStudentAsync(stuId);
-            await HttpContext.AuditAsync("deleted", $"student s{stuid}", user == null ? null : $"unlink u{user.Id}");
+            await HttpContext.AuditAsync("deleted", $"student s{stuid}", string.IsNullOrEmpty(unlinked) ? null : $"unlink{unlinked}");
             StatusMessage = $"Student ID {stuid} has been removed.";
             return RedirectToAction(nameof(List), new { page });
         }
 
 
-        [HttpGet("{stuid}/[action]")]
+        [HttpGet("{stuid}/[action]/{uid}")]
         [ValidateInAjax]
-        public async Task<IActionResult> MarkVerified(int page, int stuid)
+        public async Task<IActionResult> MarkVerified(int page, int stuid, int uid)
         {
             var stuId = await UserManager.FindStudentAsync(stuid);
             if (stuId == null) return NotFound();
 
-            var user = await UserManager.FindByStudentIdAsync(stuid);
+            var users = await UserManager.FindByStudentIdAsync(stuid);
+            var user = users.SingleOrDefault(u => u.Id == uid);
             if (user == null) return NotFound();
             
             if (!user.StudentVerified)

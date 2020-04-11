@@ -16,7 +16,7 @@ namespace JudgeWeb.Domains.Identity
 
         Task<Student> FindStudentAsync(int sid);
 
-        Task<User> FindByStudentIdAsync(int sid);
+        Task<List<User>> FindByStudentIdAsync(int sid);
 
         Task<IdentityResult> SlideExpirationAsync(User user);
 
@@ -33,6 +33,8 @@ namespace JudgeWeb.Domains.Identity
         Task<(IEnumerable<Student>, int)> ListStudentsAsync(int page, int pageCount);
 
         Task<(IEnumerable<Student>, int)> ListStudentsAsync(int classId, int page, int pageCount);
+
+        Task<IEnumerable<Student>> ListStudentsAsync(TeachingClass @class);
 
         Task<int[]> CheckStudentIdAsync(IEnumerable<int> ids);
 

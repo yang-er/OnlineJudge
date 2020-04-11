@@ -36,7 +36,7 @@
     {
         <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" active-area="Account" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                <i class="fas fa-user d-md-none"></i> @User.GetUserName()
+                <i class="fas fa-user"></i> @User.GetUserName()
             </a>
             <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown">
                 <a class="dropdown-item disabled" href="#">@User.GetNickName()</a>
@@ -87,7 +87,7 @@
     {
         <li class="nav-item">
             <a class="nav-link" role="button" data-toggle="ajaxWindow" data-target="login" asp-area="Account" asp-controller="Sign" asp-action="Login" asp-route-returnUrl="@ViewData["RefreshUrl"]">
-                <i class="fas fa-sign-in-alt fa-fw d-md-none"></i> Login
+                <i class="fas fa-sign-in-alt fa-fw"></i> Login
             </a>
         </li>
     }

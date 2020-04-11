@@ -15,6 +15,8 @@
                 </a>
             </div>
         </li>
+    </viewmodule>
+    <viewmodule roles="Administrator,Teacher">
         <li class="nav-item">
             <a class="nav-link" asp-area="Dashboard" asp-controller="Contests" asp-action="List">
                 <i class="fas fa-trophy"></i> Contests
@@ -26,6 +28,21 @@
             <i class="fas fa-book-open"></i> Problems
         </a>
     </li>
+    <viewmodule roles="Teacher">
+        <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownStudents" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <i class="fas fa-graduation-cap"></i> Schools
+            </a>
+            <div class="dropdown-menu" aria-labelledby="navbarDropdownStudents">
+                <a class="dropdown-item" asp-action="List" asp-controller="Students" asp-area="Dashboard">
+                    <i class="fas fa-user-graduate fa-fw"></i> students
+                </a>
+                <a class="dropdown-item" asp-action="List" asp-controller="Groups" asp-area="Dashboard">
+                    <i class="fas fa-school fa-fw"></i> teaching classes
+                </a>
+            </div>
+        </li>
+    </viewmodule>
     <viewmodule roles="Administrator">
         <li class="nav-item">
             <a class="nav-link" asp-area="Dashboard" asp-controller="Users" asp-action="List">

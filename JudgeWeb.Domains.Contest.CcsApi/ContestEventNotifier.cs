@@ -32,7 +32,7 @@ namespace JudgeWeb.Domains.Contests
 
         DbSet<Event> Events => Context.Set<Event>();
 
-        public ContestEventNotifier(DbContext context)
+        public ContestEventNotifier(DbContextAccessor context)
         {
             Context = context;
         }

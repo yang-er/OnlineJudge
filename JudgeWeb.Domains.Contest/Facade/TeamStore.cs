@@ -266,5 +266,14 @@ namespace JudgeWeb.Domains.Contests
                 .Where(t => t.Status == 0 && t.ContestId == cid)
                 .CachedCountAsync($"`c{cid}`teams`pending_count", TimeSpan.FromSeconds(10));
         }
+
+        public async Task<HashSet<int>> ListMemberUidsAsync(int cid)
+        {
+            var ids = await Members
+                .Where(m => m.ContestId == cid)
+                .Select(m => m.UserId)
+                .ToListAsync();
+            return ids.ToHashSet();
+        }
     }
 }

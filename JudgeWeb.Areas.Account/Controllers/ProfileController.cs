@@ -253,7 +253,8 @@ namespace JudgeWeb.Areas.Account.Controllers
                 return RedirectToAction(nameof(StudentVerify));
             }
 
-            var users = await UserManager.FindByStudentIdAsync(model.StudentId);
+            var users2 = await UserManager.FindByStudentIdAsync(model.StudentId);
+            var users = users2.SingleOrDefault(u => u.StudentEmail != null);
 
             if (users != null && users.Id != user.Id)
             {
