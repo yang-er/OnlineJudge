@@ -49,10 +49,8 @@ namespace JudgeWeb.Areas.Api.Controllers
                 }
                 while (io.GetFileInfo(fileNameFull).Exists);
 
-                var sz = arrayPool.Rent((int)formFile.Length);
-                using (var stream = formFile.OpenReadStream())
-                    await stream.ReadAsync(sz, 0, (int)formFile.Length);
-                await io.WriteBinaryAsync(fileNameFull, sz);
+                using (var dest = io.OpenWrite(fileNameFull))
+                    await formFile.CopyToAsync(dest);
                 await HttpContext.AuditAsync("upload", fileName);
                 return new ObjectResult(new { success = 1, url = "/" + fileNameFull });
             }
