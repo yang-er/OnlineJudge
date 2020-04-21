@@ -62,9 +62,10 @@
                 <div class="card-header">@grp.Name</div>
                 <div class="card-body">
                     <ul class="list-group list-group-flush">
-                        @foreach (var aff in Model.RankCache.Where(g => g.CategoryId == grp.CategoryId).Select(g => g.Affiliation).Distinct())
+                        @foreach (var affid in Model.RankCache.Where(g => g.CategoryId == grp.CategoryId).Select(g => g.AffiliationId).Distinct())
                         {
-                            <li class="list-group-item">@aff.FormalName</li>
+                            var aff = Model.Affiliations.SingleOrDefault(a => a.AffiliationId == affid);
+                            <li class="list-group-item">@aff?.FormalName</li>
                         }
                     </ul>
                 </div>
