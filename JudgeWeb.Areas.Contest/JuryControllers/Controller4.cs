@@ -35,6 +35,18 @@ namespace JudgeWeb.Areas.Contest.Controllers
             return RedirectToAction("Home", "Jury");
         }
 
+        protected async Task<IEnumerable<ListSubmissionModel>> ListSubmissionsByProblemAsync(
+            int cid, int probid, bool all = true)
+        {
+            Expression<Func<Submission, bool>> cond =
+                s => s.ContestId == cid && s.ProblemId == probid;
+            int? limit = all ? default(int?) : 75;
+
+            return await HttpContext.RequestServices
+                .GetRequiredService<ISubmissionStore>()
+                .ListWithJudgingAsync(cond, true, limit);
+        }
+
         protected async Task<IEnumerable<ListSubmissionModel>> ListSubmissionsByJuryAsync(
             int cid, int? teamid = null, bool all = true)
         {

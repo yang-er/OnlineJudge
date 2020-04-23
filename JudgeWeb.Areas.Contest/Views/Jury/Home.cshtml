@@ -143,7 +143,7 @@
                     <tbody>
                         @foreach (var prob in probs)
                         {
-                            <tr asp-area="Polygon" asp-controller="Editor" asp-action="Overview" asp-route-pid="@prob.ProblemId" data-toggle="gotoUrl">
+                            <tr asp-controller="Problems" asp-action="Detail" asp-route-pid="@prob.ProblemId" data-toggle="gotoUrl">
                                 <td use-a>p@(prob.ProblemId)</td>
                                 <td use-a><div class="circle" style="background-color: @prob.Color"></div> <span class="text-monospace">@prob.ShortName</span> - @prob.Title</td>
                                 <td use-a>@(prob.AllowSubmit ? "Yes" : "No")</td>

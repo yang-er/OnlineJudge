@@ -32,6 +32,17 @@ namespace JudgeWeb.Areas.Contest.Controllers
         }
 
 
+        [HttpGet("{pid}")]
+        public async Task<IActionResult> Detail(int cid, int pid, bool all = false)
+        {
+            var prob = Problems.SingleOrDefault(p => p.ProblemId == pid);
+            if (prob == null) return NotFound();
+            ViewBag.TeamNames = await Facade.Teams.ListNamesAsync(cid);
+            ViewBag.Submissions = await ListSubmissionsByProblemAsync(cid, pid, all);
+            return View(prob);
+        }
+
+
         [HttpPost("[action]")]
         [ValidateInAjax]
         [ValidateAntiForgeryToken]
