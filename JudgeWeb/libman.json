@@ -805,6 +805,13 @@
         "css/select2.min.css",
         "js/i18n/en.js"
       ]
+    },
+    {
+      "library": "FileSaver.js@1.3.8",
+      "destination": "wwwroot/static/js/",
+      "files": [
+        "FileSaver.min.js"
+      ]
     }
   ]
 }

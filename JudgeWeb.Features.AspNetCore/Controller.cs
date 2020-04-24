@@ -167,6 +167,12 @@ namespace Microsoft.AspNetCore.Mvc
             return StatusCodePage();
         }
 
+        protected IActionResult StatusCodePage(int code)
+        {
+            Response.StatusCode = code;
+            return StatusCodePage();
+        }
+
         protected IActionResult StatusCodePage()
         {
             ViewBag.RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier;

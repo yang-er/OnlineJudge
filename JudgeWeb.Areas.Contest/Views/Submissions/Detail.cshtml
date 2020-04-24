@@ -56,7 +56,7 @@
     </span>
     <span>
         <i class="fas fa-book-open" title="Problem:"></i>
-        <a asp-area="Polygon" asp-controller="Editor" asp-action="Overview" asp-route-pid="@prob.ProblemId">@prob.ShortName: @prob.Title</a>
+        <a asp-controller="Problems" asp-action="Detail" asp-route-pid="@prob.ProblemId">@prob.ShortName: @prob.Title</a>
     </span>
     <span>
         <i class="fas fa-comments" title="Language:"></i>

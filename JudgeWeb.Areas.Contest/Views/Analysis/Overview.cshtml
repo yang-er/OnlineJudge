@@ -1,0 +1,358 @@
+﻿@model AnalysisOneModel
+@{
+    ViewData["Title"] = "Statistics";
+    ViewData["DisableAjaxRefresh"] = true;
+    Contest ctx = ViewBag.Contest;
+    ContestProblem[] probs = ViewBag.Problems;
+    Dictionary<int, (string, string)> teamNames = ViewBag.TeamNames2;
+    var byprob = Model.TeamStatistics.GroupBy(a => a.Key.prob).ToDictionary(k => k.Key, k => (k.Count(), k.Count(a => a.Value.ac > 0)));
+    var byteam = Model.TeamStatistics.GroupBy(a => a.Key.team).ToDictionary(k => k.Key, k => (k.Count(), k.Count(a => a.Value.ac > 0), k.Sum(a => a.Value.ac + a.Value.at), k.Sum(a => a.Value.ac)));
+}
+
+@functions
+{
+    string loopFor(Verdict v)
+    {
+        WriteLiteral("[");
+        int j = (int)v;
+        for (int i = 0; i <= Model.TotalMinutes; i++)
+        {
+            WriteLiteral($"[{i},{Model.VerdictStatistics[j, i]}],");
+        }
+        WriteLiteral("]");
+        return "";
+    }
+
+    string loopLang(IReadOnlyDictionary<string, int> stat)
+    {
+        WriteLiteral("[");
+        foreach (var (lang, count) in stat)
+        {
+            WriteLiteral($"{{\"label\":\"{lang}\",\"value\":{count}}},");
+        }
+        WriteLiteral("]");
+        return "";
+    }
+
+    string loopProb(IReadOnlyDictionary<int, int> stat)
+    {
+        ContestProblem[] probs = ViewBag.Problems;
+        WriteLiteral("[");
+        foreach (var prob in probs)
+        {
+            WriteLiteral($"{{\"label\":\"{prob.ShortName}\",\"value\":{stat.GetValueOrDefault(prob.ProblemId)}}},");
+        }
+        WriteLiteral("]");
+        return "";
+    }
+}
+
+<h2 class="mt-2">Statistics of contest</h2>
+
+<script>
+    $(function () {
+        $('[data-toggle="popover"]').popover({
+            trigger: 'hover',
+            html: true
+        })
+    })
+</script>
+
+<div class="row">
+    <div class="col-md-3 mt-3">
+        <div class="card">
+            <div class="card-header">
+                Contest Stats
+            </div>
+            <div class="card-body">
+                @{
+                    var account = Model.AcceptedLanguages.Values.Append(0).Sum();
+                    var totcount = Model.AcceptedLanguages.Values.Append(0).Sum();
+                    var misery = Model.TotalMinutes - Math.Ceiling(teamNames.Select(k => Model.TeamLastSubmission.GetValueOrDefault(k.Key)).Average());
+                }
+                <abbr data-toggle="popover" data-placement="bottom" title="Misery Index" data-content="This is a measure of how 'bored' contestants are. It is the average number of people-minutes spent fruitlessly trying to solve problems at the end of the contest. <br> Calculated as:<br> average across all teams of [1 person x (number of minutes elapsed - minute last problem solved by team t)]">Misery index</abbr>: @misery minutes<br>
+                # Submissions: @totcount<br>
+                # Accepted Submissions: @account <span class="text-muted">(~@(Math.Floor(account*100.0/totcount))%)</span><br>
+                # of Teams: @teamNames.Count
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mt-3" id="graph_languages">
+        <div class="card">
+            <div class="card-header">
+                Language Stats
+            </div>
+            <div class="card-body">
+                <svg style="height: 250px"></svg>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-5 mt-3" id="graph_problems">
+        <div class="card">
+            <div class="card-header">
+                Problems Attempted/Solved
+            </div>
+            <div class="card-body">
+                <svg style="height: 250px"></svg>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-12 mt-3" id="graph_submissions">
+        <div class="card">
+            <div class="card-header">
+                Submissions Over Time
+            </div>
+            <div class="card-body">
+                <svg style="height: 400px"></svg>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-6 mt-3 mb-3">
+        <div class="card">
+            <div class="card-header">
+                Problems
+            </div>
+            <div class="card-body tablecard" style="max-height:35em;overflow-y:scroll">
+                <table class="table table-sm table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th scope="col">ID</th>
+                            <th scope="col">name</th>
+                            <th scope="col">time<br>limit</th>
+                            <th scope="col">memory<br>limit</th>
+                            <th scope="col">test<br>cases</th>
+                            <th scope="col"># <br>attempts/solutions</th>
+                            <th scope="col"># teams<br>attempted/solved</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in probs)
+                        {
+                            var pt = byprob.GetValueOrDefault(item.ProblemId);
+                            <tr asp-action="Problem" asp-route-pid="@item.ProblemId">
+                                <th scope="row">@item.ProblemId</th>
+                                <td use-a>@item.ShortName - @item.Title</td>
+                                <td use-a>@(item.TimeLimit / 1000.0)</td>
+                                <td use-a>@(item.MemoryLimit / 1024)</td>
+                                <td use-a>@item.TestcaseCount</td>
+                                <td use-a>@Model.AttemptedProblems.GetValueOrDefault(item.ProblemId) / @Model.AcceptedProblems.GetValueOrDefault(item.ProblemId)</td>
+                                <td use-a>@pt.Item1 / @pt.Item2</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 mt-3 mb-3">
+        <div class="card">
+            <div class="card-header">
+                Teams
+            </div>
+            <div class="card-body tablecard" style="max-height:35em;overflow-y:scroll">
+                <table class="table table-sm table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th scope="col">ID</th>
+                            <th scope="col">aff.</th>
+                            <th scope="col" style="max-width: 200px">name</th>
+                            <th scope="col">#<br>submitted/correct</th>
+                            <th scope="col"># problems<br>attempted/solved</th>
+                            <th scope="col">Misery<br>Index</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var team in teamNames)
+                        {
+                            var tt = byteam.GetValueOrDefault(team.Key);
+                            <tr asp-action="Detail" asp-controller="Teams" asp-route-teamid="@team.Key">
+                                <th scope="row">@team.Key</th>
+                                <td use-a class="text-variant">@team.Value.Item2</td>
+                                <td use-a class="truncate" style="max-width: 200px">@team.Value.Item1</td>
+                                <td use-a>@tt.Item3 / @tt.Item4</td>
+                                <td use-a>@tt.Item1 / @tt.Item2</td>
+                                <td use-a>@(Model.TotalMinutes - Model.TeamLastSubmission.GetValueOrDefault(team.Key))</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<link rel="stylesheet" href="~/static/chart/nv.d3.min.css" type="text/css" />
+<script type="text/javascript" src="~/static/chart/d3.min.js"></script>
+<script type="text/javascript" src="~/static/chart/nv.d3.min.js"></script>
+<script type="text/javascript" src="~/static/js/FileSaver.min.js"></script>
+
+<script>
+
+    //////////////////////////////////////
+    // Results by language
+    // bar graph, x axis is language, y axis is # of solutions
+    // mutlibar, one for attempts, one for solutions
+
+    var language_stats = [
+        { key: "Attempted", color: 'red', values: @loopLang(Model.AttemptedLanguages) },
+        { key: "Accepted", color: 'green', values: @loopLang(Model.AcceptedLanguages) }
+    ];
+
+    nv.addGraph(function () {
+        var chart = nv.models.multiBarChart()
+            .x(function (d) { return d.label })
+            .y(function (d) { return d.value })
+            .showControls(false)
+            .reduceXTicks(false)
+            .margin({ bottom: 40 })
+            .duration(250);
+        chart.yAxis
+            .tickFormat(d3.format('.0f'))
+            .axisLabel('# of Submissions');
+        chart.xAxis.axisLabel("Language");
+        d3.select('#graph_languages svg')
+            .datum(language_stats)
+            .call(chart);
+        nv.utils.windowResize(chart.update);
+        return chart;
+    });
+
+
+    //////////////////////////////////////
+    // Results by problem
+    // Graph, multibar chart, x axis is problem id/shortname, y axis is # of teams
+    // one bar for #teams attempted(red), second bar for solved(green)
+
+    var problem_stats = [
+        { key: "Attempted", color: 'red', values: @loopProb(Model.AttemptedProblems) },
+        { key: "Accepted", color: 'green', values: @loopProb(Model.AcceptedProblems) }
+    ];
+
+    nv.addGraph(function () {
+        var chart = nv.models.multiBarChart()
+            .x(function (d) { return d.label })
+            .y(function (d) { return d.value })
+            .showControls(false)
+            .reduceXTicks(false)
+            .margin({ bottom: 40 })
+            .duration(250);
+        chart.yAxis
+            .tickFormat(d3.format('.0f'))
+            .axisLabel('# of Teams');
+        chart.xAxis.axisLabel("Problem");
+        d3.select('#graph_problems svg')
+            .datum(problem_stats)
+            .call(chart);
+        nv.utils.windowResize(chart.update);
+        return chart;
+    });
+
+
+    //////////////////////////////////////
+    // Submissions over time
+    // stacked graph of correct, runtime-error, wrong-answer, compiler-error, timelimit, etc
+    // x-axis is contest time
+    // y axis is # of submissions
+
+    var submission_stats = [
+        { key: "correct", color: "#01df01", values: @loopFor(Verdict.Accepted) },
+        { key: "wrong-answer", color: "red", values: @loopFor(Verdict.WrongAnswer) },
+        { key: "time-limit", color: "orange", values: @loopFor(Verdict.TimeLimitExceeded) },
+        { key: "run-error", color: "#ff3399", values: @loopFor(Verdict.RuntimeError) },
+        { key: "memory-limit", color: "purple", values: @loopFor(Verdict.MemoryLimitExceeded) },
+        { key: "compile-error", color: "grey", values: @loopFor(Verdict.CompileError) },
+    ];
+
+    nv.addGraph(function () {
+        var chart = nv.models.stackedAreaChart()
+            // .margin({left: 100})  //Adjust chart margins to give the x-axis some breathing room.
+            // .useInteractiveGuideline(true)  //We want nice looking tooltips and a guideline!
+            // .transitionDuration(350)  //how fast do you want the lines to transition?
+            // .showLegend(true)       //Show the legend, allowing users to turn on/off line series.
+            .showControls(false)
+            .x(function (d) { return d[0] })   //We can modify the data accessor functions...
+            .y(function (d) { return d[1] })   //...in case your data is formatted differently.
+            .showYAxis(true)        //Show the y-axis
+            .showXAxis(true)        //Show the x-axis
+            .forceX([0, @(Model.TotalMinutes)])
+            .forceY([0, @(Model.TotalSubmissions * 1.125)]);
+        chart.xAxis     //Chart x-axis settings
+            .axisLabel('Contest Time(minutes)')
+            .tickFormat(d3.format('d'));
+
+        chart.yAxis     //Chart y-axis settings
+            .axisLabel('Total Submissions')
+            .tickFormat(d3.format('d'));
+
+        d3.select('#graph_submissions svg')
+            .datum(submission_stats)
+            .call(chart);
+        nv.utils.windowResize(chart.update);
+        return chart;
+    });
+
+
+    // Source: http://bl.ocks.org/Rokotyan/0556f8facbaf344507cdc45dc3622177
+    // Slightly modified to copy the correct CSS
+    function getSVGString(svgNode) {
+        svgNode.setAttribute('xlink', 'http://www.w3.org/1999/xlink');
+        var cssStyleText = getCSSStyles();
+        appendCSS(cssStyleText, svgNode);
+
+        var serializer = new XMLSerializer();
+        var svgString = serializer.serializeToString(svgNode);
+        svgString = svgString.replace(/(\w+)?:?xlink=/g, 'xmlns:xlink='); // Fix root xlink without namespace
+        svgString = svgString.replace(/NS\d+:href/g, 'xlink:href'); // Safari NS namespace fix
+
+        return svgString;
+
+        function getCSSStyles() {
+            // Extract CSS Rules
+            var extractedCSSText = "";
+            for (var i = 0; i < document.styleSheets.length; i++) {
+                var s = document.styleSheets[i];
+
+                try {
+                    if (!s.cssRules) continue;
+                } catch (e) {
+                    if (e.name !== 'SecurityError') throw e; // for Firefox
+                    continue;
+                }
+
+                var cssRules = s.cssRules;
+                for (var r = 0; r < cssRules.length; r++) {
+                    if (/nvd3/.test(cssRules[r].selectorText) || true) {
+                        extractedCSSText += cssRules[r].cssText;
+                    }
+                }
+            }
+
+            return extractedCSSText;
+        }
+
+        function appendCSS(cssText, element) {
+            var styleElement = document.createElement("style");
+            styleElement.setAttribute("type", "text/css");
+            styleElement.innerHTML = cssText;
+            var refNode = element.hasChildNodes() ? element.children[0] : null;
+            element.insertBefore(styleElement, refNode);
+        }
+    }
+
+    $(function () {
+        $('.container-fluid svg').each(function () {
+            var $button = $('<button class="btn btn-sm btn-primary"><i class="fas fa-download"></i> Download as SVG</button>');
+            $(this).parent().append($button);
+
+            $button.on('click', function () {
+                var svg = $(this).parent().find('svg')[0];
+                var svgString = getSVGString(svg);
+                var svgBlob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
+                saveAs(svgBlob, 'graph.svg');
+            });
+        });
+    });
+
+</script>

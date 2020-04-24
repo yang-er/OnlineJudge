@@ -18,16 +18,6 @@ namespace JudgeWeb.Areas.Contest.Controllers
         }
 
 
-        [HttpGet("[action]")]
-        public async Task<IActionResult> Statistics(int cid)
-        {
-            var result = await Store.ListWithJudgingAsync(
-                predicate: s => s.ContestId == cid,
-                selector: (s, j) => new { s.Time, j.Status });
-            return View(result.Select(a => (a.Status, a.Time)));
-        }
-
-
         [HttpGet]
         public async Task<IActionResult> List(int cid, bool all = false)
         {

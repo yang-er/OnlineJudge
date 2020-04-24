@@ -1,0 +1,302 @@
+﻿@model AnalysisTwoModel
+@{
+    ViewData["Title"] = "Statistics";
+    Contest ctx = ViewBag.Contest;
+    ContestProblem[] probs = ViewBag.Problems;
+    Dictionary<int, (string, string)> teamNames = ViewBag.TeamNames2;
+}
+
+@functions
+{
+    string loopFor(Verdict v)
+    {
+        WriteLiteral("[");
+        int j = (int)v;
+        for (int i = 0; i <= Model.TotalMinutes; i++)
+        {
+            WriteLiteral($"[{i},{Model.VerdictStatistics[j, i]}],");
+        }
+        WriteLiteral("]");
+        return "";
+    }
+}
+
+<h2 class="mt-2">Statistics of problem @Model.Problem.Title</h2>
+
+<script>
+    $(function () {
+        $('[data-toggle="popover"]').popover({
+            trigger: 'hover',
+            html: true
+        })
+    })
+</script>
+<div class="row">
+<div class="col-lg-3 col-sm-6 mt-3">
+    <div class="card">
+        <div class="card-header">
+            Misc Statistics
+        </div>
+        <div class="card-body">
+            <dl class="row">
+                <dt class="col-sm-6"># Submissions</dt>
+                <dd class="col-sm-6">@Model.TotalSubmissions</dd>
+
+                <dt class="col-sm-6"># Correct</dt>
+                <dd class="col-sm-6">@Model.TotalAccepted <span class="text-muted">(@($"{100.0 * Model.TotalAccepted / Model.TotalSubmissions:F2}")%)</span></dd>
+
+                <dt class="col-sm-6"># Teams Attempted</dt>
+                <dd class="col-sm-6">@Model.TeamAttempted</dd>
+
+                <dt class="col-sm-6"># Teams Correct</dt>
+                <dd class="col-sm-6">@Model.TeamAccepted <span class="text-muted">(@($"{100.0 * Model.TeamAccepted / Model.TeamAttempted:F2}")%)</dd>
+            </dl>
+        </div>
+    </div>
+</div>
+<div class="col-lg-4 col-sm-6 mt-3" id="judging_results">
+    <div class="card">
+        <div class="card-header">
+            Judging Results
+        </div>
+        <div class="card-body">
+            <svg style="height: 275px"></svg>
+        </div>
+    </div>
+</div>
+<div class="col-lg-5 col-sm-12 mt-3" id="submission_times">
+    <div class="card">
+        <div class="card-header">
+            Submissions over Time
+        </div>
+        <div class="card-body">
+            <svg style="height: 275px"></svg>
+        </div>
+    </div>
+</div>
+  </div>
+<div class="row equal mt-3">
+    <div class="col-12" id="maxruntime">
+        <div class="card">
+            <div class="card-header">
+                Max Runtimes
+            </div>
+            <div class="card-body">
+                <svg style="height: 600px"></svg>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<link rel="stylesheet" href="~/static/chart/nv.d3.min.css" type="text/css" />
+<script type="text/javascript" src="~/static/chart/d3.min.js"></script>
+<script type="text/javascript" src="~/static/chart/nv.d3.min.js"></script>
+<script type="text/javascript" src="~/static/js/FileSaver.min.js"></script>
+
+<script>
+    var run_max_times = [
+        { key: "Max Runtimes", values: @Json.Serialize(Model.List) }
+    ];
+
+    nv.addGraph(function () {
+        var chart = nv.models.discreteBarChart()
+            .x(function (d) { return d.label })
+            .y(function (d) { return d.value })
+            .valueFormat(d3.format('.3f'))
+            .staggerLabels(run_max_times[0].values.length > 10)
+            .forceY([0, @(Model.Problem.TimeLimit / 1000.0 + 1)])
+            .showValues(false)
+            .margin({ bottom: 70 })
+            .duration(250);
+
+        chart.yAxis
+            .tickFormat(d3.format('.3f'))
+            .axisLabel('Runtime(in s)');
+        chart.xAxis.axisLabel("Judgings");
+        d3.select('#maxruntime svg')
+            .datum(run_max_times)
+            .call(chart);
+
+        // Clicking on one of the bars takes you to the judgment
+        chart.discretebar.dispatch.on('elementClick', function (e) {
+            window.location = "@Url.Action("Detail", "Submissions", new { sid = "_SUBMIT_ID_" })".replace('_SUBMIT_ID_', e.data.id);
+        });
+
+        // More useful tooltip
+        chart.tooltip.contentGenerator(function (obj) {
+            var format = d3.format(".3f");
+            return '<div style="background: LightCyan;padding:0.5em">'
+                + '<b>Team:</b> ' + obj.data.team + '<br/>'
+                + '<b>Submitted:</b> ' + obj.data.submittime + '<br/>'
+                + '<b>max. Runtime:</b> ' + format(obj.data.value) + 's</b><br/>'
+                + '<small>click to view judging</small>'
+                + '</div>';
+        });
+
+        // Create our timelimit line
+        d3.select('#maxruntime svg')
+            .append('line')
+            .attr({ id: 'maxline' })
+            .style("stroke", "#F00");
+
+        // update the line in case the chart dimensions have changed
+        var svgsize = chart.container.clientWidth || chart.container.parentNode.clientWidth;
+        updateline = function () {
+            line = d3.select('#maxruntime svg #maxline')
+                .attr({
+                    x1: chart.margin().left,
+                    y1: chart.yAxis.scale()(@(Model.Problem.TimeLimit / 1000.0)) + chart.margin().top,
+                    x2: +svgsize - chart.margin().right,
+                    y2: chart.yAxis.scale()(@(Model.Problem.TimeLimit / 1000.0)) + chart.margin().top,
+                })
+        }
+
+        updateline();
+        nv.utils.windowResize(function () {
+            updateline();
+            chart.update()
+        });
+        return chart;
+    });
+
+    //////////////////////////////////////
+    // Results by type
+
+    var judging_results = [{
+        key: "Judging Results",
+        values: [
+            { "label": "WA", "value": @Model.VerdictStatistics[(int)Verdict.WrongAnswer, Model.TotalMinutes], "color": "red", },
+            { "label": "RTE", "value": @Model.VerdictStatistics[(int)Verdict.RuntimeError, Model.TotalMinutes], "color": "#ff3399", },
+            { "label": "TLE", "value": @Model.VerdictStatistics[(int)Verdict.TimeLimitExceeded, Model.TotalMinutes], "color": "orange", },
+            { "label": "AC", "value": @Model.VerdictStatistics[(int)Verdict.Accepted, Model.TotalMinutes], "color": "#01df01", },
+            { "label": "MLE", "value": @Model.VerdictStatistics[(int)Verdict.MemoryLimitExceeded, Model.TotalMinutes], "color": "purple", },
+            { "label": "CE", "value": @Model.VerdictStatistics[(int)Verdict.CompileError, Model.TotalMinutes], "color": "grey", },
+        ]
+    }];
+
+    nv.addGraph(function () {
+        var chart = nv.models.discreteBarChart()
+            .x(function (d) { return d.label })
+            .y(function (d) { return d.value })
+            .valueFormat(d3.format('.0f'))
+            //.staggerLabels(run_max_times[0].values.length > 2)
+            .margin({ bottom: 50 })
+            .duration(250);
+        chart.yAxis
+            .tickFormat(d3.format('.0f'))
+            .axisLabel('Number of submissions');
+        chart.xAxis.axisLabel("Judgement");
+        d3.select('#judging_results svg')
+            .datum(judging_results)
+            .call(chart);
+        nv.utils.windowResize(chart.update);
+        return chart;
+    });
+
+
+    //////////////////////////////////////
+    // Submissions over time
+    // stacked graph of correct, runtime-error, wrong-answer, compiler-error, timelimit, etc
+    // x-axis is contest time
+    // y axis is # of submissions
+
+    var submission_stats = [
+        { key: "correct", color: "#01df01", values: @loopFor(Verdict.Accepted) },
+        { key: "wrong-answer", color: "red", values: @loopFor(Verdict.WrongAnswer) },
+        { key: "time-limit", color: "orange", values: @loopFor(Verdict.TimeLimitExceeded) },
+        { key: "run-error", color: "#ff3399", values: @loopFor(Verdict.RuntimeError) },
+        { key: "memory-limit", color: "purple", values: @loopFor(Verdict.MemoryLimitExceeded) },
+        { key: "compile-error", color: "grey", values: @loopFor(Verdict.CompileError) },
+    ];
+
+    nv.addGraph(function () {
+        var chart = nv.models.stackedAreaChart()
+            // .margin({left: 100})  //Adjust chart margins to give the x-axis some breathing room.
+            // .useInteractiveGuideline(true)  //We want nice looking tooltips and a guideline!
+            // .transitionDuration(350)  //how fast do you want the lines to transition?
+            // .showLegend(true)       //Show the legend, allowing users to turn on/off line series.
+            .showControls(false)
+            .x(function (d) { return d[0] })   //We can modify the data accessor functions...
+            .y(function (d) { return d[1] })   //...in case your data is formatted differently.
+            .showYAxis(true)        //Show the y-axis
+            .showXAxis(true)        //Show the x-axis
+            .forceX([0, @(Model.TotalMinutes)])
+            .forceY([0, @(Model.TotalSubmissions * 1.125)]);
+        chart.xAxis     //Chart x-axis settings
+            .axisLabel('Contest Time(minutes)')
+            .tickFormat(d3.format('d'));
+
+        chart.yAxis     //Chart y-axis settings
+            .axisLabel('Total Submissions')
+            .tickFormat(d3.format('d'));
+
+        d3.select('#submission_times svg')
+            .datum(submission_stats)
+            .call(chart);
+        nv.utils.windowResize(chart.update);
+        return chart;
+    });
+
+    // Source: http://bl.ocks.org/Rokotyan/0556f8facbaf344507cdc45dc3622177
+    // Slightly modified to copy the correct CSS
+    function getSVGString(svgNode) {
+        svgNode.setAttribute('xlink', 'http://www.w3.org/1999/xlink');
+        var cssStyleText = getCSSStyles();
+        appendCSS(cssStyleText, svgNode);
+
+        var serializer = new XMLSerializer();
+        var svgString = serializer.serializeToString(svgNode);
+        svgString = svgString.replace(/(\w+)?:?xlink=/g, 'xmlns:xlink='); // Fix root xlink without namespace
+        svgString = svgString.replace(/NS\d+:href/g, 'xlink:href'); // Safari NS namespace fix
+
+        return svgString;
+
+        function getCSSStyles() {
+            // Extract CSS Rules
+            var extractedCSSText = "";
+            for (var i = 0; i < document.styleSheets.length; i++) {
+                var s = document.styleSheets[i];
+
+                try {
+                    if (!s.cssRules) continue;
+                } catch (e) {
+                    if (e.name !== 'SecurityError') throw e; // for Firefox
+                    continue;
+                }
+
+                var cssRules = s.cssRules;
+                for (var r = 0; r < cssRules.length; r++) {
+                    if (/nvd3/.test(cssRules[r].selectorText) || true) {
+                        extractedCSSText += cssRules[r].cssText;
+                    }
+                }
+            }
+
+            return extractedCSSText;
+        }
+
+        function appendCSS(cssText, element) {
+            var styleElement = document.createElement("style");
+            styleElement.setAttribute("type", "text/css");
+            styleElement.innerHTML = cssText;
+            var refNode = element.hasChildNodes() ? element.children[0] : null;
+            element.insertBefore(styleElement, refNode);
+        }
+    }
+
+    $(function () {
+        $('.container-fluid svg').each(function () {
+            var $button = $('<button class="btn btn-sm btn-primary"><i class="fas fa-download"></i> Download as SVG</button>');
+            $(this).parent().append($button);
+
+            $button.on('click', function () {
+                var svg = $(this).parent().find('svg')[0];
+                var svgString = getSVGString(svg);
+                var svgBlob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
+                saveAs(svgBlob, 'graph.svg');
+            });
+        });
+    });
+
+</script>
