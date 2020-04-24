@@ -35,7 +35,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
             }
             
             var time = Contest.EndTime - Contest.StartTime;
-            if (time.HasValue && time.Value.TotalMilliseconds >= 14400)
+            if (time.HasValue && time.Value.TotalMinutes >= 14400)
             {
                 context.Result = StatusCodePage(503);
                 return;
