@@ -28,8 +28,18 @@ namespace JudgeWeb.Areas.Contest.Controllers
         public override async Task OnActionExecutingAsync(ActionExecutingContext context)
         {
             await base.OnActionExecutingAsync(context);
-            if (context.Result == null && Contest.GetState() == Data.ContestState.NotScheduled)
+            if (context.Result == null && Contest.GetState() == ContestState.NotScheduled)
+            {
                 context.Result = StatusCodePage(410);
+                return;
+            }
+            
+            var time = Contest.EndTime - Contest.StartTime;
+            if (time.HasValue && time.Value.TotalMilliseconds >= 14400)
+            {
+                context.Result = StatusCodePage(503);
+                return;
+            }
 
             var lst = await Facade.Teams.ListAsync(Contest.ContestId,
                 selector: t => new { t.TeamName, t.TeamId, t.Affiliation.ExternalId },
