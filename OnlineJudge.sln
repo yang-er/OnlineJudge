@@ -57,7 +57,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JudgeWeb.Domains.Identity.A
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JudgeWeb.Domains.Contests.CcsApi", "JudgeWeb.Domains.Contest.CcsApi\JudgeWeb.Domains.Contests.CcsApi.csproj", "{F7E06A97-6AD2-492C-B2D2-603C374F59D0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JudgeWeb.Data.Abstraction", "JudgeWeb.Data.Abstraction\JudgeWeb.Data.Abstraction.csproj", "{7FBE105E-BB77-45D6-9CFD-7AD0E2B7656A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JudgeWeb.Data.Abstraction", "JudgeWeb.Data.Abstraction\JudgeWeb.Data.Abstraction.csproj", "{7FBE105E-BB77-45D6-9CFD-7AD0E2B7656A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

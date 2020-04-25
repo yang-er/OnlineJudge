@@ -13,7 +13,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
 
         public new Problem Problem { get; set; }
 
-        protected new IActionResult NotFound() => ExplicitNotFound();
+        protected new IActionResult NotFound() => StatusCodePage(404);
 
         private async Task<IActionResult> ValidateAsync()
         {

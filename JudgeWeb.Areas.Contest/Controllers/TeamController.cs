@@ -21,7 +21,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
     {
         public bool TooEarly => Contest.GetState() < ContestState.Started;
 
-        private new IActionResult NotFound() => ExplicitNotFound();
+        private new IActionResult NotFound() => StatusCodePage(404);
 
         public override async Task OnActionExecutingAsync(ActionExecutingContext context)
         {

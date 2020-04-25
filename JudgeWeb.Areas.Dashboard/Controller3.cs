@@ -7,6 +7,6 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
 {
     public class Controller3 : Controller2
     {
-        protected new IActionResult NotFound() => ExplicitNotFound();
+        protected new IActionResult NotFound() => StatusCodePage(404);
     }
 }

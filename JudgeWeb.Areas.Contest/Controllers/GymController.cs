@@ -23,7 +23,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
     {
         public bool TooEarly => Contest.GetState() < ContestState.Started;
 
-        private new IActionResult NotFound() => ExplicitNotFound();
+        private new IActionResult NotFound() => StatusCodePage(404);
 
         private IActionResult GoBackHome(string message)
         {
@@ -343,7 +343,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
 
         [Route("[action]")]
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult NotFound2() => ExplicitNotFound();
+        public IActionResult NotFound2() => StatusCodePage(404);
         [Route("[action]")]
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error() => StatusCodePage();

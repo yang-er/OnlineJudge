@@ -161,12 +161,6 @@ namespace Microsoft.AspNetCore.Mvc
 
         public bool IsWindowAjax { get; private set; }
         
-        protected IActionResult ExplicitNotFound()
-        {
-            Response.StatusCode = 404;
-            return StatusCodePage();
-        }
-
         protected IActionResult StatusCodePage(int code)
         {
             Response.StatusCode = code;

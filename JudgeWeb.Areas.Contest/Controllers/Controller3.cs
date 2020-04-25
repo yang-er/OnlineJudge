@@ -77,14 +77,14 @@ namespace JudgeWeb.Areas.Contest.Controllers
         protected IActionResult PrintView()
         {
             if (!Contest.PrintingAvaliable)
-                return ExplicitNotFound();
+                return StatusCodePage(404);
             return View(new Models.AddPrintModel());
         }
 
         protected async Task<IActionResult> PrintDo(int cid, Models.AddPrintModel model)
         {
             if (!Contest.PrintingAvaliable)
-                return ExplicitNotFound();
+                return StatusCodePage(404);
 
             var Printings = HttpContext.RequestServices
                 .GetRequiredService<IPrintingStore>();

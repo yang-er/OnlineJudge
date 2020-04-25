@@ -188,7 +188,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
 
         [Route("[action]")]
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult NotFound2() => ExplicitNotFound();
+        public IActionResult NotFound2() => StatusCodePage(404);
         [Route("[action]")]
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error() => StatusCodePage();

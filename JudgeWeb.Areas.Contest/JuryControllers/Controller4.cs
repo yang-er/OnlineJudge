@@ -27,7 +27,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
             return base.OnActionExecutingAsync(context);
         }
 
-        protected new IActionResult NotFound() => ExplicitNotFound();
+        protected new IActionResult NotFound() => StatusCodePage(404);
 
         protected IActionResult GoBackHome(string str)
         {
