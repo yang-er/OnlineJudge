@@ -39,8 +39,8 @@
                     <td class="text-monospace">@print.FileName</td>
                     <td class="text-variant">@print.Language</td>
                     <td><a asp-route-fid="@print.Id" asp-action="Download" title="download print file"><i class="fas fa-file-download"></i></a></td>
-                    <td><if cond="@(print.Done == true)"><a asp-route-fid="@print.Id" asp-action="Undone" title="redo this print"><i class="fas fa-copy"></i></a></if></td>
-                    <td><if cond="@(print.Done != true)"><a asp-route-fid="@print.Id" asp-action="Done" title="mark print as done"><i class="fas fa-running"></i></a></if></td>
+                    <td><a asp-show-if="print.Done == true" asp-route-fid="@print.Id" asp-action="Undone" title="redo this print"><i class="fas fa-copy"></i></a></td>
+                    <td><a asp-show-if="print.Done != true" asp-route-fid="@print.Id" asp-action="Done" title="mark print as done"><i class="fas fa-running"></i></a></td>
                 </tr>
             }
         </tbody>

@@ -8,7 +8,7 @@
         : now >= endTime ? 100 : (now - startTime) * 100.0 / (endTime - startTime);
 }
 
-<if cond="@(prog > 0 && prog < 100)">
+<razor asp-show-if="@(prog > 0 && prog < 100)">
     <div class="progress" style="margin-top:-9px; height: 10px; margin-bottom: 9px" data-progress-bar>
         <div class="progress-bar" role="progressbar" style="width: @prog%;"
                 aria-valuenow="@prog" aria-valuemin="0" aria-valuemax="100"></div>
@@ -18,4 +18,4 @@
             body { padding-top: 4.066666rem; }
         }
     </style>
-</if>
+</razor>

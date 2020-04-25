@@ -32,8 +32,8 @@
                     <td>@stu.Name</td>
                     <td class="@(stu.UserName != null ? "" : "disabled")" use-a>@stu.UserName</td>
                     <td class="@(stu.IsVerified.GetValueOrDefault() ? "" : "text-decoration-del")" use-a>@stu.Email</td>
-                    <td><if cond="@(stu.UserName != null && !stu.IsVerified.GetValueOrDefault())"><a asp-action="MarkVerified" asp-route-stuid="@stu.Id" asp-route-uid="@stu.UserId" asp-route-page="@curPage" title="mark this student verified" data-toggle="ajaxWindow" data-target="signStud"><i class="fas fa-fingerprint"></i></a></if></td>
-                    <td><if cond="stu.UserName != null"><a asp-action="Unlink" asp-route-stuid="@stu.Id" asp-route-uid="@stu.UserId" asp-route-page="@curPage" title="unlink this student with account" data-toggle="ajaxWindow" data-target="unlinkStud"><i class="fas fa-unlink"></i></a></if></td>
+                    <td><a asp-show-if="@(stu.UserName != null && !stu.IsVerified.GetValueOrDefault())" asp-action="MarkVerified" asp-route-stuid="@stu.Id" asp-route-uid="@stu.UserId" asp-route-page="@curPage" title="mark this student verified" data-toggle="ajaxWindow" data-target="signStud"><i class="fas fa-fingerprint"></i></a></td>
+                    <td><a asp-show-if="stu.UserName != null" asp-action="Unlink" asp-route-stuid="@stu.Id" asp-route-uid="@stu.UserId" asp-route-page="@curPage" title="unlink this student with account" data-toggle="ajaxWindow" data-target="unlinkStud"><i class="fas fa-unlink"></i></a></td>
                     <td><a asp-action="Delete" asp-route-stuid="@stu.Id" asp-route-page="@curPage" title="delete this student" data-toggle="ajaxWindow" data-target="deleteStud"><i class="fas fa-trash-alt"></i></a></td>
                 </tr>
             }

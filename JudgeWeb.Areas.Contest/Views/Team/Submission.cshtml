@@ -27,28 +27,23 @@
                         <div class="p-2">Compilation: <span class="badge badge-@compile_badge">@compile_result</span></div>
                     </div>
 
-                    <if cond="@(compile_badge == "success")">
-                        <div class="d-flex flex-row">
-                            <div class="p-2">
-                                Run result: <verdict3 value="@Model.Verdict" />
-                            </div>
-                            <if cond="ctx.RankingStrategy == 2">
-                                <div class="p-2">
-                                    Score: <b>@Model.Grade</b>
-                                </div>
-                            </if>
+                    <div class="d-flex flex-row" asp-show-if="@(compile_badge == "success")">
+                        <div class="p-2">
+                            Run result: <verdict3 value="@Model.Verdict" />
                         </div>
-                    </if>
-
+                        <div asp-show-if="ctx.RankingStrategy == 2" class="p-2">
+                            Score: <b>@Model.Grade</b>
+                        </div>
+                    </div>
+                    
                     <hr />
                     <h4 class="text-center">Compilation output</h4>
                     <snippet class="pre-scrollable" base64="@Model.CompilerOutput" nodata="There were no compiler errors or warnings." />
                     
-                    <if cond="@(ctx.GetState() == ContestState.Finalized)">
-                        <hr />
-                        <h4 class="text-center">Source code</h4>
-                        <ace value="@Model.SourceCode.UnBase64()" file="Main.@Model.Language.FileExtension" />
-                    </if>
+                    <hr />
+                    <h4 class="text-center">Source code</h4>
+                    <p asp-show-if="ctx.GetState() != ContestState.Finalized" class="nodata">Source code will be available when contest is finalized.</p>
+                    <ace asp-show-if="ctx.GetState() == ContestState.Finalized" value="@Model.SourceCode.UnBase64()" file="Main.@Model.Language.FileExtension" />
                 </div>
             </div>
             <div class="modal-footer">

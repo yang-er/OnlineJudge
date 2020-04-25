@@ -70,24 +70,19 @@
     </p>
     @Html.Raw(ViewBag.Markdown)
     <h3 class="mt-4">Practice</h3>
-    <if cond="@(!ViewData.ContainsKey("HasTeam"))">
-        <if cond="ctx.RegisterDefaultCategory == 0">
-            <p>Registration closed.</p>
-        </if>
-        <if cond="ctx.RegisterDefaultCategory != 0">
-            <p>
-                Want to solve the contest problems? Just register for practice and you will be able to submit solutions.
-            </p>
-            <p>
-                <a class="btn btn-sm btn-primary" asp-action="Register">Register</a>
-            </p>
-        </if>
-    </if>
-    <viewmodule key="HasTeam">
-        <p>
-            You have registered as Team <b>@team.TeamName</b>.
+    <razor asp-no-viewdata-key="HasTeam">
+        <p asp-show-if="ctx.RegisterDefaultCategory == 0">
+            Registration closed.
         </p>
-    </viewmodule>
+        <p asp-show-if="ctx.RegisterDefaultCategory != 0">
+            Want to solve the contest problems? Just register for practice and you will be able to submit solutions.
+            <br />
+            <a class="mt-2 btn btn-sm btn-primary" asp-action="Register">Register</a>
+        </p>
+    </razor>
+    <p asp-viewdata-key="HasTeam">
+        You have registered as Team <b>@team.TeamName</b>.
+    </p>
 </div>
 </div>
 </div>

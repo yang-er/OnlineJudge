@@ -42,11 +42,9 @@
     </div>
 }
 
-<if cond="User.GetUserName() == user.UserName">
-    <p class="mb-0 mt-3">
-        <a asp-action="Edit" class="btn btn-primary mb-1">Edit profile</a>
-        <a asp-action="ChangePassword" class="btn btn-secondary mb-1">Change password</a>
-        <a asp-action="StudentVerify" class="btn btn-info mb-1">Student verify</a>
-        <a asp-action="List" asp-controller="TrainingTeam" class="btn btn-success mb-1">Teams</a>
-    </p>
-</if>
+<p class="mb-0 mt-3" asp-show-if="User.GetUserName() == user.UserName">
+    <a asp-action="Edit" class="btn btn-primary mb-1">Edit profile</a>
+    <a asp-action="ChangePassword" class="btn btn-secondary mb-1">Change password</a>
+    <a asp-action="StudentVerify" class="btn btn-info mb-1">Student verify</a>
+    <a asp-action="List" asp-controller="TrainingTeam" class="btn btn-success mb-1">Teams</a>
+</p>

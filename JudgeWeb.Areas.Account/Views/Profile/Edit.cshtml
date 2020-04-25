@@ -23,16 +23,14 @@
     </div>
     <div class="form-group">
         <label asp-for="Email"></label>
-        <if cond="Model.IsEmailConfirmed">
-            <div class="input-group">
-                <input asp-for="Email" class="form-control" />
-                <span class="input-group-addon" aria-hidden="true"><span class="glyphicon glyphicon-ok text-success"></span></span>
-            </div>
-        </if>
-        <if cond="!Model.IsEmailConfirmed">
+        <div class="input-group" asp-show-if="Model.IsEmailConfirmed">
+            <input asp-for="Email" class="form-control" />
+            <div class="input-group-append"><span class="input-group-text" aria-hidden="true"><i class="fas fa-check text-success"></i></span></div>
+        </div>
+        <razor asp-show-if="!Model.IsEmailConfirmed">
             <input asp-for="Email" class="form-control" />
             <button asp-action="SendVerificationEmail" class="btn btn-link">Send verification email</button>
-        </if>
+        </razor>
         <span asp-validation-for="Email" class="text-danger"></span>
     </div>
     <button type="submit" class="btn btn-primary">Save</button>

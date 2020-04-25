@@ -94,9 +94,9 @@
                                     </a>
                                 </td>
                                 <td style="vertical-align:middle">
-                                    <if cond="u.Accepted ?? false">Active</if>
-                                    <if cond="u.Accepted.HasValue && !u.Accepted.Value">Rejected</if>
-                                    <if cond="!u.Accepted.HasValue">Inviting</if>
+                                    <razor asp-show-if="u.Accepted ?? false">Active</razor>
+                                    <razor asp-show-if="u.Accepted.HasValue && !u.Accepted.Value">Rejected</razor>
+                                    <razor asp-show-if="!u.Accepted.HasValue">Inviting</razor>
                                 </td>
                                 <td style="vertical-align:middle">
                                     <a asp-action="Delete" asp-route-username="@u.UserName" data-toggle="ajaxWindow" data-target="removeMember"><i class="fas fa-times"></i></a>

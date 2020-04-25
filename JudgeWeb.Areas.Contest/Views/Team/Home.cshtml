@@ -27,12 +27,12 @@
         <span id="teamwelcometeam">@team.TeamName</span>!
     </h1>
     <h2 id="contestnotstarted" class="text-center">
-        <if cond="Model.Contest.StartTime.HasValue">
+        <razor asp-show-if="Model.Contest.StartTime.HasValue">
             Contest scheduled to start on @Model.Contest.StartTime.Value.ToString("ddd, dd MMM yyyy HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture) CST
-        </if>
-        <if cond="!Model.Contest.StartTime.HasValue">
+        </razor>
+        <razor asp-show-if="!Model.Contest.StartTime.HasValue">
             Contest has been delayed
-        </if>
+        </razor>
     </h2>
 }
 else
@@ -73,7 +73,7 @@ else
                                 <td use-a>@t.ToString("HH:mm")</td>
                                 <td use-a class="probid" title="@submit.Problem.TimeLimit">@submit.Problem.ShortName</td>
                                 <td use-a class="langid">@submit.Language.Id</td>
-                                <td use-a><if cond="Model.Contest.RankingStrategy == 2">@submit.Grade - </if><verdict3 value="@submit.Verdict" too-late="!b" /></td>
+                                <td use-a><span asp-show-if="Model.Contest.RankingStrategy == 2">@submit.Grade - </span><verdict3 value="@submit.Verdict" too-late="!b" /></td>
                             </tr>
                         }
                     </tbody>

@@ -21,15 +21,13 @@
         </a>
     </li>
 
-    <if cond="cts.PrintingAvaliable">
-        <li class="nav-item">
-            <a class="nav-link" active-act="Print" asp-action="Print">
-                <i class="fas fa-file-alt"></i>
-                Print
-            </a>
-        </li>
-    </if>
-
+    <li asp-show-if="cts.PrintingAvaliable" class="nav-item">
+        <a class="nav-link" active-act="Print" asp-action="Print">
+            <i class="fas fa-file-alt"></i>
+            Print
+        </a>
+    </li>
+    
     <li class="nav-item">
         <a class="nav-link" active-act="Scoreboard" asp-area="Contest" asp-controller="Team" asp-action="Scoreboard">
             <i class="fas fa-list-ol"></i>
@@ -37,14 +35,12 @@
         </a>
     </li>
 
-    <viewmodule key="IsJury">
-        <li class="nav-item">
-            <a class="nav-link" asp-controller="Jury" asp-action="Home">
-                <i class="fas fa-arrow-right"></i>
-                Jury
-            </a>
-        </li>
-    </viewmodule>
+    <li asp-viewdata-key="IsJury" class="nav-item">
+        <a class="nav-link" asp-controller="Jury" asp-action="Home">
+            <i class="fas fa-arrow-right"></i>
+            Jury
+        </a>
+    </li>
 </ul>
 
 <div id="submitbut">
@@ -76,16 +72,14 @@
                 <i class="fas fa-bell fa-fw"></i> Enable Notifications
             </a>
 
-            <viewmodule key="RefreshSpan">
-                <a class="dropdown-item" href="#" id="refresh-navitem">
-                    <i class="fas fa-sync-alt fa-fw"></i>
-                    <span id="refresh-toggle">
-                        Disable Refresh
-                    </span>
-                    <span class="small text-muted">(@ViewData["RefreshSpan"]s)</span>
-                </a>
-            </viewmodule>
-
+            <a asp-viewdata-key="RefreshSpan" class="dropdown-item" href="#" id="refresh-navitem">
+                <i class="fas fa-sync-alt fa-fw"></i>
+                <span id="refresh-toggle">
+                    Disable Refresh
+                </span>
+                <span class="small text-muted">(@ViewData["RefreshSpan"]s)</span>
+            </a>
+            
             <a class="dropdown-item" asp-area="Misc" asp-controller="Home" asp-action="Index">
                 <i class="fas fa-sign-out-alt fa-fw"></i> Back to main site
             </a>

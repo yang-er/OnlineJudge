@@ -1,7 +1,10 @@
 ﻿using Microsoft.AspNetCore.Razor.TagHelpers;
 
-namespace JudgeWeb.Features.Razor
+namespace Microsoft.AspNetCore.Mvc.TagHelpers
 {
+    /// <summary>
+    /// Apply <c>selected</c> or <c>checked</c>
+    /// </summary>
     [HtmlTargetElement("option", Attributes = "issel")]
     [HtmlTargetElement("input", Attributes = "issel")]
     public class IsSelectedTagHelper : TagHelper

@@ -13,43 +13,41 @@
     var grps = Model.Categories.Where(g => g.IsPublic || inJury);
     var state = Model.Contest.GetState();
     var dateFormat = System.Globalization.CultureInfo.GetCultureInfo(1033);
+    var freezeLength = (int)((Model.Contest.EndTime - Model.Contest.FreezeTime)?.TotalMinutes ?? 0);
 }
 
 <div class="card">
     <div class="card-header" style="font-family: Roboto, sans-serif; display: flex;">
         <span style="font-weight: bold;">@Model.Contest.Name</span>
         <span style="color: DimGray; margin-left: auto;">
-            <if cond="@(state == ContestState.NotScheduled)">
+            <razor asp-show-if="@(state == ContestState.NotScheduled)">
                 scheduling
-            </if>
-            <if cond="@(state == ContestState.ScheduledToStart)">
-                <if cond="@(Model.Contest.StartTime.Value.Date > DateTimeOffset.Now)">
+            </razor>
+            <razor asp-show-if="@(state == ContestState.ScheduledToStart)">
+                <razor asp-show-if="@(Model.Contest.StartTime.Value.Date > DateTimeOffset.Now)">
                     scheduled to start on @string.Format(dateFormat, "{0:ddd, dd MMM yyyy HH:mm:ss CST}", Model.Contest.StartTime)
-                </if>
-                <if cond="@(Model.Contest.StartTime.Value.Date < DateTimeOffset.Now)">
+                </razor>
+                <razor asp-show-if="@(Model.Contest.StartTime.Value.Date < DateTimeOffset.Now)">
                     scheduled to start on @Model.Contest.StartTime?.ToString("HH:mm")
-                </if>
-            </if>
-            <if cond="@(state == ContestState.Started || state == ContestState.Frozen)">
+                </razor>
+            </razor>
+            <razor asp-show-if="@(state == ContestState.Started || state == ContestState.Frozen)">
                 starts: @Model.Contest.StartTime?.ToString("HH:mm") - ends: @Model.Contest.EndTime?.ToString("HH:mm")
-            </if>
-            <if cond="@(state == ContestState.Ended)">
+            </razor>
+            <razor asp-show-if="@(state == ContestState.Ended)">
                 contest over, waiting for results
-            </if>
-            <if cond="@(state == ContestState.Finalized)">
+            </razor>
+            <razor asp-show-if="@(state == ContestState.Finalized)">
                 final standings
-            </if>
+            </razor>
         </span>
     </div>
 </div>
 
-<if cond="@(state == ContestState.Frozen || state == ContestState.Ended)">
-    @{ var freezeLength = (int)(Model.Contest.EndTime - Model.Contest.FreezeTime).Value.TotalMinutes; }
-    <div class="alert alert-warning" role="alert" style="font-size: 80%;">
-        The @(inJury ? "public" : "") scoreboard was frozen with @freezeLength minutes remaining - solutions
-        submitted in the last @freezeLength minutes of the contest are still shown as pending.
-    </div>
-</if>
+<div asp-show-if="state == ContestState.Frozen || state == ContestState.Ended" class="alert alert-warning" role="alert" style="font-size: 80%;">
+    The @(inJury ? "public" : "") scoreboard was frozen with @freezeLength minutes remaining - solutions
+    submitted in the last @freezeLength minutes of the contest are still shown as pending.
+</div>
 
 @if ((state == ContestState.NotScheduled || state == ContestState.ScheduledToStart) && !inJury)
 {

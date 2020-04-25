@@ -81,9 +81,9 @@
                                         {
                                             <a asp-controller="Profile" asp-action="Show" asp-route-username="@u.UserName">
                                                 @u.UserName
-                                                <if cond="u.UserId == team.Key.UserId">(Owner)</if>
-                                                <if cond="!u.Accepted.HasValue">(Inviting)</if>
-                                                <if cond="u.Accepted.HasValue && !u.Accepted.Value">(Rejected)</if>
+                                                <razor asp-show-if="u.UserId == team.Key.UserId">(Owner)</razor>
+                                                <razor asp-show-if="!u.Accepted.HasValue">(Inviting)</razor>
+                                                <razor asp-show-if="u.Accepted == false">(Rejected)</razor>
                                             </a>
                                         }
                                     </td>

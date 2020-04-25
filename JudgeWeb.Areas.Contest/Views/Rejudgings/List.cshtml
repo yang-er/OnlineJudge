@@ -31,17 +31,15 @@
                     <td use-a>@rej.StartTime?.ToString("HH:mm")</td>
                     <td use-a>@(rej.EndTime?.ToString("HH:mm") ?? "-")</td>
                     <td use-a>
-                        <if cond="rej.Applied.HasValue">
+                        <span asp-show-if="rej.Applied.HasValue">
                             @(rej.Applied.Value ? "applied" : "cancelled")
-                        </if>
-                        <if cond="!rej.Applied.HasValue">
-                            <if cond="@(rej.Ready.Item2 == 0)">
-                                <b>ready</b>
-                            </if>
-                            <if cond="@(rej.Ready.Item2 != 0)">
-                                not ready @($"{(100 - 100.0 * rej.Ready.Item2 / rej.Ready.Item1):f0}")%
-                            </if>
-                        </if>
+                        </span>
+                        <b asp-show-if="!rej.Applied.HasValue && rej.Ready.Item2 == 0">
+                            ready
+                        </b>
+                        <span asp-show-if="!rej.Applied.HasValue && rej.Ready.Item2 != 0">
+                            not ready @($"{(100 - 100.0 * rej.Ready.Item2 / rej.Ready.Item1):f0}")%
+                        </span>
                     </td>
                 </tr>
             }

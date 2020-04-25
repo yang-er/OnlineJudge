@@ -78,45 +78,42 @@
     </span>
 </div>
 
-<if cond="@(Model.AllJudgings.Count() > 1)">
-    <table class="judging-table table table-striped table-hover table-sm" style="width: auto;">
-        <caption>Judgings</caption>
-        <thead>
-            <tr>
-                <td></td>
-                <th scope="col">ID</th>
-                <th scope="col">start</th>
-                <th scope="col">time</th>
-                <th scope="col">memory</th>
-                <th scope="col">judgehost</th>
-                <th scope="col">result</th>
+<table asp-show-if="Model.AllJudgings.Count() > 1" class="judging-table table table-striped table-hover table-sm" style="width: auto;">
+    <caption>Judgings</caption>
+    <thead>
+        <tr>
+            <td></td>
+            <th scope="col">ID</th>
+            <th scope="col">start</th>
+            <th scope="col">time</th>
+            <th scope="col">memory</th>
+            <th scope="col">judgehost</th>
+            <th scope="col">result</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var j in Model.AllJudgings)
+        {
+            <tr asp-route-jid="@j.JudgingId" data-toggle="gotoUrl" class="@(j.Active ? "" : "disabled")">
+                <td use-a><i asp-show-if="j.JudgingId == judging.JudgingId" class="fas fa-long-arrow-alt-right"></i></td>
+                <td use-a>j@(j.JudgingId)</td>
+                <td use-a>@j.StartTime?.ToString("HH:mm")</td>
+                <td use-a>@(j.ExecuteTime.HasValue ? $"{j.ExecuteTime.Value}ms" : "N/A")</td>
+                <td use-a>@(j.ExecuteMemory.HasValue ? $"{j.ExecuteMemory.Value}K" : "N/A")</td>
+                <td use-a><span class="hostname">@j.Server</span></td>
+                <td use-a><verdict3 value="@j.Status" class="@(j.Active ? "" : "disabled")" /></td>
             </tr>
-        </thead>
-        <tbody>
-            @foreach (var j in Model.AllJudgings)
-            {
-                <tr asp-route-jid="@j.JudgingId" data-toggle="gotoUrl" class="@(j.Active ? "" : "disabled")">
-                    <td use-a><if cond="@(j.JudgingId == judging.JudgingId)"><i class="fas fa-long-arrow-alt-right"></i></if></td>
-                    <td use-a>j@(j.JudgingId)</td>
-                    <td use-a>@j.StartTime?.ToString("HH:mm")</td>
-                    <td use-a>@(j.ExecuteTime.HasValue ? $"{j.ExecuteTime.Value}ms" : "N/A")</td>
-                    <td use-a>@(j.ExecuteMemory.HasValue ? $"{j.ExecuteMemory.Value}K" : "N/A")</td>
-                    <td use-a><span class="hostname">@j.Server</span></td>
-                    <td use-a><verdict3 value="@j.Status" class="@(j.Active ? "" : "disabled")" /></td>
-                </tr>
-            }
-        </tbody>
-    </table>
-</if>
+        }
+    </tbody>
+</table>
 
 <div>
-    <if cond="@(Model.AllJudgings.Count() > 1)">
-        <nvd3 id="maxruntime" title="Max Runtimes" key="Max Runtime"
-              baseline="@timeLimit"
-              max-value="@(Model.AllJudgings.Max(j => j.ExecuteTime.GetValueOrDefault()) / 1000.0)"
-              data="@Model.AllJudgings.Select(j => new { label = $"j{j.JudgingId}", value = j.ExecuteTime.GetValueOrDefault() / 1000.0, color = ColorNvd3(j.Status) })"
-              x-axis="Judging" y-axis="Runtime (in s)" />
-    </if>
+    <nvd3 id="maxruntime" title="Max Runtimes" key="Max Runtime"
+          asp-show-if="Model.AllJudgings.Count() > 1"
+          baseline="@timeLimit"
+          max-value="@(Model.AllJudgings.Max(j => j.ExecuteTime.GetValueOrDefault()) / 1000.0)"
+          data="@Model.AllJudgings.Select(j => new { label = $"j{j.JudgingId}", value = j.ExecuteTime.GetValueOrDefault() / 1000.0, color = ColorNvd3(j.Status) })"
+          x-axis="Judging" y-axis="Runtime (in s)" />
     <nvd3 id="testcaseruntime" title="Testcase Runtimes" key="Runtime"
           baseline="@timeLimit"
           max-value="@(Model.Details.Max(d => d.Item1?.ExecuteTime).GetValueOrDefault() / 1000.0)"
@@ -131,37 +128,34 @@
         Result: <verdict3 value="@judging.Status" class="@(judging.Active ? "" : "disabled")" />,
         Judgehost: <span class="hostname">@(Model.AllJudgings.FirstOrDefault(j => j.JudgingId == judging.JudgingId).Server)</span>,
         <span class="judgetime">
-            <if cond="judging.StartTime.HasValue">
+            <razor asp-show-if="judging.StartTime.HasValue">
                 Judging started: @judging.StartTime?.ToString("HH:mm:ss"),
-                <if cond="@(judging.StopTime.HasValue && judging.Status != Verdict.UndefinedError)">
+                <razor asp-show-if="@(judging.StopTime.HasValue && judging.Status != Verdict.UndefinedError)">
                     finished in @((judging.StopTime - judging.StartTime)?.ToString("mm\\:ss"))s
-                </if>
-                <if cond="@(!judging.StopTime.HasValue && judging.Status != Verdict.UndefinedError)">
+                </razor>
+                <razor asp-show-if="@(!judging.StopTime.HasValue && judging.Status != Verdict.UndefinedError)">
                     [still judging - busy @((DateTimeOffset.Now - judging.StartTime.Value).ToString("mm\\:ss"))s]
-                </if>
-                <if cond="@(judging.Status == Verdict.UndefinedError)">
+                </razor>
+                <razor asp-show-if="@(judging.Status == Verdict.UndefinedError)">
                     [aborted]
-                </if>
-            </if>
-            <if cond="!judging.StartTime.HasValue">
+                </razor>
+            </razor>
+            <razor asp-show-if="!judging.StartTime.HasValue">
                 Judging not started yet
-            </if>
+            </razor>
         </span>
-        <if cond="@(judging.StartTime.HasValue && judging.StopTime.HasValue && judging.Status != Verdict.CompileError)">
+        <razor asp-show-if="@(judging.StartTime.HasValue && judging.StopTime.HasValue && judging.Status != Verdict.CompileError)">
             , max / sum runtime: @(judging.ExecuteTime / 1000.0)s / @(Model.Details.Sum(s => s.r?.ExecuteTime ?? 0) / 1000.0)s
-        </if>
+        </razor>
     </div>
-    <if cond="@(judging.Status != Verdict.CompileError)">
-        <table>
-            <tr>
-                <td>testcase runs: </td>
-                <td>
-                    @foreach (var (d, t) in Model.Details)
-                    {<a title="#@t.Rank, @(d == null ? "unknown" : $"runtime: {d.ExecuteTime}ms, result: {d.Status}")" href="#run-@t.Rank" onclick="@if (d?.Status == Verdict.Accepted) {@("display_correctruns(true);")}"><verdict6 value="@(d?.Status ?? Verdict.Pending)" /></a>}
+    <table asp-show-if="judging.Status != Verdict.CompileError">
+        <tr>
+            <td>testcase runs: </td>
+            <td>
+                @foreach (var (d, t) in Model.Details) {<a title="#@t.Rank, @(d == null ? "unknown" : $"runtime: {d.ExecuteTime}ms, result: {d.Status}")" href="#run-@t.Rank" onclick="@if (d?.Status == Verdict.Accepted) {@("display_correctruns(true);")}"><verdict6 value="@(d?.Status ?? Verdict.Pending)" /></a>}
             </td>
         </tr>
     </table>
-</if>
 </div>
 
 <h3>

@@ -53,28 +53,22 @@
                     <i class="fas fa-address-card fa-fw"></i> Profile
                 </a>
 
-                <viewmodule key="RefreshSpan">
-                    <a class="dropdown-item" href="#" id="refresh-navitem">
-                        <i class="fas fa-sync-alt fa-fw"></i>
-                        <span id="refresh-toggle">
-                            Disable Refresh
-                        </span>
-                        <span class="small text-muted">(@ViewData["RefreshSpan"]s)</span>
-                    </a>
-                </viewmodule>
+                <a asp-viewdata-key="RefreshSpan" class="dropdown-item" href="#" id="refresh-navitem">
+                    <i class="fas fa-sync-alt fa-fw"></i>
+                    <span id="refresh-toggle">
+                        Disable Refresh
+                    </span>
+                    <span class="small text-muted">(@ViewData["RefreshSpan"]s)</span>
+                </a>
+                
+                <a asp-in-roles="Administrator" class="dropdown-item" asp-area="Dashboard" asp-controller="Root" asp-action="Index">
+                    <i class="fas fa-compass fa-fw"></i> Dashboard
+                </a>
 
-                <viewmodule roles="Administrator">
-                    <a class="dropdown-item" asp-area="Dashboard" asp-controller="Root" asp-action="Index">
-                        <i class="fas fa-compass fa-fw"></i> Dashboard
-                    </a>
-                </viewmodule>
-
-                <viewmodule roles="Problem">
-                    <a class="dropdown-item" asp-area="Polygon" asp-controller="Root" asp-action="List">
-                        <i class="fas fa-compass fa-fw"></i> Polygon
-                    </a>
-                </viewmodule>
-
+                <a asp-in-roles="Problem" class="dropdown-item" asp-area="Polygon" asp-controller="Root" asp-action="List">
+                    <i class="fas fa-compass fa-fw"></i> Polygon
+                </a>
+                
                 <form asp-area="Account" asp-controller="Sign" asp-action="Logout" method="post" id="logoutForm">
                     <button type="submit" class="dropdown-item">
                         <i class="fas fa-sign-out-alt fa-fw"></i> Logout

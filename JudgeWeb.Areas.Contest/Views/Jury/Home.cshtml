@@ -39,44 +39,28 @@
                                 <td><b>Start time:</b></td>
                                 <td><difftime show-time="ctx.StartTime" null-value="not scheduled" /></td>
                                 <td>
-                                    <if cond="@(state == ContestState.ScheduledToStart)">
-                                        <button asp-action="ChangeState" asp-route-target="startnow" class="btn btn-sm btn-primary">start now</button>
-                                        <button asp-action="ChangeState" asp-route-target="delay" class="mt-1 mt-md-0 btn btn-sm btn-primary">delay</button>
-                                    </if>
-                                    <if cond="@(state == ContestState.NotScheduled)">
-                                        <button asp-action="ChangeState" asp-route-target="startnow" class="btn btn-sm btn-primary">start now</button>
-                                    </if>
+                                    <button asp-show-if="state == ContestState.ScheduledToStart" asp-action="ChangeState" asp-route-target="startnow" class="btn btn-sm btn-primary">start now</button>
+                                    <button asp-show-if="state == ContestState.ScheduledToStart" asp-action="ChangeState" asp-route-target="delay" class="mt-1 mt-md-0 btn btn-sm btn-primary">delay</button>
+                                    <button asp-show-if="state == ContestState.NotScheduled" asp-action="ChangeState" asp-route-target="startnow" class="btn btn-sm btn-primary">start now</button>
                                 </td>
                             </tr>
                             <tr>
                                 <td><i class="fas fa-@(ctx.FreezeTime.HasValue && (int)state >= 3 ? "check" : "")"></i></td>
                                 <td><b>Freeze time:</b></td>
                                 <td><difftime show-time="ctx.FreezeTime" /></td>
-                                <td>
-                                    <if cond="@(state == ContestState.Started)">
-                                        <button asp-action="ChangeState" asp-route-target="freeze" class="btn btn-sm btn-primary">freeze now</button>
-                                    </if>
-                                </td>
+                                <td><button asp-show-if="state == ContestState.Started" asp-action="ChangeState" asp-route-target="freeze" class="btn btn-sm btn-primary">freeze now</button></td>
                             </tr>
                             <tr>
-                                <td class=""><i class="fas fa-@(ctx.EndTime.HasValue && (int)state >= 4 ? "check" : "")"></i></td>
+                                <td class=""><i asp-show-if="ctx.EndTime.HasValue && (int)state >= 4" class="fas fa-check"></i></td>
                                 <td class=""><b>End time:</b></td>
                                 <td><difftime show-time="ctx.EndTime" /></td>
-                                <td>
-                                    <if cond="@(state == ContestState.Started || state == ContestState.Frozen)">
-                                        <button asp-action="ChangeState" asp-route-target="endnow" class="btn btn-sm btn-primary">end now</button>
-                                    </if>
-                                </td>
+                                <td><button asp-show-if="state == ContestState.Started || state == ContestState.Frozen" asp-action="ChangeState" asp-route-target="endnow" class="btn btn-sm btn-primary">end now</button></td>
                             </tr>
                             <tr>
                                 <td><i class="fas fa-@(ctx.UnfreezeTime.HasValue && (int)state >= 5 ? "check" : "")"></i></td>
                                 <td><b>Unfreeze time:</b></td>
                                 <td><difftime show-time="ctx.UnfreezeTime" /></td>
-                                <td>
-                                    <if cond="@(state == ContestState.Ended)">
-                                        <button asp-action="ChangeState" asp-route-target="unfreeze" class="btn btn-sm btn-primary">unfreeze now</button>
-                                    </if>
-                                </td>
+                                <td><button asp-show-if="state == ContestState.Ended" asp-action="ChangeState" asp-route-target="unfreeze" class="btn btn-sm btn-primary">unfreeze now</button></td>
                             </tr>
                         </tbody>
                     </table>
@@ -104,13 +88,9 @@
                     <div class="col-lg-6">
                         <h5 class="ml-2 text-left">During contest</h5>
                         <ul>
-                            <if cond="ctx.BalloonAvaliable">
-                                <li><a asp-action="Balloon">Balloon status</a></li>
-                            </if>
-                            <if cond="ctx.PrintingAvaliable">
-                                <li><a asp-controller="Printings" asp-action="List">Printing status</a></li>
-                                <li><a asp-action="Print">Print</a></li>
-                            </if>
+                            <li asp-show-if="ctx.BalloonAvaliable"><a asp-action="Balloon">Balloon status</a></li>
+                            <li asp-show-if="ctx.PrintingAvaliable"><a asp-controller="Printings" asp-action="List">Printing status</a></li>
+                            <li asp-show-if="ctx.PrintingAvaliable"><a asp-action="Print">Print</a></li>
                             <li><a asp-controller="Rejudgings" asp-action="List">Rejudgings</a></li>
                             <li><a asp-controller="Analysis" asp-action="Overview">Statistics/Analysis</a></li>
                             <li><a asp-action="ResetEventFeed" data-target="refresh" data-toggle="ajaxWindow">Reset event feed</a></li>
@@ -167,11 +147,7 @@
                             <th scope="col">ID</th>
                             <th scope="col">User Name</th>
                             <th scope="col">Nick Name</th>
-                            <th>
-                                <viewmodule roles="Administrator">
-                                    <a class="text-reset" asp-action="Assign" data-toggle="ajaxWindow" data-target="assign"><i class="fas fa-plus"></i></a>
-                                </viewmodule>
-                            </th>
+                            <th><a asp-in-roles="Administrator" class="text-reset" asp-action="Assign" data-toggle="ajaxWindow" data-target="assign"><i class="fas fa-plus"></i></a></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -181,11 +157,7 @@
                                 <td use-a>u@(u.Id)</td>
                                 <td use-a>@u.UserName</td>
                                 <td use-a>@u.NickName</td>
-                                <td>
-                                    <viewmodule roles="Administrator">
-                                        <a asp-action="Unassign" asp-route-uid="@u.Id" data-toggle="ajaxWindow" data-target="unassign"><i class="fas fa-trash-alt"></i></a>
-                                    </viewmodule>
-                                </td>
+                                <td><a asp-in-roles="Administrator" asp-action="Unassign" asp-route-uid="@u.Id" data-toggle="ajaxWindow" data-target="unassign"><i class="fas fa-trash-alt"></i></a></td>
                             </tr>
                         }
                     </tbody>

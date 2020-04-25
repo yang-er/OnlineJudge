@@ -19,25 +19,15 @@
             <tr>
                 <td>
                     @item.PublicId
-                    <if cond="item.Submitted.HasValue">
-                        <if cond="item.Submitted.Value">
-                            <i class="fas fa-check-circle text-success"></i>
-                        </if>
-                        <if cond="!item.Submitted.Value">
-                            <i class="fas fa-exclamation-circle text-warning"></i>
-                        </if>
-                    </if>
+                    <i asp-show-if="item.Submitted == true" class="fas fa-check-circle text-success"></i>
+                    <i asp-show-if="item.Submitted == false" class="fas fa-exclamation-circle text-warning"></i>
                 </td>
                 <td>
                     <a asp-action="View" asp-route-pid="@item.PublicId">@item.Title</a>
-                    @foreach (var src in item.Source.Split(',').Where(s => !string.IsNullOrWhiteSpace(s)))
-                    {
-                        <span class="badge badge-info" style="font-size:0.7em">@src.Trim()</span>
-                    }
-                    @foreach (var src in item.TagName.Split(',').Where(s => !string.IsNullOrWhiteSpace(s)))
-                    {
-                        <span class="badge badge-secondary" style="font-size:0.7em">@src.Trim()</span>
-                    }
+                    <span style="font-size:0.9em">
+                        <tags color="info" list="@item.Source" />
+                        <tags color="secondary" list="@item.TagName" />
+                    </span>
                 </td>
                 <td>@Html.RatioOf(item.Accepted, item.Total)</td>
             </tr>
@@ -46,7 +36,7 @@
     <tfoot>
         <tr>
             <td colspan="3">
-                <partial name="_Pagination" model="((int)ViewBag.Page, (int)ViewBag.TotalPage)" />
+                <pagination bs-current-page="ViewBag.Page" bs-total-page="ViewBag.TotalPage" />
             </td>
         </tr>
     </tfoot>

@@ -43,17 +43,15 @@
                 <th>Status</th>
                 <td><verdict0 type="TeamStatus" value="@team.Status" /></td>
             </tr>
-            <if cond="members.Any()">
-                <tr>
-                    <th>User</th>
-                    <td>
-                        @foreach (var item in members)
-                        {
-                            <a asp-area="Account" asp-controller="Profile" asp-action="Show" asp-route-username="@item">@item</a>
-                        }
-                    </td>
-                </tr>
-            </if>
+            <tr asp-show-if="members.Any()">
+                <th>User</th>
+                <td>
+                    @foreach (var item in members)
+                    {
+                        <a asp-area="Account" asp-controller="Profile" asp-action="Show" asp-route-username="@item">@item</a>
+                    }
+                </td>
+            </tr>
         </table>
     </div>
 </div>
@@ -99,7 +97,7 @@
                 <td use-a class="langid">@sub.Language</td>
                 <td use-a>
                     <verdict3 value="@sub.Verdict" too-late="tooLate" />
-                    <if cond="tooLate"> (<verdict3 value="@sub.Verdict" />)</if>
+                    <razor asp-show-if="tooLate"> (<verdict3 value="@sub.Verdict" />)</razor>
                 </td>
                 <td class="testcase-results">
                     @{ int t = 0; foreach (var item in sub.Details) { t++;<verdict6 value="@item.Status" />}@for (; t < (prob?.TestcaseCount ?? 1); t++) {<verdict6 value="Pending" judging-pending="@(sub.Verdict == Verdict.Pending || sub.Verdict == Verdict.Running)" />}}

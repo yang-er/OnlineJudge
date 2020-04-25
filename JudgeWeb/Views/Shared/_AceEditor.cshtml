@@ -2,12 +2,6 @@
 @model AceEditorTagHelper
 @{ var idd = $"editor{Model.RandomId}"; }
 
-<viewmodule key="InAjax">
-    <!-- ace editor -->
-    <script src="~/static/ace/ace.js"></script>
-    <script src="~/static/ace/ext-modelist.js"></script>
-</viewmodule>
-
 <div class="editor" id="@idd" style="font-size:0.8em">@Model.Content</div>
 <script>
     $(function () {

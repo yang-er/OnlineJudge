@@ -100,7 +100,7 @@
                 <td use-a class="langid">@sub.Language</td>
                 <td use-a>
                     <verdict3 value="@sub.Verdict" too-late="tooLate" />
-                    <if cond="tooLate"> (<verdict3 value="@sub.Verdict" />)</if>
+                    <razor asp-show-if="tooLate"> (<verdict3 value="@sub.Verdict" />)</razor>
                 </td>
                 <td class="testcase-results">
                     @{ int t = 0; foreach (var item in sub.Details) { t++;<verdict6 value="@item.Status" />}@for (; t < Model.TestcaseCount; t++) {<verdict6 value="Pending" judging-pending="@(sub.Verdict == Verdict.Pending || sub.Verdict == Verdict.Running)" />}}

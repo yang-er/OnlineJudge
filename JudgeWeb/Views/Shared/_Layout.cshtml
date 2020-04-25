@@ -19,18 +19,15 @@
     <link rel="stylesheet" href="~/static/css/dataTables.bootstrap4.min.css">
     <script src="~/static/js/jquery.dataTables.min.js"></script>
     <script src="~/static/js/dataTables.bootstrap4.min.js"></script>
-    <viewmodule key="Nvd3">
-        <!-- nvd3 -->
-        <link rel="stylesheet" href="~/static/chart/nv.d3.min.css" />
-        <script src="~/static/chart/d3.min.js"></script>
-        <script src="~/static/chart/nv.d3.min.js"></script>
-    </viewmodule>
-    <viewmodule key="AceEditor">
-        <!-- ace editor -->
-        <script src="~/static/ace/ace.js"></script>
-        <script src="~/static/ace/ext-modelist.js"></script>
-    </viewmodule>
-    <viewmodule key="CompactMode">
+    <!-- nvd3 -->
+    <link rel="stylesheet" href="~/static/chart/nv.d3.min.css" />
+    <script src="~/static/chart/d3.min.js"></script>
+    <script src="~/static/chart/nv.d3.min.js"></script>
+    <!-- ace editor -->
+    <script src="~/static/ace/ace.js"></script>
+    <script src="~/static/ace/ext-modelist.js"></script>
+
+    <razor asp-viewdata-key="CompactMode">
         <!-- compact for old styles -->
         <style type="text/css">
             body {
@@ -42,7 +39,7 @@
                 body { padding-top: 3.5rem; }
             }
         </style>
-    </viewmodule>
+    </razor>
 </head>
 
 <body>
@@ -88,29 +85,25 @@
     <div id="ajax_append"></div>
     <aside class="col-md-4 col-xl-3 pb-3" id="notification-box"></aside>
 
-    <viewmodule key="RefreshSpan">
-        <script>
-            $(function () {
-                /* toggle refresh if set */
-                $('#refresh-navitem').on('click', function() {
-                    toggleRefresh('@Html.Raw(ViewData["RefreshUrl"])', @ViewData["RefreshSpan"], 1);
-                });
-
-                /* Enable page refresh if set if wanted by the page, and wanted by the user */
-                enableRefresh('@Html.Raw(ViewData["RefreshUrl"])', @ViewData["RefreshSpan"], 1);
+    <script asp-viewdata-key="RefreshSpan">
+        $(function () {
+            /* toggle refresh if set */
+            $('#refresh-navitem').on('click', function() {
+                toggleRefresh('@Html.Raw(ViewData["RefreshUrl"])', @ViewData["RefreshSpan"], 1);
             });
-        </script>
-    </viewmodule>
 
-    <viewmodule key="AjaxUpdateUrl">
-        <script>
-            $(function () {
-                updateMenuAlerts();
-                setInterval(updateMenuAlerts, 20000);
-            });
-        </script>
-    </viewmodule>
+            /* Enable page refresh if set if wanted by the page, and wanted by the user */
+            enableRefresh('@Html.Raw(ViewData["RefreshUrl"])', @ViewData["RefreshSpan"], 1);
+        });
+    </script>
 
+    <script asp-viewdata-key="AjaxUpdateUrl">
+        $(function () {
+            updateMenuAlerts();
+            setInterval(updateMenuAlerts, 20000);
+        });
+    </script>
+    
     @RenderSection("Scripts", required: false)
 </body>
 </html>

@@ -39,23 +39,19 @@
         </a>
     </li>
 
-    <if cond="@(ViewData.ContainsKey("HasTeam") && !ctx.Gym)">
-        <li class="nav-item">
-            <a class="nav-link" asp-controller="Team" asp-action="Home">
-                <i class="fas fa-arrow-right"></i>
-                Team
-            </a>
-        </li>
-    </if>
+    <li asp-show-if="!ctx.Gym" asp-viewdata-key="HasTeam" class="nav-item">
+        <a class="nav-link" asp-controller="Team" asp-action="Home">
+            <i class="fas fa-arrow-right"></i>
+            Team
+        </a>
+    </li>
 
-    <if cond="ctx.Gym">
-        <li class="nav-item">
-            <a class="nav-link" asp-controller="Gym" asp-action="Home">
-                <i class="fas fa-arrow-right"></i>
-                Gym
-            </a>
-        </li>
-    </if>
+    <li asp-show-if="ctx.Gym" class="nav-item">
+        <a class="nav-link" asp-controller="Gym" asp-action="Home">
+            <i class="fas fa-arrow-right"></i>
+            Gym
+        </a>
+    </li>
 </ul>
 
 <ul class="navbar-nav">
@@ -70,15 +66,13 @@
         </a>
         <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown">
             <a class="dropdown-item disabled" href="#">@User.GetNickName()</a>
-            <viewmodule key="RefreshSpan">
-                <a class="dropdown-item" href="#" id="refresh-navitem">
-                    <i class="fas fa-sync-alt fa-fw"></i>
-                    <span id="refresh-toggle">
-                        Disable Refresh
-                    </span>
-                    <span class="small text-muted">(@ViewData["RefreshSpan"]s)</span>
-                </a>
-            </viewmodule>
+            <a asp-viewdata-key="RefreshSpan" class="dropdown-item" href="#" id="refresh-navitem">
+                <i class="fas fa-sync-alt fa-fw"></i>
+                <span id="refresh-toggle">
+                    Disable Refresh
+                </span>
+                <span class="small text-muted">(@ViewData["RefreshSpan"]s)</span>
+            </a>
             <a class="dropdown-item" asp-area="Misc" asp-controller="Home" asp-action="Index">
                 <i class="fas fa-sign-out-alt fa-fw"></i> Back to main site
             </a>

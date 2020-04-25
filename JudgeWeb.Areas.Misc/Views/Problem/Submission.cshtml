@@ -19,13 +19,13 @@
                 <p>
                     Language: @Model.LanguageName, <br />
                     Verdict: <verdict3 value="@Model.Status" />,<br />
-                    Runtime: <if cond="Model.ExecuteTime.HasValue">@(Model.ExecuteTime)ms, @(Model.ExecuteMemory)kB</if><if cond="!Model.ExecuteTime.HasValue">N/A</if>, <br />
+                    Runtime: <razor asp-show-if="Model.ExecuteTime.HasValue">@(Model.ExecuteTime)ms, @(Model.ExecuteMemory)kB</razor><razor asp-show-if="!Model.ExecuteTime.HasValue">N/A</razor>, <br />
                     Sent Time: @Html.CstTime(Model.DateTime)
                 </p>
-                <if cond="Model.Status != Verdict.CompileError">
+                <razor asp-show-if="Model.Status != Verdict.CompileError">
                     <h5>Testcase runs</h5>
                     <p>@foreach (var (d, t) in Model.Details) {<a title="#@t.Rank, @(d == null ? "unknown" : $"runtime: {d.ExecuteTime}ms, result: {d.Status}")"><verdict6 value="@(d?.Status ?? Verdict.Pending)" judging-pending="Model.Status == Verdict.Running || Model.Status == Verdict.Pending" /></a>}</p>
-                </if>
+                </razor>
                 <h5>Compiler output</h5>
                 <snippet base64="@Model.CompileError" class="mb-3" nodata="There were no compiler errors or warnings." />
                 <h5>Source code</h5>

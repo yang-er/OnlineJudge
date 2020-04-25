@@ -62,7 +62,7 @@
                     }
                 </div>
 
-                <if cond="users.Where(u => u.Accepted != true).Any() && users.Where(u => u.UserId == user.Id).Any()">
+                <razor asp-show-if="users.Where(u => u.Accepted != true).Any() && users.Where(u => u.UserId == user.Id).Any()">
                     <h4>Inactive Members</h4>
 
                     <div class="d-flex text-center mb-3">
@@ -70,24 +70,21 @@
                         {
                             <a asp-controller="Profile" asp-action="Show" asp-route-username="@u.UserName" style="width:6em;margin-right:10px;text-decoration:none;color:black">
                                 <img gravatar-email="@u.UserEmail" style="width:6em;margin-bottom:0.25em" />
-                                @u.UserName <if cond="u.Accepted.HasValue">(&times)</if><if cond="!u.Accepted.HasValue">(?)</if>
+                                @u.UserName <razor asp-show-if="u.Accepted.HasValue">(&times;)</razor><razor asp-show-if="!u.Accepted.HasValue">(?)</razor>
                             </a>
                         }
                     </div>
-                </if>
+                </razor>
 
-                <if cond="Model.UserId == user.Id">
-                    <p class="mt-4 mb-0">
-                        <a asp-action="Edit" class="btn btn-primary">Edit team</a>
-                        <a asp-action="Dismiss" data-toggle="ajaxWindow" data-target="dismissTeam" class="btn btn-danger">Delete team</a>
-                    </p>
-                </if>
-                <if cond="Model.UserId != user.Id && users.Where(u => u.UserId == user.Id).Any()">
-                    <form method="post" class="mt-4 mb-0">
-                        <button type="submit" asp-action="Accept" class="btn btn-success">Accept invitation</button>
-                        <button type="submit" asp-action="Reject" class="btn btn-danger">Reject invitation</button>
-                    </form>
-                </if>
+                <p asp-show-if="Model.UserId == user.Id" class="mt-4 mb-0">
+                    <a asp-action="Edit" class="btn btn-primary">Edit team</a>
+                    <a asp-action="Dismiss" data-toggle="ajaxWindow" data-target="dismissTeam" class="btn btn-danger">Delete team</a>
+                </p>
+                
+                <form asp-show-if="Model.UserId != user.Id && users.Where(u => u.UserId == user.Id).Any()" method="post" class="mt-4 mb-0">
+                    <button type="submit" asp-action="Accept" class="btn btn-success">Accept invitation</button>
+                    <button type="submit" asp-action="Reject" class="btn btn-danger">Reject invitation</button>
+                </form>
             </div>
         </div>
     </div>

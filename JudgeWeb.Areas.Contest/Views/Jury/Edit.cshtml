@@ -76,17 +76,15 @@
                 </select>
                 <span asp-validation-for="DefaultCategory" class="text-danger"></span>
             </div>
-            <if cond="ViewBag.Contest.Gym">
-                <div class="form-group">
-                    <label asp-for="StatusAvailable"></label>
-                    <select class="form-control" asp-for="StatusAvailable">
-                        <option value="0">Users can see only his submissions</option>
-                        <option value="1">Users can see all submissions</option>
-                        <option value="2">Users can see submissions for problems he solved</option>
-                    </select>
-                    <span asp-validation-for="StatusAvailable" class="text-danger"></span>
-                </div>
-            </if>
+            <div class="form-group" asp-show-if="ViewBag.Contest.Gym">
+                <label asp-for="StatusAvailable"></label>
+                <select class="form-control" asp-for="StatusAvailable">
+                    <option value="0">Users can see only his submissions</option>
+                    <option value="1">Users can see all submissions</option>
+                    <option value="2">Users can see submissions for problems he solved</option>
+                </select>
+                <span asp-validation-for="StatusAvailable" class="text-danger"></span>
+            </div>
         </div>
         <div class="col-lg-4">
             <b>Specification of short name:</b><br />

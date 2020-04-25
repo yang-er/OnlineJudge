@@ -35,9 +35,9 @@
 @section Header {
     <h2 class="mt-2">
         @ViewData["Title"]
-        <if cond="@(Model.Applied.HasValue && !Model.Applied.Value)">
+        <span asp-show-if="Model.Applied == false">
             (cancelled)
-        </if>
+        </span>
     </h2>
 
     <div class="row">
@@ -55,16 +55,14 @@
                         </a>
                     </td>
                 </tr>
-                <if cond="Model.OperatedBy.HasValue">
-                    <tr>
-                        <th>@(Model.Applied.Value ? "Accepted" : "Cancelled") by</th>
-                        <td>
-                            <a asp-area="Account" asp-controller="Profile" asp-action="Show" asp-route-username="@Model.Operator">
-                                @Model.Operator
-                            </a>
-                        </td>
-                    </tr>
-                </if>
+                <tr asp-show-if="Model.OperatedBy.HasValue">
+                    <th>@(Model.Applied.Value ? "Accepted" : "Cancelled") by</th>
+                    <td>
+                        <a asp-area="Account" asp-controller="Profile" asp-action="Show" asp-route-username="@Model.Operator">
+                            @Model.Operator
+                        </a>
+                    </td>
+                </tr>
                 <tr>
                     <th>Start time</th>
                     <td>
@@ -101,31 +99,24 @@
 </span>
 
 <div class="d-none" data-new-rejudging-buttons>
-
-    <if cond="Model.OperatedBy.HasValue">
-        <p>
-            <a asp-action="Repeat" class="btn btn-primary" data-toggle="ajaxWindow" data-target="repeat">
-                <i class="fas fa-sync"></i> Repeat rejudging
-            </a>
-        </p>
-    </if>
-    <if cond="@(!Model.OperatedBy.HasValue && cntsss <= 0)">
-        <form method="post">
-            <button asp-action="Cancel" type="submit" class="btn btn-danger">
-                <i class="fas fa-times"></i> Cancel rejudging
-            </button>
-            <button asp-action="Apply" type="submit" class="btn btn-success">
-                <i class="fas fa-check"></i> Apply rejudging
-            </button>
-        </form>
-    </if>
-    <if cond="@(cntsss > 0)">
-        <form asp-action="Cancel" method="post">
-            <button type="submit" class="btn btn-danger">
-                <i class="fas fa-times"></i> Cancel rejudging
-            </button>
-        </form>
-    </if>
+    <p asp-show-if="Model.OperatedBy.HasValue">
+        <a asp-action="Repeat" class="btn btn-primary" data-toggle="ajaxWindow" data-target="repeat">
+            <i class="fas fa-sync"></i> Repeat rejudging
+        </a>
+    </p>
+    <form asp-show-if="!Model.OperatedBy.HasValue && cntsss <= 0" method="post">
+        <button asp-action="Cancel" type="submit" class="btn btn-danger">
+            <i class="fas fa-times"></i> Cancel rejudging
+        </button>
+        <button asp-action="Apply" type="submit" class="btn btn-success">
+            <i class="fas fa-check"></i> Apply rejudging
+        </button>
+    </form>
+    <form asp-show-if="cntsss > 0" asp-action="Cancel" method="post">
+        <button type="submit" class="btn btn-danger">
+            <i class="fas fa-times"></i> Cancel rejudging
+        </button>
+    </form>
 </div>
 
 <div class="d-none" data-new-rejudging-matrix>

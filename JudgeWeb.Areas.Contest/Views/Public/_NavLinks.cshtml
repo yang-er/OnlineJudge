@@ -13,23 +13,19 @@
         </a>
     </li>
 
-    <viewmodule key="IsJury">
-        <li class="nav-item">
-            <a class="nav-link" asp-controller="Jury" asp-action="Home">
-                <i class="fas fa-arrow-right"></i>
-                Jury
-            </a>
-        </li>
-    </viewmodule>
+    <li asp-viewdata-key="IsJury" class="nav-item">
+        <a class="nav-link" asp-controller="Jury" asp-action="Home">
+            <i class="fas fa-arrow-right"></i>
+            Jury
+        </a>
+    </li>
 
-    <viewmodule key="HasTeam">
-        <li class="nav-item">
-            <a class="nav-link" asp-controller="Team" asp-action="Home">
-                <i class="fas fa-arrow-right"></i>
-                Team
-            </a>
-        </li>
-    </viewmodule>
+    <li asp-viewdata-key="HasTeam" class="nav-item">
+        <a class="nav-link" asp-controller="Team" asp-action="Home">
+            <i class="fas fa-arrow-right"></i>
+            Team
+        </a>
+    </li>
 </ul>
 
 <ul class="navbar-nav">
@@ -53,15 +49,13 @@
                 <i class="fas fa-bell fa-fw"></i> Enable Notifications
             </a>
 
-            <viewmodule key="RefreshSpan">
-                <a class="dropdown-item" href="#" id="refresh-navitem">
-                    <i class="fas fa-sync-alt fa-fw"></i>
-                    <span id="refresh-toggle">
-                        Disable Refresh
-                    </span>
-                    <span class="small text-muted">(@ViewData["RefreshSpan"]s)</span>
-                </a>
-            </viewmodule>
+            <a asp-viewdata-key="RefreshSpan" class="dropdown-item" href="#" id="refresh-navitem">
+                <i class="fas fa-sync-alt fa-fw"></i>
+                <span id="refresh-toggle">
+                    Disable Refresh
+                </span>
+                <span class="small text-muted">(@ViewData["RefreshSpan"]s)</span>
+            </a>
 
             <a class="dropdown-item" asp-area="Misc" asp-controller="Home" asp-action="Index">
                 <i class="fas fa-sign-out-alt fa-fw"></i> Back to main site

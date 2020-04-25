@@ -46,12 +46,7 @@
 <div class="submission-summary mb-2">
     <span>
         <i class="fas fa-user" title="Author:"></i>
-        <if cond="@(Model.ContestId == 0)">
-            <a>@(Model.UserName ?? "SYSTEM") (u@(Model.Author))</a>
-        </if>
-        <if cond="@(Model.ContestId != 0)">
-            <a>Contest @Model.ContestId Team @Model.Author</a>
-        </if>
+        <a>@(Model.UserName ?? "SYSTEM")</a>
     </span>
     <span>
         <i class="fas fa-comments" title="Language:"></i>
@@ -109,14 +104,12 @@
 }
 
 <div>
-    @if (Model.AllJudgings.Count() > 1)
-    {
-        <nvd3 id="maxruntime" title="Max Runtimes" key="Max Runtime"
-              baseline="@timeLimit"
-              max-value="@(Model.AllJudgings.Max(j => j.ExecuteTime ?? 0) / 1000.0)"
-              data="@Model.AllJudgings.Select(j => new { label = $"j{j.JudgingId}", value = j.ExecuteTime / 1000.0, color = ColorNvd3(j.Status) })"
-              x-axis="Judging" y-axis="Runtime (in s)" />
-    }
+    <nvd3 id="maxruntime" title="Max Runtimes" key="Max Runtime"
+          asp-show-if="Model.AllJudgings.Count() > 1"
+          baseline="@timeLimit"
+          max-value="@(Model.AllJudgings.Max(j => j.ExecuteTime ?? 0) / 1000.0)"
+          data="@Model.AllJudgings.Select(j => new { label = $"j{j.JudgingId}", value = j.ExecuteTime / 1000.0, color = ColorNvd3(j.Status) })"
+          x-axis="Judging" y-axis="Runtime (in s)" />
     <nvd3 id="testcaseruntime" title="Testcase Runtimes" key="Runtime"
           baseline="@timeLimit"
           max-value="@(Model.Details.Max(d => d.Item1?.ExecuteTime).GetValueOrDefault() / 1000.0)"
@@ -131,32 +124,29 @@
         Result: <verdict3 value="@Model.Status" class="@(Model.Judging.Active ? "" : "disabled")" />,
         Judgehost: <span class="hostname">@Model.ServerName</span>,
         <span class="judgetime">
-            <if cond="Model.Judging.StartTime.HasValue">
+            <span asp-show-if="Model.Judging.StartTime.HasValue">
                 Judging started: @Model.Judging.StartTime?.ToString("HH:mm:ss"),
-                <if cond="@(Model.Judging.StopTime.HasValue && Model.Judging.Status != Verdict.UndefinedError)">
+                <span asp-show-if="@(Model.Judging.StopTime.HasValue && Model.Judging.Status != Verdict.UndefinedError)">
                     finished in @((Model.Judging.StopTime - Model.Judging.StartTime)?.ToString("mm\\:ss"))s
-                </if>
-                <if cond="@(!Model.Judging.StopTime.HasValue && Model.Judging.Status != Verdict.UndefinedError)">
+                </span>
+                <span asp-show-if="@(!Model.Judging.StopTime.HasValue && Model.Judging.Status != Verdict.UndefinedError)">
                     [still judging - busy @((DateTimeOffset.Now - Model.Judging.StartTime.Value).ToString("mm\\:ss"))s]
-                </if>
-                <if cond="@(Model.Judging.Status == Verdict.UndefinedError)">
+                </span>
+                <span asp-show-if="@(Model.Judging.Status == Verdict.UndefinedError)">
                     [aborted]
-                </if>
-            </if>
-            <if cond="!Model.Judging.StartTime.HasValue">
+                </span>
+            </span>
+            <span asp-show-if="!Model.Judging.StartTime.HasValue">
                 Judging not started yet
-            </if>
+            </span>
         </span>
     </div>
-    @if (Model.Status != Verdict.CompileError)
-    {
-        <table>
-            <tr>
-                <td>testcase runs: </td>
-                <td>@foreach (var (d, t) in Model.Details) {<a title="#@t.Rank, @(d == null ? "unknown" : $"runtime: {d.ExecuteTime}ms, result: {d.Status}")" href="#run-@t.Rank" onclick="@if (d?.Status == Verdict.Accepted) {@("display_correctruns(true);")}"><verdict6 value="@(d?.Status ?? Verdict.Pending)" /></a>}</td>
-            </tr>
-        </table>
-    }
+    <table asp-show-if="Model.Status != Verdict.CompileError">
+        <tr>
+            <td>testcase runs: </td>
+            <td>@foreach (var (d, t) in Model.Details) {<a title="#@t.Rank, @(d == null ? "unknown" : $"runtime: {d.ExecuteTime}ms, result: {d.Status}")" href="#run-@t.Rank" onclick="@if (d?.Status == Verdict.Accepted) {@("display_correctruns(true);")}"><verdict6 value="@(d?.Status ?? Verdict.Pending)" /></a>}</td>
+        </tr>
+    </table>
 </div>
 
 <h3>

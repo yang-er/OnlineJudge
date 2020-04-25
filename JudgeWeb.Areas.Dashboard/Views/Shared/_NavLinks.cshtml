@@ -1,60 +1,57 @@
 ﻿<ul class="navbar-nav mr-auto">
-    <viewmodule roles="Administrator">
-        <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" active-ctrl="Judgehosts,InternalErrors" href="#" id="navbarDropdownJudgehosts" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                <i class="fas fa-gavel"></i> Judgings
-                <span class="badge badge-warning" id="num-alerts-judgehosts"></span>
-                <span class="badge badge-danger" id="num-alerts-internalerrors"></span>
+    <li class="nav-item dropdown" asp-viewdata-key="Administrator">
+        <a class="nav-link dropdown-toggle" active-ctrl="Judgehosts,InternalErrors" href="#" id="navbarDropdownJudgehosts" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <i class="fas fa-gavel"></i> Judgings
+            <span class="badge badge-warning" id="num-alerts-judgehosts"></span>
+            <span class="badge badge-danger" id="num-alerts-internalerrors"></span>
+        </a>
+        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+            <a class="dropdown-item" asp-action="List" asp-controller="Judgehosts" id="menu_judgehosts">
+                <i class="fas fa-server fa-fw"></i> judgehosts <span class="badge badge-warning" id="num-alerts-judgehosts-sub"></span>
             </a>
-            <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                <a class="dropdown-item" asp-action="List" asp-controller="Judgehosts" id="menu_judgehosts">
-                    <i class="fas fa-server fa-fw"></i> judgehosts <span class="badge badge-warning" id="num-alerts-judgehosts-sub"></span>
-                </a>
-                <a class="dropdown-item disabled" asp-action="List" asp-controller="InternalErrors" id="menu_internal_error">
-                    <i class="fas fa-bolt fa-fw"></i> internal error <span class="badge badge-danger" id="num-alerts-internalerrors-sub"></span>
-                </a>
-            </div>
-        </li>
-    </viewmodule>
-    <viewmodule roles="Administrator,Teacher">
-        <li class="nav-item">
-            <a class="nav-link" active-ctrl="Contests" asp-controller="Contests" asp-action="List">
-                <i class="fas fa-trophy"></i> Contests
+            <a class="dropdown-item disabled" asp-action="List" asp-controller="InternalErrors" id="menu_internal_error">
+                <i class="fas fa-bolt fa-fw"></i> internal error <span class="badge badge-danger" id="num-alerts-internalerrors-sub"></span>
             </a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" asp-area="Polygon" asp-controller="Root" asp-action="List">
-                <i class="fas fa-book-open"></i> Problems
+        </div>
+    </li>
+
+    <li asp-in-roles="Administrator,Teacher" class="nav-item">
+        <a class="nav-link" active-ctrl="Contests" asp-controller="Contests" asp-action="List">
+            <i class="fas fa-trophy"></i> Contests
+        </a>
+    </li>
+
+    <li asp-in-roles="Administrator,Teacher" class="nav-item">
+        <a class="nav-link" asp-area="Polygon" asp-controller="Root" asp-action="List">
+            <i class="fas fa-book-open"></i> Problems
+        </a>
+    </li>
+
+    <li asp-in-roles="Teacher" class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" active-ctrl="Groups,Students" href="#" id="navbarDropdownStudents" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <i class="fas fa-graduation-cap"></i> Schools
+        </a>
+        <div class="dropdown-menu" aria-labelledby="navbarDropdownStudents">
+            <a class="dropdown-item" asp-action="List" asp-controller="Students">
+                <i class="fas fa-user-graduate fa-fw"></i> students
             </a>
-        </li>
-    </viewmodule>
-    <viewmodule roles="Teacher">
-        <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" active-ctrl="Groups,Students" href="#" id="navbarDropdownStudents" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                <i class="fas fa-graduation-cap"></i> Schools
+            <a class="dropdown-item" asp-action="List" asp-controller="Groups">
+                <i class="fas fa-school fa-fw"></i> teaching classes
             </a>
-            <div class="dropdown-menu" aria-labelledby="navbarDropdownStudents">
-                <a class="dropdown-item" asp-action="List" asp-controller="Students">
-                    <i class="fas fa-user-graduate fa-fw"></i> students
-                </a>
-                <a class="dropdown-item" asp-action="List" asp-controller="Groups">
-                    <i class="fas fa-school fa-fw"></i> teaching classes
-                </a>
-            </div>
-        </li>
-    </viewmodule>
-    <viewmodule roles="Administrator">
-        <li class="nav-item">
-            <a class="nav-link" active-ctrl="Users" asp-controller="Users" asp-action="List">
-                <i class="fas fa-address-card"></i> Users
-            </a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" active-ctrl="News" asp-controller="News" asp-action="List">
-                <i class="fab fa-markdown"></i> News
-            </a>
-        </li>
-    </viewmodule>
+        </div>
+    </li>
+
+    <li asp-in-roles="Administrator" class="nav-item">
+        <a class="nav-link" active-ctrl="Users" asp-controller="Users" asp-action="List">
+            <i class="fas fa-address-card"></i> Users
+        </a>
+    </li>
+
+    <li asp-in-roles="Administrator" class="nav-item">
+        <a class="nav-link" active-ctrl="News" asp-controller="News" asp-action="List">
+            <i class="fab fa-markdown"></i> News
+        </a>
+    </li>
 </ul>
 
 <ul class="navbar-nav">
@@ -70,16 +67,14 @@
         <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown">
             <a class="dropdown-item disabled" href="#">@(User.GetNickName())</a>
 
-            <viewmodule key="RefreshSpan">
-                <a class="dropdown-item" href="#" id="refresh-navitem">
-                    <i class="fas fa-sync-alt fa-fw"></i>
-                    <span id="refresh-toggle">
-                        Disable Refresh
-                    </span>
-                    <span class="small text-muted">(@ViewData["RefreshSpan"]s)</span>
-                </a>
-            </viewmodule>
-
+            <a asp-viewdata-key="RefreshSpan" class="dropdown-item" href="#" id="refresh-navitem">
+                <i class="fas fa-sync-alt fa-fw"></i>
+                <span id="refresh-toggle">
+                    Disable Refresh
+                </span>
+                <span class="small text-muted">(@ViewData["RefreshSpan"]s)</span>
+            </a>
+            
             <a class="dropdown-item" asp-area="Misc" asp-controller="Home" asp-action="Index">
                 <i class="fas fa-sign-out-alt fa-fw"></i> Back to main site
             </a>

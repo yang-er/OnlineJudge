@@ -17,26 +17,19 @@
         <div class="col-12 col-lg-4 col-xl-3">
             <h4 class="mt-lg-5">Tags</h4>
             <p>
-                @foreach (var src in tag.Split(',').Where(s => !string.IsNullOrWhiteSpace(s)))
-                {
-                    <span class="badge badge-secondary">@src.Trim()</span>
-                }
-                @foreach (var src in srcs.Split(',').Where(s => !string.IsNullOrWhiteSpace(s)))
-                {
-                    <span class="badge badge-info">@src.Trim()</span>
-                }
+                <tags color="secondary" list="@tag" />
+                <tags color="info" list="@srcs" />
             </p>
-            <if cond="SignInManager.IsSignedIn(User)">
+            <razor asp-show-if="SignInManager.IsSignedIn(User)">
                 <h4>Operations</h4>
                 <p>
                     <a asp-action="Submit" data-toggle="ajaxWindow" data-target="submit" class="btn btn-success btn-sm">
                         <i class="fas fa-cloud-upload-alt"></i> Submit
                     </a>
-                    <viewmodule roles="Administrator,AuthorOfProblem@(ViewData["ReadId"])">
-                        <a asp-action="Overview" asp-controller="Editor" asp-area="Polygon" asp-route-pid="@ViewData["ReadId"]" class="btn btn-sm btn-primary">
-                            <i class="fas fa-book"></i> Polygon
-                        </a>
-                    </viewmodule>
+
+                    <a asp-in-roles="Administrator,AuthorOfProblem@(ViewData["ReadId"])" asp-action="Overview" asp-controller="Editor" asp-area="Polygon" asp-route-pid="@ViewData["ReadId"]" class="btn btn-sm btn-primary">
+                        <i class="fas fa-book"></i> Polygon
+                    </a>
                 </p>
                 <h4>My submissions</h4>
                 <table class="data-table pagination-sm table table-hover table-striped table-sm submissions-table" role="grid">
@@ -50,11 +43,11 @@
                     <tbody>
                     </tbody>
                 </table>
-            </if>
-            <if cond="!SignInManager.IsSignedIn(User)">
+            </razor>
+            <razor asp-show-if="!SignInManager.IsSignedIn(User)">
                 <h4>Operations</h4>
                 <p>You should login first.</p>
-            </if>
+            </razor>
         </div>
     </div>
 </div>

@@ -111,7 +111,7 @@
                 <td use-a>@Html.CstTime(sub.Time)</td>
                 <td use-a><verdict3 value="@sub.Verdict" /></td>
                 <td use-a>@(sub.CodeLength)B</td>
-                <td use-a><if cond="sub.ExecutionTime.HasValue">@(sub.ExecutionTime)ms, @(sub.ExecutionMemory)kb</if><if cond="!sub.ExecutionTime.HasValue">N/A</if></td>
+                <td use-a><razor asp-show-if="sub.ExecutionTime.HasValue">@(sub.ExecutionTime)ms, @(sub.ExecutionMemory)kb</razor><razor asp-show-if="!sub.ExecutionTime.HasValue">N/A</razor></td>
                 <td use-a>@sub.Ip</td>
             </tr>
         }

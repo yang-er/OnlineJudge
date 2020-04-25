@@ -8,12 +8,10 @@
 
 <h2 class="mt-2">@ViewData["Title"]</h2>
 
-<if cond="@(ctx.GetState() >= ContestState.Frozen)">
-    <div class="alert alert-info">
-        <i class="fas fa-snowflake"></i>
-        Scoreboard of c@(ctx.ContestId) (@ctx.ShortName) is now frozen.
-    </div>
-</if>
+<div class="alert alert-info" asp-show-if="ctx.GetState() >= ContestState.Frozen">
+    <i class="fas fa-snowflake"></i>
+    Scoreboard of c@(ctx.ContestId) (@ctx.ShortName) is now frozen.
+</div>
 
 <div class="table-wrapper">
     <table class="data-table table table-sm table-striped" style="width:auto">
@@ -41,12 +39,8 @@
                     <td>@ball.Team</td>
                     <td>@ball.Location</td>
                     <td>@ball.CategoryName</td>
-                    <td><if cond="ball.FirstToSolve">first to solve</if></td>
-                    <td>
-                        <if cond="!ball.Done">
-                            <a asp-action="BalloonSetDone" asp-route-bid="@ball.Id"><i class="fas fa-running"></i></a>
-                        </if>
-                    </td>
+                    <td><razor asp-show-if="ball.FirstToSolve">first to solve</razor></td>
+                    <td><a asp-show-if="!ball.Done" asp-action="BalloonSetDone" asp-route-bid="@ball.Id"><i class="fas fa-running"></i></a></td>
                 </tr>
             }
         </tbody>

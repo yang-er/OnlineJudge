@@ -29,18 +29,18 @@
                         <div class="p-2">Language: <b>@Model.Language.Name</b></div>
                         <div class="p-2">Time: @(Model.ExecuteTime.HasValue ? $"{Model.ExecuteTime.Value / 1000.0}s" : "N/A")</div>
                         <div class="p-2">Memory: @(Model.ExecuteMemory.HasValue ? $"{Model.ExecuteMemory.Value / 1024}MB" : "N/A")</div>
-                        <if cond="ctx.RankingStrategy == 2"><div class="p-2">Score: @Model.Grade</div></if>
+                        <div asp-show-if="ctx.RankingStrategy == 2" class="p-2">Score: @Model.Grade</div>
                     </div>
 
                     <ace value="@Model.SourceCode.UnBase64()" file="Main.@Model.Language.FileExtension" />
 
-                    <if cond="Model.Verdict == Verdict.CompileError">
+                    <razor asp-show-if="Model.Verdict == Verdict.CompileError">
                         <hr />
                         <h4 class="text-center">Compilation output</h4>
                         <snippet class="pre-scrollable" base64="@Model.CompilerOutput" nodata="There were no compiler errors or warnings." />
-                    </if>
+                    </razor>
 
-                    <if cond="Model.Verdict != Verdict.CompileError">
+                    <razor asp-show-if="Model.Verdict != Verdict.CompileError">
                         <hr />
                         <h4 class="text-center">Judging Protocol</h4>
 
@@ -54,7 +54,7 @@
                                 : "_SubmissionDetailOutput";
                             <partial name="@type" model="(r, t)" />
                         }
-                    </if>
+                    </razor>
                 </div>
             </div>
             <div class="modal-footer">
