@@ -69,7 +69,7 @@ namespace JudgeWeb.Domains.Problems
             await Store.WriteFileAsync(Problem, fileName, content);
         }
 
-        public async Task<Problem> ImportAsync(Stream stream, string uploadFileName, string username)
+        public async Task<List<Problem>> ImportAsync(Stream stream, string uploadFileName, string username)
         {
             XDocument document;
 
@@ -80,12 +80,7 @@ namespace JudgeWeb.Domains.Problems
             }
 
             var doc2 = document.Root;
-
-            if (doc2.Elements("item").Count() == 0)
-                throw new Exception("No problems.");
-            if (doc2.Elements("item").Count() > 1)
-                Log("Uploading multiple problems, showing last only.");
-
+            var probs = new List<Problem>();
             var langs = await Languages.ListAsync();
 
             foreach (var doc in doc2.Elements("item"))
@@ -177,9 +172,10 @@ namespace JudgeWeb.Domains.Problems
 
                 Problem.AllowJudge = true;
                 await Store.UpdateAsync(Problem);
+                probs.Add(Problem);
             }
 
-            return Problem;
+            return probs;
         }
     }
 }

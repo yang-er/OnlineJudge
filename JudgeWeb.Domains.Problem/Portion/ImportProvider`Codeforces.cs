@@ -287,7 +287,7 @@ namespace JudgeWeb.Domains.Problems
             }
         }
 
-        public async Task<Problem> ImportAsync(Stream stream, string uploadFileName, string username)
+        public async Task<List<Problem>> ImportAsync(Stream stream, string uploadFileName, string username)
         {
             using var zipArchive = new ZipArchive(stream);
             var infoXml = zipArchive.GetEntry("problem.xml");
@@ -336,7 +336,7 @@ namespace JudgeWeb.Domains.Problems
 
             Problem.AllowJudge = true;
             await Store.UpdateAsync(Problem);
-            return Problem;
+            return new List<Problem> { Problem };
         }
     }
 }

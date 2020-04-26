@@ -14,6 +14,9 @@ namespace JudgeWeb.Domains.Problems
 
         StringBuilder LogBuffer { get; }
 
-        Task<Problem> ImportAsync([NotNull] Stream stream, [NotNull] string streamFileName, [NotNull] string username);
+        Task<List<Problem>> ImportAsync(
+            [NotNull] Stream stream,
+            [NotNull] string streamFileName,
+            [NotNull] string username);
     }
 }

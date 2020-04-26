@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace JudgeWeb.Areas.Polygon.Controllers
@@ -133,28 +134,37 @@ namespace JudgeWeb.Areas.Polygon.Controllers
                 var importer = (IImportProvider)
                     HttpContext.RequestServices.GetService(importType);
 
-                Problem prob;
+                List<Problem> probs;
                 using (var stream = file.OpenReadStream())
-                    prob = await importer.ImportAsync(
+                    probs = await importer.ImportAsync(
                         stream: stream,
                         streamFileName: file.FileName,
                         username: User.GetUserName());
 
+                if (probs.Count > 1)
+                    importer.LogBuffer.AppendLine("Uploading multiple problems, showing first.");
+
+                if (probs.Count == 0)
+                    throw new InvalidOperationException("No problems are uploaded.");
+
                 StatusMessage = importer.LogBuffer.ToString();
 
-                await roleManager.CreateAsync(new Role
+                foreach (var prob in probs)
                 {
-                    ProblemId = prob.ProblemId,
-                    Name = "AuthorOfProblem" + prob.ProblemId
-                });
+                    await roleManager.CreateAsync(new Role
+                    {
+                        ProblemId = prob.ProblemId,
+                        Name = "AuthorOfProblem" + prob.ProblemId
+                    });
 
-                var u = await UserManager.GetUserAsync(User);
-                await UserManager.AddToRoleAsync(u, "AuthorOfProblem" + prob.ProblemId);
+                    var u = await UserManager.GetUserAsync(User);
+                    await UserManager.AddToRoleAsync(u, "AuthorOfProblem" + prob.ProblemId);
+                }
 
                 return RedirectToAction(
                     actionName: "Overview",
                     controllerName: "Editor",
-                    routeValues: new { pid = prob.ProblemId });
+                    routeValues: new { pid = probs[0].ProblemId });
             }
             catch (Exception ex)
             {

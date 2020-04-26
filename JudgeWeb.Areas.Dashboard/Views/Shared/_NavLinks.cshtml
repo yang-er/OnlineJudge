@@ -1,5 +1,5 @@
 ﻿<ul class="navbar-nav mr-auto">
-    <li class="nav-item dropdown" asp-viewdata-key="Administrator">
+    <li asp-in-roles="Administrator" class="nav-item dropdown">
         <a class="nav-link dropdown-toggle" active-ctrl="Judgehosts,InternalErrors" href="#" id="navbarDropdownJudgehosts" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
             <i class="fas fa-gavel"></i> Judgings
             <span class="badge badge-warning" id="num-alerts-judgehosts"></span>

@@ -60,7 +60,7 @@ namespace JudgeWeb.Domains.Problems
             await Store.WriteFileAsync(Problem, fileName, content);
         }
 
-        public async Task<Problem> ImportAsync(Stream stream, string uploadFileName, string username)
+        public async Task<List<Problem>> ImportAsync(Stream stream, string uploadFileName, string username)
         {
             XDocument document;
 
@@ -128,7 +128,7 @@ namespace JudgeWeb.Domains.Problems
                 }
             }
 
-            return Problem;
+            return new List<Problem> { Problem };
         }
     }
 }

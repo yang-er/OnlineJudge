@@ -230,7 +230,7 @@ namespace JudgeWeb.Domains.Problems
                     if (fileName == "build" || fileName == "run")
                         f.ExternalAttributes = LINUX755;
                     else
-                        f.ExternalAttributes = LINUX644;
+                        f.ExternalAttributes = file.ExternalAttributes;
                 }
             }
             
@@ -413,7 +413,7 @@ namespace JudgeWeb.Domains.Problems
             Log($"Adding statement section 'problem_statement/{mdfile}.md'.");
         }
 
-        public async Task<Problem> ImportAsync(Stream stream, string uploadFileName, string username)
+        public async Task<List<Problem>> ImportAsync(Stream stream, string uploadFileName, string username)
         {
             using var zipArchive = new ZipArchive(stream);
 
@@ -480,7 +480,7 @@ namespace JudgeWeb.Domains.Problems
 
             Problem.AllowJudge = true;
             await Store.UpdateAsync(Problem);
-            return Problem;
+            return new List<Problem> { Problem };
         }
     }
 }
