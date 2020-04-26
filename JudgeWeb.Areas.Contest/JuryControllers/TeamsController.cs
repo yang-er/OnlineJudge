@@ -195,10 +195,14 @@ namespace JudgeWeb.Areas.Contest.Controllers
             var team = await Store.FindByIdAsync(cid, teamid);
             if (team == null) return NotFound();
 
-            team.TeamName = model.TeamName;
-            team.AffiliationId = model.AffiliationId;
-            team.CategoryId = model.CategoryId;
-            await Store.UpdateAsync(team);
+            await Store.UpdateAsync(cid, teamid,
+                team => new Team
+                {
+                    TeamName = model.TeamName,
+                    AffiliationId = model.AffiliationId,
+                    CategoryId = model.CategoryId
+                });
+
             await HttpContext.AuditAsync("updated", $"{teamid}");
 
             return Message(
@@ -214,8 +218,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
         {
             var team = await Store.FindByIdAsync(cid, teamid);
             if (team == null) return NotFound();
-            team.Status = 1;
-            await Store.UpdateAsync(team);
+            await Store.UpdateAsync(cid, teamid, _ => new Team { Status = 1 });
             await HttpContext.AuditAsync("accepted", $"{teamid}");
 
             return Message(
@@ -231,8 +234,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
         {
             var team = await Store.FindByIdAsync(cid, teamid);
             if (team == null) return NotFound();
-            team.Status = 2;
-            await Store.UpdateAsync(team);
+            await Store.UpdateAsync(cid, teamid, _ => new Team { Status = 2 });
             await HttpContext.AuditAsync("rejected", $"{teamid}");
 
             return Message(

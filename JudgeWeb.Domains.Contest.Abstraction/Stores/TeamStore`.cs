@@ -42,7 +42,7 @@ namespace JudgeWeb.Domains.Contests
 
         Task<int> CreateAsync(Team team, int[]? uids);
 
-        Task UpdateAsync(Team team);
+        Task UpdateAsync(int cid, int teamid, Expression<Func<Team, Team>> activator);
 
         Task<IEnumerable<int>> DeleteAsync(Team team);
     }

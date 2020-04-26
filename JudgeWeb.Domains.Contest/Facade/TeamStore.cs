@@ -218,21 +218,24 @@ namespace JudgeWeb.Domains.Contests
             }
         }
 
-        public async Task UpdateAsync(Team team)
+        public async Task UpdateAsync(int cid, int teamid, Expression<Func<Team, Team>> activator)
         {
-            Teams.Update(team);
-            await Context.SaveChangesAsync();
+            var affected = await Teams
+                .Where(t => t.ContestId == cid && t.TeamId == teamid)
+                .BatchUpdateAsync(activator);
+            if (affected != 1)
+                throw new DbUpdateException();
 
             var list = await Members
-                .Where(tu => tu.ContestId == team.ContestId && tu.TeamId == team.TeamId)
+                .Where(tu => tu.ContestId == cid && tu.TeamId == teamid)
                 .ToListAsync();
-            Context.RemoveCacheEntry($"`c{team.ContestId}`teams`t{team.TeamId}");
+            Context.RemoveCacheEntry($"`c{cid}`teams`t{teamid}");
             foreach (var uu in list)
-                Context.RemoveCacheEntry($"`c{team.ContestId}`teams`u{uu.UserId}");
-            Context.RemoveCacheEntry($"`c{team.ContestId}`teams`list_jury");
-            Context.RemoveCacheEntry($"`c{team.ContestId}`teams`aff0");
-            Context.RemoveCacheEntry($"`c{team.ContestId}`teams`cat`1");
-            Context.RemoveCacheEntry($"`c{team.ContestId}`teams`cat`2");
+                Context.RemoveCacheEntry($"`c{cid}`teams`u{uu.UserId}");
+            Context.RemoveCacheEntry($"`c{cid}`teams`list_jury");
+            Context.RemoveCacheEntry($"`c{cid}`teams`aff0");
+            Context.RemoveCacheEntry($"`c{cid}`teams`cat`1");
+            Context.RemoveCacheEntry($"`c{cid}`teams`cat`2");
         }
 
         public async Task<IEnumerable<int>> DeleteAsync(Team team)

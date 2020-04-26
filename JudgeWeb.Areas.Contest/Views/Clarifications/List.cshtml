@@ -35,7 +35,7 @@
                     <td use-a class="force-width">@clar.TeamName</td>
                     <td use-a>Jury</td>
                     <td use-a>@clar.Category @prob?.ShortName issue</td>
-                    <td use-a>@string.Join('\n', clar.Body.Split('\n').Where(b => !b.StartsWith('>')))</td>
+                    <td use-a><span class="forceWidth" style="max-width:30em">@string.Join('\n', clar.Body.Split('\n').Where(b => !b.StartsWith('>')))</span></td>
                     <td use-a><i class="fas fa-@(clar.JuryMember == null ? "times" : "user-lock")"></i></td>
                     <td style="@(!toClaim ? "padding:1px" : "")">
                         <span asp-show-if="toClaim">@clar.JuryMember</span>
@@ -73,7 +73,7 @@
                     <td use-a class="force-width">@clar.TeamName</td>
                     <td use-a>Jury</td>
                     <td use-a>@clar.Category @prob?.ShortName issue</td>
-                    <td use-a>@string.Join('\n', clar.Body.Split('\n').Where(b => !b.StartsWith('>')))</td>
+                    <td use-a><span class="forceWidth" style="max-width:30em">@string.Join('\n', clar.Body.Split('\n').Where(b => !b.StartsWith('>')))</span></td>
                     <td use-a><i class="fas fa-@(clar.Answered ? "check" : "times")"></i></td>
                     <td use-a>@clar.JuryMember</td>
                 </tr>
@@ -108,7 +108,7 @@
                     <td use-a>Jury</td>
                     <td use-a>All</td>
                     <td use-a>@clar.Category @prob?.ShortName issue</td>
-                    <td use-a>@string.Join('\n', clar.Body.Split('\n').Where(b => !b.StartsWith('>')))</td>
+                    <td use-a><span class="forceWidth" style="max-width:30em">@string.Join('\n', clar.Body.Split('\n').Where(b => !b.StartsWith('>')))</span></td>
                     <td use-a><i class="fas fa-@(clar.Answered ? "check" : "times")"></i></td>
                     <td use-a>@clar.JuryMember</td>
                 </tr>
