@@ -6,7 +6,7 @@ namespace JudgeWeb.Features.Razor
     /// Show badge icons for verdict.
     /// </summary>
     [HtmlTargetElement("verdict6")]
-    public class VerdictSmallTagHelper : TagHelper
+    public class VerdictSmallTagHelper : XysTagHelper
     {
         [HtmlAttributeName("value")]
         public Verdict Value { get; set; }

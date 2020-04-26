@@ -48,3 +48,7 @@
     <a asp-action="StudentVerify" class="btn btn-info mb-1">Student verify</a>
     <a asp-action="List" asp-controller="TrainingTeam" class="btn btn-success mb-1">Teams</a>
 </p>
+
+<p class="mb-0 mt-3" asp-in-roles="Administrator" asp-show-if="User.GetUserName() != user.UserName">
+    <a asp-action="Detail" asp-controller="Users" asp-area="Dashboard" asp-route-uid="@user.Id" class="btn btn-danger mb-1">Dashboard</a>
+</p>

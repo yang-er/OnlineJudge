@@ -6,7 +6,7 @@ namespace JudgeWeb.Features.Razor
     /// Show DOMjudge style verdict.
     /// </summary>
     [HtmlTargetElement("verdict3")]
-    public class VerdictDomTagHelper : TagHelper
+    public class VerdictDomTagHelper : XysTagHelper
     {
         [HtmlAttributeName("value")]
         public Verdict Value { get; set; }

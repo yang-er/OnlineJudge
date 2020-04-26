@@ -13,7 +13,7 @@ namespace Microsoft.AspNetCore.Mvc.TagHelpers
     /// Create <c>pagination</c> element
     /// </summary>
     [HtmlTargetElement("pagination", TagStructure = TagStructure.WithoutEndTag)]
-    public class PaginationTagHelper : TagHelper
+    public class PaginationTagHelper : XysTagHelper
     {
         private IDictionary<string, string>? _routeValues;
 

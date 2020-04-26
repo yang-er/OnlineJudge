@@ -7,7 +7,7 @@ namespace Microsoft.AspNetCore.Mvc.TagHelpers
     /// </summary>
     [HtmlTargetElement("option", Attributes = "issel")]
     [HtmlTargetElement("input", Attributes = "issel")]
-    public class IsSelectedTagHelper : TagHelper
+    public class IsSelectedTagHelper : XysTagHelper
     {
         [HtmlAttributeName("issel")]
         public bool IsSelected { get; set; }

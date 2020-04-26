@@ -43,15 +43,29 @@ namespace JudgeWeb.Areas.Contest.Controllers
         [HttpGet("{teamid}")]
         public async Task<IActionResult> Detail(int cid, int teamid)
         {
+            var team = await FindTeamByIdAsync(teamid);
+            if (team == null) return NotFound();
+            ViewBag.ShowTeam = team;
+            var scoreboard = await FindScoreboardAsync(teamid);
+            ViewBag.Scoreboard = scoreboard;
             ViewBag.Submissions = await ListSubmissionsByJuryAsync(cid, teamid);
-            var model = await FindScoreboardAsync(teamid);
-            if (model == null) return NotFound();
+
+            if (scoreboard != null)
+            {
+                ViewBag.Category = scoreboard.Category;
+                ViewBag.Affiliation = scoreboard.Affiliation;
+            }
+            else
+            {
+                var cats = await Facade.Teams.ListCategoryAsync(Contest.ContestId);
+                var affs = await Facade.Teams.ListAffiliationAsync(Contest.ContestId, false);
+                ViewBag.Affiliation = affs.FirstOrDefault(a => a.AffiliationId == team.AffiliationId);
+                ViewBag.Category = cats.FirstOrDefault(c => c.CategoryId == team.CategoryId);
+            }
 
             var allMembers = await Store.ListMembersAsync(cid);
-            ViewBag.Member = Enumerable.Empty<string>();
-            if (allMembers.Contains(teamid))
-                ViewBag.Member = allMembers[teamid];
-            return View(model);
+            ViewBag.Member = allMembers[teamid];
+            return View();
         }
 
 

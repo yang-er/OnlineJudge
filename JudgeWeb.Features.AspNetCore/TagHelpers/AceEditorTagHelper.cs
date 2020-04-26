@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace JudgeWeb.Features.Razor
 {
     [HtmlTargetElement("ace")]
-    public class AceEditorTagHelper : TagHelper
+    public class AceEditorTagHelper : XysTagHelper
     {
         private IHtmlHelper HtmlHelper { get; set; }
 

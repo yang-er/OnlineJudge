@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 namespace JudgeWeb.Features.Razor
 {
     [HtmlTargetElement("interactive")]
-    public class InteractiveLogTagHelper : TagHelper
+    public class InteractiveLogTagHelper : XysTagHelper
     {
         [HtmlAttributeName("h5-title")]
         public string Header5 { get; set; }

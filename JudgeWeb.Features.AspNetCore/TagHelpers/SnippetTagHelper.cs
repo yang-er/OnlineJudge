@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 namespace JudgeWeb.Features.Razor
 {
     [HtmlTargetElement("snippet")]
-    public class SnippetTagHelper : TagHelper
+    public class SnippetTagHelper : XysTagHelper
     {
         const string deleted = "Record has been deleted.";
 

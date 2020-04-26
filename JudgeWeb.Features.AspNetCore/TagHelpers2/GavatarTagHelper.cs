@@ -9,7 +9,7 @@ namespace Microsoft.AspNetCore.Mvc.TagHelpers
     /// Setting <c>src</c> to the corresponding gravatar logo.
     /// </summary>
     [HtmlTargetElement("img", Attributes = "gravatar-email")]
-    public class GravatarTagHelper : TagHelper
+    public class GravatarTagHelper : XysTagHelper
     {
         [HtmlAttributeName("gravatar-email")]
         public string? GravatarEmail { get; set; }

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.TagHelpers;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.Razor.TagHelpers;
+using System.Threading.Tasks;
 
 namespace JudgeWeb.Features.Razor
 {
@@ -71,10 +72,17 @@ namespace JudgeWeb.Features.Razor
                 }
             }
         }
+
+        public override Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
+        {
+            if (DisplayWhenTagHelper.Check(context))
+                return Task.CompletedTask;
+            return base.ProcessAsync(context, output);
+        }
     }
 
     [HtmlTargetElement("td", Attributes = "use-a")]
-    public class TableCellDataUrlTagHelper : TagHelper
+    public class TableCellDataUrlTagHelper : XysTagHelper
     {
         public override void Process(TagHelperContext context, TagHelperOutput output)
         {

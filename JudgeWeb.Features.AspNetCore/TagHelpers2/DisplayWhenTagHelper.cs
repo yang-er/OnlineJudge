@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.Razor.TagHelpers;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Microsoft.AspNetCore.Mvc.TagHelpers
 {
@@ -20,7 +22,7 @@ namespace Microsoft.AspNetCore.Mvc.TagHelpers
         private const string ElseInRolesKey = "asp-not-in-roles";
         private const string ConditionKey = "asp-show-if";
 
-        public override int Order => base.Order - 10000;
+        public override int Order => -10000;
 
 #pragma warning disable CS8618
         [HtmlAttributeNotBound]
@@ -58,9 +60,26 @@ namespace Microsoft.AspNetCore.Mvc.TagHelpers
         [HtmlAttributeName(ConditionKey)]
         public bool ShowIf { get; set; } = true;
 
+        /// <summary>
+        /// Is the output suppressed
+        /// </summary>
+        [HtmlAttributeNotBound]
+        private bool Suppressed { get; set; }
+
+        public override void Init(TagHelperContext context)
+        {
+            base.Init(context);
+            context.Items.Add("DisplayWhenTagHelper_" + context.UniqueId, this);
+        }
+
+        public static bool Check(TagHelperContext context)
+        {
+            var lst = context.Items.Values.OfType<DisplayWhenTagHelper>();
+            return lst.Aggregate(false, (fst, tgh) => fst || tgh.Suppressed);
+        }
+
         public override void Process(TagHelperContext context, TagHelperOutput output)
         {
-            base.Process(context, output);
             bool suppress = !ShowIf;
             if (Key != null && !ViewContext.ViewData.ContainsKey(Key))
                 suppress = true;
@@ -70,8 +89,12 @@ namespace Microsoft.AspNetCore.Mvc.TagHelpers
                 suppress = true;
             if (ElseRoles != null && ViewContext.HttpContext.User.IsInRoles(ElseRoles))
                 suppress = true;
+
             if (suppress)
+            {
+                Suppressed = suppress;
                 output.SuppressOutput();
+            }
         }
     }
 
@@ -79,7 +102,7 @@ namespace Microsoft.AspNetCore.Mvc.TagHelpers
     /// Razor tag block without wrapping in output but in code.
     /// </summary>
     [HtmlTargetElement("razor")]
-    public class EmptyWrapperTagHelper : TagHelper
+    public class EmptyWrapperTagHelper : XysTagHelper
     {
         public override void Process(TagHelperContext context, TagHelperOutput output)
         {

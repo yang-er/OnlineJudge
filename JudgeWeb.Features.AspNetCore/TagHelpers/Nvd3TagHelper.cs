@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace JudgeWeb.Features.Razor
 {
     [HtmlTargetElement("nvd3")]
-    public class Nvd3TagHelper : TagHelper
+    public class Nvd3TagHelper : XysTagHelper
     {
         private IHtmlHelper HtmlHelper { get; set; }
 

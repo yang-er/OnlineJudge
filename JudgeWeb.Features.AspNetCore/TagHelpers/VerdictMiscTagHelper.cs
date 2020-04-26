@@ -7,7 +7,7 @@ namespace JudgeWeb.Features.Razor
     /// Verdict icon for misc things
     /// </summary>
     [HtmlTargetElement("verdict0")]
-    public class VerdictMiscTagHelper : TagHelper
+    public class VerdictMiscTagHelper : XysTagHelper
     {
         public enum UseType
         {

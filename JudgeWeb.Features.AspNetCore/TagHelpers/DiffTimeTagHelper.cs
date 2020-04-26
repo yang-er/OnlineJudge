@@ -4,7 +4,7 @@ using System;
 namespace JudgeWeb.Features.Razor
 {
     [HtmlTargetElement("difftime")]
-    public class DiffTimeTagHelper : TagHelper
+    public class DiffTimeTagHelper : XysTagHelper
     {
         static readonly DateTimeOffset TwoKilo = new DateTime(2000, 1, 1);
 

@@ -6,7 +6,7 @@ namespace Microsoft.AspNetCore.Mvc.TagHelpers
     /// Render badges with color
     /// </summary>
     [HtmlTargetElement("badge")]
-    public class BadgeTagHelper : TagHelper
+    public class BadgeTagHelper : XysTagHelper
     {
         [HtmlAttributeName("color")]
         public BootstrapColor Color { get; set; }
@@ -24,7 +24,7 @@ namespace Microsoft.AspNetCore.Mvc.TagHelpers
     /// Render tags by badges with color
     /// </summary>
     [HtmlTargetElement("tags", TagStructure = TagStructure.WithoutEndTag)]
-    public class TagsTagHelper : TagHelper
+    public class TagsTagHelper : XysTagHelper
     {
         [HtmlAttributeName("color")]
         public BootstrapColor Color { get; set; }
