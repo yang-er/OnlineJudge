@@ -237,7 +237,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
             {
                 await Problems.DeleteAsync(Problem);
                 StatusMessage = $"Problem {pid} deleted successfully.";
-                return RedirectToAction("List", "Root");
+                return RedirectToAction("List", "Problems", new { area = "Dashboard" });
             }
             catch
             {

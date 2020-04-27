@@ -13,7 +13,7 @@
     }
 }
 
-<h2 class="mt-4">Gyms</h2>
+<h2 class="mt-2">Gyms</h2>
 
 <table class="table table-responsive-lg mt-3">
     <thead>
@@ -31,6 +31,7 @@
                 <td>
                     <i asp-show-if="!contest.IsPublic" class="fas fa-eye-slash"></i>
                     <a asp-action="Home" asp-controller="Gym" asp-area="Contest" asp-route-cid="@contest.ContestId">@(string.IsNullOrEmpty(contest.Name) ? "(unnamed)" : contest.Name)</a>
+                    <badge asp-show-if="rg.Contains(contest.ContestId)" color="success">registered</badge>
                 </td>
                 <td>@Html.CstTime(contest.StartTime)</td>
                 <td align="center"><i class="fas fa-user"></i>&times;@contest.TeamCount</td>

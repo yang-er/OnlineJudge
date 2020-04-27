@@ -8,18 +8,19 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace JudgeWeb.Areas.Polygon.Controllers
+namespace JudgeWeb.Areas.Dashboard.Controllers
 {
-    [Area("Polygon")]
-    [Route("/dashboard/problems")]
+    [Area("Dashboard")]
+    [Route("[area]/[controller]")]
     [Authorize(Roles = "Administrator,Problem")]
-    public class RootController : Controller2
+    [AuditPoint(AuditlogType.Problem)]
+    public class ProblemsController : Controller3
     {
         private UserManager<User> UserManager { get; }
 
         private IProblemStore Store { get; }
 
-        public RootController(UserManager<User> um, IProblemStore db)
+        public ProblemsController(UserManager<User> um, IProblemStore db)
         {
             UserManager = um;
             Store = db;
@@ -83,14 +84,16 @@ namespace JudgeWeb.Areas.Polygon.Controllers
                 }
             }
 
+            await HttpContext.AuditAsync("created", $"{p.ProblemId}");
+
             return RedirectToAction(
                 actionName: "Overview",
                 controllerName: "Editor",
-                routeValues: new { pid = p.ProblemId });
+                routeValues: new { area = "Polygon", pid = p.ProblemId });
         }
 
 
-        [HttpGet("[action]/{jid}")]
+        [HttpGet("/[area]/submissions/[action]/{jid}")]
         public async Task<IActionResult> ByJudgingId(
             [FromRoute] int jid,
             [FromServices] ISubmissionStore submission)
@@ -102,7 +105,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
                 return RedirectToAction(
                     actionName: "Detail",
                     controllerName: "Submissions",
-                    new { sid = item.SubmissionId, jid, pid = item.ProblemId });
+                    new { area = "Polygon", sid = item.SubmissionId, jid, pid = item.ProblemId });
             else
                 return RedirectToAction(
                     actionName: "Detail",
@@ -124,7 +127,8 @@ namespace JudgeWeb.Areas.Polygon.Controllers
         [ValidateAntiForgeryToken]
         [RequestSizeLimit(1 << 30)]
         [RequestFormLimits2(1 << 30)]
-        public async Task<IActionResult> Import(IFormFile file, string type,
+        public async Task<IActionResult> Import(
+            IFormFile file, string type,
             [FromServices] RoleManager<Role> roleManager)
         {
             try
@@ -164,7 +168,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
                 return RedirectToAction(
                     actionName: "Overview",
                     controllerName: "Editor",
-                    routeValues: new { pid = probs[0].ProblemId });
+                    routeValues: new { area = "Polygon", pid = probs[0].ProblemId });
             }
             catch (Exception ex)
             {
@@ -175,7 +179,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
         }
 
 
-        [HttpGet("/dashboard/status")]
+        [HttpGet("/[area]/submissions")]
         public async Task<IActionResult> Status(
             [FromServices] ISubmissionStore submissions,
             [FromQuery] int page = 1)
@@ -194,13 +198,5 @@ namespace JudgeWeb.Areas.Polygon.Controllers
             ViewBag.TotalPage = totPage;
             return View(model);
         }
-
-
-        [Route("[action]")]
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult NotFound2() => StatusCodePage(404);
-        [Route("[action]")]
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error() => StatusCodePage();
     }
 }

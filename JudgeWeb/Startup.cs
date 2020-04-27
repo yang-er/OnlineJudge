@@ -211,7 +211,7 @@ namespace JudgeWeb
                 endpoints.MapControllers();
 
                 endpoints.MapSwaggerUI("/api/doc")
-                    .RequireRoles("Administrator");
+                    .RequireRoles("Administrator,Problem,Teacher");
 
                 endpoints.MapFallbackNotFound("/api/{**slug}");
 
@@ -219,10 +219,6 @@ namespace JudgeWeb
 
                 endpoints.MapFallbackNotFound("/static/{**slug}");
                 
-                endpoints.MapFallbackToAreaController(
-                    pattern: "/dashboard/problems/{**slug}",
-                    "NotFound2", "Root", "Polygon");
-
                 endpoints.MapFallbackToAreaController(
                     pattern: "/dashboard/{**slug}",
                     "NotFound2", "Root", "Dashboard");

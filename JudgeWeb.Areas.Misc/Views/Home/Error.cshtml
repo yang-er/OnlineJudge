@@ -1,8 +1,9 @@
 ﻿@{
     ViewData["Title"] = "Error";
+    ViewData["UseLightTheme"] = true;
     if (ViewData.ContainsKey("InAjax")) { Layout = null; }
     var code = (System.Net.HttpStatusCode)ViewBag.StatusCode;
-	var codename = System.Text.RegularExpressions.Regex.Replace(code.ToString(), "([a-z])([A-Z])", "$1 $2");
+    var codename = System.Text.RegularExpressions.Regex.Replace(code.ToString(), "([a-z])([A-Z])", "$1 $2");
 }
 
 <div class="container mt-5">

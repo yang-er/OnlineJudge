@@ -8,10 +8,11 @@ using System.Threading.Tasks;
 namespace JudgeWeb.Areas.Dashboard.Controllers
 {
     [Area("Dashboard")]
-    [Authorize(Roles = "Administrator")]
+    [Authorize(Roles = "Administrator,Teacher,Problem")]
     [Route("[area]")]
     public class RootController : Controller3
     {
+        [HttpGet]
         public IActionResult Index()
         {
             return View();
@@ -19,6 +20,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
 
 
         [HttpGet("[action]")]
+        [Authorize(Roles = "Administrator")]
         public async Task<IActionResult> Updates(
             [FromServices] IJudgehostStore jh,
             [FromServices] IInternalErrorStore ie)
@@ -30,6 +32,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
 
 
         [HttpGet("[action]/{page?}")]
+        [Authorize(Roles = "Administrator")]
         public async Task<IActionResult> Auditlog(
             [FromServices] IAuditlogger auditlogger,
             int page = 1)
@@ -41,6 +44,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
 
 
         [HttpGet("[action]")]
+        [Authorize(Roles = "Administrator")]
         public async Task<IActionResult> Config(
             [FromServices] IConfigurationRegistry registry)
         {
@@ -49,6 +53,7 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
 
 
         [HttpPost("[action]")]
+        [Authorize(Roles = "Administrator")]
         [ValidateAntiForgeryToken]
         [AuditPoint(AuditlogType.Configuration)]
         public async Task<IActionResult> Config(
