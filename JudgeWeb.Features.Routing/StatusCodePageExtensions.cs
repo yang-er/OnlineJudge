@@ -135,8 +135,6 @@ namespace Microsoft.AspNetCore.Builder
                 if (context.HttpContext.Response.StatusCode != 404)
                 {
                     var routeVal = context.HttpContext.Request.RouteValues;
-                    if (path.StartsWithSegments("/dashboard/problems"))
-                        return Handle(context, "/dashboard/problems/error");
                     if (path.StartsWithSegments("/dashboard"))
                         return Handle(context, "/dashboard/error");
                     if (path.StartsWithSegments("/polygon") && routeVal.ContainsKey("pid"))

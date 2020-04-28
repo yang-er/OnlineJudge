@@ -59,6 +59,15 @@ namespace JudgeWeb.Domains.Contests
             });
         }
 
+        public Task<List<ContestProblem>> ListByProblemAsync(int pid)
+        {
+            return ContestProblems
+                .Where(cp => cp.ProblemId == pid)
+                .Include(cp => cp.c)
+                .OrderBy(cp => cp.ContestId)
+                .ToListAsync();
+        }
+
         public async Task<IEnumerable<ProblemStatement>> StatementsAsync(int cid)
         {
             var probs = await ContestProblems

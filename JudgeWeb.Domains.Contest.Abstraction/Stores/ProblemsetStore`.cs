@@ -19,6 +19,8 @@ namespace JudgeWeb.Domains.Contests
 
         Task<ContestProblem[]> ListAsync(int cid);
 
+        Task<List<ContestProblem>> ListByProblemAsync(int pid);
+
         Task<IEnumerable<ProblemStatement>> StatementsAsync(int cid);
 
         Task<(bool ok, string msg)> CheckAvailabilityAsync(int cid, int pid, ClaimsPrincipal user);

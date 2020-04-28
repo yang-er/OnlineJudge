@@ -2,6 +2,8 @@
 @{
     ViewData["Title"] = "Problem " + Model.ProblemId;
     ProblemArchive arch = ViewBag.Archive;
+    List<ContestProblem> cps = ViewBag.Contests;
+    IEnumerable<(int, string un, string nn)> urs = ViewBag.Users;
 }
 
 <h2 class="mt-2">Problem @(Model.Title)</h2>
@@ -11,7 +13,7 @@
         <table class="table table-sm table-striped">
             <tr>
                 <th>ID</th>
-                <td>p@(Model.ProblemId)</td>
+                <td>p@(Model.ProblemId) <span asp-show-if="Model.Shared">(shared)</span></td>
             </tr>
             <tr>
                 <th>Archive ID</th>
@@ -126,7 +128,75 @@
 {
     <p>
         <a asp-action="Edit" class="btn btn-primary" title="Edit"><i class="fas fa-edit"></i>&nbsp;Edit</a>
-        <a asp-action="Delete" class="btn btn-danger" title="Delete" data-toggle="ajaxWindow" data-target="deleteProb"><i class="fas fa-trash-alt"></i>&nbsp;Delete</a>
+        <a asp-in-roles="Administrator,Problem" asp-action="Delete" class="btn btn-danger" title="Delete" data-toggle="ajaxWindow" data-target="deleteProb"><i class="fas fa-trash-alt"></i>&nbsp;Delete</a>
         <a asp-action="Archive" class="btn btn-success" title="Archive" data-toggle="ajaxWindow" data-target="archProb"><i class="fas fa-book-open"></i>&nbsp;Archive</a>
     </p>
 }
+
+
+<h3 class="mt-4">Contests</h3>
+
+<div class="row">
+    <div class="col-md-6">
+        <table class="data-table table table-hover table-striped table-sm">
+            <thead class="thead-light">
+                <tr>
+                    <th>CID</th>
+                    <th>Contest<br />shortname</th>
+                    <th>Contest<br />name</th>
+                    <th>Problem<br />shortname</th>
+                    <th>Allow<br />submit</th>
+                    <th>Colour</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var cp in cps)
+                {
+                    <tr asp-action="Detail" asp-route-pid="@Model.ProblemId" asp-controller="Problems" asp-area="Contest" asp-route-cid="@cp.ContestId">
+                        <td use-a>c@(cp.ContestId)</td>
+                        <td use-a>@cp.c.ShortName</td>
+                        <td use-a>@cp.c.Name</td>
+                        <td use-a>@cp.ShortName</td>
+                        <td use-a>@(cp.AllowSubmit ? "Yes" : "No")</td>
+                        <td use-a title="@cp.Color"><div class="circle" style="background-color: @(cp.Color)"></div></td>
+                    </tr>
+                }
+                <tr asp-show-if="cps.Count == 0">
+                    <td colspan="6">No data available.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+<h3 class="mt-3">Reviewers</h3>
+
+<div class="row">
+    <div class="col-md-6">
+        <table class="data-table table table-hover table-striped table-sm">
+            <thead class="thead-light">
+                <tr>
+                    <th scope="col">UID</th>
+                    <th scope="col">User name</th>
+                    <th scope="col">Nick name</th>
+                    <th><a asp-in-roles="Administrator" asp-action="Authorize" data-toggle="ajaxWindow" data-target="authProb" class="text-reset"><i class="fas fa-plus"></i></a></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var (uid, uname, nname) in urs)
+                {
+                    <tr asp-action="Show" asp-route-username="@uname" asp-controller="Profile" asp-area="Account">
+                        <td use-a>u@(uid)</td>
+                        <td use-a>@uname</td>
+                        <td use-a>@nname</td>
+                        <td><a asp-in-roles="Administrator" asp-action="Unauthorize" asp-route-uid="@uid" data-toggle="ajaxWindow" data-target="unauthProb"><i class="fas fa-trash-alt"></i></a></td>
+                    </tr>
+                }
+                <tr asp-show-if="urs.Count() == 0">
+                    <td colspan="4">No data available.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -140,5 +140,23 @@ namespace JudgeWeb.Domains.Problems
                 .Where(p => p.ProblemId == pid)
                 .BatchUpdateAsync(p => new Problem { AllowJudge = tobe });
         }
+
+        public async Task<IEnumerable<(int UserId, string UserName, string NickName)>> ListPermittedUserAsync(int pid)
+        {
+            var result = await Context.Set<Role>()
+                .Where(r => r.ProblemId == pid)
+                .Join(
+                    inner: Context.Set<IdentityUserRole<int>>(),
+                    outerKeySelector: r => r.Id,
+                    innerKeySelector: ur => ur.RoleId,
+                    resultSelector: (r, ur) => ur)
+                .Join(
+                    inner: Context.Set<User>(),
+                    outerKeySelector: ur => ur.UserId,
+                    innerKeySelector: u => u.Id,
+                    resultSelector: (ur, u) => new { u.Id, u.UserName, u.NickName })
+                .ToListAsync();
+            return result.Select(a => (a.Id, a.UserName, a.NickName));
+        }
     }
 }

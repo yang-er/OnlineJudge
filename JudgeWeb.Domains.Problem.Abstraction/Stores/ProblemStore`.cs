@@ -21,6 +21,8 @@ namespace JudgeWeb.Domains.Problems
         Task<(IEnumerable<Problem> model, int totPage)> ListAsync(
             int? uid, int page, int perCount);
 
+        Task<IEnumerable<(int UserId, string UserName, string NickName)>> ListPermittedUserAsync(int pid);
+
         Task<IFileInfo> WriteFileAsync(Problem problem, string fileName, string content);
 
         Task<IFileInfo> WriteFileAsync(Problem problem, string fileName, byte[] content);

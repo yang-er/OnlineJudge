@@ -1,8 +1,11 @@
 ﻿using JudgeWeb.Areas.Polygon.Models;
 using JudgeWeb.Data;
+using JudgeWeb.Domains.Contests;
+using JudgeWeb.Domains.Identity;
 using JudgeWeb.Domains.Problems;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Linq;
@@ -12,15 +15,19 @@ namespace JudgeWeb.Areas.Polygon.Controllers
 {
     [Area("Polygon")]
     [Route("[area]/{pid}/[action]")]
+    [AuditPoint(AuditlogType.Problem)]
     public class EditorController : Controller3
     {
         [HttpGet("/[area]/{pid}")]
         public async Task<IActionResult> Overview(int pid,
             [FromServices] ITestcaseStore tcs,
-            [FromServices] IArchiveStore archs)
+            [FromServices] IArchiveStore archs,
+            [FromServices] IProblemsetStore cps)
         {
             ViewBag.TestcaseCount = await tcs.CountAsync(Problem);
             ViewBag.Archive = await archs.FindInternalAsync(pid);
+            ViewBag.Contests = await cps.ListByProblemAsync(pid);
+            ViewBag.Users = await Problems.ListPermittedUserAsync(pid);
             return View(Problem);
         }
 
@@ -101,6 +108,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
                 TimeLimit = Problem.TimeLimit,
                 OutputLimit = Problem.OutputLimit,
                 Title = Problem.Title,
+                Shared = Problem.Shared,
             });
         }
 
@@ -123,7 +131,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
 
             if (!ModelState.IsValid)
             {
-                TempData["StatusMessage"] = "Error validating problem.\n" +
+                StatusMessage = "Error validating problem.\n" +
                     string.Join('\n', ModelState.Values
                         .SelectMany(m => m.Errors)
                         .Select(e => e.ErrorMessage));
@@ -179,8 +187,10 @@ namespace JudgeWeb.Areas.Polygon.Controllers
             Problem.Title = model.Title;
             Problem.Source = model.Source ?? "";
             Problem.CombinedRunCompare = model.RunAsCompare;
+            Problem.Shared = model.Shared;
             await Problems.UpdateAsync(Problem);
 
+            await HttpContext.AuditAsync("edit", $"{Problem.ProblemId}");
             return RedirectToAction(nameof(Overview));
         }
 
@@ -193,7 +203,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
             return AskPost(
                 title: $"Delete problem {Problem.ProblemId} - \"{Problem.Title}\"",
                 message: $"You're about to delete problem {Problem.ProblemId} \"{Problem.Title}\". " +
-                    "Warning, this will cascade to testcases. Are you sure?",
+                    "Warning, this will cascade to testcases and submissions. Are you sure?",
                 area: "Polygon", ctrl: "Editor", act: "Delete",
                 routeValues: new { pid = Problem.ProblemId },
                 type: MessageType.Danger);
@@ -205,8 +215,81 @@ namespace JudgeWeb.Areas.Polygon.Controllers
         public async Task<IActionResult> Export(
             [FromServices] IExportProvider export)
         {
+            await HttpContext.AuditAsync("export", $"{Problem.ProblemId}");
             var (stream, mimeType, fileName) = await export.ExportAsync(Problem);
             return File(stream, mimeType, fileName, false);
+        }
+
+
+        [HttpGet("{uid}")]
+        [ValidateInAjax]
+        [Authorize(Roles = "Administrator")]
+        public async Task<IActionResult> Unauthorize(int uid,
+            [FromServices] UserManager userManager)
+        {
+            var user = await userManager.FindByIdAsync(uid);
+            if (user == null) return NotFound();
+
+            return AskPost(
+                title: "Unassign authority",
+                message: $"Are you sure to unassign user {user.UserName} (u{uid})?",
+                area: "Polygon", ctrl: "Editor", act: "Unauthorize");
+        }
+
+
+        [HttpPost("{uid}")]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Administrator")]
+        public async Task<IActionResult> Unauthorize(int uid,
+            [FromServices] UserManager userManager, bool post = true)
+        {
+            var user = await userManager.FindByIdAsync(uid);
+            if (user == null) return NotFound();
+            var roleName = $"AuthorOfProblem{Problem.ProblemId}";
+            var result = await userManager.RemoveFromRoleAsync(user, roleName);
+
+            if (!result.Succeeded)
+                StatusMessage = "Error " + result.ToString();
+            else
+                StatusMessage = "Role unassigned.";
+            return RedirectToAction(nameof(Overview));
+        }
+
+
+        [HttpGet]
+        [ValidateInAjax]
+        [Authorize(Roles = "Administrator")]
+        public IActionResult Authorize()
+        {
+            return Window();
+        }
+
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Administrator")]
+        public async Task<IActionResult> Authorize(string username,
+            [FromServices] RoleManager<Role> roleManager,
+            [FromServices] UserManager userManager)
+        {
+            var user = await userManager.FindByNameAsync(username);
+
+            if (user == null)
+            {
+                StatusMessage = "Error user not found.";
+                return RedirectToAction(nameof(Overview));
+            }
+
+            var roleName = $"AuthorOfProblem{Problem.ProblemId}";
+            if (!await roleManager.RoleExistsAsync(roleName))
+                await roleManager.CreateAsync(new Role { ProblemId = Problem.ProblemId, Name = roleName });
+            var result = await userManager.AddToRoleAsync(user, roleName);
+
+            if (!result.Succeeded)
+                StatusMessage = "Error " + result.ToString();
+            else
+                StatusMessage = "Role assigned.";
+            return RedirectToAction(nameof(Overview));
         }
 
 
@@ -236,6 +319,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
             try
             {
                 await Problems.DeleteAsync(Problem);
+                await HttpContext.AuditAsync("deleted", $"{Problem.ProblemId}");
                 StatusMessage = $"Problem {pid} deleted successfully.";
                 return RedirectToAction("List", "Problems", new { area = "Dashboard" });
             }

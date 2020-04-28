@@ -81,6 +81,11 @@
         public Problem p { get; set; }
 
         /// <summary>
+        /// 导航属性
+        /// </summary>
+        public Contest c { get; set; }
+
+        /// <summary>
         /// 默认构造函数
         /// </summary>
         public ContestProblem() { }

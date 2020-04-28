@@ -40,6 +40,9 @@ namespace JudgeWeb.Areas.Polygon.Models
         [DisplayName("Use run script as compare script")]
         public bool RunAsCompare { get; set; }
 
+        [DisplayName("Allow users to download test-data in Gym")]
+        public bool Shared { get; set; }
+
         public IFormFile UploadedCompare { get; set; }
 
         public IFormFile UploadedRun { get; set; }
