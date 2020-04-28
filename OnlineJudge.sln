@@ -59,6 +59,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JudgeWeb.Domains.Contests.C
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JudgeWeb.Data.Abstraction", "JudgeWeb.Data.Abstraction\JudgeWeb.Data.Abstraction.csproj", "{7FBE105E-BB77-45D6-9CFD-7AD0E2B7656A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JudgeWeb.Data.Seeds", "JudgeWeb.Data.Seeds\JudgeWeb.Data.Seeds.csproj", "{F58F1B9E-A521-4765-A251-C075DB7B5100}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -153,6 +155,10 @@ Global
 		{7FBE105E-BB77-45D6-9CFD-7AD0E2B7656A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7FBE105E-BB77-45D6-9CFD-7AD0E2B7656A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7FBE105E-BB77-45D6-9CFD-7AD0E2B7656A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F58F1B9E-A521-4765-A251-C075DB7B5100}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F58F1B9E-A521-4765-A251-C075DB7B5100}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F58F1B9E-A521-4765-A251-C075DB7B5100}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F58F1B9E-A521-4765-A251-C075DB7B5100}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -179,6 +185,7 @@ Global
 		{538E4E8C-DBE9-4638-B87A-58B08B489DCA} = {57D1FDFB-07CC-42A5-89DD-1D178BACDE90}
 		{F7E06A97-6AD2-492C-B2D2-603C374F59D0} = {57D1FDFB-07CC-42A5-89DD-1D178BACDE90}
 		{7FBE105E-BB77-45D6-9CFD-7AD0E2B7656A} = {57D1FDFB-07CC-42A5-89DD-1D178BACDE90}
+		{F58F1B9E-A521-4765-A251-C075DB7B5100} = {57D1FDFB-07CC-42A5-89DD-1D178BACDE90}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {63A11EAF-DF83-49FD-B3CD-4AB686D1C955}
