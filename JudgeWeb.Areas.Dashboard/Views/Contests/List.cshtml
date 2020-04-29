@@ -3,11 +3,12 @@
     ViewData["Title"] = "Contests";
     Dictionary<int, int> teams = ViewBag.Teams;
     Dictionary<int, int> probs = ViewBag.Problems;
-    
+
     string ContestState(Contest c)
     {
         if (!c.StartTime.HasValue) return "table-primary";
-        if (DateTime.Now < c.EndTime) return "table-warning";
+        if (DateTimeOffset.Now < c.StartTime) return "table-warning";
+        if (DateTimeOffset.Now < c.EndTime) return "table-success";
         return "";
     }
 }

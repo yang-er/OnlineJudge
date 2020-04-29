@@ -40,7 +40,8 @@ namespace JudgeWeb.Domains.Contests
                         EndTime = c.EndTime,
                         IsPublic = c.IsPublic,
                         StartTime = c.StartTime,
-                        OpenRegister = c.RegisterDefaultCategory > 0
+                        OpenRegister = c.RegisterDefaultCategory > 0,
+                        Gym = c.Gym,
                     })
                     .ToListAsync();
 

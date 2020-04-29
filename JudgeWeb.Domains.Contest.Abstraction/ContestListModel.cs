@@ -22,6 +22,8 @@ namespace JudgeWeb.Domains.Contests
 
         public bool OpenRegister { get; set; }
 
+        public bool Gym { get; set; }
+
         private int stat = 0;
 
         public int GetState()
@@ -41,11 +43,28 @@ namespace JudgeWeb.Domains.Contests
 
         public int CompareTo(ContestListModel other)
         {
-            int t1 = GetState(), t2 = other.GetState();
-            if (t1 != t2) return t1.CompareTo(t2);
-            if (t1 == 1) return ContestId.CompareTo(other.ContestId);
-            if (t1 == 2) return StartTime.Value.CompareTo(other.StartTime.Value);
-            return other.StartTime.Value.CompareTo(StartTime.Value);
+            if (Gym != other.Gym)
+            {
+                // this is not ok!!
+                return ContestId.CompareTo(other.ContestId);
+            }
+            else if (Gym)
+            {
+                if (!StartTime.HasValue && !other.StartTime.HasValue)
+                    return ContestId.CompareTo(other.ContestId);
+                else if (StartTime.HasValue && other.StartTime.HasValue)
+                    return StartTime.Value.CompareTo(other.StartTime.Value);
+                else
+                    return StartTime.HasValue ? 1 : -1;
+            }
+            else
+            {
+                int t1 = GetState(), t2 = other.GetState();
+                if (t1 != t2) return t1.CompareTo(t2);
+                if (t1 == 1) return ContestId.CompareTo(other.ContestId);
+                if (t1 == 2) return StartTime.Value.CompareTo(other.StartTime.Value);
+                return other.StartTime.Value.CompareTo(StartTime.Value);
+            }
         }
     }
 }
