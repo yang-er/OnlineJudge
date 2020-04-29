@@ -1,6 +1,5 @@
 ﻿using JudgeWeb.Data;
 using JudgeWeb.Domains.Problems;
-using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
@@ -22,6 +21,8 @@ namespace JudgeWeb.Domains.Contests
         Task<Dictionary<int, int>> StatisticsProblemAsync();
 
         Task<Dictionary<int, int>> StatisticsTeamAsync();
+
+        Task<Dictionary<int, int>> StatisticAcceptedAsync(int cid);
 
         public Task<Submission> SubmitAsync(
             string code,

@@ -36,6 +36,8 @@ namespace JudgeWeb.Domains.Contests
 
         Task<ILookup<int, string>> ListMembersAsync(int cid);
 
+        Task<Dictionary<int, (int ac, int tot)>> StatisticsSubmissionAsync(int cid, int teamid);
+
         Task<Team> FindByIdAsync(int cid, int teamid);
 
         Task<Team> FindByUserAsync(int cid, int uid);

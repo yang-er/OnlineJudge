@@ -87,7 +87,7 @@ namespace JudgeWeb.Features.Razor
             output.Content.Append(result);
 
             if (!string.IsNullOrWhiteSpace(Header5))
-                output.PreContent.AppendHtml("<h5>").Append(Header5).AppendHtml("</h5>");
+                output.PreElement.AppendHtml("<h5>").Append(Header5).AppendHtml("</h5>");
         }
     }
 }

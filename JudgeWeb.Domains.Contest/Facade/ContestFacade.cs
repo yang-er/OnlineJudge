@@ -1,13 +1,10 @@
 ﻿using JudgeWeb.Data;
 using JudgeWeb.Domains.Contests;
 using JudgeWeb.Domains.Problems;
-using JudgeWeb.Features.Storage;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.FileProviders;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 [assembly: Inject(typeof(IContestFacade), typeof(ContestFacade))]
@@ -62,6 +59,17 @@ namespace JudgeWeb.Domains.Contests
                 .GroupBy(t => t.ContestId)
                 .Select(g => new { ContestId = g.Key, TeamCount = g.Count() })
                 .ToDictionaryAsync(k => k.ContestId, v => v.TeamCount);
+        }
+
+        public Task<Dictionary<int, int>> StatisticAcceptedAsync(int cid)
+        {
+            return Context.Set<SubmissionStatistics>()
+                .Where(s => s.ContestId == cid && s.AcceptedSubmission > 0)
+                .GroupBy(t => t.ProblemId)
+                .Select(g => new { ProblemId = g.Key, Count = g.Count() })
+                .CachedToDictionaryAsync(
+                    k => k.ProblemId, v => v.Count,
+                    $"`c{cid}`probs`ac_stat", TimeSpan.FromMinutes(5));
         }
     }
 }

@@ -3,8 +3,8 @@
     bool inajax = ViewData.ContainsKey("InAjax");
     Team team = ViewBag.Team;
     Contest ctx = ViewBag.Contest;
-    Team query = ViewBag.ScoreboardData;
     Dictionary<int, int> stats = ViewBag.Statistics;
+    Dictionary<int, (int ac, int tot)> substat = ViewBag.TeamStatistics;
     ContestProblem[] probs = ViewBag.Problems;
     IEnumerable<Clarification> clars = ViewBag.Clarifications;
 }
@@ -26,8 +26,8 @@
         <tbody>
             @foreach (var prob in probs)
             {
-                var ot = query?.ScoreCache?.FirstOrDefault(sc => sc.ProblemId == prob.ProblemId) ?? new ScoreCache();
-                <tr class="@(ot.IsCorrectRestricted ? "accepted-problem" : ot.SubmissionRestricted > 0 ? "rejected-problem" : "")">
+                var ot = substat?.GetValueOrDefault(prob.ProblemId) ?? default;
+                <tr class="@(ot.ac > 0 ? "accepted-problem" : ot.tot > 0 ? "rejected-problem" : "")">
                     <td class="prob-short-name" style="font-weight:bold">@prob.ShortName</td>
                     <td class="text-left"><a asp-action="ProblemView" asp-route-prob="@prob.ShortName">@prob.Title</a></td>
                     <td><i class="fas fa-user"></i> &times; @stats.GetValueOrDefault(prob.ProblemId)</td>

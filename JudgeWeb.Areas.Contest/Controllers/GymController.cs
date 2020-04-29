@@ -7,7 +7,6 @@ using JudgeWeb.Features.Storage;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using System;
 using System.Collections.Generic;
@@ -33,26 +32,28 @@ namespace JudgeWeb.Areas.Contest.Controllers
 
         private IActionResult NotStarted() => View("NotStarted");
 
-        public override Task OnActionExecutingAsync(ActionExecutingContext context)
+        public override async Task OnActionExecutingAsync(ActionExecutingContext context)
         {
             if (!Contest.Gym)
                 context.Result = RedirectToAction("Info", "Public");
             else if ((Contest.StartTime ?? DateTimeOffset.MaxValue) >= DateTimeOffset.Now)
                 context.Result = NotStarted();
-            return base.OnActionExecutingAsync(context);
+            
+            await base.OnActionExecutingAsync(context);
+
+            if (context.Result == null && Team != null)
+                ViewBag.TeamStatistics = await Facade.Teams
+                    .StatisticsSubmissionAsync(Team.ContestId, Team.TeamId);
         }
 
 
         [HttpGet("[action]")]
-        public async Task<IActionResult> Scoreboard(int cid,
-            [FromQuery(Name = "affiliations[]")] int[] affiliations,
-            [FromQuery(Name = "categories[]")] int[] categories,
-            [FromQuery(Name = "clear")] string clear = "")
+        public async Task<IActionResult> Scoreboard(int cid)
         {
             ViewBag.Members = await Facade.Teams.ListMembersAsync(cid);
             return await ScoreboardView(
                 isPublic: Contest.GetState() < ContestState.Finalized,
-                isJury: false, clear == "clear", affiliations, categories);
+                isJury: false, true, null, null);
         }
 
 
@@ -61,9 +62,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
             [FromServices] IProblemFileRepository io,
             [FromServices] IClarificationStore clars)
         {
-            var board = await Facade.Teams.LoadScoreboardAsync(cid);
-            ViewBag.ScoreboardData = Team == null ? null : board.Data.GetValueOrDefault(Team.TeamId);
-            ViewBag.Statistics = board.Statistics;
+            ViewBag.Statistics = await Facade.StatisticAcceptedAsync(cid);
 
             int? teamid = Team?.TeamId;
             ViewBag.Clarifications =
@@ -103,15 +102,14 @@ namespace JudgeWeb.Areas.Contest.Controllers
 
             var model = models.SingleOrDefault();
             if (model == null) return NotFound();
-            var board = await Facade.Teams.LoadScoreboardAsync(cid);
-            var boardQuery = board.Data.GetValueOrDefault(Team.TeamId);
-            model.TeamName = board.Data.GetValueOrDefault(model.TeamId)?.TeamName;
+            Dictionary<int, (int ac, int tot)> substat = ViewBag.TeamStatistics;
+            model.TeamName = (await FindTeamByIdAsync(model.TeamId)).TeamName;
 
             if (model.TeamId != Team.TeamId)
             {
                 if (Contest.StatusAvaliable == 2)
                 {
-                    if (!boardQuery.ScoreCache.Any(sc => sc.ProblemId == model.Problem.ProblemId && sc.IsCorrectRestricted))
+                    if (substat.GetValueOrDefault(model.Problem.ProblemId).ac == 0)
                         return Forbid();
                 }
                 else if (Contest.StatusAvaliable == 0)
@@ -334,9 +332,6 @@ namespace JudgeWeb.Areas.Contest.Controllers
 
             ViewBag.Page = page;
             ViewBag.TeamsName = await Facade.Teams.ListNamesAsync(cid);
-
-            var board = await Facade.Teams.LoadScoreboardAsync(cid);
-            ViewBag.ScoreboardData = Team == null ? null : board.Data.GetValueOrDefault(Team.TeamId);
             return View(model);
         }
 

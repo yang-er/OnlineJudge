@@ -97,6 +97,16 @@ namespace JudgeWeb.Domains.Contests
             });
         }
 
+        public Task<Dictionary<int, (int ac, int tot)>> StatisticsSubmissionAsync(int cid, int teamid)
+        {
+            return Context.Set<SubmissionStatistics>()
+                .Where(s => s.ContestId == cid && s.Author == teamid)
+                .CachedToDictionaryAsync(
+                    keySelector: s => s.ProblemId,
+                    valueSelector: s => (s.AcceptedSubmission, s.TotalSubmission),
+                    $"`c{cid}`teams`{teamid}`substat", TimeSpan.FromMinutes(1));
+        }
+
         public Task<Team> FindByIdAsync(int cid, int teamid)
         {
             return Teams

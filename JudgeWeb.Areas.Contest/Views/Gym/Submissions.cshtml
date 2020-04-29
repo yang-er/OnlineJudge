@@ -7,8 +7,8 @@
     ContestProblem[] probs = ViewBag.Problems;
     Dictionary<int, string> names = ViewBag.TeamsName;
     var dateFormat = System.Globalization.CultureInfo.GetCultureInfo(1033);
-    Team q = ViewBag.ScoreboardData; q = q ?? new Team();
-    var avp = q.ScoreCache?.Where(sc => sc.IsCorrectRestricted).Select(sc => sc.ProblemId).ToHashSet() ?? new HashSet<int>();
+    Dictionary<int, (int ac, int tot)> substat = ViewBag.TeamStatistics;
+    var avp = substat?.Where(sc => sc.Value.ac > 0).Select(sc => sc.Key).ToHashSet() ?? new HashSet<int>();
     Team team = ViewBag.Team; int? teamid = team?.TeamId;
 }
 
@@ -38,7 +38,7 @@
             {
                 var prob = probs.FirstOrDefault(cp => cp.ProblemId == stat.ProblemId);
                 if (prob == null) { continue; }
-                var notIgnore = ctx.StatusAvaliable == 1 || (ctx.StatusAvaliable == 0 ? stat.AuthorId == teamid : avp.Contains(stat.ProblemId));
+                var notIgnore = ctx.StatusAvaliable == 1 || stat.AuthorId == teamid || (ctx.StatusAvaliable == 2 && avp.Contains(stat.ProblemId));
                 <tr role="row" asp-link-ignore="@(!notIgnore)" asp-action="Submission" asp-route-sid="@stat.SubmissionId" data-toggle="ajaxWindow" data-target="showSubmission">
                     <td use-a="">@stat.SubmissionId</td>
                     <td use-a>@Html.CstTime(stat.Time)</td>
