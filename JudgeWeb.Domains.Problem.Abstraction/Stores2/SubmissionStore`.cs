@@ -32,6 +32,8 @@ namespace JudgeWeb.Domains.Problems
 
         Task<Submission> FindByJudgingAsync(int jid);
 
+        Task UpdateStatisticsAsync(int cid, int author, int probid, bool ac);
+
         Task<IEnumerable<SubmissionStatistics>> StatisticsByUserAsync(int uid);
 
         Task<Dictionary<int, string>> GetAuthorNamesAsync(Expression<Func<Submission, bool>> sids);

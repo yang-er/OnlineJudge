@@ -51,12 +51,18 @@ namespace JudgeWeb.Features.OjUpdate
 
         private static async Task UpdateStatistics(DbContext store)
         {
-            var source = store.Set<SubmissionStatistics>().FromSqlRaw(
-                "SELECT COUNT(*) AS [TotalSubmission], [s].[ProblemId], [s].[Author], [s].[ContestId]," +
-                      " SUM(CASE WHEN [j].[Status] = 11 THEN 1 ELSE 0 END) AS [AcceptedSubmission]\r\n" +
-                "FROM [Submissions] AS [s]\r\n" +
-                "INNER JOIN [Judgings] AS [j] ON ([s].[SubmissionId] = [j].[SubmissionId]) AND ([j].[Active] = 1)\r\n" +
-                "GROUP BY [s].[ProblemId], [s].[ContestId], [s].[Author]");
+            var source =
+                from s in store.Set<Submission>()
+                join j in store.Set<Judging>() on new { s.SubmissionId, Active = true } equals new { j.SubmissionId, j.Active }
+                group j.Status by new { s.ProblemId, s.Author, s.ContestId } into g
+                select new SubmissionStatistics
+                {
+                    ProblemId = g.Key.ProblemId,
+                    Author = g.Key.Author,
+                    ContestId = g.Key.ContestId,
+                    TotalSubmission = g.Count(),
+                    AcceptedSubmission = g.Sum(v => v == Verdict.Accepted ? 1 : 0)
+                };
 
             await store.Set<SubmissionStatistics>().MergeAsync(
                 sourceTable: source,

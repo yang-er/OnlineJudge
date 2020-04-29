@@ -48,6 +48,17 @@ namespace JudgeWeb.Domains.Problems
             });
 
             await Context.SaveChangesAsync();
+
+            var (cid, tid, pid, acc) = (
+                sub.ContestId, sub.Author, sub.ProblemId,
+                currentJudging.Status == Verdict.Accepted ? 1 : 0);
+            await Context.Set<SubmissionStatistics>()
+                .Where(s => s.Author == tid && s.ContestId == cid && s.ProblemId == pid)
+                .BatchUpdateAsync(s => new SubmissionStatistics
+                {
+                    TotalSubmission = s.TotalSubmission - 1,
+                    AcceptedSubmission = s.AcceptedSubmission - acc,
+                });
         }
 
         public async Task<int> BatchRejudgeAsync(
@@ -211,6 +222,27 @@ namespace JudgeWeb.Domains.Problems
                     EndTime = DateTimeOffset.Now,
                     OperatedBy = uid,
                 });
+
+            var statisticsMerge =
+                from j in Judgings
+                where j.RejudgeId == rid
+                join j2 in Judgings on j.PreviousJudgingId equals j2.JudgingId
+                join s in Submissions on j.SubmissionId equals s.SubmissionId
+                where (j.Status == Verdict.Accepted && j2.Status != Verdict.Accepted) || (j.Status != Verdict.Accepted && j2.Status == Verdict.Accepted)
+                group j.Status == Verdict.Accepted ? 1 : -1 by new { s.ContestId, s.Author, s.ProblemId } into g
+                select new { g.Key.Author, g.Key.ContestId, g.Key.ProblemId, Delta = g.Sum() };
+            
+            await Context.Set<SubmissionStatistics>()
+                .MergeAsync(
+                    sourceTable: statisticsMerge,
+                    targetKey: s => new { s.Author, s.ContestId, s.ProblemId },
+                    sourceKey: s => new { s.Author, s.ContestId, s.ProblemId },
+                    insertExpression: null,
+                    delete: false,
+                    updateExpression: (o, s) => new SubmissionStatistics
+                    {
+                        AcceptedSubmission = o.AcceptedSubmission + s.Delta
+                    });
         }
 
         public Task<int> GetJuryStatusAsync(int cid)

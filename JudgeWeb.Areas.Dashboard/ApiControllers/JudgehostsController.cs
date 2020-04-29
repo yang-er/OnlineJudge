@@ -73,6 +73,11 @@ namespace JudgeWeb.Areas.Api.Controllers
                     .JudgingFinished(cont, subtime, pid, uid, j);
             }
 
+            if (j.Active)
+                await HttpContext.RequestServices
+                    .GetRequiredService<ISubmissionStore>()
+                    .UpdateStatisticsAsync(cid ?? 0, uid, pid, j.Status == Verdict.Accepted);
+
             Telemetry.TrackDependency(
                 dependencyTypeName: "JudgeHost",
                 dependencyName: j.Server,
