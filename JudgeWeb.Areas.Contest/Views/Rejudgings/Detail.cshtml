@@ -7,6 +7,7 @@
     Dictionary<int, string> teams = ViewBag.Teams;
     Dictionary<string, Language> langs = ViewBag.Languages;
     ContestProblem[] probs = ViewBag.Problems;
+    Contest ctx = ViewBag.Contest;
     if (ViewData.ContainsKey("InAjax")) { Layout = null; }
 }
 
@@ -202,8 +203,8 @@
                     <td use-a>@teams.GetValueOrDefault(s.teamid) (t@(s.teamid))</td>
                     <td use-a class="probid">@probs.FirstOrDefault(ss => ss.ProblemId == s.probid)?.ShortName</td>
                     <td use-a class="langid">@s.langid</td>
-                    <td use-a><verdict3 value="@(s.@new.Status)" /></td>
-                    <td use-a><verdict3 value="@s.old.Status" /></td>
+                    <td use-a><span asp-show-if="ctx.RankingStrategy == 2">@(s.@new.TotalScore ?? 0) - </span><verdict3 value="@(s.@new.Status)" /></td>
+                    <td use-a><span asp-show-if="ctx.RankingStrategy == 2">@(s.old.TotalScore ?? 0) - </span><verdict3 value="@s.old.Status" /></td>
                 </tr>
             }
 

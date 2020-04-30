@@ -101,7 +101,7 @@
                 <td use-a>@(j.ExecuteTime.HasValue ? $"{j.ExecuteTime.Value}ms" : "N/A")</td>
                 <td use-a>@(j.ExecuteMemory.HasValue ? $"{j.ExecuteMemory.Value}K" : "N/A")</td>
                 <td use-a><span class="hostname">@j.Server</span></td>
-                <td use-a><verdict3 value="@j.Status" class="@(j.Active ? "" : "disabled")" /></td>
+                <td use-a><span asp-show-if="ctx.RankingStrategy == 2">@(j.TotalScore ?? 0) - </span><verdict3 value="@j.Status" class="@(j.Active ? "" : "disabled")" /></td>
             </tr>
         }
     </tbody>
@@ -125,7 +125,7 @@
 
 <div class="mb-2">
     <div>
-        Result: <verdict3 value="@judging.Status" class="@(judging.Active ? "" : "disabled")" />,
+        Result: <span asp-show-if="ctx.RankingStrategy == 2">@(judging.TotalScore ?? 0) - </span><verdict3 value="@judging.Status" class="@(judging.Active ? "" : "disabled")" />,
         Judgehost: <span class="hostname">@(Model.AllJudgings.FirstOrDefault(j => j.JudgingId == judging.JudgingId).Server)</span>,
         <span class="judgetime">
             <razor asp-show-if="judging.StartTime.HasValue">

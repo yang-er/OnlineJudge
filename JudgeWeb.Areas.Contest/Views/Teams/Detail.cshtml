@@ -98,6 +98,7 @@
                 <td use-a class="probid">@prob?.ShortName</td>
                 <td use-a class="langid">@sub.Language</td>
                 <td use-a>
+                    <span asp-show-if="ctx.RankingStrategy == 2">@(sub.TotalScore ?? 0) - </span>
                     <verdict3 value="@sub.Verdict" too-late="tooLate" />
                     <razor asp-show-if="tooLate"> (<verdict3 value="@sub.Verdict" />)</razor>
                 </td>

@@ -109,7 +109,9 @@ namespace JudgeWeb.Areas.Contest.Controllers
                     cond = cond.Combine((s, j) => verds.Contains(j.Status));
             }
 
-            int tok = await Store.BatchRejudgeAsync(cond, r);
+            int tok = await Store.BatchRejudgeAsync(cond, r,
+                fullTest: Contest.RankingStrategy == 2);
+            // if oi mode, force full judge
 
             if (tok == 0)
             {

@@ -73,6 +73,7 @@ namespace JudgeWeb.Domains.Problems
                     Expected = s.ExpectedResult,
                     ExecutionTime = j.ExecuteTime,
                     Details = j.Details,
+                    TotalScore = j.TotalScore,
                 };
             else
                 return (s, j) => new ListSubmissionModel
@@ -90,6 +91,7 @@ namespace JudgeWeb.Domains.Problems
                     ExecutionMemory = j.ExecuteMemory,
                     Expected = s.ExpectedResult,
                     ExecutionTime = j.ExecuteTime,
+                    TotalScore = j.TotalScore,
                 };
         }
 

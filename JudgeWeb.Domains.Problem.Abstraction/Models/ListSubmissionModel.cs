@@ -14,6 +14,8 @@ namespace JudgeWeb.Domains.Problems
 
         public int ContestId { get; set; }
 
+        public int? TotalScore { get; set; }
+
         public DateTimeOffset Time { get; set; }
 
         public int AuthorId { get; set; }
