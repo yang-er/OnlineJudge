@@ -120,7 +120,7 @@ namespace JudgeWeb.Features.Scoreboard
             rc.PointsRestricted -= (int)sc.SolveTimeRestricted / 60;
             sc.FirstToSolve = args.Verdict == Verdict.Accepted;
             sc.SolveTimeRestricted = args.TotalScore * 60;
-            sc.IsCorrectRestricted = args.TotalScore > 0;
+            sc.IsCorrectRestricted = args.Verdict == Verdict.Accepted || args.TotalScore > 0;
             sc.PendingRestricted--;
             sc.SubmissionRestricted++;
             rc.PointsRestricted += args.TotalScore;
@@ -143,6 +143,21 @@ namespace JudgeWeb.Features.Scoreboard
         public async Task RefreshCache(ScoreboardContext db, ScoreboardEventArgs args)
         {
             int cid = args.ContestId;
+
+            var rebuildScoreQuery =
+                from j in db.Judgings
+                join s in db.Submissions on j.SubmissionId equals s.SubmissionId
+                join d in db.Context.Set<Detail>() on j.JudgingId equals d.JudgingId
+                join t in db.Context.Set<Testcase>() on d.TestcaseId equals t.TestcaseId
+                group d.Status == Verdict.Accepted ? t.Point : 0 by j.JudgingId into g
+                select new { JudgingId = g.Key, Score = g.Sum() };
+
+            await db.Judgings.MergeAsync(
+                sourceTable: rebuildScoreQuery,
+                targetKey: j => j.JudgingId,
+                sourceKey: j => j.JudgingId,
+                updateExpression: (j, s) => new Judging { TotalScore = s.Score },
+                insertExpression: null, delete: false);
 
             var query =
                 from s in db.Submissions
@@ -182,7 +197,7 @@ namespace JudgeWeb.Features.Scoreboard
                 }
 
                 sc.SubmissionRestricted++;
-                sc.IsCorrectRestricted = s.TotalScore != 0;
+                sc.IsCorrectRestricted = s.Status == Verdict.Accepted || s.TotalScore != 0;
                 sc.SolveTimeRestricted = s.TotalScore.Value * 60;
                 sc.FirstToSolve = s.Status == Verdict.Accepted;
                 if (lastop2.ContainsKey(s.TeamId))
