@@ -1,7 +1,8 @@
 ﻿@{
     ViewData["Title"] = "Error";
+    ViewData["BigTitle"] = "Online Judge";
+    Layout = ViewData.ContainsKey("InAjax") ? null : "_Layout";
     ViewData["UseLightTheme"] = true;
-    if (ViewData.ContainsKey("InAjax")) { Layout = null; }
     var code = (System.Net.HttpStatusCode)ViewBag.StatusCode;
     var codename = System.Text.RegularExpressions.Regex.Replace(code.ToString(), "([a-z])([A-Z])", "$1 $2");
 }
