@@ -29,6 +29,33 @@ namespace JudgeWeb.Areas.Polygon.Controllers
         }
 
 
+        [HttpGet("[action]")]
+        [ValidateInAjax]
+        public async Task<IActionResult> Score(int pid)
+        {
+            ViewData["pid"] = pid;
+            var upper = await Store.CountAsync(pid);
+
+            return Window(new TestcaseScoreModel
+            {
+                Upper = upper,
+                Lower = 1,
+                Score = upper == 0 ? 100 : (100 / upper)
+            });
+        }
+
+
+        [HttpPost("[action]")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Score(int pid, TestcaseScoreModel model)
+        {
+            int cnt = await Store.BatchScoreAsync(pid, model.Lower, model.Upper, model.Score);
+            await HttpContext.AuditAsync("scored", $"{model.Lower} ~ {model.Upper}");
+            StatusMessage = $"Score set, {cnt} testcases affected.";
+            return RedirectToAction(nameof(Testcases));
+        }
+
+
         [HttpGet("{tid}/[action]")]
         [ValidateInAjax]
         public async Task<IActionResult> Edit(int pid, int tid)

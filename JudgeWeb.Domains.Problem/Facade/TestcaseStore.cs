@@ -110,6 +110,13 @@ namespace JudgeWeb.Domains.Problems
             return Testcases.SingleOrDefaultAsync(t => t.TestcaseId == tid);
         }
 
+        public Task<int> BatchScoreAsync(int pid, int lower, int upper, int score)
+        {
+            return Testcases
+                .Where(t => t.ProblemId == pid && t.Rank >= lower && t.Rank <= upper)
+                .BatchUpdateAsync(t => new Testcase { Point = score });
+        }
+
         public IFileInfo GetFile(Testcase tc, string target)
         {
             return Files.GetFileInfo($"p{tc.ProblemId}/t{tc.TestcaseId}.{target}");

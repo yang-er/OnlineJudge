@@ -15,6 +15,8 @@ namespace JudgeWeb.Domains.Problems
 
         Task<Testcase> FindAsync(int tid);
 
+        Task<int> BatchScoreAsync(int pid, int lower, int upper, int score);
+
         Task<int> CascadeDeleteAsync(Testcase testcase);
 
         Task ChangeRankAsync(int pid, int tid, bool up);

@@ -15,7 +15,6 @@ namespace JudgeWeb.Areas.Polygon.Controllers
 {
     [Area("Polygon")]
     [Route("[area]/{pid}/[action]")]
-    [AuditPoint(AuditlogType.Problem)]
     public class EditorController : Controller3
     {
         [HttpGet("/[area]/{pid}")]
@@ -116,6 +115,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Administrator,Problem")]
+        [AuditPoint(AuditlogType.Problem)]
         public async Task<IActionResult> Edit(
             int pid, ProblemEditModel model,
             [FromServices] IExecutableStore execs)
@@ -212,6 +212,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
 
         [HttpGet]
         [Authorize(Roles = "Administrator,Problem")]
+        [AuditPoint(AuditlogType.Problem)]
         public async Task<IActionResult> Export(
             [FromServices] IExportProvider export)
         {
@@ -314,6 +315,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Administrator,Problem")]
+        [AuditPoint(AuditlogType.Problem)]
         public async Task<IActionResult> Delete(int pid)
         {
             try

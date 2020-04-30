@@ -124,6 +124,9 @@ namespace Microsoft.AspNetCore.Builder
                     && s.First() == "XMLHttpRequest")
                     return Task.CompletedTask;
 
+                if (context.HttpContext.Items.ContainsKey("AuditlogType"))
+                    context.HttpContext.Items.Remove("AuditlogType");
+
                 var path = context.HttpContext.Request.Path;
                 if (path.StartsWithSegments("/api"))
                     return Task.CompletedTask;
