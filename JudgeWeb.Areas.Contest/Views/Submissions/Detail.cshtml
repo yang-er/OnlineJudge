@@ -74,7 +74,7 @@
     </span>
     <span>
         <i class="fas fa-code" title="Source code:"></i>
-        <a href="#src-0">View source code</a>
+        <a asp-action="Source">View source code</a>
     </span>
 </div>
 
@@ -191,9 +191,6 @@
         text-align: left;
     }
 </style>
-
-<h2 class="mt-3" id="src-0">Source code</h2>
-<ace file="Main.@lang.FileExtension" value="@submit.SourceCode.UnBase64()" />
 
 <script type="text/javascript">
     function display_correctruns(show) {

@@ -1,6 +1,7 @@
 ﻿using JudgeWeb.Areas.Contest.Models;
 using JudgeWeb.Domains.Problems;
 using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -51,6 +52,33 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 Team = await Facade.Teams.FindByIdAsync(cid, submit.Author),
                 Problem = prob,
                 Language = Languages[submit.Language],
+            });
+        }
+
+
+        [HttpGet("{sid}/[action]")]
+        public async Task<IActionResult> Source(int cid, int sid)
+        {
+            var submit = await Store.FindAsync(sid);
+            if (submit == null || submit.ContestId != cid) return NotFound();
+
+            var lasts = await Store.ListWithJudgingAsync(
+                pagination: (1, 1),
+                predicate: s => s.ContestId == cid && s.SubmissionId < sid &&
+                    s.Author == submit.Author && s.ProblemId == submit.ProblemId,
+                selector: (s, j) => new { s.Language, s.SourceCode, s.SubmissionId });
+            var last = lasts.list.SingleOrDefault();
+
+            return View(new SubmissionSourceModel
+            {
+                ProblemId = submit.ProblemId,
+                TeamId = submit.Author,
+                NewCode = submit.SourceCode,
+                NewId = submit.SubmissionId,
+                NewLang = Languages[submit.Language],
+                OldCode = last?.SourceCode,
+                OldId = last?.SubmissionId,
+                OldLang = Languages.GetValueOrDefault(last?.Language ?? string.Empty),
             });
         }
 

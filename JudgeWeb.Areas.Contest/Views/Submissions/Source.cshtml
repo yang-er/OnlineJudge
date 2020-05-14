@@ -1,0 +1,64 @@
+﻿@model SubmissionSourceModel
+@{
+    ViewData["Title"] = "Source s" + Model.NewId;
+}
+
+<h2 class="mt-2">Source code for submission <a asp-action="Detail">s@(Model.NewId)</a></h2>
+<p><a href="#origdiff">Go to diff to original submission</a></p>
+<ace file="Main.@Model.NewLang.FileExtension" value="@Model.NewCode.UnBase64()" />
+
+<h3 class="mt-3" id="origdiff">Diff to previous submission <a asp-show-if="@Model.OldId.HasValue" asp-action="Detail" asp-route-sid="@Model.OldId">s@(Model.OldId)</a></h3>
+<div id="diff-content"><span class="diff-banner">  --- a/Main.@(Model.OldLang.FileExtension)<br />  +++ b/Main.@(Model.NewLang.FileExtension)</span></div>
+
+<script src="~/static/js/diff_match_patch.js"></script>
+
+<style>
+    #diff-content {
+        font-size: 1rem;
+        font-family: monospace;
+        white-space: pre;
+    }
+
+    #diff-content .diff-banner {
+        padding: .5em 0em;
+        font-weight: bold;
+        background-color: #e6e6e6;
+    }
+
+    #diff-content .diff-head {
+        padding: .25em 0em;
+        font-weight: bold;
+        color: darkblue;
+        background-color: #e6e6ff;
+    }
+
+    #diff-content .diff-del {
+        background-color: #ffe6e6;
+        color: indianred;
+    }
+
+    #diff-content > span {
+        display: block;
+    }
+
+    #diff-content .diff-ins {
+        background-color: #e6ffe6;
+        color: green;
+    }
+
+    #diff-content .diff-ins b {
+        color: darkgreen;
+    }
+
+    #diff-content .diff-del b {
+        color: darkred;
+    }
+</style>
+
+<script>
+    $(function () {
+        $("#diff-content").append(diff_match_patch.html(
+            window.atob("@Html.Raw(Model.OldCode ?? "")"),
+            window.atob("@Html.Raw(Model.NewCode)")));
+    });
+</script>
