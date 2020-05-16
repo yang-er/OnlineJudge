@@ -8,7 +8,7 @@
 <ace file="Main.@Model.NewLang.FileExtension" value="@Model.NewCode.UnBase64()" />
 
 <h3 class="mt-3" id="origdiff">Diff to previous submission <a asp-show-if="@Model.OldId.HasValue" asp-action="Detail" asp-route-sid="@Model.OldId">s@(Model.OldId)</a></h3>
-<div id="diff-content"><span class="diff-banner">  --- a/Main.@(Model.OldLang.FileExtension)<br />  +++ b/Main.@(Model.NewLang.FileExtension)</span></div>
+<div id="diff-content"><span class="diff-banner">  --- a/Main.@(Model.OldLang?.FileExtension ?? "null")<br />  +++ b/Main.@(Model.NewLang.FileExtension)</span></div>
 
 <script src="~/static/js/diff_match_patch.js"></script>
 
