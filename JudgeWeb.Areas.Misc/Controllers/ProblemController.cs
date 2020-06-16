@@ -40,7 +40,7 @@ namespace JudgeWeb.Areas.Misc.Controllers
             [FromServices] IProblemStore probs)
         {
             var prob = await Store.FindAsync(pid);
-            if (prob == null) return NotFound();
+            if (prob == null || prob.AllowSubmit == false) return NotFound();
 
             var fileInfo = probs.GetFile(prob, "view.html");
             var view = await fileInfo.ReadAsync();

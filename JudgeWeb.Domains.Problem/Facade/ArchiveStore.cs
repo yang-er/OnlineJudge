@@ -63,6 +63,7 @@ namespace JudgeWeb.Domains.Problems
                 from a in Archives
                 where a.PublicId <= IArchiveStore.StartId + page * IArchiveStore.ArchivePerPage
                     && a.PublicId > IArchiveStore.StartId + (page - 1) * IArchiveStore.ArchivePerPage
+                    && a.p.AllowSubmit
                 join ss in Context.Set<SubmissionStatistics>()
                     on new { a.ProblemId, ContestId = 0, Author = uid }
                     equals new { ss.ProblemId, ss.ContestId, ss.Author }
