@@ -14,6 +14,7 @@ namespace JudgeWeb.Domains.Problems
                 ["xysxml"] = typeof(XmlImportProvider),
                 ["hustoj"] = typeof(FpsImportProvider),
                 ["cfplyg"] = typeof(CodeforcesImportProvider),
+                ["data"] = typeof(DataImportProvider),
             };
             
             services.TryAddFrom(typeof(ServiceCollectionExtensions).Assembly);
