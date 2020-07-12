@@ -151,6 +151,9 @@ namespace JudgeWeb.Domains.Problems
             Log($"Problem p{Problem.ProblemId} created.");
             await CreateTestcasesAsync(zipArchive);
 
+            foreach (var a in zipArchive.Entries.Where(a => !a.Name.EndsWith(".in") && !a.Name.EndsWith(".out")))
+                Log($"Has file {a.FullName}.");
+
             Problem.AllowJudge = true;
             await Store.UpdateAsync(Problem);
             return new List<Problem> { Problem };
