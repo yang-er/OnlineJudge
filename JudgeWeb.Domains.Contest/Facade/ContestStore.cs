@@ -88,6 +88,8 @@ namespace JudgeWeb.Domains.Contests
 
             Context.RemoveCacheEntry($"`c{cid}`info");
             Context.RemoveCacheEntry($"`c{cid}`internal_state");
+            Context.RemoveCacheEntry($"cont::list");
+            Context.RemoveCacheEntry($"gym::list");
         }
     }
 }

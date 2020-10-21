@@ -37,10 +37,13 @@ namespace JudgeWeb.Features.Scoreboard
                 writer.Write("<th title=\"problem ");
                 writer.Write(prob.Title);
                 writer.Write("\" scope=\"col\">");
+                if (_inJury) writer.Write($"<a href=\"/contest/{prob.ContestId}/jury/problems/{prob.ProblemId}\">");
                 writer.Write(prob.ShortName);
                 writer.Write(" <div class=\"circle\" style=\"background:");
                 writer.Write(prob.Color);
-                writer.WriteLine(";\"></div></th>");
+                writer.Write(";\"></div>");
+                if (_inJury) writer.Write("</a>");
+                writer.WriteLine("</th>");
             }
 
             writer.WriteLine("</tr></thead>");

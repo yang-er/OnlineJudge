@@ -387,13 +387,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
 
             StatusMessage = "Contest updated successfully.";
             if (contestTimeChanged)
-            {
-                StatusMessage += " Scoreboard cache will be refreshed later.";
-                HttpContext.RequestServices
-                    .GetRequiredService<IScoreboardService>()
-                    
-                    .RefreshCache(Contest, DateTimeOffset.Now);
-            }
+                StatusMessage += " Scoreboard cache should be refreshed later.";
 
             return RedirectToAction(nameof(Home));
         }
@@ -403,11 +397,10 @@ namespace JudgeWeb.Areas.Contest.Controllers
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Administrator")]
         [AuditPoint(AuditlogType.Scoreboard)]
-        public async Task<IActionResult> RefreshCache(int cid,
-            [FromServices] IScoreboardService scoreboardService)
+        public async Task<IActionResult> RefreshCache()
         {
-            scoreboardService.RefreshCache(Contest, DateTimeOffset.Now);
-            StatusMessage = "Scoreboard cache will be refreshed in minutes...";
+            await Mediator.RefreshScoreboardCache(Contest);
+            StatusMessage = "Scoreboard cache has been refreshed.";
             await HttpContext.AuditAsync("refresh cache", null);
             return RedirectToAction(nameof(Home));
         }

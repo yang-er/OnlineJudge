@@ -3,11 +3,27 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Threading.Tasks;
 
 namespace JudgeWeb.Features.Scoreboard
 {
+    /// <summary>
+    /// XCPC的榜单计算方法。
+    /// </summary>
+    /// <example>
+    /// Restricted 对应内榜
+    /// Public     对应公榜
+    /// 
+    /// Pending    表示挂起数、未结束测评数
+    /// Submission 表示非CE提交数
+    /// Score      表示显示在榜单中央的时间数字
+    /// IsCorrect  表示是否正确
+    /// SolveTime  表示解出题目的时间
+    /// FirstToSolve 表示是否为第一个过题的人
+    /// 
+    /// Points     表示总分
+    /// TotalTime  表示总罚时
+    /// </example>
     public class XCPCRank : IRankingStrategy
     {
         public IEnumerable<Team> SortByRule(IEnumerable<Team> source, bool isPublic)
@@ -18,159 +34,100 @@ namespace JudgeWeb.Features.Scoreboard
                     .ThenBy(a => a.RankCache.TotalTimeRestricted);
 
 
-        public async Task Accept(ScoreboardContext db, ScoreboardEventArgs args)
+        public async Task Accept(DbContext db, JudgingFinishedRequest args)
         {
-            Expression<Func<ScoreCache, ScoreCache>> scp;
-
-            // first blood
+            // first blood：此处竞态条件可以暂时无视？
             var fbQuery =
-                from sc in db.ScoreCache
+                from sc in db.Set<ScoreCache>()
                 where sc.ContestId == args.ContestId && sc.ProblemId == args.ProblemId && sc.FirstToSolve
-                join t in db.Teams on new { sc.ContestId, sc.TeamId } equals new { t.ContestId, t.TeamId }
-                join c in db.Categories on t.CategoryId equals c.CategoryId
-                where (from t in db.Teams
+                join t in db.Set<Team>() on new { sc.ContestId, sc.TeamId } equals new { t.ContestId, t.TeamId }
+                join c in db.Set<TeamCategory>() on t.CategoryId equals c.CategoryId
+                where (from t in db.Set<Team>()
                        where t.ContestId == args.ContestId && t.TeamId == args.TeamId
-                       join c in db.Categories on t.CategoryId equals c.CategoryId
+                       join c in db.Set<TeamCategory>() on t.CategoryId equals c.CategoryId
                        select c.SortOrder).Contains(c.SortOrder)
-                select new { tid = sc.TeamId };
+                select t.TeamId;
             bool firstBlood = !await fbQuery.AnyAsync();
+
             double time = (args.SubmitTime - args.ContestTime).TotalSeconds;
+            int score = time < 0 ? -(((int)-time) / 60) : ((int)time) / 60;
+            bool showPublic = !args.Frozen;
 
-            if (args.Frozen)
-            {
-                scp = s => new ScoreCache
-                {
-                    PendingRestricted = s.PendingRestricted - 1,
-                    SubmissionRestricted = s.SubmissionRestricted + 1,
-                    IsCorrectRestricted = true,
-                    SolveTimeRestricted = time,
-                    FirstToSolve = firstBlood,
-                };
-            }
-            else
-            {
-                scp = s => new ScoreCache
-                {
-                    PendingPublic = s.PendingPublic - 1,
-                    SubmissionPublic = s.SubmissionPublic + 1,
-                    IsCorrectPublic = true,
-                    SolveTimePublic = time,
-                    PendingRestricted = s.PendingRestricted - 1,
-                    SubmissionRestricted = s.SubmissionRestricted + 1,
-                    IsCorrectRestricted = true,
-                    SolveTimeRestricted = time,
-                    FirstToSolve = firstBlood,
-                };
-            }
-
-            int count = await db.Score(args)
+            int affectedRows = await db.Score(args.ContestId, args.ProblemId, args.TeamId)
                 .Where(s => s.PendingRestricted > 0)
-                .BatchUpdateAsync(scp);
+                .BatchUpdateAsync(s => new ScoreCache
+                {
+                    PendingPublic    = showPublic ? s.PendingPublic - 1    : s.PendingPublic,
+                    SubmissionPublic = showPublic ? s.SubmissionPublic + 1 : s.SubmissionPublic,
+                    ScorePublic      = showPublic ? score                  : (int?)null,
+                    SolveTimePublic  = showPublic ? time                   : 0,
+                    IsCorrectPublic  = showPublic,
 
-            if (count == 0) return;
+                    PendingRestricted    = s.PendingRestricted - 1,
+                    SubmissionRestricted = s.SubmissionRestricted + 1,
+                    ScoreRestricted      = score,
+                    SolveTimeRestricted  = time,
+                    IsCorrectRestricted  = true,
 
-            // update rank
-            var tries = await db.Score(args)
-                .Select(s => new { t = s.SolveTimeRestricted, s = s.SubmissionRestricted })
-                .SingleOrDefaultAsync();
+                    FirstToSolve = firstBlood,
+                });
 
-            int penalty = (tries.s - 1) * 20;
-            penalty += tries.t < 0 ? -(((int)(-tries.t)) / 60) : ((int)(tries.t)) / 60;
+            if (affectedRows == 0) return;
 
-            if (args.Frozen)
-            {
-                await db.RankCache.MergeAsync(
-                    sourceTable: new[] { new { args.ContestId, args.TeamId, penalty } },
-                    targetKey: rc => new { rc.ContestId, rc.TeamId },
-                    sourceKey: rc => new { rc.ContestId, rc.TeamId },
-                    delete: false,
+            // 将此处罚时计算交给数据库，减少数据拉取量
+            var updateRankQuery = db.Score(args.ContestId, args.ProblemId, args.TeamId)
+                .Select(sc => new
+                {
+                    sc.ContestId, sc.TeamId,
+                    Penalty = score + 20 * (sc.SubmissionRestricted - 1)
+                });
 
-                    updateExpression: (r, s) => new RankCache
-                    {
-                        PointsRestricted = r.PointsRestricted + 1,
-                        TotalTimeRestricted = r.TotalTimeRestricted + s.penalty,
-                    },
+            await db.Set<RankCache>().MergeAsync(
+                sourceTable: updateRankQuery,
+                targetKey: rc => new { rc.ContestId, rc.TeamId },
+                sourceKey: rc => new { rc.ContestId, rc.TeamId },
+                delete: false,
 
-                    insertExpression: s => new RankCache
-                    {
-                        PointsRestricted = 1,
-                        TotalTimeRestricted = s.penalty,
-                        TeamId = s.TeamId,
-                        ContestId = s.ContestId,
-                    });
-            }
-            else
-            {
-                await db.RankCache.MergeAsync(
-                    sourceTable: new[] { new { args.ContestId, args.TeamId, penalty } },
-                    targetKey: rc => new { rc.ContestId, rc.TeamId },
-                    sourceKey: rc => new { rc.ContestId, rc.TeamId },
-                    delete: false,
+                updateExpression: (r, s) => new RankCache
+                {
+                    PointsRestricted    = r.PointsRestricted + 1,
+                    TotalTimeRestricted = r.TotalTimeRestricted + s.Penalty,
+                    PointsPublic    = showPublic ? r.PointsPublic + 1            : r.PointsPublic,
+                    TotalTimePublic = showPublic ? r.TotalTimePublic + s.Penalty : r.TotalTimePublic,
+                },
 
-                    updateExpression: (r, s) => new RankCache
-                    {
-                        PointsRestricted = r.PointsRestricted + 1,
-                        TotalTimeRestricted = r.TotalTimeRestricted + s.penalty,
-                        PointsPublic = r.PointsPublic + 1,
-                        TotalTimePublic = r.TotalTimePublic + s.penalty,
-                    },
-
-                    insertExpression: s => new RankCache
-                    {
-                        PointsRestricted = 1,
-                        TotalTimeRestricted = s.penalty,
-                        PointsPublic = 1,
-                        TotalTimePublic = s.penalty,
-                        TeamId = s.TeamId,
-                        ContestId = s.ContestId,
-                    });
-            }
-
-            if (!args.Frozen && args.Balloon)
-            {
-                await db.Balloon.MergeAsync(
-                    sourceTable: new[] { new { args.SubmissionId } },
-                    targetKey: s => s.SubmissionId,
-                    sourceKey: s => s.SubmissionId,
-                    updateExpression: null,
-                    insertExpression: s => new Balloon { SubmissionId = s.SubmissionId },
-                    delete: false);
-            }
+                insertExpression: s => new RankCache
+                {
+                    ContestId = s.ContestId,
+                    TeamId    = s.TeamId,
+                    PointsRestricted    = 1,
+                    TotalTimeRestricted = s.Penalty,
+                    PointsPublic    = showPublic ? 1         : 0,
+                    TotalTimePublic = showPublic ? s.Penalty : 0,
+                });
         }
 
 
-        public Task CompileError(ScoreboardContext db, ScoreboardEventArgs args)
+        public Task CompileError(DbContext db, JudgingFinishedRequest args)
         {
-            Expression<Func<ScoreCache, ScoreCache>> scp;
-
-            if (args.Frozen)
-            {
-                scp = s => new ScoreCache
-                {
-                    PendingRestricted = s.PendingRestricted - 1,
-                };
-            }
-            else
-            {
-                scp = s => new ScoreCache
-                {
-                    PendingPublic = s.PendingPublic - 1,
-                    PendingRestricted = s.PendingRestricted - 1,
-                };
-            }
-
+            bool showPublic = !args.Frozen;
             return db.Score(args.ContestId, args.ProblemId, args.TeamId)
                 .Where(s => s.PendingRestricted > 0)
-                .BatchUpdateAsync(scp);
+                .BatchUpdateAsync(s => new ScoreCache
+                {
+                    PendingPublic = showPublic ? s.PendingPublic - 1 : s.PendingPublic,
+                    PendingRestricted = s.PendingRestricted - 1,
+                });
         }
 
 
-        public Task Pending(ScoreboardContext db, ScoreboardEventArgs args)
+        public Task Pending(DbContext db, SubmissionCreatedRequest args)
         {
-            return db.ScoreCache.MergeAsync(
+            return db.Set<ScoreCache>().MergeAsync(
                 sourceTable: new[] { new { args.ContestId, args.TeamId, args.ProblemId } },
                 targetKey: sc => new { sc.ContestId, sc.TeamId, sc.ProblemId },
                 sourceKey: sc => new { sc.ContestId, sc.TeamId, sc.ProblemId },
+                delete: false,
 
                 updateExpression: (t, s) => new ScoreCache
                 {
@@ -185,51 +142,36 @@ namespace JudgeWeb.Features.Scoreboard
                     ProblemId = s.ProblemId,
                     PendingPublic = 1,
                     PendingRestricted = 1,
-                },
-
-                delete: false);
+                });
         }
 
 
-        public Task Reject(ScoreboardContext db, ScoreboardEventArgs args)
+        public Task Reject(DbContext db, JudgingFinishedRequest args)
         {
-            Expression<Func<ScoreCache, ScoreCache>> scp;
-
-            if (args.Frozen)
-            {
-                scp = s => new ScoreCache
-                {
-                    PendingRestricted = s.PendingRestricted - 1,
-                    SubmissionRestricted = s.SubmissionRestricted + 1,
-                };
-            }
-            else
-            {
-                scp = s => new ScoreCache
-                {
-                    PendingPublic = s.PendingPublic - 1,
-                    SubmissionPublic = s.SubmissionPublic + 1,
-                    PendingRestricted = s.PendingRestricted - 1,
-                    SubmissionRestricted = s.SubmissionRestricted + 1,
-                };
-            }
-
+            bool showPublic = !args.Frozen;
+            int publicDelta = args.Frozen ? 0 : 1;
             return db.Score(args.ContestId, args.ProblemId, args.TeamId)
                 .Where(s => s.PendingRestricted > 0)
-                .BatchUpdateAsync(scp);
+                .BatchUpdateAsync(s => new ScoreCache
+                {
+                    PendingPublic    = showPublic ? s.PendingPublic - 1    : s.PendingPublic,
+                    SubmissionPublic = showPublic ? s.SubmissionPublic + 1 : s.SubmissionPublic,
+                    PendingRestricted    = s.PendingRestricted - 1,
+                    SubmissionRestricted = s.SubmissionRestricted + 1,
+                });
         }
 
 
-        public async Task RefreshCache(ScoreboardContext db, ScoreboardEventArgs args)
+        public async Task RefreshCache(DbContext db, RefreshScoreboardCacheRequest args)
         {
             int cid = args.ContestId;
 
             var query =
-                from s in db.Submissions
+                from s in db.Set<Submission>()
                 where s.ContestId == cid
-                join t in db.Teams on new { s.ContestId, TeamId = s.Author } equals new { t.ContestId, t.TeamId }
-                join tc in db.Categories on t.CategoryId equals tc.CategoryId
-                join j in db.Judgings on new { s.SubmissionId, Active = true } equals new { j.SubmissionId, j.Active }
+                join t in db.Set<Team>() on new { s.ContestId, TeamId = s.Author } equals new { t.ContestId, t.TeamId }
+                join tc in db.Set<TeamCategory>() on t.CategoryId equals tc.CategoryId
+                join j in db.Set<Judging>() on new { s.SubmissionId, Active = true } equals new { j.SubmissionId, j.Active }
                 orderby s.Time ascending
                 select new { s.SubmissionId, t.TeamId, tc.SortOrder, s.ProblemId, s.Time, j.Status };
             var results = await query.ToListAsync();
@@ -238,7 +180,7 @@ namespace JudgeWeb.Features.Scoreboard
             var scc = new Dictionary<(int, int), ScoreCache>();
             var fb = new HashSet<(int, int)>();
             var oks = new List<int>();
-            var endTime = args.EndTime < args.SubmitTime ? args.EndTime : args.SubmitTime;
+            var endTime = args.Deadline;
 
             foreach (var s in results)
             {
@@ -262,13 +204,14 @@ namespace JudgeWeb.Features.Scoreboard
                     if (!rcc.ContainsKey(s.TeamId))
                         rcc.Add(s.TeamId, new RankCache { ContestId = cid, TeamId = s.TeamId });
                     var rc = rcc[s.TeamId];
+                    var timee = (s.Time - args.ContestTime).TotalSeconds;
 
                     sc.IsCorrectRestricted = true;
-                    sc.SolveTimeRestricted = (s.Time - args.ContestTime).TotalSeconds;
+                    sc.SolveTimeRestricted = timee;
+                    sc.ScoreRestricted = timee < 0 ? -(((int)-timee) / 60) : ((int)timee) / 60;
                     oks.Add(s.SubmissionId);
 
-                    int penalty = (sc.SubmissionRestricted - 1) * 20;
-                    penalty += sc.SolveTimeRestricted < 0 ? -(((int)(-sc.SolveTimeRestricted)) / 60) : ((int)(sc.SolveTimeRestricted)) / 60;
+                    int penalty = (sc.SubmissionRestricted - 1) * 20 + sc.ScoreRestricted.Value;
                     rc.PointsRestricted++;
                     rc.TotalTimeRestricted += penalty;
 
@@ -288,6 +231,7 @@ namespace JudgeWeb.Features.Scoreboard
                     sc.SolveTimePublic = sc.SolveTimeRestricted;
                     sc.SubmissionPublic = sc.SubmissionRestricted;
                     sc.IsCorrectPublic = sc.IsCorrectRestricted;
+                    sc.ScorePublic = sc.ScoreRestricted;
 
                     if (s.Status == Verdict.Accepted)
                     {
@@ -298,27 +242,16 @@ namespace JudgeWeb.Features.Scoreboard
                 }
             }
 
-            await db.ScoreCache
+            await db.Set<ScoreCache>()
                 .Where(t => t.ContestId == cid)
                 .BatchDeleteAsync();
             
-            await db.RankCache
+            await db.Set<RankCache>()
                 .Where(t => t.ContestId == cid)
                 .BatchDeleteAsync();
 
-            db.RankCache.AddRange(rcc.Values);
-            db.ScoreCache.AddRange(scc.Values);
-
-            if (args.Balloon)
-            {
-                var createdBalloons = await db.Balloon
-                    .Select(b => b.SubmissionId)
-                    .ToListAsync();
-                var balloons = oks.Except(createdBalloons)
-                    .Select(s => new Balloon { SubmissionId = s })
-                    .ToList();
-                db.Balloon.AddRange(balloons);
-            }
+            db.Set<RankCache>().AddRange(rcc.Values);
+            db.Set<ScoreCache>().AddRange(scc.Values);
 
             await db.SaveChangesAsync();
         }

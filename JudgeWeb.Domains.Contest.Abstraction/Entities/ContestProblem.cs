@@ -108,6 +108,7 @@
             MemoryLimit = mem;
             Interactive = ia;
             Shared = shared;
+            Score = cp.Score;
         }
     }
 }

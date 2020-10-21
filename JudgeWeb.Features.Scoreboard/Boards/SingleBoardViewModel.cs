@@ -32,7 +32,8 @@ namespace JudgeWeb.Features.Scoreboard
                     PendingCount = pp.PendingRestricted,
                     IsFirstToSolve = pp.FirstToSolve,
                     JudgedCount = pp.SubmissionRestricted,
-                    SolveTime = pp.IsCorrectRestricted ? (int)pp.SolveTimeRestricted / 60 : default(int?),
+                    Score = pp.ScoreRestricted,
+                    SolveTime = pp.SolveTimeRestricted,
                 };
             }
 

@@ -247,8 +247,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Submit(
             int cid, TeamCodeSubmitModel model,
-            [FromServices] ISubmissionStore submissions,
-            [FromServices] IScoreboardService scoreboardService)
+            [FromServices] ISubmissionStore submissions)
         {
             if (!ViewData.ContainsKey("HasTeam"))
             {
@@ -286,7 +285,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 via: "gym-page",
                 username: User.GetUserName());
 
-            scoreboardService.SubmissionCreated(Contest, s);
+            await Mediator.SubmissionCreated(Contest, s);
             StatusMessage = "Submission done!";
             return RedirectToAction(nameof(ProblemView), new { prob = prob.ShortName });
         }

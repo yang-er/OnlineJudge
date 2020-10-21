@@ -240,8 +240,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Submit(
             int cid, TeamCodeSubmitModel model,
-            [FromServices] ISubmissionStore submits,
-            [FromServices] IScoreboardService scoreboardService)
+            [FromServices] ISubmissionStore submits)
         {
             if (TooEarly && !ViewData.ContainsKey("IsJury"))
             {
@@ -273,7 +272,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 via: "team-page",
                 username: User.GetUserName());
 
-            scoreboardService.SubmissionCreated(Contest, s);
+            await Mediator.SubmissionCreated(Contest, s);
             StatusMessage = "Submission done! Watch for the verdict in the list below.";
             return RedirectToAction(nameof(Home));
         }

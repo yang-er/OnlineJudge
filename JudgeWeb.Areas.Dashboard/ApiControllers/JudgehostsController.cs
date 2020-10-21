@@ -62,16 +62,9 @@ namespace JudgeWeb.Areas.Api.Controllers
                 "judged", $"{j.JudgingId}", $"{j.Status}");
 
             if (cid.HasValue && j.Active)
-            {
-                var cont = await HttpContext.RequestServices
-                    .GetRequiredService<IContestStore>()
-                    .FindAsync(cid.Value);
-                if (cont == null)
-                    throw new ApplicationException();
-                HttpContext.RequestServices
-                    .GetRequiredService<IScoreboardService>()
-                    .JudgingFinished(cont, subtime, pid, uid, j);
-            }
+                await HttpContext.RequestServices
+                    .GetRequiredService<MediatR.IMediator>()
+                    .JudgingFinished(cid.Value, subtime, pid, uid, j);
 
             if (j.Active)
                 await HttpContext.RequestServices
@@ -256,7 +249,8 @@ namespace JudgeWeb.Areas.Api.Controllers
                 r = await Judgings.FindAsync(
                     predicate: j => j.Status == Verdict.Pending
                             && j.s.l.AllowJudge
-                            && j.s.p.AllowJudge,
+                            && j.s.p.AllowJudge
+                            && !j.s.Ignored,
                     selector: j => new
                     {
                         judging = j,

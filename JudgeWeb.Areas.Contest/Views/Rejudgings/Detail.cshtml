@@ -113,7 +113,7 @@
             <i class="fas fa-check"></i> Apply rejudging
         </button>
     </form>
-    <form asp-show-if="cntsss > 0" asp-action="Cancel" method="post">
+    <form asp-show-if="!Model.OperatedBy.HasValue && cntsss > 0" asp-action="Cancel" method="post">
         <button type="submit" class="btn btn-danger">
             <i class="fas fa-times"></i> Cancel rejudging
         </button>

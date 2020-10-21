@@ -39,7 +39,7 @@
                     <td use-a>s@(sub.SubmissionId)</td>
                     <td use-a>@Html.CstTime(sub.Time)</td>
                     <td use-a class="text-variant">@sub.Language</td>
-                    <td use-a><verdict3 value="@sub.Verdict" /></td>
+                    <td use-a><verdict3 skipped="@sub.Skipped" value="@sub.Verdict" /></td>
                 </tr>
             }
 

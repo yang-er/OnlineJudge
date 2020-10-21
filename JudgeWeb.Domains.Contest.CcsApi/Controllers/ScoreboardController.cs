@@ -90,9 +90,9 @@ namespace JudgeWeb.Areas.Api.Controllers
                     num_judged = s.JudgedCount,
                     num_pending = s.PendingCount,
                     problem_id = $"{p.ProblemId}",
-                    solved = s.SolveTime.HasValue,
+                    solved = s.Score.HasValue,
                     label = p.ShortName,
-                    time = s.SolveTime ?? 0
+                    time = s.Score ?? 0
                 };
             }
         }

@@ -2,11 +2,13 @@
 {
     public class ScoreCellModel
     {
-        public int? SolveTime { get; set; }
+        public int? Score { get; set; }
 
         public int PendingCount { get; set; }
 
         public int JudgedCount { get; set; }
+
+        public double SolveTime { get; set; }
 
         public bool IsFirstToSolve { get; set; }
 
@@ -16,9 +18,9 @@
             {
                 if (PendingCount > 0)
                     return "score_pending";
-                else if (SolveTime.HasValue && IsFirstToSolve)
+                else if (Score.HasValue && IsFirstToSolve)
                     return "score_correct score_first";
-                else if (SolveTime.HasValue)
+                else if (Score.HasValue)
                     return "score_correct";
                 else
                     return "score_incorrect";

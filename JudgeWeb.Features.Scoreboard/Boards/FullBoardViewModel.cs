@@ -50,7 +50,7 @@ namespace JudgeWeb.Features.Scoreboard
             int last_point = int.MinValue;
             int last_penalty = int.MinValue;
             var cats = new Dictionary<int, TeamCategory>();
-            src = ScoreboardService.SC[Contest.RankingStrategy].SortByRule(src, ispublic);
+            src = IRankingStrategy.SC[Contest.RankingStrategy].SortByRule(src, ispublic);
 
             foreach (var item in src)
             {
@@ -84,7 +84,8 @@ namespace JudgeWeb.Features.Scoreboard
                             PendingCount = pp.PendingPublic,
                             IsFirstToSolve = pp.FirstToSolve,
                             JudgedCount = pp.SubmissionPublic,
-                            SolveTime = pp.IsCorrectPublic ? (int)pp.SolveTimePublic / 60 : default(int?),
+                            Score = pp.ScorePublic,
+                            SolveTime = pp.SolveTimePublic,
                         };
                     }
                     else
@@ -94,13 +95,14 @@ namespace JudgeWeb.Features.Scoreboard
                             PendingCount = pp.PendingRestricted,
                             IsFirstToSolve = pp.FirstToSolve,
                             JudgedCount = pp.SubmissionRestricted,
-                            SolveTime = pp.IsCorrectRestricted ? (int)pp.SolveTimeRestricted / 60 : default(int?),
+                            Score = pp.ScoreRestricted,
+                            SolveTime = pp.SolveTimeRestricted,
                         };
                     }
 
-                    if (prob[pid].SolveTime.HasValue)
+                    if (prob[pid].Score.HasValue)
                     {
-                        stat[pid].FirstSolve = Math.Min(stat[pid].FirstSolve ?? int.MaxValue, prob[pid].SolveTime.Value);
+                        stat[pid].FirstSolve ??= prob[pid].Score;
                         stat[pid].Accepted++;
                         stat[pid].Rejected += prob[pid].JudgedCount - 1;
                         stat[pid].Pending += prob[pid].PendingCount;

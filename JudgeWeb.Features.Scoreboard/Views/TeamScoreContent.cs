@@ -68,8 +68,8 @@ namespace JudgeWeb.Features.Scoreboard
                     writer.Write("<a><div class=\"");
                     writer.Write(item.StyleClass);
                     writer.Write("\">");
-                    if (item.SolveTime.HasValue)
-                        writer.Write(item.SolveTime.Value);
+                    if (item.Score.HasValue)
+                        writer.Write(item.Score.Value);
                     else
                         writer.Write("&nbsp;");
                     writer.Write("<span>");

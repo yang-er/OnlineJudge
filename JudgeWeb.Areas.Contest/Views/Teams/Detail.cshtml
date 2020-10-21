@@ -99,8 +99,8 @@
                 <td use-a class="langid">@sub.Language</td>
                 <td use-a>
                     <span asp-show-if="ctx.RankingStrategy == 2">@(sub.TotalScore ?? 0) - </span>
-                    <verdict3 value="@sub.Verdict" too-late="tooLate" />
-                    <razor asp-show-if="tooLate"> (<verdict3 value="@sub.Verdict" />)</razor>
+                    <verdict3 skipped="@sub.Skipped" value="@sub.Verdict" too-late="tooLate" />
+                    <razor asp-show-if="tooLate && !sub.Skipped"> (<verdict3 value="@sub.Verdict" />)</razor>
                 </td>
                 <td class="testcase-results">
                     @{ int t = 0; foreach (var item in sub.Details) { t++;<verdict6 value="@item.Status" />}@for (; t < (prob?.TestcaseCount ?? 1); t++) {<verdict6 value="Pending" judging-pending="@(sub.Verdict == Verdict.Pending || sub.Verdict == Verdict.Running)" />}}

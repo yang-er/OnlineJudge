@@ -36,6 +36,11 @@
         public double SolveTimeRestricted { get; set; }
 
         /// <summary>
+        /// 内榜分数
+        /// </summary>
+        public int? ScoreRestricted { get; set; }
+
+        /// <summary>
         /// 内榜是否正确
         /// </summary>
         public bool IsCorrectRestricted { get; set; }
@@ -54,6 +59,11 @@
         /// 公榜解决时间
         /// </summary>
         public double SolveTimePublic { get; set; }
+
+        /// <summary>
+        /// 公榜分数
+        /// </summary>
+        public int? ScorePublic { get; set; }
 
         /// <summary>
         /// 公榜是否正确

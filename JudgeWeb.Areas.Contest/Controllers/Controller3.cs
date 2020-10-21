@@ -2,6 +2,7 @@
 using JudgeWeb.Domains.Contests;
 using JudgeWeb.Domains.Identity;
 using JudgeWeb.Features.Scoreboard;
+using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -18,11 +19,11 @@ namespace JudgeWeb.Areas.Contest.Controllers
 {
     public class Controller3 : Controller2
     {
+        protected IMediator Mediator { get; private set; }
+
         protected IContestFacade Facade { get; private set; }
 
         protected IContestEventNotifier Notifier { get; private set; }
-
-        protected IScoreboardService ScoreboardService { get; private set; }
 
         [ViewData]
         public Data.Contest Contest { get; set; }
@@ -158,6 +159,8 @@ namespace JudgeWeb.Areas.Contest.Controllers
                 .GetRequiredService<IContestFacade>();
             Notifier = HttpContext.RequestServices
                 .GetRequiredService<IContestEventNotifier>();
+            Mediator = HttpContext.RequestServices
+                .GetRequiredService<IMediator>();
 
             // check the existence
             Contest = await Facade.Contests.FindAsync(cid);

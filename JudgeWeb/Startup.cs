@@ -61,9 +61,7 @@ namespace JudgeWeb
 
             services.AddMemoryCache();
 
-            services.AddMediatR(
-                AppDomain.CurrentDomain.GetAssemblies()
-                    .Where(s => s.FullName.StartsWith("JudgeWeb.")).ToArray());
+            services.AddMediatR(typeof(JudgingFinishedHandler).Assembly);
 
             services.AddDbContext<AppDbContext>(options => options
                 .UseSqlServer(Configuration.GetConnectionString("UserDbConnection"))
@@ -144,7 +142,6 @@ namespace JudgeWeb
             services.AddOjUpdateService<AppDbContext>(
                 Environment.IsDevelopment() ? 24 * 7 * 60 : 3 * 24 * 60);
             services.AddHostedService<ArchiveCacheService>();
-            services.AddScoreboard();
 
             services.AddProblemDomain();
             services.AddContestDomain();

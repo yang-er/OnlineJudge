@@ -195,7 +195,6 @@ namespace JudgeWeb.Areas.Contest.Controllers
         [HttpPost("{rid}/[action]")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Apply(int cid, int rid,
-            [FromServices] IScoreboardService scoreboard,
             [FromServices] IJudgingStore judgings)
         {
             var rej = await Store.FindAsync(cid, rid);
@@ -213,7 +212,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
 
             await Store.ApplyAsync(rej, int.Parse(User.GetUserId()));
             await HttpContext.AuditAsync("applied", $"{rid}");
-            scoreboard.RefreshCache(Contest, DateTimeOffset.Now);
+            await Mediator.RefreshScoreboardCache(Contest);
             StatusMessage = "Rejudging applied. Scoreboard cache will be refreshed.";
             return RedirectToAction(nameof(Detail));
         }

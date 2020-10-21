@@ -1,4 +1,5 @@
 ﻿using JudgeWeb.Data;
+using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -9,6 +10,13 @@ namespace JudgeWeb.Features.Scoreboard
     /// </summary>
     public interface IRankingStrategy
     {
+        internal static IRankingStrategy[] SC = new IRankingStrategy[]
+        {
+            new XCPCRank(),
+            new CFRank(),
+            new OIRank(),
+        };
+
         /// <summary>
         /// 根据排序规则进行排序。
         /// </summary>
@@ -22,34 +30,34 @@ namespace JudgeWeb.Features.Scoreboard
         /// </summary>
         /// <param name="db">数据库</param>
         /// <param name="args">提交事件数据</param>
-        Task Pending(ScoreboardContext db, ScoreboardEventArgs args);
+        Task Pending(DbContext db, SubmissionCreatedRequest args);
 
         /// <summary>
         /// 提交等待评测
         /// </summary>
         /// <param name="db">数据库</param>
         /// <param name="args">提交事件数据</param>
-        Task CompileError(ScoreboardContext db, ScoreboardEventArgs args);
+        Task CompileError(DbContext db, JudgingFinishedRequest args);
 
         /// <summary>
         /// 提交等待评测
         /// </summary>
         /// <param name="db">数据库</param>
         /// <param name="args">提交事件数据</param>
-        Task Reject(ScoreboardContext db, ScoreboardEventArgs args);
+        Task Reject(DbContext db, JudgingFinishedRequest args);
 
         /// <summary>
         /// 提交等待评测
         /// </summary>
         /// <param name="db">数据库</param>
         /// <param name="args">提交事件数据</param>
-        Task Accept(ScoreboardContext db, ScoreboardEventArgs args);
+        Task Accept(DbContext db, JudgingFinishedRequest args);
 
         /// <summary>
         /// 刷新榜单缓存
         /// </summary>
         /// <param name="db">数据库</param>
-        /// <param name="contest">比赛</param>
-        Task RefreshCache(ScoreboardContext db, ScoreboardEventArgs args);
+        /// <param name="args">请求参数</param>
+        Task RefreshCache(DbContext db, RefreshScoreboardCacheRequest args);
     }
 }

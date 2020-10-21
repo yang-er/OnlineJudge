@@ -198,5 +198,28 @@ namespace JudgeWeb.Areas.Dashboard.Controllers
             ViewBag.TotalPage = totPage;
             return View(model);
         }
+
+
+        [HttpGet("/[area]/submissions/[action]")]
+        [Authorize(Roles = "Administrator")]
+        [ValidateInAjax]
+        public IActionResult RefreshCache()
+        {
+            return AskPost(
+                title: "Rebuild submission statistics",
+                message: "Are you sure to rebuild this cache? This will cause heavy load to the database.",
+                area: "Dashboard", ctrl: "Problems", act: "RefreshCache", type: MessageType.Warning);
+        }
+
+
+        [HttpPost("/[area]/submissions/[action]")]
+        [Authorize(Roles = "Administrator")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RefreshCache(bool post = true)
+        {
+            await Store.RebuildSubmissionStatisticsAsync();
+            StatusMessage = "Submission statistics has been rebuilt.";
+            return RedirectToAction(nameof(Status));
+        }
     }
 }

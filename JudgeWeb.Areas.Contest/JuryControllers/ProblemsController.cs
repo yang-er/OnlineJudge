@@ -115,6 +115,7 @@ namespace JudgeWeb.Areas.Contest.Controllers
                     Color = "#" + model.Color.TrimStart('#'),
                     AllowSubmit = model.AllowSubmit,
                     ShortName = model.ShortName,
+                    Score = model.Score,
                 });
 
             await HttpContext.AuditAsync("updated", $"{pid}");

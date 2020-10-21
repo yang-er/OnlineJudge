@@ -65,7 +65,7 @@
                 <td use-a>p@(md.ProblemId)</td>
                 <td use-a>@Html.CstTime(md.Time)</td>
                 <td use-a>@(md.CodeLength)B</td>
-                <td use-a><verdict3 value="@md.Verdict" /></td>
+                <td use-a><verdict3 skipped="@md.Skipped" value="@md.Verdict" /></td>
             </tr>
         }
         @if (subs.Count() == 0)

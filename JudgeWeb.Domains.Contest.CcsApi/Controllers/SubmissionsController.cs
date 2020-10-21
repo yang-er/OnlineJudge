@@ -73,13 +73,10 @@ namespace JudgeWeb.Areas.Api.Controllers
         /// </summary>
         /// <param name="cid">The contest ID</param>
         /// <param name="model">The content</param>
-        /// <param name="scoreboardService"></param>
         /// <response code="201">Added</response>
         [HttpPost("[action]")]
         [ProducesResponseType(201, Type = typeof(Submission))]
-        public async Task<ActionResult<Submission>> Restore(int cid,
-            RestoreSubmissionModel model,
-            [FromServices] IScoreboardService scoreboardService)
+        public async Task<ActionResult<Submission>> Restore(int cid, RestoreSubmissionModel model)
         {
             var s = await Store.CreateAsync(
                 code: model.code,
@@ -92,7 +89,7 @@ namespace JudgeWeb.Areas.Api.Controllers
                 username: "api",
                 time: model.time);
 
-            scoreboardService.SubmissionCreated(Contest, s);
+            await Mediator.SubmissionCreated(Contest, s);
             return Created($"/api/contests/{cid}/submissions/{s.SubmissionId}",
                 new Submission(cid, s.Language, s.SubmissionId, s.ProblemId, s.Author, s.Time, s.Time - (Contest.StartTime ?? DateTimeOffset.Now)));
         }

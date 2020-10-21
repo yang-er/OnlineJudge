@@ -1,4 +1,5 @@
 ﻿using JudgeWeb.Domains.Contests;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,6 +14,8 @@ namespace JudgeWeb.Areas.Api.Controllers
         public Data.ContestProblem[] Problems { get; private set; }
 
         public int MaxEventId { get; private set; }
+
+        public IMediator Mediator { get; private set; }
 
 
         [NonAction]
@@ -30,6 +33,8 @@ namespace JudgeWeb.Areas.Api.Controllers
                     .GetRequiredService<IProblemsetStore>()
                     .ListAsync(cid);
                 MaxEventId = await store.MaxEventIdAsync(cid);
+                Mediator = HttpContext.RequestServices
+                    .GetRequiredService<IMediator>();
                 HttpContext.Items[nameof(cid)] = cid;
                 
                 context.Result = null;
