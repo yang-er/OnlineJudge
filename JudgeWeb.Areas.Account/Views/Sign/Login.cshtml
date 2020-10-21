@@ -4,47 +4,40 @@
 @inject SignInManager<User> SignInManager
 
 @{
-    ViewData["Title"] = "Log in";
+    ViewData["Title"] = "Sign In";
+    Layout = "_WindowLayout";
     var loginProviders = await SignInManager.GetExternalAuthenticationSchemesAsync();
 }
 
-<div class="container-fluid pl-0 pr-0" style="max-width:35em">
-    <h2 class="mt-4">@ViewData["Title"]</h2>
-    <hr />
-    <section>
-        <form asp-route-returnurl="@ViewData["ReturnUrl"]" method="post">
-            <div asp-validation-summary="All" class="text-danger"></div>
-            <div class="form-group">
-                <label asp-for="Username"></label>
-                <input asp-for="Username" class="form-control" />
-                <span asp-validation-for="Username" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Password"></label>
-                <input asp-for="Password" class="form-control" />
-                <span asp-validation-for="Password" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <div class="custom-control custom-checkbox">
-                    <input class="custom-control-input" asp-for="RememberMe" />
-                    <label class="custom-control-label" asp-for="RememberMe">@Html.DisplayNameFor(m => m.RememberMe)</label>
-                </div>
-            </div>
-            <div class="form-group">
-                <button type="submit" class="btn btn-primary">Log in</button>
-            </div>
-            <div class="form-group">
-                <p>
-                    <a asp-action="ForgotPassword">Forgot your password?</a>
-                </p>
-                <p>
-                    <a asp-action="Register" asp-route-returnurl="@ViewData["ReturnUrl"]">Register as a new user?</a>
-                </p>
-            </div>
-        </form>
-    </section>
+<div asp-validation-summary="All" class="text-danger"></div>
+<div class="form-group">
+    <label asp-for="Username"></label>
+    <input asp-for="Username" class="form-control" />
+    <span asp-validation-for="Username" class="text-danger"></span>
+</div>
+<div class="form-group">
+    <label asp-for="Password"></label>
+    <input asp-for="Password" class="form-control" />
+    <span asp-validation-for="Password" class="text-danger"></span>
+</div>
+<div class="form-group">
+    <div class="custom-control custom-checkbox">
+        <input class="custom-control-input" asp-for="RememberMe" />
+        <label class="custom-control-label" asp-for="RememberMe">@Html.DisplayNameFor(m => m.RememberMe)</label>
+    </div>
+</div>
+<div class="form-group">
+    <p>
+        <a asp-action="ForgotPassword">Forgot your password?</a>
+    </p>
+    <p>
+        <a asp-action="Register" asp-route-returnurl="@ViewData["ReturnUrl"]">Register as a new user?</a>
+    </p>
 </div>
 
+@section Footer {
+    <button asp-action="Login" asp-route-returnUrl="@ViewData["ReturnUrl"]" type="submit" class="btn btn-primary">Login</button>
+}
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

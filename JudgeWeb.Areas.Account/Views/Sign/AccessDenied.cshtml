@@ -1,6 +1,7 @@
 ﻿@{
     ViewData["Title"] = "Access denied";
+    Layout = "_WindowLayout";
 }
 
-<h2 class="text-danger mt-4">@ViewData["Title"]</h2>
 <p class="text-danger">You do not have access to this resource.</p>
+<p class="text-danger" asp-show-if="@User.HasClaim("email_verified", "false")">Your email is not verified for restricted pages. <a asp-action="Edit" asp-controller="Profile" asp-route-username="@User.GetUserName()">Click to verify &raquo;</a></p>

@@ -16,7 +16,7 @@ function ajaxget(geturl, dom) {
             }
         },
         error: function (jqXHR) {
-            notice("请联系管理员。" + jqXHR.status + ' ' + jqXHR.statusText + "<br><pre>" + jqXHR.responseText, "danger", "内部错误");
+            notice("请联系管理员。" + jqXHR.status + ' ' + jqXHR.statusText + "<br><pre>" + jqXHR.responseText, "danger", "内部错误", false);
             $(dom).html('<span color="red">内部错误，无法显示</span>');
         },
         beforeSend: function (jqXHR) {
@@ -45,24 +45,24 @@ function showWindow(handlekey, geturl) {
             }
         },
         error: function (jqXHR) {
-            notice("请联系管理员。" + jqXHR.status + ' ' + jqXHR.statusText + "<br><pre>" + jqXHR.responseText, "danger", "内部错误");
+            notice("请联系管理员。" + jqXHR.status + ' ' + jqXHR.statusText + "<br><pre>" + jqXHR.responseText, "danger", "内部错误", false);
         }
     });
 }
 
-function notice(text, type, header) {
+function notice(text, type, header, autohide = true) {
     type = type || "info";
     header = header || "小羊实验室";
 
     $('#notification-box').append(
-        '<div class="toast new-add" data-autohide="false" role="alert" aria-live="assertive" aria-atomic="true">'
-        + '<div class="toast-header"><div class="rounded mr-2 text-' + type + '">•</div>'
+        '<div class="toast new-add" data-delay="10000" data-autohide="' + autohide + '" role="alert" aria-live="assertive" aria-atomic="true">'
+        + '<div class="toast-header"><div class="mr-2 text-' + type + '"><i class="fas fa-info-circle"></i></div>'
         + '<strong class="mr-auto">' + header + '</strong>'
         + '<small class="text-muted">just now</small>'
         + '<button type="button" class="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close">'
         + '<span aria-hidden="true">&times;</span></button>'
         + '</div><div class="toast-body">' + text + '</div></div>');
-    $('#notification-box .new-add').removeClass('new-add').toast('show');
+    return $('#notification-box .new-add').removeClass('new-add').toast('show');
 }
 
 function ajaxpost(Form, handlekey, parent, arg2) {
@@ -99,7 +99,7 @@ function ajaxpost(Form, handlekey, parent, arg2) {
             if (jqXHR.getResponseHeader('X-Login-Page')) {
                 window.location = jqXHR.getResponseHeader('X-Login-Page');
             }
-            notice("请联系管理员。" + jqXHR.status + ' ' + jqXHR.statusText + "<br><pre>" + jqXHR.responseText, "danger", "内部错误");
+            notice("请联系管理员。" + jqXHR.status + ' ' + jqXHR.statusText + "<br><pre>" + jqXHR.responseText, "danger", "内部错误", false);
         }
     });
     return false;

@@ -1,0 +1,102 @@
+﻿@{
+    Layout = ViewData.ContainsKey("InAjax") ? null : "_Layout";
+    var (styleAjax, stylePlain) = ViewData.ContainsKey("MaxWidth")
+        ? ($"max-width:{ViewData["MaxWidth"]}", $"max-width:{ViewData["MaxWidth"]}")
+        : ("", "max-width:35rem");
+}
+
+@if (ViewData.ContainsKey("InAjax"))
+{
+<form action="javascript:;" method="post">
+    @Html.AntiForgeryToken()
+    <div class="modal fade" id="modal-@ViewData["HandleKey"]" tabindex="-1" role="dialog" aria-labelledby="modal-@ViewData["HandleKey"]-label" aria-hidden="true">
+        <div class="modal-dialog" style="@styleAjax" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modal-@ViewData["HandleKey"]-label">@ViewData["Title"]</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    @RenderBody()
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    @RenderSection("Footer", required: false)
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+@RenderSection("Scripts", required: false)
+}
+else
+{
+    <style type="text/css">
+        @@media (min-width: 576px) {
+            body {
+                background-color: #f7f8f9;
+            }
+
+            .window-card {
+                margin-top: 3rem;
+                box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075) !important;
+                border-radius: 0.25rem !important;
+            }
+
+                .window-card > .card-body {
+                    padding: 2rem 1.5rem 1.5rem;
+                }
+        }
+
+        .window-card {
+            padding-left: 0;
+            padding-right: 0;
+        }
+
+            .window-card > .card-body .panel-bottom {
+                text-align: right;
+                margin-top: 1.5em;
+            }
+
+        @@media (max-width: 575.9999px) {
+            .window-card {
+                margin-top: 1.5rem;
+                border-color: white;
+            }
+
+                .window-card > .card-body {
+                    padding: 0;
+                }
+        }
+    </style>
+
+    <div class="card window-card container-fluid" style="@stylePlain">
+        <div class="card-body">
+            <h2>@ViewData["Title"]</h2>
+
+            <hr />
+            <form action="javascript:;" method="post">
+                @Html.AntiForgeryToken()
+                @RenderBody()
+
+                @if (!IsSectionDefined("Footer"))
+                {
+                    <small class="text-muted">Trace ID: @(System.Diagnostics.Activity.Current?.Id ?? Context.TraceIdentifier)</small>
+                }
+                else
+                {
+                    <div class="panel-bottom">
+                        @RenderSection("Footer")
+                    </div>
+                }
+            </form>
+        </div>
+    </div>
+
+    @section Scripts {
+        @RenderSection("Scripts", required: false)
+    }
+}

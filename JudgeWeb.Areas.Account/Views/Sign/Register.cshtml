@@ -1,61 +1,34 @@
 ﻿@model RegisterModel
 @{
     ViewData["Title"] = "Register";
+    Layout = "_WindowLayout";
 }
 
-<h2 class="mt-4">@ViewData["Title"]</h2>
-<div class="row">
-    <div class="col-md-4 order-1 order-md-0">
-        <form asp-route-returnUrl="@ViewData["ReturnUrl"]" method="post">
-            <h4>Create a new account</h4>
-            <hr />
-            <div asp-validation-summary="All" class="text-danger"></div>
-            <div class="form-group">
-                <label asp-for="UserName"></label>
-                <input asp-for="UserName" class="form-control" />
-                <span asp-validation-for="UserName" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Email"></label>
-                <input asp-for="Email" class="form-control" />
-                <span asp-validation-for="Email" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Password"></label>
-                <input asp-for="Password" class="form-control" />
-                <span asp-validation-for="Password" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="ConfirmPassword"></label>
-                <input asp-for="ConfirmPassword" class="form-control" />
-                <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
-            </div>
-            <button type="submit" class="btn btn-primary">Register</button>
-        </form>
-    </div>
-    <div class="col-md-7 order-0 order-md-1">
-        <h4>Registration Agreement</h4>
-        <hr />
-        <p>Dear ACMer, you are welcome to register as a user of this website. </p>
-        <p>Please read the following content carefully before registering: </p>
-        <h5>Academic Integrity</h5>
-        <ul>
-            <li>You are not allowed to copy and paste codes from others in contests or homework. </li>
-            <li>If untrustworthy behavior is found, we will contact related persons. </li>
-        </ul>
-        <h5>Copyrights of Problem</h5>
-        <ul>
-            <li>Copyrights of the problem uploaded to this site belong to their author.</li>
-            <li>If you want to get test cases to examine your code, please contact the problem author.</li>
-        </ul>
-        <h5>Servers for Judge</h5>
-        <ul>
-            <li>Servers for judge are provided by XiaoYang now. If you want to provide one, please contact XiaoYang.</li>
-            <li>If you upload some code that may damage the server, we'll block your account from accessing any service of this site. </li>
-        </ul>
-        <p>If you register an account, you are agreed with these terms.</p>
-    </div>
+<div asp-validation-summary="All" class="text-danger"></div>
+<div class="form-group">
+    <label asp-for="UserName"></label>
+    <input asp-for="UserName" class="form-control" />
+    <span asp-validation-for="UserName" class="text-danger"></span>
 </div>
+<div class="form-group">
+    <label asp-for="Email"></label>
+    <input asp-for="Email" class="form-control" />
+    <span asp-validation-for="Email" class="text-danger"></span>
+</div>
+<div class="form-group">
+    <label asp-for="Password"></label>
+    <input asp-for="Password" class="form-control" />
+    <span asp-validation-for="Password" class="text-danger"></span>
+</div>
+<div class="form-group">
+    <label asp-for="ConfirmPassword"></label>
+    <input asp-for="ConfirmPassword" class="form-control" />
+    <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+</div>
+
+@section Footer {
+    <button asp-route-returnUrl="@ViewData["ReturnUrl"]" asp-action="Register" type="submit" class="btn btn-primary">Register</button>
+}
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

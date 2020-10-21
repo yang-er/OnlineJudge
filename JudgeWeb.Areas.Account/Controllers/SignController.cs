@@ -42,9 +42,7 @@ namespace JudgeWeb.Areas.Account.Controllers
             await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
 
             ViewData["ReturnUrl"] = returnUrl;
-
-            if (!IsWindowAjax) return View();
-            else return Window("LoginAjax");
+            return View();
         }
 
         [HttpPost]

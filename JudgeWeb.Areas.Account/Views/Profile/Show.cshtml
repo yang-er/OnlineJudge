@@ -33,6 +33,11 @@
     </div>
 }
 
+@if (!stat.Where(p => p.AcceptedSubmission != 0).Any())
+{
+    <p>A problem not solved a day keeps the gold medals away...</p>
+}
+
 <h4 class="mt-3">List of unsolved problems</h4>
 @foreach (var prob in stat.Where(p => p.AcceptedSubmission == 0))
 {
@@ -40,6 +45,11 @@
         <a asp-area="Misc" asp-controller="Problem" asp-action="View" asp-route-pid="@prob.ProblemId">@prob.ProblemId</a>
         <small class="text-danger mr-1">@prob.AcceptedSubmission/@prob.TotalSubmission</small>
     </div>
+}
+
+@if (!stat.Where(p => p.AcceptedSubmission == 0).Any())
+{
+    <p>Wow! You can really solve problems.</p>
 }
 
 <p class="mb-0 mt-3" asp-show-if="User.GetUserName() == user.UserName">
