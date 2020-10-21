@@ -77,7 +77,7 @@ namespace JudgeWeb.Areas.Polygon.Controllers
                 return NotFound();
             if (target != model.Target || $"p{pid}" != model.BackingStore)
                 return BadRequest();
-            await Problems.WriteFileAsync(Problem, $"{target}.md", model.Markdown);
+            await Problems.WriteFileAsync(Problem, $"{target}.md", model.Markdown ?? string.Empty);
             StatusMessage = "Description saved.";
             return RedirectToAction();
         }
