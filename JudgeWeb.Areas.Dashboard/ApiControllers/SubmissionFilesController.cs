@@ -40,7 +40,7 @@ namespace JudgeWeb.Areas.Api.Controllers
             var memStream = new MemoryStream();
 
             using (var zip = new ZipArchive(memStream, ZipArchiveMode.Create, true))
-                zip.CreateEntryFromByteArray(srcDecoded, "Main." + src.Value.src);
+                zip.CreateEntryFromByteArray(srcDecoded, "Main." + src.Value.ext);
             memStream.Position = 0;
             return File(memStream, "application/zip");
         }
