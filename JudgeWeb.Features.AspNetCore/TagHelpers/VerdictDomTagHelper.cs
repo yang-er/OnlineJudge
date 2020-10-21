@@ -17,6 +17,9 @@ namespace JudgeWeb.Features.Razor
         [HtmlAttributeName("tooltip")]
         public string TooltipTitle { get; set; }
 
+        [HtmlAttributeName("skipped")]
+        public bool Skipped { get; set; }
+
         static readonly (string, string)[] st = new[]
         {
             ("unknown", "queued"), // 0
@@ -38,6 +41,8 @@ namespace JudgeWeb.Features.Razor
             var v = (int)Value;
             if (IsTooLate)
                 return ("sol sol_queued", "too-late");
+            else if (Skipped)
+                return ("sol sol_queued", "skipped");
             else
                 return ("sol sol_" + st[v].Item2, st[v].Item1);
         }

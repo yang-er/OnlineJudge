@@ -2,6 +2,7 @@
 using JudgeWeb.Domains.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -11,6 +12,11 @@ namespace JudgeWeb.Areas.Misc.Controllers
     [Route("[action]")]
     public class HomeController : Controller2
     {
+        public static string ProgramVersion { get; } =
+            typeof(HomeController).Assembly
+                .GetCustomAttribute<GitVersionAttribute>()?
+                .CommitId?.Substring(0, 7) ?? "unknown";
+
         private INewsStore Store { get; }
 
         private static string[] PhotoList { get; } = new[] { "2018qingdao", "2018xian", "2018final" };

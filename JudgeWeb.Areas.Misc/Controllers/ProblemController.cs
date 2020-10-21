@@ -62,7 +62,6 @@ namespace JudgeWeb.Areas.Misc.Controllers
 
 
         [HttpGet("{pid}/[action]")]
-        [Authorize]
         public async Task<IActionResult> Submissions(int pid, int draw, int start, int length)
         {
             const int PageCount = 15;

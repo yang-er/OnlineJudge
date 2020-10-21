@@ -9,6 +9,7 @@ using JudgeWeb.Features.OjUpdate;
 using JudgeWeb.Features.Scoreboard;
 using JudgeWeb.Features.Storage;
 using Markdig;
+using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -59,6 +60,10 @@ namespace JudgeWeb
             services.AddApplicationInsightsTelemetry();
 
             services.AddMemoryCache();
+
+            services.AddMediatR(
+                AppDomain.CurrentDomain.GetAssemblies()
+                    .Where(s => s.FullName.StartsWith("JudgeWeb.")).ToArray());
 
             services.AddDbContext<AppDbContext>(options => options
                 .UseSqlServer(Configuration.GetConnectionString("UserDbConnection"))
@@ -112,6 +117,12 @@ namespace JudgeWeb
                     options.Realm = "JudgeWeb";
                     options.AllowInsecureProtocol = true;
                     options.Events = new BasicAuthenticationValidator<User, Role, int, AppDbContext>();
+                });
+
+            services.AddAuthorization(
+                options =>
+                {
+                    options.AddPolicy("EmailVerified", b => b.RequireClaim("email_verified", "true"));
                 });
 
             if (Configuration["IdentityServer:Enabled"] == "True")

@@ -7,9 +7,12 @@ namespace Microsoft.AspNetCore.Mvc.Rendering
     {
         public static string Timespan(this IHtmlHelper hh, TimeSpan timeSpan)
         {
-            if (timeSpan.TotalDays > 1) return $"{timeSpan.TotalDays:0} days ago";
-            else if (timeSpan.TotalHours > 1) return $"{timeSpan.TotalHours:0} hours ago";
-            else if (timeSpan.TotalMinutes > 1) return $"{timeSpan.TotalMinutes:0} mins ago";
+            if (timeSpan.TotalDays > 730) return $"{timeSpan.TotalDays / 365:0} years ago";
+            else if (timeSpan.TotalDays > 60) return $"{timeSpan.TotalDays / 30:0} months ago";
+            else if (timeSpan.TotalDays > 14) return $"{timeSpan.TotalDays / 7:0} weeks ago";
+            else if (timeSpan.TotalDays > 2) return $"{timeSpan.TotalDays:0} days ago";
+            else if (timeSpan.TotalHours > 2) return $"{timeSpan.TotalHours:0} hours ago";
+            else if (timeSpan.TotalMinutes > 2) return $"{timeSpan.TotalMinutes:0} mins ago";
             return $"{timeSpan.TotalSeconds:0} secs ago";
         }
 

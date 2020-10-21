@@ -51,10 +51,10 @@ namespace JudgeWeb.Features.Razor
             if (Value == 0)
                 return ("sol", "XCPC");
             else if (Value == 1)
-                return ("sol", "Codeforces");
+                return ("sol", "CF");
             else if (Value == 2)
-                return ("sol", "OI");
-            return ("sol sol_incorrect", "Unknown");
+                return ("sol", "IOI");
+            return ("sol sol_incorrect", "UKE");
         }
 
         public override void Process(TagHelperContext context, TagHelperOutput output)
