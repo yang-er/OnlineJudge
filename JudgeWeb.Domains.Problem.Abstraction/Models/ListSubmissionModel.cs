@@ -37,5 +37,7 @@ namespace JudgeWeb.Domains.Problems
         public string AuthorName { get; set; }
 
         public string Ip { get; set; }
+
+        public bool Skipped { get; set; }
     }
 }

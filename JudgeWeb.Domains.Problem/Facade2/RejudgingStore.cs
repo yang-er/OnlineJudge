@@ -68,13 +68,13 @@ namespace JudgeWeb.Domains.Problems
             int cid = rejudge?.ContestId ?? 0;
             var selectionQuery = Submissions
                 .Where(s => s.ContestId == cid && s.RejudgeId == null)
-                .NatureJoin(Judgings, (s, j) => new { s, j });
+                .Join(Judgings, s => s.SubmissionId, j => j.SubmissionId, (s, j) => new { s, j });
 
             var _predicate = predicate.Combine(
                 objectTemplate: new { s = default(Submission), j = default(Judging) },
                 place1: a => a.s, place2: a => a.j);
             selectionQuery = selectionQuery.Where(_predicate);
-            var sublist_0 = selectionQuery.Select(a => a.s.SubmissionId);
+            var sublist_0 = selectionQuery.Select(a => a.s.SubmissionId).Distinct();
             var sublist = Submissions.Where(s => sublist_0.Contains(s.SubmissionId));
 
             if (rejudge == null)

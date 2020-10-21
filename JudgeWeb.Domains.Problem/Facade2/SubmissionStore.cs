@@ -192,29 +192,38 @@ namespace JudgeWeb.Domains.Problems
             return GetAuthorNamesAsync(Submissions.Where(sids));
         }
 
-        public Task UpdateStatisticsAsync(int cid, int author, int probid, bool ac)
+        public async Task UpdateStatisticsAsync(int cid, int author, int probid, bool ac)
         {
-            return Context.Set<SubmissionStatistics>()
-                .MergeAsync(
-                    sourceTable: new[] { new { cid, author, probid, acc = ac ? 1 : 0 } },
-                    targetKey: s => new { author = s.Author, cid = s.ContestId, probid = s.ProblemId },
-                    sourceKey: s => new { s.author, s.cid, s.probid },
-                    delete: false,
-                    
-                    updateExpression: (s, s2) => new SubmissionStatistics
-                    {
-                        AcceptedSubmission = s.AcceptedSubmission + s2.acc,
-                        TotalSubmission = s.TotalSubmission + 1,
-                    },
+            await Context.Set<SubmissionStatistics>().MergeAsync(
+                sourceTable: new[] { new { cid, author, probid, acc = ac ? 1 : 0 } },
+                targetKey: s => new { author = s.Author, cid = s.ContestId, probid = s.ProblemId },
+                sourceKey: s => new { s.author, s.cid, s.probid },
+                delete: false,
 
-                    insertExpression: s2 => new SubmissionStatistics
-                    {
-                        Author = s2.author,
-                        ContestId = s2.cid,
-                        ProblemId = s2.probid,
-                        AcceptedSubmission = s2.acc,
-                        TotalSubmission = 1,
-                    });
+                updateExpression: (s, s2) => new SubmissionStatistics
+                {
+                    AcceptedSubmission = s.AcceptedSubmission + s2.acc,
+                    TotalSubmission = s.TotalSubmission + 1,
+                },
+
+                insertExpression: s2 => new SubmissionStatistics
+                {
+                    Author = s2.author,
+                    ContestId = s2.cid,
+                    ProblemId = s2.probid,
+                    AcceptedSubmission = s2.acc,
+                    TotalSubmission = 1,
+                });
+
+            if (cid != 0) return;
+            int acc = ac ? 1 : 0;
+            await Context.Set<ProblemArchive>()
+                .Where(p => p.ProblemId == probid)
+                .BatchUpdateAsync(p => new ProblemArchive
+                {
+                    Accepted = p.Accepted + acc,
+                    Total = p.Total + 1
+                });
         }
     }
 }

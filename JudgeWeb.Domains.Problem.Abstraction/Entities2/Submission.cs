@@ -64,6 +64,11 @@ namespace JudgeWeb.Data
         public int? RejudgeId { get; set; }
 
         /// <summary>
+        /// 此提交是否被忽略
+        /// </summary>
+        public bool Ignored { get; set; }
+
+        /// <summary>
         /// 到评测信息的导航属性
         /// </summary>
         public ICollection<Judging> Judgings { get; set; }

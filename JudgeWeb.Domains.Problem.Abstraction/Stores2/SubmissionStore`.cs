@@ -74,6 +74,7 @@ namespace JudgeWeb.Domains.Problems
                     ExecutionTime = j.ExecuteTime,
                     Details = j.Details,
                     TotalScore = j.TotalScore,
+                    Skipped = s.Ignored,
                 };
             else
                 return (s, j) => new ListSubmissionModel
@@ -92,6 +93,7 @@ namespace JudgeWeb.Domains.Problems
                     Expected = s.ExpectedResult,
                     ExecutionTime = j.ExecuteTime,
                     TotalScore = j.TotalScore,
+                    Skipped = s.Ignored,
                 };
         }
 

@@ -59,7 +59,7 @@ namespace JudgeWeb.Domains.Problems
                     .BatchDeleteAsync();
                 // set the rest testcases correct rank
                 await Testcases
-                    .Where(t => t.Rank > testcase.Rank)
+                    .Where(t => t.Rank > testcase.Rank && t.ProblemId == testcase.ProblemId)
                     .BatchUpdateAsync(t => new Testcase { Rank = t.Rank - 1 });
                 await tran.CommitAsync();
             }

@@ -158,5 +158,66 @@ namespace JudgeWeb.Domains.Problems
                 .ToListAsync();
             return result.Select(a => (a.Id, a.UserName, a.NickName));
         }
+
+        public async Task RebuildSubmissionStatisticsAsync()
+        {
+            var source =
+                from s in Context.Set<Submission>()
+                join j in Context.Set<Judging>() on new { s.SubmissionId, Active = true } equals new { j.SubmissionId, j.Active }
+                group j.Status by new { s.ProblemId, s.Author, s.ContestId } into g
+                select new SubmissionStatistics
+                {
+                    ProblemId = g.Key.ProblemId,
+                    Author = g.Key.Author,
+                    ContestId = g.Key.ContestId,
+                    TotalSubmission = g.Count(),
+                    AcceptedSubmission = g.Sum(v => v == Verdict.Accepted ? 1 : 0)
+                };
+
+            await Context.Set<SubmissionStatistics>().MergeAsync(
+                sourceTable: source,
+                targetKey: ss => new { ss.Author, ss.ContestId, ss.ProblemId },
+                sourceKey: ss => new { ss.Author, ss.ContestId, ss.ProblemId },
+                delete: true,
+
+                updateExpression: (_, ss) => new SubmissionStatistics
+                {
+                    AcceptedSubmission = ss.AcceptedSubmission,
+                    TotalSubmission = ss.TotalSubmission
+                },
+
+                insertExpression: ss => new SubmissionStatistics
+                {
+                    Author = ss.Author,
+                    ContestId = ss.ContestId,
+                    ProblemId = ss.ProblemId,
+                    AcceptedSubmission = ss.AcceptedSubmission,
+                    TotalSubmission = ss.TotalSubmission
+                });
+
+
+            var source2 =
+                from ss in Context.Set<SubmissionStatistics>()
+                where ss.ContestId == 0
+                group ss by ss.ProblemId into g
+                select new
+                {
+                    ProblemId = g.Key,
+                    Accepted = g.Sum(ss => ss.AcceptedSubmission),
+                    Total = g.Sum(ss => ss.TotalSubmission),
+                };
+
+            await Context.Set<ProblemArchive>().MergeAsync(
+                sourceTable: source2,
+                targetKey: a => a.ProblemId,
+                sourceKey: a => a.ProblemId,
+                insertExpression: null, delete: false,
+
+                updateExpression: (a, s) => new ProblemArchive
+                {
+                    Accepted = s.Accepted,
+                    Total = s.Total,
+                });
+        }
     }
 }

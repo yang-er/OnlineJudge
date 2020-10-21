@@ -18,6 +18,8 @@ namespace JudgeWeb.Domains.Problems
 
         Task<Problem> FindAsync(int pid);
 
+        Task RebuildSubmissionStatisticsAsync();
+
         Task<(IEnumerable<Problem> model, int totPage)> ListAsync(
             int? uid, int page, int perCount);
 
