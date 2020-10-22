@@ -1,0 +1,53 @@
+﻿<Project>
+  <PropertyGroup>
+    <GitRepositoryDirectory>$(MSBuildThisFileDirectory).git</GitRepositoryDirectory>
+  </PropertyGroup>
+
+  <UsingTask TaskName="_ReadGitInfo" TaskFactory="RoslynCodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
+    <ParameterGroup>
+      <Folder ParameterType="System.String" Required="true" />
+      <CommitId ParameterType="System.String" Output="true" />
+    </ParameterGroup>
+    <Task>
+      <Using Namespace="System"/>
+      <Using Namespace="System.IO"/>
+      <Using Namespace="System.Linq"/>
+      <Code Type="Fragment" Language="cs">
+        <![CDATA[
+            CommitId = "UNKNOWN";
+            if (Directory.Exists(Folder))
+            {
+                var head = Path.Combine(Folder, "logs", "HEAD");
+                if (File.Exists(head))
+                {
+                    var lines = File.ReadAllText(head).Trim();
+                    var line = lines.Split('\n').LastOrDefault()?.Trim();
+                    if (!string.IsNullOrEmpty(line))
+                    {
+                        CommitId = line.Split(' ')[1];
+                    }
+                }
+            }
+]]>
+      </Code>
+    </Task>
+  </UsingTask>
+
+  <Target Name="GetGitVersionAndDebugPath" BeforeTargets="GenerateAssemblyInfo">
+    <_ReadGitInfo Condition="$(GitRepositoryDirectory) != ''" Folder="$(GitRepositoryDirectory)">
+      <Output TaskParameter="CommitId" PropertyName="_GitVersionRead" />
+    </_ReadGitInfo>
+    <PropertyGroup Condition="$(_GitVersionRead) == ''">
+      <_GitVersionRead>unknown</_GitVersionRead>
+    </PropertyGroup>
+  </Target>
+
+  <Target Name="GetGitVersionAndDebugPathCore" DependsOnTargets="GetGitVersionAndDebugPath">
+    <ItemGroup>
+      <AssemblyAttribute Include="System.GitVersionAttribute">
+        <_Parameter1>$(_GitVersionRead)</_Parameter1>
+      </AssemblyAttribute>
+    </ItemGroup>
+  </Target>
+
+</Project>

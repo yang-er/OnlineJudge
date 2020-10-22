@@ -13,7 +13,7 @@ namespace JudgeWeb.Areas.Misc.Controllers
     public class HomeController : Controller2
     {
         public static string ProgramVersion { get; } =
-            typeof(HomeController).Assembly
+            typeof(GitVersionAttribute).Assembly
                 .GetCustomAttribute<GitVersionAttribute>()?
                 .CommitId?.Substring(0, 7) ?? "unknown";
 

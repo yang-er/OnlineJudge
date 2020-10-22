@@ -117,6 +117,12 @@ namespace JudgeWeb.Areas.Account.Controllers
         public async Task<IActionResult> Register(RegisterModel model, string returnUrl = null)
         {
             ViewData["ReturnUrl"] = returnUrl;
+
+            if (model.UserName.StartsWith("team", StringComparison.OrdinalIgnoreCase))
+            {
+                ModelState.AddModelError("xys::username", "User name can't start with \"team\".");
+            }
+
             if (ModelState.IsValid)
             {
                 var user = new User

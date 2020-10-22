@@ -1,5 +1,6 @@
 ﻿using JudgeWeb.Data;
 using JudgeWeb.Domains.Contests;
+using JudgeWeb.Domains.Identity;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -287,6 +288,120 @@ namespace JudgeWeb.Domains.Contests
                 .Select(m => m.UserId)
                 .ToListAsync();
             return ids.ToHashSet();
+        }
+
+        private static Func<string> CreatePasswordGenerator()
+        {
+            const string passwordSource = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789";
+            var rng = new Random(unchecked((int)DateTimeOffset.Now.Ticks));
+            return () =>
+            {
+                Span<char> pwd = stackalloc char[8];
+                for (int i = 0; i < 8; i++) pwd[i] = passwordSource[rng.Next(passwordSource.Length)];
+                return new string(pwd);
+            };
+        }
+
+        private async Task EnsureTeamWithPassword(UserManager userManager, int cid, int teamId, string password)
+        {
+            string username = UserNameForTeamId(teamId);
+
+            var user = await userManager.FindByNameAsync(username);
+
+            if (user != null)
+            {
+                if (await userManager.HasPasswordAsync(user))
+                {
+                    var token = await userManager.GeneratePasswordResetTokenAsync(user);
+                    await userManager.ResetPasswordAsync(user, token, password);
+                }
+                else
+                {
+                    await userManager.AddPasswordAsync(user, password);
+                }
+
+                if (await userManager.IsLockedOutAsync(user))
+                {
+                    await userManager.SetLockoutEndDateAsync(user, null);
+                }
+            }
+            else
+            {
+                user = new User { UserName = username, Email = $"{username}@contest.acm.xylab.fun" };
+                await userManager.CreateAsync(user, password);
+            }
+
+            await Context.Set<TeamMember>().MergeAsync(
+                sourceTable: new[] { new { ContestId = cid, TeamId = teamId, UserId = user.Id } },
+                targetKey: t => new { t.ContestId, t.TeamId, t.UserId },
+                sourceKey: t => new { t.ContestId, t.TeamId, t.UserId },
+                updateExpression: null, delete: false,
+                insertExpression: t => new TeamMember { ContestId = t.ContestId, TeamId = t.TeamId, UserId = t.UserId, Temporary = true });
+
+            Context.RemoveCacheEntry($"`c{cid}`teams`t{teamId}");
+            Context.RemoveCacheEntry($"`c{cid}`teams`u{user.Id}");
+        }
+
+        private string UserNameForTeamId(int teamId) => $"team{teamId:D3}";
+
+        public async Task<List<(Team, string)>> BatchCreateAsync(
+            UserManager userManager,
+            int cid,
+            TeamAffiliation aff,
+            TeamCategory cat,
+            string[] names)
+        {
+            var rng = CreatePasswordGenerator();
+            var result = new List<(Team, string)>();
+
+            var list2 = await Context.Set<Team>()
+                .Where(c => c.ContestId == cid && c.AffiliationId == aff.AffiliationId && c.CategoryId == cat.CategoryId)
+                .Select(c => new { c.TeamId, c.TeamName })
+                .ToListAsync();
+            var list = list2.ToLookup(a => a.TeamName, a => a.TeamId);
+            
+            foreach (var item2 in names)
+            {
+                var item = item2.Trim();
+
+                if (list.Contains(item))
+                {
+                    var e = list[item];
+                    foreach (var teamId in e)
+                    {
+                        await EnsureTeamWithPassword(userManager, cid, teamId, rng());
+                    }
+                }
+                else
+                {
+                    int teamId = await CreateAsync(uids: null, team: new Team
+                    {
+                        AffiliationId = aff.AffiliationId,
+                        CategoryId = cat.CategoryId,
+                        ContestId = cid,
+                        Status = 1,
+                        TeamName = item,
+                    });
+
+                    await EnsureTeamWithPassword(userManager, cid, teamId, rng());
+                }
+            }
+
+            return result;
+        }
+
+        public async Task<int> BatchLockOutAsync(int cid)
+        {
+            var lockOuts = Context.Set<TeamMember>()
+                .Where(m => m.ContestId == cid && m.Temporary);
+
+            var lockOuts2 = lockOuts.Select(m => m.UserId);
+
+            await Context.Set<User>()
+                .Where(u => lockOuts2.Contains(u.Id))
+                .BatchUpdateAsync(u => new User { LockoutEnd = DateTimeOffset.MaxValue });
+
+            return await lockOuts.BatchDeleteAsync();
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using JudgeWeb.Data;
+using JudgeWeb.Domains.Identity;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -41,6 +42,15 @@ namespace JudgeWeb.Domains.Contests
         Task<Team> FindByIdAsync(int cid, int teamid);
 
         Task<Team> FindByUserAsync(int cid, int uid);
+
+        Task<List<(Team team, string password)>> BatchCreateAsync(
+            UserManager userManager,
+            int cid,
+            TeamAffiliation affiliation,
+            TeamCategory category,
+            string[] teamNames);
+
+        Task<int> BatchLockOutAsync(int cid);
 
         Task<int> CreateAsync(Team team, int[]? uids);
 
