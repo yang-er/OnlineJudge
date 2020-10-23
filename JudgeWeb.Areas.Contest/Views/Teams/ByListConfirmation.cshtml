@@ -1,0 +1,27 @@
+﻿@model List<(Team, string)>
+@{
+    ViewData["Title"] = "Batch import result";
+    Layout = "_WindowLayout";
+}
+
+<table class="data-table text-center table table-hover table-striped table-sm" role="grid">
+    <thead class="thead-light">
+        <tr>
+            <th scope="col">#</th>
+            <th scope="col">team</th>
+            <th scope="col">username</th>
+            <th scope="col">password</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var (team, pwd) in Model)
+        {
+            <tr>
+                <td>@team.TeamId</td>
+                <td>@team.TeamName</td>
+                <td class="text-monospace">@($"team{team.TeamId:D3}")</td>
+                <td class="text-monospace">@pwd</td>
+            </tr>
+        }
+    </tbody>
+</table>

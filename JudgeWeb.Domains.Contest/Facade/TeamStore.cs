@@ -356,9 +356,8 @@ namespace JudgeWeb.Domains.Contests
 
             var list2 = await Context.Set<Team>()
                 .Where(c => c.ContestId == cid && c.AffiliationId == aff.AffiliationId && c.CategoryId == cat.CategoryId)
-                .Select(c => new { c.TeamId, c.TeamName })
                 .ToListAsync();
-            var list = list2.ToLookup(a => a.TeamName, a => a.TeamId);
+            var list = list2.ToLookup(a => a.TeamName);
             
             foreach (var item2 in names)
             {
@@ -367,23 +366,28 @@ namespace JudgeWeb.Domains.Contests
                 if (list.Contains(item))
                 {
                     var e = list[item];
-                    foreach (var teamId in e)
+                    foreach (var team in e)
                     {
-                        await EnsureTeamWithPassword(userManager, cid, teamId, rng());
+                        string pwd = rng();
+                        await EnsureTeamWithPassword(userManager, cid, team.TeamId, pwd);
+                        result.Add((team, pwd));
                     }
                 }
                 else
                 {
-                    int teamId = await CreateAsync(uids: null, team: new Team
+                    var team = new Team
                     {
                         AffiliationId = aff.AffiliationId,
                         CategoryId = cat.CategoryId,
                         ContestId = cid,
                         Status = 1,
                         TeamName = item,
-                    });
+                    };
 
-                    await EnsureTeamWithPassword(userManager, cid, teamId, rng());
+                    int teamId = await CreateAsync(team, null);
+                    string pwd = rng();
+                    await EnsureTeamWithPassword(userManager, cid, teamId, pwd);
+                    result.Add((team, pwd));
                 }
             }
 

@@ -78,8 +78,9 @@
         </a>
 
         <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
-            <a class="dropdown-item" asp-action="Import" data-toggle="ajaxWindow" data-target="importTeam"><i class="fas fa-envelope-open-text fa-fw"></i>&nbsp;Batch import</a>
+            <a class="dropdown-item" asp-action="ByList" data-toggle="ajaxWindow" data-target="importTeam"><i class="fas fa-envelope-open-text fa-fw"></i>&nbsp;Batch import</a>
             <a class="dropdown-item" asp-action="ByGroup" data-toggle="ajaxWindow" data-target="importTeam"><i class="fas fa-graduation-cap fa-fw"></i>&nbsp;Add teaching class</a>
+            <a class="dropdown-item" asp-in-roles="Administrator" asp-action="LockoutTemporary" data-toggle="ajaxWindow" data-target="importTeam"><i class="fas fa-lock"></i>&nbsp;Lockout temporary users</a>
         </div>
     </div>
 </div>

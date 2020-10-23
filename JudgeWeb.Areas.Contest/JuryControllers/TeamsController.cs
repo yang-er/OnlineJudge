@@ -263,6 +263,65 @@ namespace JudgeWeb.Areas.Contest.Controllers
         }
 
 
+        [HttpGet("[action]")]
+        [ValidateInAjax]
+        [Authorize(Roles = "Administrator")]
+        public IActionResult LockoutTemporary()
+        {
+            return AskPost(
+                title: "Lockout temporary users",
+                message: "Are you sure to lockout temporary users? You should only proceed this after the whole contest is over.",
+                area: "Contest", ctrl: "Teams", act: nameof(LockoutTemporaryConfirmation), new { cid = Contest.ContestId },
+                type: MessageType.Warning);
+        }
+
+
+        [HttpPost("[action]")]
+        [Authorize(Roles = "Administrator")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> LockoutTemporaryConfirmation()
+        {
+            await Store.BatchLockOutAsync(Contest.ContestId);
+            StatusMessage = "Lockout finished.";
+            return RedirectToAction(nameof(List));
+        }
+
+
+        [HttpGet("[action]")]
+        [ValidateInAjax]
+        [Authorize(Roles = "Administrator,Teacher")]
+        public async Task<IActionResult> ByList(int cid)
+        {
+            ViewBag.Aff = await Store.ListAffiliationAsync(cid, false);
+            ViewBag.Cat = await Store.ListCategoryAsync(cid);
+
+            return Window(new AddTeamByListModel
+            {
+                AffiliationId = 1,
+                CategoryId = 3,
+            });
+        }
+
+
+        [HttpPost("[action]")]
+        [Authorize(Roles = "Administrator,Teacher")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ByListConfirmation(
+            int cid, AddTeamByListModel model,
+            [FromServices] UserManager userManager)
+        {
+            var affs = await Store.ListAffiliationAsync(cid, false);
+            var cats = await Store.ListCategoryAsync(cid);
+            var aff = affs.SingleOrDefault(a => a.AffiliationId == model.AffiliationId);
+            var cat = cats.SingleOrDefault(c => c.CategoryId == model.CategoryId);
+            if (aff == null || cat == null) return NotFound();
+
+            var names = (model.TeamNames ?? "").Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+            var result = await Store.BatchCreateAsync(userManager, cid, aff, cat, names);
+            return View(result);
+        }
+
+
         [HttpPost("[action]")]
         [Authorize(Roles = "Administrator,Teacher")]
         [ValidateAntiForgeryToken]
