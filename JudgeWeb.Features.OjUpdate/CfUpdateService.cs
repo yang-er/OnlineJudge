@@ -11,7 +11,7 @@ namespace JudgeWeb.Features.OjUpdate
             ILogger<CfUpdateService> logger, IServiceProvider serviceProvider)
             : base(logger, serviceProvider, 2, "Codeforces")
         {
-            AccountTemplate = "https://codeforces.com/profile/{0}";
+            AccountTemplate = "http://codeforces.com/profile/{0}";
             ColumnName = "Rating";
         }
 
@@ -32,7 +32,7 @@ namespace JudgeWeb.Features.OjUpdate
 
         protected override void ConfigureHttpClient(HttpClient httpClient)
         {
-            httpClient.BaseAddress = new Uri("https://codeforces.com/");
+            httpClient.BaseAddress = new Uri("http://codeforces.com/");
             httpClient.Timeout = TimeSpan.FromSeconds(60);
         }
 
