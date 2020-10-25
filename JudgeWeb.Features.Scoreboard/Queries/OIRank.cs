@@ -212,7 +212,7 @@ namespace JudgeWeb.Features.Scoreboard
                     sc.SolveTimePublic = sc.SolveTimeRestricted;
                     sc.SubmissionPublic = sc.SubmissionRestricted;
                     sc.IsCorrectPublic = sc.IsCorrectRestricted;
-                    sc.ScorePublic = sc.ScorePublic;
+                    sc.ScorePublic = sc.ScoreRestricted;
                     if (lastop1.ContainsKey(s.TeamId))
                         lastop1[s.TeamId] = (int)(s.Time - args.ContestTime).TotalMinutes;
                     else
