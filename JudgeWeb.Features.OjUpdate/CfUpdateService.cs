@@ -1,7 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using System;
 using System.Net.Http;
-using System.Text.RegularExpressions;
 
 namespace JudgeWeb.Features.OjUpdate
 {
@@ -13,6 +12,18 @@ namespace JudgeWeb.Features.OjUpdate
         {
             AccountTemplate = "http://codeforces.com/profile/{0}";
             ColumnName = "Rating";
+        }
+
+        private class Rootobject
+        {
+            public string status { get; set; }
+            public Result[] result { get; set; }
+
+            public class Result
+            {
+                public int? rating { get; set; }
+                public string handle { get; set; }
+            }
         }
 
         public override string RankTemplate(int rk)
@@ -33,24 +44,20 @@ namespace JudgeWeb.Features.OjUpdate
         protected override void ConfigureHttpClient(HttpClient httpClient)
         {
             httpClient.BaseAddress = new Uri("http://codeforces.com/");
-            httpClient.Timeout = TimeSpan.FromSeconds(60);
+            httpClient.Timeout = TimeSpan.FromSeconds(20);
         }
 
         protected override string GenerateGetSource(string account)
         {
-            return "profile/" + account;
+            return "api/user.info?handles=" + account;
         }
 
         protected override int MatchCount(string html)
         {
-            var cnt = Regex.Match(html,
-                @"Contest rating:(\s+)<span style=""font-weight:bold;"" class=""user-(\S+)"">(\S+)</span>"
-            ).Groups[3].Value;
-
-            var success = int.TryParse(cnt, out int ans);
-            return success ? ans :
-                   html.Contains("<span class=\"user-black\">Unrated </span>")
-                   ? -50 : -51;
+            var obj = html.AsJson<Rootobject>();
+            if (obj == null || obj.status != "OK" || obj.result.Length != 1)
+                return -51; // User not ready?
+            return obj.result[0].rating ?? -50;
         }
     }
 }
