@@ -190,7 +190,29 @@ function initXylabFunctions() {
 			throwOnError: false,
 			displayMode: true
 		}));
-	});
+    });
+
+    // input-output-copier
+    $body.on('click', '.input-output-copier', function () {
+        let $pre = $(this).parent().next();
+        let $type = $(this).parent().parent().attr('class');
+
+        let aux = document.createElement("textarea");
+        aux.innerText = $pre.text();
+        document.body.appendChild(aux);
+        aux.select();
+        document.execCommand("copy");
+        document.body.removeChild(aux);
+
+        let curRange = new Range();
+        curRange.selectNodeContents($pre[0]);
+        window.getSelection().removeAllRanges();
+        window.getSelection().addRange(curRange);
+        notice('The example ' + $type + ' has been copied into the clipboard', 'success');
+    });
+
+    // samp
+    $('.samp > .input > .title, .samp > .output > .title').append('<div title="Copy" class="input-output-copier">Copy</div>')
 }
 
 $(function () {
