@@ -193,26 +193,18 @@ function initXylabFunctions() {
     });
 
     // input-output-copier
-    $body.on('click', '.input-output-copier', function () {
-        let $pre = $(this).parent().next();
-        let $type = $(this).parent().parent().attr('class');
-
-        let aux = document.createElement("textarea");
-        aux.innerText = $pre.text();
-        document.body.appendChild(aux);
-        aux.select();
-        document.execCommand("copy");
-        document.body.removeChild(aux);
-
-        let curRange = new Range();
-        curRange.selectNodeContents($pre[0]);
-        window.getSelection().removeAllRanges();
-        window.getSelection().addRange(curRange);
-        notice('The example ' + $type + ' has been copied into the clipboard', 'success');
+    new ClipboardJS('.input-output-copier', { text: function (trigger) { return $($(trigger).data('clipboard-target')).text(); } }).on('success', function (e) {
+        notice('The example ' + $(e.trigger).data('sample-type') + ' has been copied into the clipboard', 'success');
     });
 
     // samp
-    $('.samp > .input > .title, .samp > .output > .title').append('<div title="Copy" class="input-output-copier">Copy</div>')
+    $('.samp > .input > .title, .samp > .output > .title').each(function () {
+        let $pre = $(this).next();
+        let $preId = ("id" + Math.random()).replaceAll(".", "0");
+        let $type = $(this).parent().attr('class');
+        $pre.attr("id", $preId);
+        $(this).append('<div title="Copy" data-clipboard-target="#' + $preId + '" data-sample-type="' + $type + '" class="input-output-copier">Copy</div>');
+    });
 }
 
 $(function () {

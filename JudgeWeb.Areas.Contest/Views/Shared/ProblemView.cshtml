@@ -5,37 +5,38 @@
 
 <link rel="stylesheet" href="~/static/katex.min.css" />
 <script defer src="~/static/katex.min.js"></script>
+<script defer src="~/static/js/clipboard.min.js"></script>
 
 <div class="mt-3" id="problem-descibe">
     @Html.Raw((string)ViewData["Content"])
 </div>
 
 <style>
-    
-@@media print {
-    body {
-        font-size: 1.3em;
-        margin: 1cm;
+
+    @@media print {
+        body {
+            font-size: 1.3em;
+            margin: 1cm;
+        }
+
+        #problem-descibe {
+            margin: 0em !important;
+        }
     }
 
-    #problem-descibe {
-        margin: 0em !important;
+    #problem-descibe p {
+        font-size: 1.05em;
     }
-}
 
-#problem-descibe p {
-    font-size: 1.05em;
-}
+        #problem-descibe p > code, #problem-descibe li > code {
+            font-size: 100%;
+            background: rgba(27, 31, 35, 0.05);
+            color: #24292e;
+            padding: .2em .4em;
+            border-radius: .2em;
+        }
 
-#problem-descibe p > code, #problem-descibe li > code {
-    font-size: 100%;
-    background: rgba(27, 31, 35, 0.05);
-    color: #24292e;
-    padding: .2em .4em;
-    border-radius: .2em;
-}
-
-span.katex-src ~ .katex {
-    font-size: 1.1em;
-}
+    span.katex-src ~ .katex {
+        font-size: 1.1em;
+    }
 </style>

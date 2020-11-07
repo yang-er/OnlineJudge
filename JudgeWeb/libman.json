@@ -812,6 +812,10 @@
       "files": [
         "FileSaver.min.js"
       ]
+    },
+    {
+      "library": "clipboard.js@2.0.6",
+      "destination": "wwwroot/static/js/"
     }
   ]
 }
