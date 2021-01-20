@@ -79,20 +79,21 @@ namespace JudgeWeb
 
             services.Configure<FormOptions>(options =>
             {
-                options.ValueCountLimit = 1 << 26;
-                options.ValueLengthLimit = 1 << 26;
-                options.KeyLengthLimit = 1 << 26;
-                options.MultipartBodyLengthLimit = 1 << 26;
-                options.MultipartBoundaryLengthLimit = 1 << 26;
+                options.ValueCountLimit = 1 << 28;
+                options.ValueLengthLimit = 1 << 28;
+                options.KeyLengthLimit = 1 << 28;
+                options.MultipartBodyLengthLimit = 1 << 28;
+                options.MultipartBoundaryLengthLimit = 1 << 28;
             });
 
             services.AddDbContext<AppDbContext>(options =>
-                options.UseSqlServer(Configuration.GetConnectionString("UserDbConnection")));
+                options.UseMySQL(Configuration.GetConnectionString("UserDbConnection")));
 
             services.AddIdentity<User, IdentityRole<int>>()
                 .AddEntityFrameworkStores<AppDbContext>()
                 .AddUserManager<UserManager>()
-                .AddDefaultTokenProviders();
+                .AddDefaultTokenProviders()
+                .UsePasswordHasher<MySqlOldPasswordHasher<User>, User>();
 
             services.AddSingleton(new ConfigurationBasicAuthorizationService(Configuration));
 

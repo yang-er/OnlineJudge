@@ -8,7 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-[assembly: Inject(typeof(StatusProvider), typeof(DefaultStatusProvider))]
+[assembly: Inject(typeof(StatusProvider), typeof(InnoDbStatusProvider))]
 namespace JudgeWeb.Areas.Judge.Providers
 {
     public abstract class StatusProvider

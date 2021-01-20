@@ -1,5 +1,6 @@
 ﻿using EntityFrameworkCore.Cacheable;
 using Microsoft.AspNetCore.Identity;
+using MySql.Data.MySqlClient;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -54,7 +55,7 @@ namespace JudgeWeb.Data
 
         public IQueryable<ContestTestcase> ContestTestcase(int _cid) =>
             Query<ContestTestcase>()
-                .FromSql(Data.ContestTestcase.QueryString, new SqlParameter("__cid", _cid))
+                .FromSql(Data.ContestTestcase.QueryString, new MySqlParameter("__cid", _cid))
                 .AsNoTracking();
 
 

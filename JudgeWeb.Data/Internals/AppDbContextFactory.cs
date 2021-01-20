@@ -17,7 +17,7 @@ namespace JudgeWeb.Data
 
             // You can change UseSqlServer to your dbs, e.g. MySQL
             var optionsBuilder = new DbContextOptionsBuilder<AppDbContext>();
-            optionsBuilder.UseSqlServer("Server=(localdb)\\mssqllocaldb;Database=aspnet-JudgeWeb;Trusted_Connection=True;MultipleActiveResultSets=true");
+            optionsBuilder.UseMySQL("server=localhost;user id=oj;database=acm3xylab;character set=utf-8;TreatTinyAsBoolean=true");
             return new AppDbContext(optionsBuilder.Options);
         }
     }
