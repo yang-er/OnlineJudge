@@ -87,8 +87,7 @@ namespace JudgeWeb
             });
 
             services.AddDbContext<AppDbContext>(options =>
-                options.UseSqlServer(Configuration.GetConnectionString("UserDbConnection"))
-                       .UseSecondLevelCache());
+                options.UseSqlServer(Configuration.GetConnectionString("UserDbConnection")));
 
             services.AddIdentity<User, IdentityRole<int>>()
                 .AddEntityFrameworkStores<AppDbContext>()
@@ -113,7 +112,6 @@ namespace JudgeWeb
             services.AddMarkdown();
 
             services.AddMvc()
-                .SetTokenTransform<SlugifyParameterTransformer>()
                 .EnableContentFileResult()
                 .SetCompatibilityVersion(CompatibilityVersion.Version_2_1)
                 .UseAreaParts("JudgeWeb.Areas.", new[] { "Misc", "Account", "Api", "Judge", "Contest" });

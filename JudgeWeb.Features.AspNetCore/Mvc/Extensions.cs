@@ -26,15 +26,6 @@ namespace Microsoft.AspNetCore.Mvc
             return roles.Split(',').Any(role => user.IsInRole(role));
         }
 
-        public static IMvcBuilder SetTokenTransform<T>(this IMvcBuilder builder)
-            where T : IOutboundParameterTransformer, new()
-        {
-            builder.Services.Configure<MvcOptions>(options =>
-                options.Conventions.Add(
-                    new RouteTokenTransformerConvention(new T())));
-            return builder;
-        }
-
         public static IMvcBuilder EnableContentFileResult(this IMvcBuilder builder)
         {
             builder.Services.TryAddSingleton<
