@@ -37,6 +37,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JudgeWeb.Areas.Contest", "J
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JudgeWeb.Features.Scoreboard", "JudgeWeb.Features.Scoreboard\JudgeWeb.Features.Scoreboard.csproj", "{6112B384-4745-4F72-A029-FC6D15D1EC3D}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JudgeWeb.Migration", "JudgeWeb.Migration\JudgeWeb.Migration.csproj", "{595AA1E7-6C70-44CB-B5F1-368ECF7EF809}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -103,6 +105,10 @@ Global
 		{6112B384-4745-4F72-A029-FC6D15D1EC3D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6112B384-4745-4F72-A029-FC6D15D1EC3D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6112B384-4745-4F72-A029-FC6D15D1EC3D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{595AA1E7-6C70-44CB-B5F1-368ECF7EF809}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{595AA1E7-6C70-44CB-B5F1-368ECF7EF809}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{595AA1E7-6C70-44CB-B5F1-368ECF7EF809}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{595AA1E7-6C70-44CB-B5F1-368ECF7EF809}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
