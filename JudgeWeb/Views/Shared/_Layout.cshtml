@@ -7,12 +7,12 @@
     <meta charset="utf-8">
     <title>@ViewData["Title"] - @ViewData["BigTitle"]</title>
     <meta name="viewport" content="initial-scale=1, user-scalable=no">
+    @JavascriptSnippet.FullScript
     <!-- jQuery and Bootstrap --><script src="~/static/js/jquery.min.js"></script><link rel="stylesheet" href="~/static/css/bootstrap.min.css" /><script src="~/static/js/bootstrap.bundle.min.js"></script><link rel="stylesheet" href="~/static/css/fontawesome.min.css" />
     <!-- DOMjudge style and scripts --><link rel="stylesheet" href="~/static/site/domjudge.css" /><script src="~/static/site/domjudge.js"></script><script src="~/static/site/xylab.js"></script>
     <!-- datatables --><link rel="stylesheet" href="~/static/css/dataTables.bootstrap4.min.css"><script src="~/static/js/jquery.dataTables.min.js"></script><script src="~/static/js/dataTables.bootstrap4.min.js"></script>
     <!-- nvd3 --><link rel="stylesheet" href="~/static/chart/nv.d3.min.css" /><script src="~/static/chart/d3.min.js"></script><script src="~/static/chart/nv.d3.min.js"></script>
     <razor asp-viewdata-key="AceEditor"><!-- ace editor --><script src="~/static/ace/ace.js"></script><script src="~/static/ace/ext-modelist.js"></script></razor>
-    @JavascriptSnippet.FullScript
     <razor asp-viewdata-key="CompactMode">
         <!-- compact for old styles -->
         <style type="text/css">
