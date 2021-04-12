@@ -1,5 +1,5 @@
-# README
+# Announcement
 
-This is the repository for JLU Online Judge vNext.
+Online Judge project has been upgraded to a newer architect. This version has been archived.
 
-Readme file will be completed after full development.
+For getting the codes and documents of newer version, please refer to **[Namomo Open Source](https://github.com/namofun)**.
